@@ -28,6 +28,58 @@
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "ingress": {}
+              },
+              "required": [
+                "ingress"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "ingress": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "ingress": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    }
+  ],
   "properties": {
     "ingress": {
       "additionalProperties": {},

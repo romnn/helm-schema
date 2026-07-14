@@ -34,6 +34,64 @@
         "allOf": [
           {
             "properties": {
+              "NetworkPolicy": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "NetworkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "checkDeprecation": {}
+                  },
+                  "required": [
+                    "checkDeprecation"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "checkDeprecation": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "checkDeprecation"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "NetworkPolicy": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "agent": {
                 "properties": {
                   "additionalContainers": {
@@ -4514,6 +4572,123 @@
                   }
                 },
                 "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "healthProbes": {}
+                      },
+                      "required": [
+                        "healthProbes"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "healthProbes": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "healthProbes"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "probes": {}
+                      },
+                      "required": [
+                        "probes"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "probes": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "probes"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "probes": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "type": "object"

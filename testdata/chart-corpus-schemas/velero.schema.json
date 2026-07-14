@@ -124,6 +124,57 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configuration": {}
+              },
+              "required": [
+                "configuration"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configuration": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "configuration"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "configuration": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings."
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -459,6 +510,174 @@
       }
     },
     {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configuration": {
+                  "properties": {
+                    "repositoryMaintenanceJob": {}
+                  },
+                  "required": [
+                    "repositoryMaintenanceJob"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configuration"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configuration": {
+                "properties": {
+                  "repositoryMaintenanceJob": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "repositoryMaintenanceJob"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "configuration"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "configuration": {
+            "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
+            "properties": {
+              "repositoryMaintenanceJob": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Resource requests/limits to specify for the repository-maintenance job. Optional.\nhttps://velero.io/docs/v1.14/repository-maintenance/#resource-limitation"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configuration": {
+                  "properties": {
+                    "repositoryMaintenanceJob": {
+                      "properties": {
+                        "repositoryConfigData": {}
+                      },
+                      "required": [
+                        "repositoryConfigData"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "repositoryMaintenanceJob"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configuration"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configuration": {
+                "properties": {
+                  "repositoryMaintenanceJob": {
+                    "properties": {
+                      "repositoryConfigData": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "repositoryConfigData"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "repositoryMaintenanceJob"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "configuration"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "configuration": {
+            "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
+            "properties": {
+              "repositoryMaintenanceJob": {
+                "description": "Resource requests/limits to specify for the repository-maintenance job. Optional.\nhttps://velero.io/docs/v1.14/repository-maintenance/#resource-limitation",
+                "properties": {
+                  "repositoryConfigData": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Per-repository resource settings ConfigMap\nThis ConfigMap allows specifying different settings for different repositories\nSee: https://velero.io/docs/main/repository-maintenance/"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
       "properties": {
         "configuration": {
           "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
@@ -642,6 +861,35 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "containerSecurityContext": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "containerSecurityContext"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "containerSecurityContext": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Container Level Security Context for the 'velero' container of the Velero deployment. Optional.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container\nallowPrivilegeEscalation: false\ncapabilities:\ndrop: [\"ALL\"]\nadd: []\nreadOnlyRootFilesystem: true"
           }
         },
         "type": "object"
@@ -2946,6 +3194,57 @@
                 "type": "null"
               }
             ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "namespace": {}
+              },
+              "required": [
+                "namespace"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "namespace"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "namespace": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Labels settings in namespace"
           }
         },
         "type": "object"

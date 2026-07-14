@@ -835,6 +835,79 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "applicationSet": {
+                  "properties": {
+                    "vpa": {}
+                  },
+                  "required": [
+                    "vpa"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "applicationSet"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "applicationSet": {
+                "properties": {
+                  "vpa": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "vpa"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "applicationSet"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "applicationSet": {
+            "description": "ApplicationSet controller",
+            "properties": {
+              "vpa": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "ApplicationSet controller Vertical Pod Autoscaler\nRef: https://kubernetes.io/docs/concepts/workloads/autoscaling/#scaling-workloads-vertically/"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -1826,6 +1899,78 @@
       }
     },
     {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "commitServer": {
+                  "properties": {
+                    "vpa": {}
+                  },
+                  "required": [
+                    "vpa"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "commitServer"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "commitServer": {
+                "properties": {
+                  "vpa": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "vpa"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "commitServer"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "commitServer": {
+            "properties": {
+              "vpa": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Commit server Vertical Pod Autoscaler\nRef: https://kubernetes.io/docs/concepts/workloads/autoscaling/#scaling-workloads-vertically/"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
       "properties": {
         "configs": {
           "description": "Argo Configs",
@@ -2204,6 +2349,225 @@
                   }
                 },
                 "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configs": {
+                  "properties": {
+                    "cm": {}
+                  },
+                  "required": [
+                    "cm"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configs"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configs": {
+                "properties": {
+                  "cm": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "cm"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "configs"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "configs": {
+            "description": "Argo Configs",
+            "properties": {
+              "cm": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configs": {
+                  "properties": {
+                    "params": {}
+                  },
+                  "required": [
+                    "params"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configs"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configs": {
+                "properties": {
+                  "params": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "params"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "configs"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "configs": {
+            "description": "Argo Configs",
+            "properties": {
+              "params": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Argo CD configuration parameters\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cmd-params-cm.yaml"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configs": {
+                  "properties": {
+                    "rbac": {}
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configs"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configs": {
+                "properties": {
+                  "rbac": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "configs"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "configs": {
+            "description": "Argo Configs",
+            "properties": {
+              "rbac": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Argo CD RBAC policy configuration\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/rbac.md"
               }
             },
             "type": "object"
@@ -6596,6 +6960,79 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "vpa": {}
+                  },
+                  "required": [
+                    "vpa"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "vpa": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "vpa"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "description": "Application controller",
+            "properties": {
+              "vpa": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Application controller Vertical Pod Autoscaler\nRef: https://kubernetes.io/docs/concepts/workloads/autoscaling/#scaling-workloads-vertically/"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -7626,6 +8063,79 @@
                   }
                 ],
                 "description": "Additional volumes to the dex pod"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "dex": {
+                  "properties": {
+                    "vpa": {}
+                  },
+                  "required": [
+                    "vpa"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "dex"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "dex": {
+                "properties": {
+                  "vpa": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "vpa"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "dex"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "dex": {
+            "description": "Dex",
+            "properties": {
+              "vpa": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Dex Vertical Pod Autoscaler\nRef: https://kubernetes.io/docs/concepts/workloads/autoscaling/#scaling-workloads-vertically/"
               }
             },
             "type": "object"
@@ -16275,6 +16785,79 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "notifications": {
+                  "properties": {
+                    "vpa": {}
+                  },
+                  "required": [
+                    "vpa"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "notifications"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "notifications": {
+                "properties": {
+                  "vpa": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "vpa"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "notifications"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "notifications": {
+            "description": "Notifications controller",
+            "properties": {
+              "vpa": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Notifications controller Vertical Pod Autoscaler\nRef: https://kubernetes.io/docs/concepts/workloads/autoscaling/#scaling-workloads-vertically/"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -19121,6 +19704,130 @@
       "if": {
         "anyOf": [
           {
+            "not": {
+              "properties": {
+                "redis": {
+                  "properties": {
+                    "vpa": {}
+                  },
+                  "required": [
+                    "vpa"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "redis"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "redis": {
+                "properties": {
+                  "vpa": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "vpa"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "redis"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "redis": {
+            "description": "Redis",
+            "properties": {
+              "vpa": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Redis Vertical Pod Autoscaler\nRef: https://kubernetes.io/docs/concepts/workloads/autoscaling/#scaling-workloads-vertically/"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "redis-ha": {}
+              },
+              "required": [
+                "redis-ha"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "redis-ha": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "redis-ha"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "redis-ha": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "properties": {
@@ -21228,6 +21935,549 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "redis-ha": {
+                      "properties": {
+                        "containerSecurityContext": {}
+                      },
+                      "required": [
+                        "containerSecurityContext"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "redis-ha"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "redis-ha": {
+                    "properties": {
+                      "containerSecurityContext": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "containerSecurityContext"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "redis-ha"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "redis-ha": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "redis-ha"
+                ],
+                "type": "object"
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "exporter": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "exporter"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "redis-ha": {
+                              "properties": {
+                                "hostPath": {
+                                  "properties": {
+                                    "chown": {}
+                                  },
+                                  "required": [
+                                    "chown"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "hostPath"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "redis-ha"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "redis-ha": {
+                            "properties": {
+                              "hostPath": {
+                                "properties": {
+                                  "chown": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "chown"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "hostPath"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "redis-ha"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "hostPath": {
+                            "properties": {
+                              "path": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "path"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "hostPath"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "sysctlImage": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "sysctlImage"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "exporter": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "exporter"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "redis-ha": {
+                              "properties": {
+                                "hostPath": {
+                                  "properties": {
+                                    "chown": {}
+                                  },
+                                  "required": [
+                                    "chown"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "hostPath"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "redis-ha"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "redis-ha": {
+                            "properties": {
+                              "hostPath": {
+                                "properties": {
+                                  "chown": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "chown"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "hostPath"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "redis-ha"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "hostPath": {
+                            "properties": {
+                              "path": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "path"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "hostPath"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "sysctlImage": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "sysctlImage"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "redis-ha": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "redis-ha"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "redis-ha": {
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+            "properties": {
+              "containerSecurityContext": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Redis HA statefulset container-level security context"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -22412,6 +23662,273 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "redis-ha": {
+                      "properties": {
+                        "haproxy": {
+                          "properties": {
+                            "containerSecurityContext": {}
+                          },
+                          "required": [
+                            "containerSecurityContext"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "haproxy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "redis-ha"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "redis-ha": {
+                    "properties": {
+                      "haproxy": {
+                        "properties": {
+                          "containerSecurityContext": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "containerSecurityContext"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "haproxy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "redis-ha"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "redis-ha": {
+                              "properties": {
+                                "haproxy": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "haproxy"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "redis-ha"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "redis-ha": {
+                            "properties": {
+                              "haproxy": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "haproxy"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "redis-ha"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "redis-ha": {
+                              "properties": {
+                                "haproxy": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "haproxy"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "redis-ha"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "redis-ha": {
+                            "properties": {
+                              "haproxy": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "haproxy"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "redis-ha"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "redis-ha": {
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+            "properties": {
+              "haproxy": {
+                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.",
+                "properties": {
+                  "containerSecurityContext": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "HAProxy container-level security context"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -22651,6 +24168,273 @@
                       }
                     ],
                     "description": "(string) Allows for custom config-haproxy.cfg file to be applied. If this is used then default config will be overwriten\ncustomConfig: |-\nDefine configuration here"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "redis-ha": {
+                      "properties": {
+                        "haproxy": {
+                          "properties": {
+                            "securityContext": {}
+                          },
+                          "required": [
+                            "securityContext"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "haproxy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "redis-ha"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "redis-ha": {
+                    "properties": {
+                      "haproxy": {
+                        "properties": {
+                          "securityContext": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "securityContext"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "haproxy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "redis-ha"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "redis-ha": {
+                              "properties": {
+                                "haproxy": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "haproxy"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "redis-ha"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "redis-ha": {
+                            "properties": {
+                              "haproxy": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "haproxy"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "redis-ha"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "redis-ha": {
+                              "properties": {
+                                "haproxy": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "haproxy"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "redis-ha"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "redis-ha": {
+                            "properties": {
+                              "haproxy": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "haproxy"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "redis-ha"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "redis-ha": {
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+            "properties": {
+              "haproxy": {
+                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.",
+                "properties": {
+                  "securityContext": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Security context to be added to the HAProxy deployment."
                   }
                 },
                 "type": "object"
@@ -25565,6 +27349,345 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "redis-ha": {
+                      "properties": {
+                        "securityContext": {}
+                      },
+                      "required": [
+                        "securityContext"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "redis-ha"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "redis-ha": {
+                    "properties": {
+                      "securityContext": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "securityContext"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "redis-ha"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "redis-ha": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "redis-ha"
+                ],
+                "type": "object"
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "redis-ha": {
+                              "properties": {
+                                "hostPath": {
+                                  "properties": {
+                                    "chown": {}
+                                  },
+                                  "required": [
+                                    "chown"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "hostPath"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "redis-ha"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "redis-ha": {
+                            "properties": {
+                              "hostPath": {
+                                "properties": {
+                                  "chown": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "chown"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "hostPath"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "redis-ha"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "hostPath": {
+                            "properties": {
+                              "path": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "path"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "hostPath"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "redis-ha": {
+                              "properties": {
+                                "hostPath": {
+                                  "properties": {
+                                    "chown": {}
+                                  },
+                                  "required": [
+                                    "chown"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "hostPath"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "redis-ha"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "redis-ha": {
+                            "properties": {
+                              "hostPath": {
+                                "properties": {
+                                  "chown": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "chown"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "hostPath"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "redis-ha"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "hostPath": {
+                            "properties": {
+                              "path": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "path"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "hostPath"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "redis-ha": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "redis-ha"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "redis-ha": {
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+            "properties": {
+              "securityContext": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Security context to be added to the Redis StatefulSet."
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -27940,6 +30063,79 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "repoServer": {
+                  "properties": {
+                    "vpa": {}
+                  },
+                  "required": [
+                    "vpa"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "repoServer"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "repoServer": {
+                "properties": {
+                  "vpa": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "vpa"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "repoServer"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "repoServer": {
+            "description": "Repo Server",
+            "properties": {
+              "vpa": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Repo server Vertical Pod Autoscaler\nRef: https://kubernetes.io/docs/concepts/workloads/autoscaling/#scaling-workloads-vertically/"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -29556,6 +31752,79 @@
                   }
                 ],
                 "description": "Additional volumes to the server pod\n- name: custom-tools\nemptyDir: {}"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "server": {
+                  "properties": {
+                    "vpa": {}
+                  },
+                  "required": [
+                    "vpa"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "server"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "server": {
+                "properties": {
+                  "vpa": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "vpa"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "server"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "server": {
+            "description": "Server",
+            "properties": {
+              "vpa": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Argo CD server Vertical Pod Autoscaler\nRef: https://kubernetes.io/docs/concepts/workloads/autoscaling/#scaling-workloads-vertically/"
               }
             },
             "type": "object"

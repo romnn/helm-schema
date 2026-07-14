@@ -282,6 +282,7 @@ fn contract_ir_activation_guards_gate_fail_captures() {
         ],
         approximate_condition_paths: std::collections::BTreeSet::new(),
         direct_ranged_paths: std::collections::BTreeSet::new(),
+        member_access: false,
     }]);
 
     contract.append_guards_to_all_uses(&[Guard::Truthy {

@@ -1479,6 +1479,171 @@
       }
     },
     {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "cilium": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "cilium"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "cilium": {
+                            "properties": {
+                              "kubeApiServerSelector": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "kubeApiServerSelector"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cilium"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "flavor": {
+                            "enum": [
+                              "cilium"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "flavor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "networkPolicy": {
+                        "properties": {
+                          "flavor": {
+                            "enum": [
+                              "cilium"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "flavor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "networkPolicy"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "networkPolicy": {
+            "description": "Configure network policy for kube-state-metrics",
+            "properties": {
+              "cilium": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
       "properties": {
         "networkPolicy": {
           "description": "Configure network policy for kube-state-metrics",
@@ -1673,6 +1838,56 @@
         }
       },
       "type": "object"
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "securityContext": {}
+              },
+              "required": [
+                "securityContext"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "securityContext": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "securityContext"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "securityContext": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
     },
     {
       "if": {

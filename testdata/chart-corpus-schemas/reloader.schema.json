@@ -293,6 +293,53 @@
     },
     {
       "if": {
+        "properties": {
+          "reloader": {
+            "properties": {
+              "service": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "reloader"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "namespace": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reloader": {
+            "properties": {
+              "service": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -407,25 +454,6 @@
             ]
           },
           {
-            "properties": {
-              "reloader": {
-                "properties": {
-                  "service": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "service"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "reloader"
-            ],
-            "type": "object"
-          },
-          {
             "anyOf": [
               {
                 "not": {
@@ -525,6 +553,48 @@
       }
     },
     {
+      "if": {
+        "properties": {
+          "reloader": {
+            "properties": {
+              "custom_annotations": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "custom_annotations"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "reloader"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "reloader": {
+            "properties": {
+              "custom_annotations": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Optional flags to pass to the Reloader entrypoint\nExample:\ncustom_annotations:\nconfigmap: \"my.company.com/configmap\"\nsecret: \"my.company.com/secret\"\nignore: \"my.company.com/reloader-ignore\""
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
       "properties": {
         "reloader": {
           "properties": {
@@ -605,6 +675,75 @@
         }
       },
       "type": "object"
+    },
+    {
+      "if": {
+        "properties": {
+          "reloader": {
+            "properties": {
+              "deployment": {
+                "properties": {
+                  "env": {
+                    "properties": {
+                      "secret": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "secret"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "env"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "deployment"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "reloader"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "reloader": {
+            "properties": {
+              "deployment": {
+                "properties": {
+                  "env": {
+                    "description": "Support for extra environment variables.",
+                    "properties": {
+                      "secret": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any."
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
     },
     {
       "if": {

@@ -2145,6 +2145,157 @@
         "allOf": [
           {
             "properties": {
+              "global": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "mode": {}
+                      },
+                      "required": [
+                        "mode"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "mode": {
+                        "enum": [
+                          "distributed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "mode"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "standalone"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "buckets": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "buckets"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "customCommands": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "customCommands"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "policies": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "policies"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "svcaccts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "svcaccts"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "users": {}
+                          },
+                          "required": [
+                            "users"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "users": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "users"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "buckets": {
                 "$ref": "#/$defs/helm-truthy"
               }
@@ -4447,6 +4598,207 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "postJob": {
+                      "properties": {
+                        "securityContext": {}
+                      },
+                      "required": [
+                        "securityContext"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "postJob"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "postJob": {
+                    "properties": {
+                      "securityContext": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "securityContext"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "postJob"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "buckets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "buckets"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "customCommands": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "customCommands"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "policies": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "policies"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "svcaccts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "svcaccts"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "users": {}
+                      },
+                      "required": [
+                        "users"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "users": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "users"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "postJob": {
+            "description": "Merge jobs",
+            "properties": {
+              "securityContext": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "securityContext": {}
+              },
+              "required": [
+                "securityContext"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "securityContext": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "securityContext"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "securityContext": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Add stateful containers to have security context, if enabled MinIO will run as this\nuser and group NOTE: securityContext is only enabled if persistence.enabled=true"
           }
         },
         "type": "object"

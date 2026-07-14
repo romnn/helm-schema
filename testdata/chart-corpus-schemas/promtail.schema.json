@@ -1598,6 +1598,77 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "deployment": {
+                  "properties": {
+                    "autoscaling": {}
+                  },
+                  "required": [
+                    "autoscaling"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "deployment"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "deployment": {
+                "properties": {
+                  "autoscaling": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "autoscaling"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "deployment"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "deployment": {
+            "properties": {
+              "autoscaling": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "networkPolicy": {
             "properties": {
@@ -3507,6 +3578,57 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceMonitor": {}
+              },
+              "required": [
+                "serviceMonitor"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "serviceMonitor": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ServiceMonitor configuration"
           }
         },
         "type": "object"

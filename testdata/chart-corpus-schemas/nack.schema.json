@@ -148,6 +148,190 @@
       }
     },
     {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "jetstream": {
+                  "properties": {
+                    "image": {}
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "jetstream"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "jetstream": {
+                "properties": {
+                  "image": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "image": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "nats": {
+                "properties": {
+                  "credentials": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "credentials"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nats"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "jetstream"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "nats": {
+                "description": "NATS URL",
+                "properties": {
+                  "credentials": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "nats": {
+                "properties": {
+                  "nkey": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "nkey"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nats"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "jetstream"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "nats": {
+                "description": "NATS URL",
+                "properties": {
+                  "nkey": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
       "properties": {
         "nameOverride": {
           "anyOf": [

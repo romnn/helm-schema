@@ -1005,306 +1005,83 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
-              {
-                "not": {
+            "not": {
+              "properties": {
+                "agents": {
                   "properties": {
-                    "agents": {
+                    "containers": {
                       "properties": {
-                        "containers": {
+                        "agent": {
                           "properties": {
-                            "agent": {
-                              "properties": {
-                                "livenessProbe": {}
-                              },
-                              "required": [
-                                "livenessProbe"
-                              ],
-                              "type": "object"
-                            }
+                            "livenessProbe": {}
                           },
                           "required": [
-                            "agent"
+                            "livenessProbe"
                           ],
                           "type": "object"
                         }
                       },
                       "required": [
-                        "containers"
+                        "agent"
                       ],
                       "type": "object"
                     }
                   },
                   "required": [
-                    "agents"
+                    "containers"
                   ],
                   "type": "object"
                 }
               },
-              {
+              "required": [
+                "agents"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "agents": {
                 "properties": {
-                  "agents": {
+                  "containers": {
                     "properties": {
-                      "containers": {
+                      "agent": {
                         "properties": {
-                          "agent": {
-                            "properties": {
-                              "livenessProbe": {
-                                "anyOf": [
-                                  {
-                                    "type": "object"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                ]
+                          "livenessProbe": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
                               }
-                            },
-                            "required": [
-                              "livenessProbe"
-                            ],
-                            "type": "object"
+                            ]
                           }
                         },
                         "required": [
-                          "agent"
+                          "livenessProbe"
                         ],
                         "type": "object"
                       }
                     },
                     "required": [
-                      "containers"
+                      "agent"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "agents"
+                  "containers"
                 ],
                 "type": "object"
               }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "agents": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "agents"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "agents": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "agents"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "properties": {
-                    "agents": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "agent": {
-                              "properties": {
-                                "livenessProbe": {
-                                  "properties": {
-                                    "exec": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "exec"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "livenessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "agent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "agents"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "agents": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "agent": {
-                              "properties": {
-                                "livenessProbe": {
-                                  "properties": {
-                                    "httpGet": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "httpGet"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "livenessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "agent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "agents"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "agents": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "agent": {
-                              "properties": {
-                                "livenessProbe": {
-                                  "properties": {
-                                    "tcpSocket": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "tcpSocket"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "livenessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "agent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "agents"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "datadog": {
-                    "properties": {
-                      "apiKey": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "apiKey"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "datadog"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "datadog": {
-                    "properties": {
-                      "apiKeyExistingSecret": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "apiKeyExistingSecret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "datadog"
-                ],
-                "type": "object"
-              }
-            ]
+            },
+            "required": [
+              "agents"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -1343,306 +1120,83 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
-              {
-                "not": {
+            "not": {
+              "properties": {
+                "agents": {
                   "properties": {
-                    "agents": {
+                    "containers": {
                       "properties": {
-                        "containers": {
+                        "agent": {
                           "properties": {
-                            "agent": {
-                              "properties": {
-                                "readinessProbe": {}
-                              },
-                              "required": [
-                                "readinessProbe"
-                              ],
-                              "type": "object"
-                            }
+                            "readinessProbe": {}
                           },
                           "required": [
-                            "agent"
+                            "readinessProbe"
                           ],
                           "type": "object"
                         }
                       },
                       "required": [
-                        "containers"
+                        "agent"
                       ],
                       "type": "object"
                     }
                   },
                   "required": [
-                    "agents"
+                    "containers"
                   ],
                   "type": "object"
                 }
               },
-              {
+              "required": [
+                "agents"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "agents": {
                 "properties": {
-                  "agents": {
+                  "containers": {
                     "properties": {
-                      "containers": {
+                      "agent": {
                         "properties": {
-                          "agent": {
-                            "properties": {
-                              "readinessProbe": {
-                                "anyOf": [
-                                  {
-                                    "type": "object"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                ]
+                          "readinessProbe": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
                               }
-                            },
-                            "required": [
-                              "readinessProbe"
-                            ],
-                            "type": "object"
+                            ]
                           }
                         },
                         "required": [
-                          "agent"
+                          "readinessProbe"
                         ],
                         "type": "object"
                       }
                     },
                     "required": [
-                      "containers"
+                      "agent"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "agents"
+                  "containers"
                 ],
                 "type": "object"
               }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "agents": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "agents"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "agents": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "agents"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "properties": {
-                    "agents": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "agent": {
-                              "properties": {
-                                "readinessProbe": {
-                                  "properties": {
-                                    "exec": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "exec"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "readinessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "agent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "agents"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "agents": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "agent": {
-                              "properties": {
-                                "readinessProbe": {
-                                  "properties": {
-                                    "httpGet": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "httpGet"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "readinessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "agent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "agents"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "agents": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "agent": {
-                              "properties": {
-                                "readinessProbe": {
-                                  "properties": {
-                                    "tcpSocket": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "tcpSocket"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "readinessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "agent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "agents"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "datadog": {
-                    "properties": {
-                      "apiKey": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "apiKey"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "datadog"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "datadog": {
-                    "properties": {
-                      "apiKeyExistingSecret": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "apiKeyExistingSecret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "datadog"
-                ],
-                "type": "object"
-              }
-            ]
+            },
+            "required": [
+              "agents"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -1681,335 +1235,83 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
-              {
-                "not": {
+            "not": {
+              "properties": {
+                "agents": {
                   "properties": {
-                    "agents": {
+                    "containers": {
                       "properties": {
-                        "containers": {
+                        "agent": {
                           "properties": {
-                            "agent": {
-                              "properties": {
-                                "startupProbe": {}
-                              },
-                              "required": [
-                                "startupProbe"
-                              ],
-                              "type": "object"
-                            }
+                            "startupProbe": {}
                           },
                           "required": [
-                            "agent"
+                            "startupProbe"
                           ],
                           "type": "object"
                         }
                       },
                       "required": [
-                        "containers"
+                        "agent"
                       ],
                       "type": "object"
                     }
                   },
                   "required": [
-                    "agents"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "agents": {
-                    "properties": {
-                      "containers": {
-                        "properties": {
-                          "agent": {
-                            "properties": {
-                              "startupProbe": {
-                                "anyOf": [
-                                  {
-                                    "type": "object"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                ]
-                              }
-                            },
-                            "required": [
-                              "startupProbe"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "agent"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "containers"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "agents"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "agents": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "agents"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "agents": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "agents"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "providers": {
-                  "properties": {
-                    "gke": {
-                      "properties": {
-                        "autopilot": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "autopilot"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "gke"
+                    "containers"
                   ],
                   "type": "object"
                 }
               },
               "required": [
-                "providers"
+                "agents"
               ],
               "type": "object"
             }
           },
           {
-            "not": {
-              "anyOf": [
-                {
-                  "properties": {
-                    "agents": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "agent": {
-                              "properties": {
-                                "startupProbe": {
-                                  "properties": {
-                                    "exec": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "exec"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "startupProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "agent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "agents"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "agents": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "agent": {
-                              "properties": {
-                                "startupProbe": {
-                                  "properties": {
-                                    "httpGet": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "httpGet"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "startupProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "agent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "agents"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "agents": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "agent": {
-                              "properties": {
-                                "startupProbe": {
-                                  "properties": {
-                                    "tcpSocket": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "tcpSocket"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "startupProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "agent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "agents"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
+            "properties": {
+              "agents": {
                 "properties": {
-                  "datadog": {
+                  "containers": {
                     "properties": {
-                      "apiKey": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "agent": {
+                        "properties": {
+                          "startupProbe": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "startupProbe"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "apiKey"
+                      "agent"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "datadog"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "datadog": {
-                    "properties": {
-                      "apiKeyExistingSecret": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "apiKeyExistingSecret"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "datadog"
+                  "containers"
                 ],
                 "type": "object"
               }
-            ]
+            },
+            "required": [
+              "agents"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -12306,6 +11608,183 @@
                   "properties": {
                     "agents": {
                       "properties": {
+                        "containers": {
+                          "properties": {
+                            "traceAgent": {
+                              "properties": {
+                                "livenessProbe": {}
+                              },
+                              "required": [
+                                "livenessProbe"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "traceAgent"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "containers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agents"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "agents": {
+                    "properties": {
+                      "containers": {
+                        "properties": {
+                          "traceAgent": {
+                            "properties": {
+                              "livenessProbe": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "livenessProbe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "traceAgent"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "containers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agents"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "datadog": {
+                    "properties": {
+                      "apm": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "apm"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "datadog"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "datadog": {
+                    "properties": {
+                      "apm": {
+                        "properties": {
+                          "portEnabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "portEnabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "apm"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "datadog"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agents": {
+            "description": "agents.enabled -- You should keep Datadog DaemonSet enabled!",
+            "properties": {
+              "containers": {
+                "properties": {
+                  "traceAgent": {
+                    "properties": {
+                      "livenessProbe": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "agents.containers.traceAgent.livenessProbe -- Override default agent liveness probe settings"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "agents": {
+                      "properties": {
                         "enabled": {}
                       },
                       "required": [
@@ -14420,6 +13899,341 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "agents": {
+                "properties": {
+                  "lifecycle": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "lifecycle"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agents"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "providers": {
+                "properties": {
+                  "gke": {
+                    "properties": {
+                      "autopilot": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "autopilot"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "gke"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "providers"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "datadog": {
+                  "properties": {
+                    "envDict": {
+                      "properties": {
+                        "HELM_FORCE_RENDER": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "HELM_FORCE_RENDER"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "envDict"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "datadog"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agents": {
+            "description": "agents.enabled -- You should keep Datadog DaemonSet enabled!",
+            "properties": {
+              "lifecycle": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "agents.lifecycle -- Configure the lifecycle of the Agent.\nNote: The `exec` lifecycle handler is not supported in GKE Autopilot.\npreStop:\nsleep:\nseconds: 5\nexec:\ncommand: [\"/bin/sh\", \"-c\", \"sleep 70\"]\npostStart:\nexec:\ncommand: [\"/bin/sh\", \"-c\", \"sleep 70\"]\nsleep:\nseconds: 5"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "agents": {
+                "properties": {
+                  "lifecycle": {
+                    "properties": {
+                      "postStart": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "postStart"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "lifecycle"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agents"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "providers": {
+                "properties": {
+                  "gke": {
+                    "properties": {
+                      "autopilot": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "autopilot"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "gke"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "providers"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "datadog": {
+                  "properties": {
+                    "envDict": {
+                      "properties": {
+                        "HELM_FORCE_RENDER": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "HELM_FORCE_RENDER"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "envDict"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "datadog"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agents": {
+            "description": "agents.enabled -- You should keep Datadog DaemonSet enabled!",
+            "properties": {
+              "lifecycle": {
+                "description": "agents.lifecycle -- Configure the lifecycle of the Agent.\nNote: The `exec` lifecycle handler is not supported in GKE Autopilot.\npreStop:\nsleep:\nseconds: 5\nexec:\ncommand: [\"/bin/sh\", \"-c\", \"sleep 70\"]\npostStart:\nexec:\ncommand: [\"/bin/sh\", \"-c\", \"sleep 70\"]\nsleep:\nseconds: 5",
+                "properties": {
+                  "postStart": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "agents": {
+                "properties": {
+                  "lifecycle": {
+                    "properties": {
+                      "preStop": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "preStop"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "lifecycle"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agents"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "providers": {
+                "properties": {
+                  "gke": {
+                    "properties": {
+                      "autopilot": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "autopilot"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "gke"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "providers"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "datadog": {
+                  "properties": {
+                    "envDict": {
+                      "properties": {
+                        "HELM_FORCE_RENDER": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "HELM_FORCE_RENDER"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "envDict"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "datadog"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agents": {
+            "description": "agents.enabled -- You should keep Datadog DaemonSet enabled!",
+            "properties": {
+              "lifecycle": {
+                "description": "agents.lifecycle -- Configure the lifecycle of the Agent.\nNote: The `exec` lifecycle handler is not supported in GKE Autopilot.\npreStop:\nsleep:\nseconds: 5\nexec:\ncommand: [\"/bin/sh\", \"-c\", \"sleep 70\"]\npostStart:\nexec:\ncommand: [\"/bin/sh\", \"-c\", \"sleep 70\"]\nsleep:\nseconds: 5",
+                "properties": {
+                  "preStop": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -16177,6 +15991,1199 @@
                     "not": {
                       "type": "object"
                     }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "agents": {
+                      "properties": {
+                        "podSecurity": {
+                          "properties": {
+                            "seLinuxContext": {}
+                          },
+                          "required": [
+                            "seLinuxContext"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "podSecurity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agents"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "agents": {
+                    "properties": {
+                      "podSecurity": {
+                        "properties": {
+                          "seLinuxContext": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "seLinuxContext"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "podSecurity"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agents"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "agents": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "agents"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "agents": {
+                              "properties": {
+                                "podSecurity": {
+                                  "properties": {
+                                    "seLinuxContext": {
+                                      "properties": {
+                                        "seLinuxOptions": {}
+                                      },
+                                      "required": [
+                                        "seLinuxOptions"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "seLinuxContext"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "podSecurity"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "agents"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "podSecurity": {
+                                "properties": {
+                                  "seLinuxContext": {
+                                    "properties": {
+                                      "seLinuxOptions": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object"
+                                          },
+                                          {
+                                            "$ref": "#/$defs/helm-truthy"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "seLinuxOptions"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "seLinuxContext"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "podSecurity"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "agents": {
+                          "properties": {
+                            "podSecurity": {
+                              "properties": {
+                                "securityContext": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "securityContext"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "podSecurity"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "agents"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "datadog": {
+                                "properties": {
+                                  "securityContext": {}
+                                },
+                                "required": [
+                                  "securityContext"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "datadog"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "properties": {
+                            "datadog": {
+                              "properties": {
+                                "securityContext": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object"
+                                    },
+                                    {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "securityContext"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "datadog"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "podSecurity": {
+                                "properties": {
+                                  "podSecurityPolicy": {
+                                    "properties": {
+                                      "create": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "create"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "podSecurityPolicy"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "podSecurity"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "podSecurity": {
+                                "properties": {
+                                  "securityContextConstraints": {
+                                    "properties": {
+                                      "create": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "create"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "securityContextConstraints"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "podSecurity"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKey": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKey"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKeyExistingSecret": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKeyExistingSecret"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "agents": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "agents"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "agents": {
+                          "properties": {
+                            "podSecurity": {
+                              "properties": {
+                                "securityContext": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "securityContext"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "podSecurity"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "agents"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "datadog": {
+                                "properties": {
+                                  "securityContext": {}
+                                },
+                                "required": [
+                                  "securityContext"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "datadog"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "properties": {
+                            "datadog": {
+                              "properties": {
+                                "securityContext": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object"
+                                    },
+                                    {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "securityContext"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "datadog"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "podSecurity": {
+                                "properties": {
+                                  "podSecurityPolicy": {
+                                    "properties": {
+                                      "create": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "create"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "podSecurityPolicy"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "podSecurity"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "podSecurity": {
+                                "properties": {
+                                  "securityContextConstraints": {
+                                    "properties": {
+                                      "create": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "create"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "securityContextConstraints"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "podSecurity"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKey": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKey"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKeyExistingSecret": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKeyExistingSecret"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agents": {
+            "description": "agents.enabled -- You should keep Datadog DaemonSet enabled!",
+            "properties": {
+              "podSecurity": {
+                "description": "Provide Daemonset PodSecurityPolicy configuration",
+                "properties": {
+                  "seLinuxContext": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "agents.podSecurity.seLinuxContext -- Provide seLinuxContext configuration for PSP/SCC"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "agents": {
+                "properties": {
+                  "podSecurity": {
+                    "properties": {
+                      "securityContext": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "securityContext"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podSecurity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agents"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "agents": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "agents"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "agents": {
+                        "properties": {
+                          "podSecurity": {
+                            "properties": {
+                              "securityContext": {
+                                "properties": {
+                                  "seLinuxOptions": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "seLinuxOptions"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "securityContext"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "podSecurity"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agents"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "datadog": {
+                                "properties": {
+                                  "securityContext": {}
+                                },
+                                "required": [
+                                  "securityContext"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "datadog"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "properties": {
+                            "datadog": {
+                              "properties": {
+                                "securityContext": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object"
+                                    },
+                                    {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "securityContext"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "datadog"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "podSecurity": {
+                                "properties": {
+                                  "podSecurityPolicy": {
+                                    "properties": {
+                                      "create": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "create"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "podSecurityPolicy"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "podSecurity"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "podSecurity": {
+                                "properties": {
+                                  "securityContextConstraints": {
+                                    "properties": {
+                                      "create": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "create"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "securityContextConstraints"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "podSecurity"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKey": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKey"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKeyExistingSecret": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKeyExistingSecret"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "agents": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "agents"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "datadog": {
+                                "properties": {
+                                  "securityContext": {}
+                                },
+                                "required": [
+                                  "securityContext"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "datadog"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "properties": {
+                            "datadog": {
+                              "properties": {
+                                "securityContext": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object"
+                                    },
+                                    {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "securityContext"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "datadog"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "podSecurity": {
+                                "properties": {
+                                  "podSecurityPolicy": {
+                                    "properties": {
+                                      "create": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "create"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "podSecurityPolicy"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "podSecurity"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "podSecurity": {
+                                "properties": {
+                                  "securityContextConstraints": {
+                                    "properties": {
+                                      "create": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "create"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "securityContextConstraints"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "podSecurity"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKey": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKey"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKeyExistingSecret": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKeyExistingSecret"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agents": {
+            "description": "agents.enabled -- You should keep Datadog DaemonSet enabled!",
+            "properties": {
+              "podSecurity": {
+                "description": "Provide Daemonset PodSecurityPolicy configuration",
+                "properties": {
+                  "securityContext": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "type": "object"
@@ -26947,6 +27954,49 @@
     },
     {
       "if": {
+        "properties": {
+          "datadog": {
+            "properties": {
+              "envDict": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "envDict"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "datadog"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "datadog": {
+            "description": "datadog.apiKey -- Your Datadog API key",
+            "properties": {
+              "envDict": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "datadog.envDict -- Set environment variables defined in a dict for node Agents containers only\n<ENV_VAR_NAME>: <ENV_VAR_VALUE>"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -31443,6 +32493,1171 @@
       "if": {
         "anyOf": [
           {
+            "not": {
+              "properties": {
+                "datadog": {
+                  "properties": {
+                    "otlp": {}
+                  },
+                  "required": [
+                    "otlp"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "datadog"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "datadog": {
+                "properties": {
+                  "otlp": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "otlp"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "datadog"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "datadog": {
+            "description": "datadog.apiKey -- Your Datadog API key",
+            "properties": {
+              "otlp": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "OTLP ingest related configuration"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "datadog": {
+                      "properties": {
+                        "otlp": {
+                          "properties": {
+                            "logs": {}
+                          },
+                          "required": [
+                            "logs"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "otlp"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "datadog"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "datadog": {
+                    "properties": {
+                      "otlp": {
+                        "properties": {
+                          "logs": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "logs"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "otlp"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "datadog"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "agents": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "agents"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "datadog": {
+                              "properties": {
+                                "otlp": {}
+                              },
+                              "required": [
+                                "otlp"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "datadog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "otlp": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "otlp"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "datadog": {
+                        "properties": {
+                          "privateActionRunner": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "privateActionRunner"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "datadog"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "targetSystem": {}
+                          },
+                          "required": [
+                            "targetSystem"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "targetSystem": {
+                            "enum": [
+                              "linux"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "targetSystem"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKey": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKey"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKeyExistingSecret": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKeyExistingSecret"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "agents": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "agents"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "datadog": {
+                              "properties": {
+                                "otlp": {}
+                              },
+                              "required": [
+                                "otlp"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "datadog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "otlp": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "otlp"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "targetSystem": {}
+                          },
+                          "required": [
+                            "targetSystem"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "targetSystem": {
+                            "enum": [
+                              "linux"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "targetSystem"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKey": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKey"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKeyExistingSecret": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKeyExistingSecret"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "agents": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "agents"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "datadog": {
+                              "properties": {
+                                "otlp": {}
+                              },
+                              "required": [
+                                "otlp"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "datadog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "otlp": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "otlp"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "targetSystem": {
+                        "enum": [
+                          "windows"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "targetSystem"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKey": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKey"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKeyExistingSecret": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKeyExistingSecret"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "agents": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "agents"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "agents": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "agents"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "datadog": {
+                              "properties": {
+                                "otlp": {}
+                              },
+                              "required": [
+                                "otlp"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "datadog"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "otlp": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "otlp"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKey": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKey"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "datadog": {
+                            "properties": {
+                              "apiKeyExistingSecret": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "apiKeyExistingSecret"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "datadog"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "datadog": {
+            "description": "datadog.apiKey -- Your Datadog API key",
+            "properties": {
+              "otlp": {
+                "description": "OTLP ingest related configuration",
+                "properties": {
+                  "logs": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "datadog": {
+                  "properties": {
+                    "otlp": {
+                      "properties": {
+                        "receiver": {}
+                      },
+                      "required": [
+                        "receiver"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "otlp"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "datadog"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "datadog": {
+                "properties": {
+                  "otlp": {
+                    "properties": {
+                      "receiver": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "receiver"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "otlp"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "datadog"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "datadog": {
+            "description": "datadog.apiKey -- Your Datadog API key",
+            "properties": {
+              "otlp": {
+                "description": "OTLP ingest related configuration",
+                "properties": {
+                  "receiver": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "datadog": {
+                  "properties": {
+                    "otlp": {
+                      "properties": {
+                        "receiver": {
+                          "properties": {
+                            "protocols": {}
+                          },
+                          "required": [
+                            "protocols"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receiver"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "otlp"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "datadog"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "datadog": {
+                "properties": {
+                  "otlp": {
+                    "properties": {
+                      "receiver": {
+                        "properties": {
+                          "protocols": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "protocols"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receiver"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "otlp"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "datadog"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "datadog": {
+            "description": "datadog.apiKey -- Your Datadog API key",
+            "properties": {
+              "otlp": {
+                "description": "OTLP ingest related configuration",
+                "properties": {
+                  "receiver": {
+                    "properties": {
+                      "protocols": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "datadog": {
+                  "properties": {
+                    "otlp": {
+                      "properties": {
+                        "receiver": {
+                          "properties": {
+                            "protocols": {
+                              "properties": {
+                                "grpc": {}
+                              },
+                              "required": [
+                                "grpc"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "protocols"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receiver"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "otlp"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "datadog"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "datadog": {
+                "properties": {
+                  "otlp": {
+                    "properties": {
+                      "receiver": {
+                        "properties": {
+                          "protocols": {
+                            "properties": {
+                              "grpc": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "grpc"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "protocols"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receiver"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "otlp"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "datadog"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "datadog": {
+            "description": "datadog.apiKey -- Your Datadog API key",
+            "properties": {
+              "otlp": {
+                "description": "OTLP ingest related configuration",
+                "properties": {
+                  "receiver": {
+                    "properties": {
+                      "protocols": {
+                        "properties": {
+                          "grpc": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "datadog.otlp.receiver.protocols.grpc - OTLP/gRPC configuration"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "anyOf": [
@@ -31877,6 +34092,143 @@
                               }
                             },
                             "type": "object"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "datadog": {
+                  "properties": {
+                    "otlp": {
+                      "properties": {
+                        "receiver": {
+                          "properties": {
+                            "protocols": {
+                              "properties": {
+                                "http": {}
+                              },
+                              "required": [
+                                "http"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "protocols"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receiver"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "otlp"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "datadog"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "datadog": {
+                "properties": {
+                  "otlp": {
+                    "properties": {
+                      "receiver": {
+                        "properties": {
+                          "protocols": {
+                            "properties": {
+                              "http": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "http"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "protocols"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receiver"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "otlp"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "datadog"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "datadog": {
+            "description": "datadog.apiKey -- Your Datadog API key",
+            "properties": {
+              "otlp": {
+                "description": "OTLP ingest related configuration",
+                "properties": {
+                  "receiver": {
+                    "properties": {
+                      "protocols": {
+                        "properties": {
+                          "http": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "datadog.otlp.receiver.protocols.http - OTLP/HTTP configuration"
                           }
                         },
                         "type": "object"
@@ -48411,49 +50763,6 @@
             "properties": {
               "otelAgentGateway": {
                 "properties": {
-                  "containers": {
-                    "properties": {
-                      "otelAgent": {
-                        "properties": {
-                          "livenessProbe": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "livenessProbe"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "otelAgent"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "containers"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "otelAgentGateway"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "otelAgentGateway": {
-                "properties": {
                   "enabled": {
                     "$ref": "#/$defs/helm-truthy"
                   }
@@ -48468,141 +50777,6 @@
               "otelAgentGateway"
             ],
             "type": "object"
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "properties": {
-                    "otelAgentGateway": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "otelAgent": {
-                              "properties": {
-                                "livenessProbe": {
-                                  "properties": {
-                                    "exec": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "exec"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "livenessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "otelAgent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "otelAgentGateway"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "otelAgentGateway": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "otelAgent": {
-                              "properties": {
-                                "livenessProbe": {
-                                  "properties": {
-                                    "httpGet": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "httpGet"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "livenessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "otelAgent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "otelAgentGateway"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "otelAgentGateway": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "otelAgent": {
-                              "properties": {
-                                "livenessProbe": {
-                                  "properties": {
-                                    "tcpSocket": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "tcpSocket"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "livenessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "otelAgent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "otelAgentGateway"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
           }
         ]
       },
@@ -48727,49 +50901,6 @@
             "properties": {
               "otelAgentGateway": {
                 "properties": {
-                  "containers": {
-                    "properties": {
-                      "otelAgent": {
-                        "properties": {
-                          "readinessProbe": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "readinessProbe"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "otelAgent"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "containers"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "otelAgentGateway"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "otelAgentGateway": {
-                "properties": {
                   "enabled": {
                     "$ref": "#/$defs/helm-truthy"
                   }
@@ -48784,141 +50915,6 @@
               "otelAgentGateway"
             ],
             "type": "object"
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "properties": {
-                    "otelAgentGateway": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "otelAgent": {
-                              "properties": {
-                                "readinessProbe": {
-                                  "properties": {
-                                    "exec": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "exec"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "readinessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "otelAgent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "otelAgentGateway"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "otelAgentGateway": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "otelAgent": {
-                              "properties": {
-                                "readinessProbe": {
-                                  "properties": {
-                                    "httpGet": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "httpGet"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "readinessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "otelAgent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "otelAgentGateway"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "properties": {
-                    "otelAgentGateway": {
-                      "properties": {
-                        "containers": {
-                          "properties": {
-                            "otelAgent": {
-                              "properties": {
-                                "readinessProbe": {
-                                  "properties": {
-                                    "tcpSocket": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "tcpSocket"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "readinessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "otelAgent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "containers"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "otelAgentGateway"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
           }
         ]
       },

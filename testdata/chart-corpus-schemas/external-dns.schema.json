@@ -31,6 +31,149 @@
   "allOf": [
     {
       "if": {
+        "properties": {
+          "affinity": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "affinity"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "affinity": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels."
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "affinity": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAffinity": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "podAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "affinity": {
+            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAffinity": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "affinity": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAntiAffinity": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "podAntiAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "affinity": {
+            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAntiAffinity": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -830,6 +973,865 @@
               }
             ],
             "description": "Annotations to add to the `Pod`."
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "provider": {}
+                  },
+                  "required": [
+                    "provider"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "provider": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "provider"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "enum": [
+                          "webhook"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "properties": {
+                          "name": {
+                            "enum": [
+                              "webhook"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "provider": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "provider"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "provider": {
+                        "enum": [
+                          "webhook"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "properties": {
+                          "name": {
+                            "enum": [
+                              "webhook"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "provider": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "provider"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "provider": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "provider": {
+                      "properties": {
+                        "webhook": {}
+                      },
+                      "required": [
+                        "webhook"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "provider"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "provider": {
+                    "properties": {
+                      "webhook": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "webhook"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "provider"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "provider": {
+                              "properties": {
+                                "webhook": {}
+                              },
+                              "required": [
+                                "webhook"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "provider"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "provider": {
+                            "properties": {
+                              "webhook": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "webhook"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "provider"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "properties": {
+                          "webhook": {
+                            "properties": {
+                              "extraVolumeMounts": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "extraVolumeMounts"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "webhook"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "enum": [
+                          "webhook"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "properties": {
+                          "name": {
+                            "enum": [
+                              "webhook"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "provider": {
+                              "properties": {
+                                "webhook": {}
+                              },
+                              "required": [
+                                "webhook"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "provider"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "provider": {
+                            "properties": {
+                              "webhook": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "webhook"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "provider"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "enum": [
+                          "webhook"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "properties": {
+                          "name": {
+                            "enum": [
+                              "webhook"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "enum": [
+                          "webhook"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "properties": {
+                          "name": {
+                            "enum": [
+                              "webhook"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "provider": {
+                        "enum": [
+                          "webhook"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "properties": {
+                          "name": {
+                            "enum": [
+                              "webhook"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "provider": {
+            "properties": {
+              "webhook": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "provider": {
+                      "properties": {
+                        "webhook": {
+                          "properties": {
+                            "service": {}
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webhook"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "provider"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "provider": {
+                    "properties": {
+                      "webhook": {
+                        "properties": {
+                          "service": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webhook"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "provider"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "provider": {
+                "enum": [
+                  "webhook"
+                ]
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "provider": {
+                "properties": {
+                  "name": {
+                    "enum": [
+                      "webhook"
+                    ]
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "provider": {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "service": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "provider": {
+                      "properties": {
+                        "webhook": {
+                          "properties": {
+                            "serviceMonitor": {}
+                          },
+                          "required": [
+                            "serviceMonitor"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webhook"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "provider"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "provider": {
+                    "properties": {
+                      "webhook": {
+                        "properties": {
+                          "serviceMonitor": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "serviceMonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webhook"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "provider"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "provider": {
+                "enum": [
+                  "webhook"
+                ]
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "provider": {
+                "properties": {
+                  "name": {
+                    "enum": [
+                      "webhook"
+                    ]
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "provider"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "provider": {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "serviceMonitor": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"

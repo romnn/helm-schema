@@ -743,6 +743,7 @@ impl<'a> Interpreter<'a> {
             conjunction: self.fail_capture_conjunction(Vec::new()),
             approximate_condition_paths: self.approximate_condition_paths.iter().cloned().collect(),
             direct_ranged_paths: self.active_direct_ranged_paths.iter().cloned().collect(),
+            member_access: false,
         };
         if capture
             .conjunction
@@ -777,6 +778,7 @@ impl<'a> Interpreter<'a> {
             conjunction: self.fail_capture_conjunction(vec![empty]),
             approximate_condition_paths: self.approximate_condition_paths.iter().cloned().collect(),
             direct_ranged_paths: self.active_direct_ranged_paths.iter().cloned().collect(),
+            member_access: false,
         };
         if capture
             .conjunction
@@ -1012,6 +1014,7 @@ impl<'a> Interpreter<'a> {
                 conjunction: self.fail_capture_conjunction(body_capture.conjunction.clone()),
                 approximate_condition_paths: approximate,
                 direct_ranged_paths: direct_ranged,
+                member_access: body_capture.member_access,
             };
             if capture
                 .conjunction

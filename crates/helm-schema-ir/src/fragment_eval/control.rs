@@ -329,6 +329,7 @@ impl Interpreter<'_> {
                     .cloned()
                     .collect(),
                 direct_ranged_paths: BTreeSet::new(),
+                member_access: false,
             })
             .collect();
         self.absorb_helper_fails(&captures);

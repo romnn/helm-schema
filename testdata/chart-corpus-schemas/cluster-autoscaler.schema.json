@@ -510,6 +510,71 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "podDisruptionBudget": {}
+              },
+              "required": [
+                "podDisruptionBudget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "additionalLabels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "additionalLabels -- Labels to add to each object of the chart."
+          },
+          "podDisruptionBudget": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "podDisruptionBudget -- Pod disruption budget."
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "expanderPriorities": {
             "$ref": "#/$defs/helm-truthy"
@@ -557,39 +622,6 @@
     {
       "if": {
         "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "podDisruptionBudget": {}
-                  },
-                  "required": [
-                    "podDisruptionBudget"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "podDisruptionBudget": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "podDisruptionBudget"
-                ],
-                "type": "object"
-              }
-            ]
-          },
           {
             "allOf": [
               {

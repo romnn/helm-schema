@@ -314,6 +314,7 @@ fn record_string_consumer_effects(paths: &BTreeSet<String>, effects: &mut Effect
                 ],
                 approximate_condition_paths: BTreeSet::new(),
                 direct_ranged_paths: BTreeSet::new(),
+                member_access: false,
             };
             if !effects.helper_fails.contains(&capture) {
                 effects.helper_fails.push(capture);
@@ -627,6 +628,7 @@ fn eval_dig(
                 ],
                 approximate_condition_paths: BTreeSet::new(),
                 direct_ranged_paths: BTreeSet::new(),
+                member_access: false,
             };
             if !effects.helper_fails.contains(&capture) {
                 effects.helper_fails.push(capture);
@@ -1169,6 +1171,7 @@ fn eval_comparison(
                     })],
                     approximate_condition_paths: BTreeSet::new(),
                     direct_ranged_paths: BTreeSet::new(),
+                    member_access: false,
                 };
                 if !result.effects.helper_fails.contains(&capture) {
                     result.effects.helper_fails.push(capture);
@@ -1210,6 +1213,7 @@ fn record_truthy_kind_operands(
                 ],
                 approximate_condition_paths: BTreeSet::new(),
                 direct_ranged_paths: BTreeSet::new(),
+                member_access: false,
             };
             if !effects.helper_fails.contains(&capture) {
                 effects.helper_fails.push(capture);
@@ -1243,6 +1247,7 @@ fn record_length_bearing_operand(
                     })],
                     approximate_condition_paths: BTreeSet::new(),
                     direct_ranged_paths: BTreeSet::new(),
+                    member_access: false,
                 };
                 if !effects.helper_fails.contains(&capture) {
                     effects.helper_fails.push(capture);

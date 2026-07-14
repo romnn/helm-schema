@@ -1047,6 +1047,56 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "monitoring": {}
+              },
+              "required": [
+                "monitoring"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "monitoring": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "monitoring"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "monitoring": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "nameOverride": {
             "$ref": "#/$defs/helm-truthy"

@@ -5364,6 +5364,56 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "chunksCache": {}
+              },
+              "required": [
+                "chunksCache"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "chunksCache": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "chunksCache"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "chunksCache": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -13538,6 +13588,57 @@
               }
             ],
             "description": "Overrides the chart's computed fullname"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "gateway": {}
+              },
+              "required": [
+                "gateway"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "gateway": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "gateway"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "gateway": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configuration for the gateway"
           }
         },
         "type": "object"
@@ -30772,182 +30873,23 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "loki": {
-                          "properties": {
-                            "generatedConfigObjectName": {}
-                          },
-                          "required": [
-                            "generatedConfigObjectName"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "loki"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "loki": {
-                        "properties": {
-                          "generatedConfigObjectName": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "generatedConfigObjectName"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "loki"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "loki": {
-                    "properties": {
-                      "structuredConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "structuredConfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "loki"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "loki": {
-                    "properties": {
-                      "configStorageType": {
-                        "enum": [
-                          "Secret"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "configStorageType"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "loki"
-                ],
-                "type": "object"
+        "properties": {
+          "loki": {
+            "properties": {
+              "structuredConfig": {
+                "$ref": "#/$defs/helm-truthy"
               }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "loki": {
-                          "properties": {
-                            "generatedConfigObjectName": {}
-                          },
-                          "required": [
-                            "generatedConfigObjectName"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "loki"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "loki": {
-                        "properties": {
-                          "generatedConfigObjectName": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "generatedConfigObjectName"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "loki"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "loki": {
-                    "properties": {
-                      "structuredConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "structuredConfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "loki"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "loki": {
-                      "properties": {
-                        "configStorageType": {
-                          "enum": [
-                            "Secret"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "configStorageType"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "loki"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+            },
+            "required": [
+              "structuredConfig"
+            ],
+            "type": "object"
           }
-        ]
+        },
+        "required": [
+          "loki"
+        ],
+        "type": "object"
       },
       "then": {
         "properties": {
@@ -30967,6 +30909,57 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "lokiCanary": {}
+              },
+              "required": [
+                "lokiCanary"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "lokiCanary": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "lokiCanary"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "lokiCanary": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Loki canary pushes logs to and queries from this loki installation to test\nthat it's working correctly"
           }
         },
         "type": "object"
@@ -33265,6 +33258,298 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "minio": {}
+                  },
+                  "required": [
+                    "minio"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "minio": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "minio"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enterprise": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "enterprise"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "enterprise": {
+                              "properties": {
+                                "gelGateway": {}
+                              },
+                              "required": [
+                                "gelGateway"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "enterprise"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "enterprise": {
+                            "properties": {
+                              "gelGateway": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "gelGateway"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "enterprise"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "gateway": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "gateway"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "gateway": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "gateway"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enterprise": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "enterprise"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "enterprise": {
+                              "properties": {
+                                "gelGateway": {}
+                              },
+                              "required": [
+                                "gelGateway"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "enterprise"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "enterprise": {
+                            "properties": {
+                              "gelGateway": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "gelGateway"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "enterprise"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "gateway": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "gateway"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "gateway": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "gateway"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "minio": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "minio": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configuration for the minio subchart"
           }
         },
         "type": "object"
@@ -37925,6 +38210,793 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "minio": {
+                      "properties": {
+                        "postJob": {
+                          "properties": {
+                            "securityContext": {}
+                          },
+                          "required": [
+                            "securityContext"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "postJob"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "minio"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "minio": {
+                    "properties": {
+                      "postJob": {
+                        "properties": {
+                          "securityContext": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "securityContext"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "postJob"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "minio"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "minio": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "minio": {
+                                  "properties": {
+                                    "buckets": {}
+                                  },
+                                  "required": [
+                                    "buckets"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "minio"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "minio": {
+                                "properties": {
+                                  "buckets": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "buckets"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "minio"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "properties": {
+                          "minio": {
+                            "properties": {
+                              "customCommands": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "customCommands"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "minio"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "minio": {
+                            "properties": {
+                              "policies": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "policies"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "minio"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "minio": {
+                            "properties": {
+                              "svcaccts": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "svcaccts"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "minio"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "minio": {
+                                  "properties": {
+                                    "users": {}
+                                  },
+                                  "required": [
+                                    "users"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "minio"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "minio": {
+                                "properties": {
+                                  "users": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "users"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "minio"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "minio": {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "minio": {
+                                  "properties": {
+                                    "buckets": {}
+                                  },
+                                  "required": [
+                                    "buckets"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "minio"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "minio": {
+                                "properties": {
+                                  "buckets": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "buckets"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "minio"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "properties": {
+                          "minio": {
+                            "properties": {
+                              "customCommands": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "customCommands"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "minio"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "minio": {
+                            "properties": {
+                              "policies": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "policies"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "minio"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "minio": {
+                            "properties": {
+                              "svcaccts": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "svcaccts"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "minio"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "minio": {
+                                  "properties": {
+                                    "users": {}
+                                  },
+                                  "required": [
+                                    "users"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "minio"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "minio": {
+                                "properties": {
+                                  "users": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "users"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "minio"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "minio": {
+            "description": "Configuration for the minio subchart",
+            "properties": {
+              "postJob": {
+                "description": "Merge jobs",
+                "properties": {
+                  "securityContext": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "minio": {
+                      "properties": {
+                        "securityContext": {}
+                      },
+                      "required": [
+                        "securityContext"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "minio"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "minio": {
+                    "properties": {
+                      "securityContext": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "securityContext"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "minio"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "minio": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "minio"
+                ],
+                "type": "object"
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "minio": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "minio": {
+                              "properties": {
+                                "mode": {}
+                              },
+                              "required": [
+                                "mode"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "minio"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "minio": {
+                            "properties": {
+                              "mode": {
+                                "enum": [
+                                  "distributed"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "mode"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "minio"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "minio": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "minio": {
+                        "properties": {
+                          "mode": {
+                            "enum": [
+                              "standalone"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "mode"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "minio": {
+                              "properties": {
+                                "mode": {}
+                              },
+                              "required": [
+                                "mode"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "minio"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "minio": {
+                            "properties": {
+                              "mode": {
+                                "enum": [
+                                  "distributed"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "mode"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "minio"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "minio": {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "minio": {
+                        "properties": {
+                          "mode": {
+                            "enum": [
+                              "standalone"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "mode"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "minio": {
+                        "properties": {
+                          "enabled": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "minio": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "minio"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "minio": {
+            "description": "Configuration for the minio subchart",
+            "properties": {
+              "securityContext": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Add stateful containers to have security context, if enabled MinIO will run as this\nuser and group NOTE: securityContext is only enabled if persistence.enabled=true"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -40262,6 +41334,415 @@
       "if": {
         "allOf": [
           {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "monitoring": {
+                      "properties": {
+                        "dashboards": {}
+                      },
+                      "required": [
+                        "dashboards"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "monitoring"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "monitoring": {
+                    "properties": {
+                      "dashboards": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "dashboards"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "monitoring"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "monitoring": {
+                          "properties": {
+                            "dashboards": {}
+                          },
+                          "required": [
+                            "dashboards"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "monitoring"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "monitoring": {
+                        "properties": {
+                          "dashboards": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "dashboards"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "monitoring"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "monitoring": {
+                              "properties": {
+                                "dashboards": {}
+                              },
+                              "required": [
+                                "dashboards"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "monitoring"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "monitoring": {
+                            "properties": {
+                              "dashboards": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "dashboards"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "monitoring"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "monitoring": {
+                        "properties": {
+                          "dashboards": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "dashboards"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "monitoring"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "monitoring": {
+            "description": "Monitoring section determines which monitoring features to enable",
+            "properties": {
+              "dashboards": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Dashboards for monitoring Loki"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "monitoring": {
+                  "properties": {
+                    "rules": {}
+                  },
+                  "required": [
+                    "rules"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "monitoring"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "monitoring": {
+                "properties": {
+                  "rules": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "rules"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "monitoring"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "monitoring": {
+            "description": "Monitoring section determines which monitoring features to enable",
+            "properties": {
+              "rules": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Recording rules for monitoring Loki, required for some dashboards"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "monitoring": {
+                "properties": {
+                  "selfMonitoring": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "selfMonitoring"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "monitoring"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "monitoring": {
+                      "properties": {
+                        "selfMonitoring": {
+                          "properties": {
+                            "grafanaAgent": {}
+                          },
+                          "required": [
+                            "grafanaAgent"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "selfMonitoring"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "monitoring"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "monitoring": {
+                    "properties": {
+                      "selfMonitoring": {
+                        "properties": {
+                          "grafanaAgent": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "grafanaAgent"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "selfMonitoring"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "monitoring"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "monitoring": {
+            "description": "Monitoring section determines which monitoring features to enable",
+            "properties": {
+              "selfMonitoring": {
+                "description": "DEPRECATED Self monitoring determines whether Loki should scrape its own logs.\nThis feature relies on Grafana Agent Operator, which is deprecated.\nIt will create custom resources for GrafanaAgent, LogsInstance, and PodLogs to configure\nscrape configs to scrape its own logs with the labels expected by the included dashboards.",
+                "properties": {
+                  "grafanaAgent": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "DEPRECATED Grafana Agent configuration"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "properties": {
               "global": {
                 "properties": {
@@ -40329,6 +41810,258 @@
                       }
                     },
                     "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "monitoring": {
+                "properties": {
+                  "selfMonitoring": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "selfMonitoring"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "monitoring"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "monitoring": {
+                      "properties": {
+                        "selfMonitoring": {
+                          "properties": {
+                            "logsInstance": {}
+                          },
+                          "required": [
+                            "logsInstance"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "selfMonitoring"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "monitoring"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "monitoring": {
+                    "properties": {
+                      "selfMonitoring": {
+                        "properties": {
+                          "logsInstance": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "logsInstance"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "selfMonitoring"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "monitoring"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "monitoring": {
+            "description": "Monitoring section determines which monitoring features to enable",
+            "properties": {
+              "selfMonitoring": {
+                "description": "DEPRECATED Self monitoring determines whether Loki should scrape its own logs.\nThis feature relies on Grafana Agent Operator, which is deprecated.\nIt will create custom resources for GrafanaAgent, LogsInstance, and PodLogs to configure\nscrape configs to scrape its own logs with the labels expected by the included dashboards.",
+                "properties": {
+                  "logsInstance": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "LogsInstance configuration"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "monitoring": {
+                "properties": {
+                  "selfMonitoring": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "selfMonitoring"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "monitoring"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "monitoring": {
+                      "properties": {
+                        "selfMonitoring": {
+                          "properties": {
+                            "podLogs": {}
+                          },
+                          "required": [
+                            "podLogs"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "selfMonitoring"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "monitoring"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "monitoring": {
+                    "properties": {
+                      "selfMonitoring": {
+                        "properties": {
+                          "podLogs": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "podLogs"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "selfMonitoring"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "monitoring"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "monitoring": {
+            "description": "Monitoring section determines which monitoring features to enable",
+            "properties": {
+              "selfMonitoring": {
+                "description": "DEPRECATED Self monitoring determines whether Loki should scrape its own logs.\nThis feature relies on Grafana Agent Operator, which is deprecated.\nIt will create custom resources for GrafanaAgent, LogsInstance, and PodLogs to configure\nscrape configs to scrape its own logs with the labels expected by the included dashboards.",
+                "properties": {
+                  "podLogs": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "PodLogs configuration"
                   }
                 },
                 "type": "object"
@@ -40489,6 +42222,423 @@
                       }
                     },
                     "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "monitoring": {
+                  "properties": {
+                    "serviceMonitor": {}
+                  },
+                  "required": [
+                    "serviceMonitor"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "monitoring"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "monitoring": {
+                "properties": {
+                  "serviceMonitor": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "monitoring"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "monitoring": {
+            "description": "Monitoring section determines which monitoring features to enable",
+            "properties": {
+              "serviceMonitor": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "ServiceMonitor configuration"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "monitoring": {
+                      "properties": {
+                        "serviceMonitor": {
+                          "properties": {
+                            "metricsInstance": {}
+                          },
+                          "required": [
+                            "metricsInstance"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceMonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "monitoring"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "monitoring": {
+                    "properties": {
+                      "serviceMonitor": {
+                        "properties": {
+                          "metricsInstance": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "metricsInstance"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "monitoring"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "monitoring": {
+                        "properties": {
+                          "selfMonitoring": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "selfMonitoring"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "monitoring"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "monitoring": {
+                              "properties": {
+                                "selfMonitoring": {
+                                  "properties": {
+                                    "grafanaAgent": {}
+                                  },
+                                  "required": [
+                                    "grafanaAgent"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "selfMonitoring"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "monitoring"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "monitoring": {
+                            "properties": {
+                              "selfMonitoring": {
+                                "properties": {
+                                  "grafanaAgent": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object"
+                                      },
+                                      {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "grafanaAgent"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "selfMonitoring"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "monitoring"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "monitoring": {
+                              "properties": {
+                                "serviceMonitor": {}
+                              },
+                              "required": [
+                                "serviceMonitor"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "monitoring"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "monitoring": {
+                            "properties": {
+                              "serviceMonitor": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "serviceMonitor"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "monitoring"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "monitoring": {
+                        "properties": {
+                          "serviceMonitor": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "serviceMonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "monitoring"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "monitoring": {
+                              "properties": {
+                                "serviceMonitor": {
+                                  "properties": {
+                                    "metricsInstance": {}
+                                  },
+                                  "required": [
+                                    "metricsInstance"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "serviceMonitor"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "monitoring"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "monitoring": {
+                            "properties": {
+                              "serviceMonitor": {
+                                "properties": {
+                                  "metricsInstance": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object"
+                                      },
+                                      {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "metricsInstance"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "serviceMonitor"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "monitoring"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "monitoring": {
+            "description": "Monitoring section determines which monitoring features to enable",
+            "properties": {
+              "serviceMonitor": {
+                "description": "ServiceMonitor configuration",
+                "properties": {
+                  "metricsInstance": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "DEPRECATED If defined, will create a MetricsInstance for the Grafana Agent Operator."
                   }
                 },
                 "type": "object"
@@ -42384,6 +44534,56 @@
               },
               {
                 "type": "string"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "resultsCache": {}
+              },
+              "required": [
+                "resultsCache"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "resultsCache": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "resultsCache"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "resultsCache": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
               }
             ]
           }
@@ -45487,6 +47687,201 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "serviceMonitor": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "tableManager": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tableManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "tableManager": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tableManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "serviceMonitor": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "tableManager": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tableManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "serviceMonitor": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object"

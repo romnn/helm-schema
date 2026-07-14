@@ -492,6 +492,57 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "certManager": {}
+              },
+              "required": [
+                "certManager"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "certManager": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "certManager"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "certManager": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Overrideable variables when enableCertManager is set to true"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "enableCertManager": {
             "$ref": "#/$defs/helm-truthy"
@@ -578,6 +629,49 @@
               }
             ],
             "description": "The name of the Kubernetes cluster. A non-empty value is required"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "controllerConfig": {
+            "properties": {
+              "featureGates": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "featureGates"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "controllerConfig"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "controllerConfig": {
+            "description": "controllerConfig specifies controller configuration",
+            "properties": {
+              "featureGates": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "featureGates set of key: value pairs that describe AWS load balance controller features\nListenerRulesTagging: true\nWeightedTargetGroups: true\nServiceTypeLoadBalancerOnly: false\nEndpointsFailOpen: true\nEnableServiceController: true\nEnableIPTargetType: true\nEnableTCPUDPListener: false\nEnableRGTAPI: false\nSubnetsClusterTagCheck: true\nNLBHealthCheckAdvancedConfig: true\nNLBSecurityGroup: true\nALBSingleSubnet: false\nLBCapacityReservation: true\nSubnetDiscoveryByReachability: true\nNLBGatewayAPI: true\nALBGatewayAPI: true\nGatewayListenerSet: true\nGlobalAcceleratorController: false\nIngressPlanAnnotation: false\nEnhancedDefaultBehavior: false\nEnableDefaultTagsLowPriority: false\nALBTargetControlAgent: false\nEnableCertificateManagement: false"
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -1179,6 +1273,416 @@
               }
             ],
             "description": "The VPC ID for the Kubernetes cluster. Set this manually when your pods are unable to use the metadata service to determine this automatically"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhookConfig": {
+                      "properties": {
+                        "ingressValidationNamespaceSelector": {}
+                      },
+                      "required": [
+                        "ingressValidationNamespaceSelector"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhookConfig"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhookConfig": {
+                    "properties": {
+                      "ingressValidationNamespaceSelector": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "ingressValidationNamespaceSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhookConfig"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "webhookConfig": {
+                        "properties": {
+                          "ingressValidationNamespaceSelector": {
+                            "properties": {
+                              "matchExpressions": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "matchExpressions"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "ingressValidationNamespaceSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webhookConfig"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "webhookConfig": {
+                          "properties": {
+                            "disableIngressValidation": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "disableIngressValidation"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webhookConfig"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "webhookConfig": {
+                        "properties": {
+                          "ingressValidationNamespaceSelector": {
+                            "properties": {
+                              "matchLabels": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "matchLabels"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "ingressValidationNamespaceSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webhookConfig"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "webhookConfig": {
+                          "properties": {
+                            "disableIngressValidation": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "disableIngressValidation"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webhookConfig"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "webhookConfig": {
+                      "properties": {
+                        "disableIngressValidation": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "disableIngressValidation"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhookConfig"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "webhookConfig": {
+            "properties": {
+              "ingressValidationNamespaceSelector": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "limit ingress validation webhook to only validate ingresses in the namespace matching the object selector."
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhookConfig": {
+                      "properties": {
+                        "ingressValidationObjectSelector": {}
+                      },
+                      "required": [
+                        "ingressValidationObjectSelector"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhookConfig"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhookConfig": {
+                    "properties": {
+                      "ingressValidationObjectSelector": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "ingressValidationObjectSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhookConfig"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "webhookConfig": {
+                        "properties": {
+                          "ingressValidationObjectSelector": {
+                            "properties": {
+                              "matchExpressions": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "matchExpressions"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "ingressValidationObjectSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webhookConfig"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "webhookConfig": {
+                          "properties": {
+                            "disableIngressValidation": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "disableIngressValidation"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webhookConfig"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "webhookConfig": {
+                        "properties": {
+                          "ingressValidationObjectSelector": {
+                            "properties": {
+                              "matchLabels": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "matchLabels"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "ingressValidationObjectSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webhookConfig"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "webhookConfig": {
+                          "properties": {
+                            "disableIngressValidation": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "disableIngressValidation"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webhookConfig"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "webhookConfig": {
+                      "properties": {
+                        "disableIngressValidation": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "disableIngressValidation"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhookConfig"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "webhookConfig": {
+            "properties": {
+              "ingressValidationObjectSelector": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "limit ingress validation webhook to only validate ingresses matching the objectSelector"
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"

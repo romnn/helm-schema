@@ -1967,6 +1967,165 @@
       }
     },
     {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "keda": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "keda"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "keda": {
+                    "properties": {
+                      "fallback": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "fallback"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "keda"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "kind": {}
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "Deployment"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "autoscaling": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "autoscaling"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "keda": {
+                "description": "Mutually exclusive with hpa autoscaling",
+                "properties": {
+                  "fallback": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
       "properties": {
         "controller": {
           "properties": {
@@ -4504,64 +4663,19 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "properties": {
-              "defaultBackend": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "defaultBackend"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "defaultBackend": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "defaultBackend"
-                  ],
-                  "type": "object"
-                }
-              },
+            "allOf": [
               {
                 "properties": {
                   "defaultBackend": {
                     "properties": {
-                      "image": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "image"
+                      "enabled"
                     ],
                     "type": "object"
                   }
@@ -4570,6 +4684,284 @@
                   "defaultBackend"
                 ],
                 "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "defaultBackend": {
+                          "properties": {
+                            "image": {}
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "defaultBackend"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "defaultBackend": {
+                        "properties": {
+                          "image": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "defaultBackend"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "defaultBackend": {
+                          "properties": {
+                            "image": {}
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "defaultBackend"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "defaultBackend": {
+                        "properties": {
+                          "image": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "defaultBackend"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "defaultBackend": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "defaultBackend"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "defaultBackend": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "defaultBackend"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "defaultBackend": {
+                                  "properties": {
+                                    "image": {
+                                      "properties": {
+                                        "seccompProfile": {}
+                                      },
+                                      "required": [
+                                        "seccompProfile"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "image"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "defaultBackend"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "defaultBackend": {
+                                "properties": {
+                                  "image": {
+                                    "properties": {
+                                      "seccompProfile": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object"
+                                          },
+                                          {
+                                            "$ref": "#/$defs/helm-truthy"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "seccompProfile"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "image"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "defaultBackend"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "defaultBackend": {
+                              "properties": {
+                                "containerSecurityContext": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "containerSecurityContext"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "defaultBackend"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "defaultBackend": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "defaultBackend"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "defaultBackend": {
+                              "properties": {
+                                "containerSecurityContext": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "containerSecurityContext"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "defaultBackend"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }

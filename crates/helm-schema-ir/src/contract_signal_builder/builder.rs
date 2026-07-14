@@ -119,6 +119,15 @@ struct ContractPathAccumulator {
     has_unconditional_overlay_peer: bool,
     saw_unsupported_overlay: bool,
     fail_implications: Vec<ContractFailImplication>,
+    /// Distinct lowerable outer-guard sets of MEMBER-ACCESS captures on
+    /// this path (empty set = an unconditional access): folded into ONE
+    /// bypass-proof arm per path instead of one per read (F57/F63).
+    member_access_guard_sets: BTreeSet<Vec<ConditionalGuard>>,
+    /// Kinds the chart's own type dispatch on this path provably handles
+    /// (`kindIs "string" .Values.x` arms): they widen the member-access
+    /// requirement, because the dispatch converts or bypasses them before
+    /// the reads run (nack's string image form).
+    self_tested_kinds: BTreeSet<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -365,6 +374,17 @@ fn record_contract_use_conjunction(
         };
         let acc = path_accumulator(paths, &contract_use.source_expr);
         acc.requiredness.is_positive_header |= positive_header;
+        // A positive self-type test proves the chart HANDLES that kind in
+        // some branch: it widens the path's member-access requirement.
+        if type_dispatched {
+            for predicate in predicates {
+                if let Predicate::Guard(Guard::TypeIs { path, schema_type }) = predicate
+                    && path == &contract_use.source_expr
+                {
+                    acc.self_tested_kinds.insert(schema_type.clone());
+                }
+            }
+        }
         // An UNCONDITIONAL string-contract row types the path itself;
         // a conditional one types only its own overlay branch (the branch
         // facts carry it there). A member row's own iteration does not
@@ -546,6 +566,10 @@ fn record_fail_conjunction(
         .flat_map(Predicate::value_paths)
         .any(|path| path.starts_with('$'))
     {
+        return;
+    }
+    if capture.member_access {
+        record_member_access_capture(paths, capture);
         return;
     }
     // A multi-path `with` header (`with (coalesce a b)`) contributes its
@@ -830,11 +854,137 @@ fn record_ranged_member_read_implications(paths: &mut BTreeMap<String, ContractP
     }
 }
 
+/// One member-access capture (`[outer…, truthy(P), ¬object(P)]`): extract
+/// the accessed path and its lowerable outer guards for per-path folding.
+/// Any conjunct the guard encoding cannot represent abstains this read
+/// (the arm may only under-narrow), and approximate conditions abstain
+/// like every fail negation.
+fn record_member_access_capture(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    capture: &crate::eval_effect::FailCapture,
+) {
+    if !capture.approximate_condition_paths.is_empty() {
+        return;
+    }
+    let mut target = None;
+    for predicate in &capture.conjunction {
+        if let Predicate::Not(inner) = predicate
+            && let Predicate::Guard(Guard::TypeIs { path, schema_type }) = inner.as_ref()
+            && schema_type == "object"
+        {
+            target = Some(path.clone());
+        }
+    }
+    let Some(target) = target else {
+        return;
+    };
+    if path_contains_wildcard(&target) {
+        return;
+    }
+    let mut outer = Vec::new();
+    for predicate in &capture.conjunction {
+        match predicate {
+            Predicate::Guard(Guard::Truthy { path }) if path == &target => continue,
+            Predicate::Not(inner)
+                if matches!(
+                    inner.as_ref(),
+                    Predicate::Guard(Guard::TypeIs { path, schema_type })
+                        if path == &target && schema_type == "object"
+                ) =>
+            {
+                continue;
+            }
+            // A `with` gate enters only when its path is truthy: the same
+            // condition the guard encoding can spell.
+            Predicate::Guard(Guard::With { path }) if !path_contains_wildcard(path) => {
+                outer.push(ConditionalGuard::Truthy { path: path.clone() });
+                continue;
+            }
+            _ => {}
+        }
+        let Some(guard) = predicate_to_guard(predicate, None) else {
+            return;
+        };
+        if guard
+            .value_paths()
+            .iter()
+            .any(|path| path_contains_wildcard(path))
+        {
+            return;
+        }
+        outer.push(guard);
+    }
+    outer.sort();
+    outer.dedup();
+    path_accumulator(paths, &target)
+        .member_access_guard_sets
+        .insert(outer);
+}
+
+/// Fold each path's member-access guard sets into ONE fail implication:
+/// an unconditional access binds `truthy(P) ⇒ member host`; guarded-only
+/// accesses key the arm on the any-of of their guard sets; fanout past the
+/// cap abstains rather than exploding umbrella-chart schemas (F57/F63).
+fn record_member_access_implications(paths: &mut BTreeMap<String, ContractPathAccumulator>) {
+    const MEMBER_ACCESS_GUARD_FANOUT: usize = 8;
+    let pending: Vec<(String, BTreeSet<Vec<ConditionalGuard>>, Vec<String>)> = paths
+        .iter()
+        .filter(|(path, acc)| {
+            !acc.member_access_guard_sets.is_empty() && !path_contains_wildcard(path)
+        })
+        .map(|(path, acc)| {
+            (
+                path.clone(),
+                acc.member_access_guard_sets.clone(),
+                acc.self_tested_kinds.iter().cloned().collect(),
+            )
+        })
+        .collect();
+    for (path, guard_sets, handled_kinds) in pending {
+        let mut outer_guards = vec![ConditionalGuard::Truthy { path: path.clone() }];
+        if !guard_sets.contains(&Vec::new()) {
+            if guard_sets.len() > MEMBER_ACCESS_GUARD_FANOUT {
+                continue;
+            }
+            let mut arms: Vec<ConditionalGuard> = guard_sets
+                .into_iter()
+                .map(|mut set| {
+                    if set.len() == 1 {
+                        set.remove(0)
+                    } else {
+                        ConditionalGuard::AllOf(set)
+                    }
+                })
+                .collect();
+            if arms.len() == 1 {
+                match arms.remove(0) {
+                    ConditionalGuard::AllOf(set) => outer_guards.extend(set),
+                    guard => outer_guards.push(guard),
+                }
+            } else {
+                outer_guards.push(ConditionalGuard::AnyOf(arms));
+            }
+        }
+        outer_guards.sort();
+        outer_guards.dedup();
+        let implication = ContractFailImplication {
+            outer_guards,
+            per_member: false,
+            requirements: vec![FailValueRequirement::MemberHost { handled_kinds }],
+        };
+        let acc = path_accumulator(paths, &path);
+        if !acc.fail_implications.contains(&implication) {
+            acc.fail_implications.push(implication);
+        }
+    }
+}
+
 fn finish_schema_signals(
     mut paths: BTreeMap<String, ContractPathAccumulator>,
     mut terminal_clauses: Vec<Vec<ConditionalGuard>>,
 ) -> ContractSchemaSignals {
     record_ranged_member_read_implications(&mut paths);
+    record_member_access_implications(&mut paths);
     let referenced_paths = paths
         .iter()
         .filter_map(|(path, acc)| acc.referenced.then_some(path.clone()))
@@ -968,6 +1118,8 @@ impl ContractPathAccumulator {
             mut has_unconditional_overlay_peer,
             saw_unsupported_overlay,
             mut fail_implications,
+            member_access_guard_sets: _,
+            self_tested_kinds: _,
         } = self;
         // An approximately-guarded path (`saw_unsupported_overlay`) must
         // not promote branch-scoped sink typing to the path level either:

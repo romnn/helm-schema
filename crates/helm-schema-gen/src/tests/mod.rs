@@ -8242,9 +8242,9 @@ fn mapping_value_fragment_accepts_all_types() {
 
 /// F57: a truthy-guarded object that is BOTH serialized and member-read is
 /// falsy-or-object — the fragment lane must not bypass the member access
-/// (coredns `podDisruptionBudget` shape).
+/// (coredns `podDisruptionBudget` shape). Encoded size-aware: one folded
+/// arm per path, pruned where the schema tree already types the node.
 #[test]
-#[ignore = "F57 open: member-access object contracts need a size-aware encoding — the naive per-read arms pushed umbrella-chart schemas past helm's 5MiB chart-file limit (signoz)"]
 fn member_read_beside_serialize_requires_object_when_truthy() {
     let src = indoc! {r#"
         {{- if .Values.podDisruptionBudget }}
@@ -8593,12 +8593,10 @@ fn tpl_behind_literal_helper_mode_condition_binds_branch_guards() {
 /// F65: an ordered `set` mutation converts the string image form into the
 /// map the later member reads require — the accepted union is EXACTLY
 /// string-or-map, and untouched scalars still abort the member read (nack
-/// `jsc.fixImage`/`jsc.image` shape). Both valid forms already validate;
-/// rejecting the untouched scalar needs the dispatch COMPLEMENT arm to
-/// carry the downstream member-read object requirement, which is the
-/// F57/F63 member-contract encoding.
+/// `jsc.fixImage`/`jsc.image` shape). The member-access arm carries the
+/// kinds the chart's own `kindIs` dispatch handles, so the converted
+/// string form stays accepted while the untouched complement rejects.
 #[test]
-#[ignore = "F65 open: rejecting the untouched complement needs the F57 size-aware member-access contract encoding"]
 fn ordered_set_mutation_accepts_converted_and_map_forms() {
     let src = indoc! {r#"
         {{- include "app.fiximage" .Values.jetstream -}}

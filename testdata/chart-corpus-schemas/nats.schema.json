@@ -84,6 +84,100 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "config": {
+                  "properties": {
+                    "websocket": {
+                      "properties": {
+                        "ingress": {}
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "websocket"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "config"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "config": {
+                "properties": {
+                  "websocket": {
+                    "properties": {
+                      "ingress": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "websocket"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "config"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "config": {
+            "description": "NATS config",
+            "properties": {
+              "websocket": {
+                "properties": {
+                  "ingress": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "ingress\nservice must be enabled also"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -817,6 +911,720 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "natsBox": {}
+              },
+              "required": [
+                "natsBox"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "natsBox": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "natsBox"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "natsBox": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "natsBox\nNATS Box Deployment and associated resources"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "natsBox": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "natsBox"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "natsBox": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "natsBox"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "natsBox": {
+                      "properties": {
+                        "serviceAccount": {}
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "natsBox"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "natsBox": {
+                    "properties": {
+                      "serviceAccount": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "natsBox"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "natsBox": {
+            "description": "natsBox\nNATS Box Deployment and associated resources",
+            "properties": {
+              "serviceAccount": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "service account"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "podDisruptionBudget": {}
+              },
+              "required": [
+                "podDisruptionBudget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "podDisruptionBudget": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "pod disruption budget"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "promExporter": {}
+                  },
+                  "required": [
+                    "promExporter"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "promExporter": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "promExporter"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "promExporter": {}
+                      },
+                      "required": [
+                        "promExporter"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "promExporter": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "promExporter"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "promExporter": {}
+                          },
+                          "required": [
+                            "promExporter"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "promExporter": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "promExporter"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "promExporter": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "promExporter"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "promExporter": {
+                        "properties": {
+                          "podMonitor": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "podMonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "promExporter"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "promExporter": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "stateful set -> pod template -> prom-exporter container\nconfig.monitor must be enabled"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "promExporter": {}
+                  },
+                  "required": [
+                    "promExporter"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "promExporter": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "promExporter"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "promExporter": {
+                      "properties": {
+                        "podMonitor": {}
+                      },
+                      "required": [
+                        "podMonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "promExporter"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "promExporter": {
+                    "properties": {
+                      "podMonitor": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "podMonitor"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "promExporter"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "promExporter": {
+            "description": "stateful set -> pod template -> prom-exporter container\nconfig.monitor must be enabled",
+            "properties": {
+              "podMonitor": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "prometheus pod monitor"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {}
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "config": {
+                          "properties": {
+                            "websocket": {
+                              "properties": {
+                                "ingress": {}
+                              },
+                              "required": [
+                                "ingress"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "websocket"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "websocket": {
+                            "properties": {
+                              "ingress": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "ingress"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "websocket"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "service": {}
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "service": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "service": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "service"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {}
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "serviceAccount": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "service account"
           }
         },
         "type": "object"

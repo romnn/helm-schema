@@ -1,7 +1,202 @@
 {
+  "$defs": {
+    "helm-truthy": {
+      "anyOf": [
+        {
+          "const": true
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "minProperties": 1,
+          "type": "object"
+        }
+      ]
+    }
+  },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "nats": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nats"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "nats": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operator": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "operator"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "operator": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "operator": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "operatorjwt": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "operatorjwt"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "operator": {
+            "properties": {
+              "operatorjwt": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "operator": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "systemaccountjwt": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "systemaccountjwt"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "operator": {
+            "properties": {
+              "systemaccountjwt": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
     {
       "properties": {
         "store": {

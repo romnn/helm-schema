@@ -849,6 +849,78 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "securityContext": {}
+                  },
+                  "required": [
+                    "securityContext"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "securityContext": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "securityContext"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
+            "properties": {
+              "securityContext": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "fullnameOverride": {
             "$ref": "#/$defs/helm-truthy"

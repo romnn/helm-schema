@@ -75,6 +75,11 @@ pub(crate) struct FailCapture {
     /// helper-scope ranges never reach the document-lane directness
     /// channel.
     pub(crate) direct_ranged_paths: BTreeSet<String>,
+    /// A MEMBER-ACCESS capture (`[outer…, truthy(P), ¬object(P)]` from a
+    /// field access through `P`): the signal builder folds these per path
+    /// into one bypass-proof arm instead of lowering each as its own
+    /// implication (the F57/F63 size-aware encoding).
+    pub(crate) member_access: bool,
 }
 
 impl Effects {

@@ -1652,15 +1652,30 @@
     },
     {
       "if": {
-        "properties": {
-          "global": {
-            "$ref": "#/$defs/helm-truthy"
+        "anyOf": [
+          {
+            "properties": {
+              "global": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "global": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
           }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "properties": {
@@ -2543,6 +2558,108 @@
             "anyOf": [
               {
                 "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configMap": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "configMap"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "meshConfig": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "meshConfig"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "meshConfig": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "meshConfig"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "all"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "namespace"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "meshConfig": {
+            "anyOf": [
+              {
+                "type": "object"
               },
               {
                 "type": "null"

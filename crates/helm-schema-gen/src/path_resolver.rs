@@ -357,6 +357,17 @@ fn fail_value_requirement_schema(
             FailValueRequirement::HasMember(member) => {
                 required_members.push(member);
             }
+            FailValueRequirement::MemberHost { handled_kinds } => {
+                let mut arms = vec![type_schema("object")];
+                arms.extend(
+                    handled_kinds
+                        .iter()
+                        .filter(|kind| kind.as_str() != "object")
+                        .map(|kind| type_schema(kind)),
+                );
+                arms.push(serde_json::json!({ "type": "null" }));
+                parts.push(serde_json::json!({ "anyOf": arms }));
+            }
             FailValueRequirement::Iterable { allow_integer } => {
                 parts.push(crate::runtime_iterable_schema(*allow_integer));
             }

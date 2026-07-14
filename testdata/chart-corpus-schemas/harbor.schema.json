@@ -4306,6 +4306,224 @@
             ]
           },
           "redis": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "cache": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "cache"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "redis": {}
+                      },
+                      "required": [
+                        "redis"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "redis": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "redis"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "metrics": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "redis": {}
+                      },
+                      "required": [
+                        "redis"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "redis": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "redis"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "redis": {}
+                      },
+                      "required": [
+                        "redis"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "redis": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "redis"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "trivy": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "trivy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "trivy": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivy"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "redis": {
             "properties": {
               "type": {
                 "description": "if external Redis is used, set \"type\" to \"external\"\nand fill the connection information in \"external\" section",
@@ -15811,497 +16029,33 @@
       "if": {
         "anyOf": [
           {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "redis": {}
-                      },
-                      "required": [
-                        "redis"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "redis": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "redis"
-                    ],
-                    "type": "object"
-                  }
-                ]
+            "not": {
+              "properties": {
+                "redis": {}
               },
-              {
-                "not": {
-                  "properties": {
-                    "redis": {
-                      "properties": {
-                        "external": {
-                          "properties": {
-                            "existingSecret": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "existingSecret"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "external"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "redis"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
+              "required": [
+                "redis"
+              ],
+              "type": "object"
+            }
           },
           {
-            "allOf": [
-              {
+            "properties": {
+              "redis": {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "redis": {}
-                      },
-                      "required": [
-                        "redis"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "redis": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "redis"
-                    ],
                     "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "properties": {
-                        "redis": {
-                          "properties": {
-                            "external": {
-                              "properties": {
-                                "existingSecret": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "existingSecret"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "external"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "redis"
-                      ],
-                      "type": "object"
-                    },
-                    {
-                      "properties": {
-                        "redis": {
-                          "properties": {
-                            "type": {
-                              "enum": [
-                                "external"
-                              ]
-                            }
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "redis"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "redis": {}
-                      },
-                      "required": [
-                        "redis"
-                      ],
-                      "type": "object"
-                    }
                   },
                   {
-                    "properties": {
-                      "redis": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "redis"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "redis": {
-                            "properties": {
-                              "external": {
-                                "properties": {
-                                  "cacheLayerDatabaseIndex": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "cacheLayerDatabaseIndex"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "external"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "redis"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "redis": {
-                            "properties": {
-                              "type": {
-                                "enum": [
-                                  "external"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "type"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "redis"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "redis": {
-                            "properties": {
-                              "internal": {
-                                "properties": {
-                                  "cacheLayerDatabaseIndex": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "cacheLayerDatabaseIndex"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "internal"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "redis"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "properties": {
-                                "redis": {
-                                  "properties": {
-                                    "type": {}
-                                  },
-                                  "required": [
-                                    "type"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "redis"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          {
-                            "properties": {
-                              "redis": {
-                                "properties": {
-                                  "type": {
-                                    "enum": [
-                                      "internal"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "type"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "redis"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 ]
               }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "redis": {}
-                      },
-                      "required": [
-                        "redis"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "redis": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "redis"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "redis": {
-                            "properties": {
-                              "external": {
-                                "properties": {
-                                  "harborDatabaseIndex": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "harborDatabaseIndex"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "external"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "redis"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "properties": {
-                          "redis": {
-                            "properties": {
-                              "type": {
-                                "enum": [
-                                  "external"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "type"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "redis"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "redis": {
-                            "properties": {
-                              "internal": {
-                                "properties": {
-                                  "harborDatabaseIndex": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "harborDatabaseIndex"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "internal"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "redis"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "properties": {
-                                "redis": {
-                                  "properties": {
-                                    "type": {}
-                                  },
-                                  "required": [
-                                    "type"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "redis"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          {
-                            "properties": {
-                              "redis": {
-                                "properties": {
-                                  "type": {
-                                    "enum": [
-                                      "internal"
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "type"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "redis"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
+            },
+            "required": [
+              "redis"
+            ],
+            "type": "object"
           }
         ]
       },

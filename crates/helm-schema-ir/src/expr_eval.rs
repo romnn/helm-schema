@@ -7,6 +7,7 @@ use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_call_eval::{eval_call_with_helper_calls, eval_pipeline_with_helper_calls};
 use helm_schema_ast::is_merge_function;
+use helm_schema_core::Predicate;
 
 pub(crate) trait HelperCallValueResolver {
     fn resolve_helper_call(&mut self, name: &str, arg: Option<&TemplateExpr>)
@@ -44,6 +45,55 @@ pub(crate) fn direct_values_path(expr: &TemplateExpr) -> Option<String> {
         .and_then(AbstractValue::unique_path)
 }
 
+/// The base of a member access: the value's OWN values identity. Influence
+/// through structures (a `dict "value" .Values.x` context) is not identity —
+/// accessing the dict's keys says nothing about `x`'s shape.
+fn direct_values_identity(value: &AbstractValue) -> Option<String> {
+    match value {
+        AbstractValue::ValuesPath(path) if !path.is_empty() => Some(path.clone()),
+        _ => None,
+    }
+}
+
+/// Record that `segments` was reached by Go field access: every
+/// nonterminal prefix at or past `accessed_from` segments must be an
+/// object when truthy — field access on a truthy scalar or list aborts
+/// rendering, while nil prefixes yield nil. The captures ride the shared
+/// fail channel so ambient guards join at absorption, and the signal
+/// builder folds them into one bypass-proof arm per path instead of one
+/// per read (the F57/F63 size-aware encoding).
+fn record_member_access_captures(segments: &[String], accessed_from: usize, effects: &mut Effects) {
+    if segments.len() < 2 {
+        return;
+    }
+    for len in accessed_from.max(1)..segments.len() {
+        let prefix = &segments[..len];
+        if prefix
+            .iter()
+            .any(|segment| segment == "*" || segment.is_empty())
+        {
+            continue;
+        }
+        let path = helm_schema_core::join_value_path(prefix.iter().cloned());
+        let capture = crate::eval_effect::FailCapture {
+            conjunction: vec![
+                Predicate::truthy_path(path.clone()),
+                Predicate::from(crate::Guard::TypeIs {
+                    path,
+                    schema_type: "object".to_string(),
+                })
+                .negated(),
+            ],
+            approximate_condition_paths: BTreeSet::new(),
+            direct_ranged_paths: BTreeSet::new(),
+            member_access: true,
+        };
+        if !effects.helper_fails.contains(&capture) {
+            effects.helper_fails.push(capture);
+        }
+    }
+}
+
 pub(crate) fn eval_expr_with_helper_calls(
     expr: &TemplateExpr,
     env: &EvalEnv,
@@ -52,12 +102,15 @@ pub(crate) fn eval_expr_with_helper_calls(
     match expr {
         TemplateExpr::Parenthesized(inner) => eval_expr_with_helper_calls(inner, env, resolver),
         TemplateExpr::Field(path) if path.first().is_some_and(|segment| segment == "Values") => {
-            EvalResult::from_value(values_path_value(path))
+            let mut result = EvalResult::from_value(values_path_value(path));
+            record_member_access_captures(&path[1..], 0, &mut result.effects);
+            result
         }
         TemplateExpr::Field(path) if path.is_empty() => {
             EvalResult::from_value(env.dot.clone().unwrap_or(AbstractValue::RootContext))
         }
         TemplateExpr::Field(path) => {
+            let dot_base = env.dot.as_ref().and_then(direct_values_identity);
             let value = env.dot.as_ref().and_then(|value| value.apply_to_path(path));
             let value = value.or_else(|| {
                 if !env.allow_field_root_lookup {
@@ -68,15 +121,24 @@ pub(crate) fn eval_expr_with_helper_calls(
                     .get(head)
                     .and_then(|value| value.apply_to_path(tail))
             });
-            value
+            let mut result = value
                 .map(EvalResult::from_value)
-                .unwrap_or_else(EvalResult::none)
+                .unwrap_or_else(EvalResult::none);
+            if let Some(base) = dot_base {
+                let mut segments = helm_schema_core::split_value_path(&base);
+                let accessed_from = segments.len();
+                segments.extend(path.iter().cloned());
+                record_member_access_captures(&segments, accessed_from, &mut result.effects);
+            }
+            result
         }
         TemplateExpr::Selector { operand, path }
             if matches!(operand.as_ref(), TemplateExpr::Variable(var) if var.is_empty())
                 && path.first().is_some_and(|segment| segment == "Values") =>
         {
-            EvalResult::from_value(values_path_value(path))
+            let mut result = EvalResult::from_value(values_path_value(path));
+            record_member_access_captures(&path[1..], 0, &mut result.effects);
+            result
         }
         TemplateExpr::Variable(var) if var.is_empty() => {
             EvalResult::from_value(AbstractValue::RootContext)
@@ -95,22 +157,24 @@ pub(crate) fn eval_expr_with_helper_calls(
                     .get(var)
                     .and_then(|binding| binding.apply_to_path(path))
             {
+                let local_base = env.locals.get(var).and_then(direct_values_identity);
                 let selected_paths = value.fragment_source_paths();
-                return with_bound_selector_paths(
-                    local_value_result(var, value, Some(&selected_paths), env),
-                    expr,
-                    env,
-                );
+                let mut result = local_value_result(var, value, Some(&selected_paths), env);
+                if let Some(base) = local_base {
+                    let mut segments = helm_schema_core::split_value_path(&base);
+                    let accessed_from = segments.len();
+                    segments.extend(path.iter().cloned());
+                    record_member_access_captures(&segments, accessed_from, &mut result.effects);
+                }
+                return with_bound_selector_paths(result, expr, env);
             }
             if let TemplateExpr::Variable(var) = operand.as_ref()
                 && !var.is_empty()
                 && path.first().is_some_and(|segment| segment == "Values")
             {
-                return with_bound_selector_paths(
-                    EvalResult::from_value(values_path_value(path)),
-                    expr,
-                    env,
-                );
+                let mut result = EvalResult::from_value(values_path_value(path));
+                record_member_access_captures(&path[1..], 0, &mut result.effects);
+                return with_bound_selector_paths(result, expr, env);
             }
             if let TemplateExpr::Variable(var) = operand.as_ref()
                 && var.is_empty()

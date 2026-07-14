@@ -254,6 +254,60 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "natskafka": {
+            "properties": {
+              "nats": {
+                "properties": {
+                  "credentials": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "credentials"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nats"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "natskafka"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "natskafka": {
+            "properties": {
+              "nats": {
+                "properties": {
+                  "credentials": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
     }
   ],
   "properties": {

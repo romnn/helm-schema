@@ -59,6 +59,41 @@ pub(crate) fn collect_conditional_schemas(
         // bypass it. An empty guard set means the requirement is
         // unconditional and the arm's condition is trivially true.
         for implication in &evidence.fail_implications {
+            // Member-access requirements: the schema tree already types
+            // interior nodes materialized by member reads as objects, so
+            // the bypass-proof arm is needed only when a union lane can
+            // widen the base past that typing (a serialized, fragment,
+            // render, ranged, or partial-scalar use, or a type-dispatch
+            // arm) or the declared default is not a mapping.
+            let member_host_only = !implication.requirements.is_empty()
+                && implication.requirements.iter().all(|requirement| {
+                    matches!(
+                        requirement,
+                        helm_schema_core::FailValueRequirement::MemberHost { .. }
+                    )
+                });
+            if member_host_only {
+                let dispatched = implication.requirements.iter().any(|requirement| {
+                    matches!(
+                        requirement,
+                        helm_schema_core::FailValueRequirement::MemberHost { handled_kinds }
+                            if !handled_kinds.is_empty()
+                    )
+                });
+                let widened = evidence.facts.used_as_serialized
+                    || evidence.facts.used_as_fragment
+                    || evidence.facts.has_render_use
+                    || evidence.facts.is_ranged_source
+                    || evidence.facts.is_partial_scalar_value_path
+                    || dispatched;
+                let declared_mapping = matches!(
+                    yaml_value_at_path(values_yaml_doc, target_value_path),
+                    Some(YamlValue::Mapping(_))
+                );
+                if declared_mapping && !widened {
+                    continue;
+                }
+            }
             if !implication.outer_guards.is_empty()
                 && !implication_guards_supported(
                     &implication.outer_guards,

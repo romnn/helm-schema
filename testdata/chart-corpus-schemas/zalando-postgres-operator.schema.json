@@ -338,6 +338,288 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "configGeneral": {}
+                  },
+                  "required": [
+                    "configGeneral"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "configGeneral": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "configGeneral"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "configGeneral": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "general configuration parameters"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "configKubernetes": {}
+                  },
+                  "required": [
+                    "configKubernetes"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "configKubernetes": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "configKubernetes"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "configKubernetes": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "configLoggingRestApi": {}
+                  },
+                  "required": [
+                    "configLoggingRestApi"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "configLoggingRestApi": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "configLoggingRestApi"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "readinessProbe": {}
+                  },
+                  "required": [
+                    "readinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "readinessProbe": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "readinessProbe"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "configLoggingRestApi": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "parameters affecting logging and REST API listener"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -381,6 +663,17 @@
               }
             },
             "type": "object"
+          },
+          "readinessProbe": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Allow to setup operator Deployment readiness probe"
           }
         },
         "type": "object"

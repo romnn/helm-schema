@@ -935,6 +935,56 @@
       "if": {
         "anyOf": [
           {
+            "not": {
+              "properties": {
+                "crds": {}
+              },
+              "required": [
+                "crds"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "crds": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "crds": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "anyOf": [
               {
                 "not": {

@@ -31,6 +31,57 @@
   "allOf": [
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "certs": {}
+              },
+              "required": [
+                "certs"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "certs": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "certs"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "certs": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "certificates used by webserver.\npaste certificate content or use helm with --set-file\nor use existing secret containing key, crt, ca as well as pem bundle"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -955,6 +1006,3373 @@
               "existingSecret": {
                 "description": "Existing secret containing the following key, crt and ca as well as the bundle pem.",
                 "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "collectors": {
+                      "properties": {
+                        "containerEngine": {
+                          "properties": {
+                            "engines": {
+                              "properties": {
+                                "bpm": {}
+                              },
+                              "required": [
+                                "bpm"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "engines"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "containerEngine"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "collectors"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "collectors": {
+                    "properties": {
+                      "containerEngine": {
+                        "properties": {
+                          "engines": {
+                            "properties": {
+                              "bpm": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "bpm"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "engines"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "containerEngine"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "collectors"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "controller": {
+                              "properties": {
+                                "kind": {}
+                              },
+                              "required": [
+                                "kind"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "controller"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "controller": {
+                            "properties": {
+                              "kind": {
+                                "enum": [
+                                  "daemonset"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "controller"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "deployment"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "collectors": {
+            "description": "Collectors for data enrichment (scenario requirement)",
+            "properties": {
+              "containerEngine": {
+                "description": "This collector is designed to collect metadata from various container engines and provide a unified interface through the container plugin.\nWhen enabled, it will deploy the container plugin and use it to collect metadata from the container engines.\nKeep in mind that the old collectors (docker, containerd, crio, podman) will use the container plugin to collect metadata under the hood.",
+                "properties": {
+                  "engines": {
+                    "description": "engines specify the container engines that will be used to collect metadata.\nSee https://github.com/falcosecurity/plugins/blob/main/plugins/container/README.md#configuration",
+                    "properties": {
+                      "bpm": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "collectors": {
+                      "properties": {
+                        "containerEngine": {
+                          "properties": {
+                            "engines": {
+                              "properties": {
+                                "containerd": {}
+                              },
+                              "required": [
+                                "containerd"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "engines"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "containerEngine"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "collectors"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "collectors": {
+                    "properties": {
+                      "containerEngine": {
+                        "properties": {
+                          "engines": {
+                            "properties": {
+                              "containerd": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "containerd"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "engines"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "containerEngine"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "collectors"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "controller": {
+                              "properties": {
+                                "kind": {}
+                              },
+                              "required": [
+                                "kind"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "controller"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "controller": {
+                            "properties": {
+                              "kind": {
+                                "enum": [
+                                  "daemonset"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "controller"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "deployment"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "collectors": {
+            "description": "Collectors for data enrichment (scenario requirement)",
+            "properties": {
+              "containerEngine": {
+                "description": "This collector is designed to collect metadata from various container engines and provide a unified interface through the container plugin.\nWhen enabled, it will deploy the container plugin and use it to collect metadata from the container engines.\nKeep in mind that the old collectors (docker, containerd, crio, podman) will use the container plugin to collect metadata under the hood.",
+                "properties": {
+                  "engines": {
+                    "description": "engines specify the container engines that will be used to collect metadata.\nSee https://github.com/falcosecurity/plugins/blob/main/plugins/container/README.md#configuration",
+                    "properties": {
+                      "containerd": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "collectors": {
+                      "properties": {
+                        "containerEngine": {
+                          "properties": {
+                            "engines": {
+                              "properties": {
+                                "cri": {}
+                              },
+                              "required": [
+                                "cri"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "engines"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "containerEngine"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "collectors"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "collectors": {
+                    "properties": {
+                      "containerEngine": {
+                        "properties": {
+                          "engines": {
+                            "properties": {
+                              "cri": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "cri"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "engines"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "containerEngine"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "collectors"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "controller": {
+                              "properties": {
+                                "kind": {}
+                              },
+                              "required": [
+                                "kind"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "controller"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "controller": {
+                            "properties": {
+                              "kind": {
+                                "enum": [
+                                  "daemonset"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "controller"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "deployment"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "collectors": {
+            "description": "Collectors for data enrichment (scenario requirement)",
+            "properties": {
+              "containerEngine": {
+                "description": "This collector is designed to collect metadata from various container engines and provide a unified interface through the container plugin.\nWhen enabled, it will deploy the container plugin and use it to collect metadata from the container engines.\nKeep in mind that the old collectors (docker, containerd, crio, podman) will use the container plugin to collect metadata under the hood.",
+                "properties": {
+                  "engines": {
+                    "description": "engines specify the container engines that will be used to collect metadata.\nSee https://github.com/falcosecurity/plugins/blob/main/plugins/container/README.md#configuration",
+                    "properties": {
+                      "cri": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "collectors": {
+                      "properties": {
+                        "containerEngine": {
+                          "properties": {
+                            "engines": {
+                              "properties": {
+                                "docker": {}
+                              },
+                              "required": [
+                                "docker"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "engines"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "containerEngine"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "collectors"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "collectors": {
+                    "properties": {
+                      "containerEngine": {
+                        "properties": {
+                          "engines": {
+                            "properties": {
+                              "docker": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "docker"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "engines"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "containerEngine"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "collectors"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "controller": {
+                              "properties": {
+                                "kind": {}
+                              },
+                              "required": [
+                                "kind"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "controller"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "controller": {
+                            "properties": {
+                              "kind": {
+                                "enum": [
+                                  "daemonset"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "controller"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "deployment"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "collectors": {
+            "description": "Collectors for data enrichment (scenario requirement)",
+            "properties": {
+              "containerEngine": {
+                "description": "This collector is designed to collect metadata from various container engines and provide a unified interface through the container plugin.\nWhen enabled, it will deploy the container plugin and use it to collect metadata from the container engines.\nKeep in mind that the old collectors (docker, containerd, crio, podman) will use the container plugin to collect metadata under the hood.",
+                "properties": {
+                  "engines": {
+                    "description": "engines specify the container engines that will be used to collect metadata.\nSee https://github.com/falcosecurity/plugins/blob/main/plugins/container/README.md#configuration",
+                    "properties": {
+                      "docker": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "collectors": {
+                      "properties": {
+                        "containerEngine": {
+                          "properties": {
+                            "engines": {
+                              "properties": {
+                                "libvirt_lxc": {}
+                              },
+                              "required": [
+                                "libvirt_lxc"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "engines"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "containerEngine"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "collectors"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "collectors": {
+                    "properties": {
+                      "containerEngine": {
+                        "properties": {
+                          "engines": {
+                            "properties": {
+                              "libvirt_lxc": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "libvirt_lxc"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "engines"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "containerEngine"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "collectors"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "controller": {
+                              "properties": {
+                                "kind": {}
+                              },
+                              "required": [
+                                "kind"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "controller"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "controller": {
+                            "properties": {
+                              "kind": {
+                                "enum": [
+                                  "daemonset"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "controller"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "deployment"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "collectors": {
+            "description": "Collectors for data enrichment (scenario requirement)",
+            "properties": {
+              "containerEngine": {
+                "description": "This collector is designed to collect metadata from various container engines and provide a unified interface through the container plugin.\nWhen enabled, it will deploy the container plugin and use it to collect metadata from the container engines.\nKeep in mind that the old collectors (docker, containerd, crio, podman) will use the container plugin to collect metadata under the hood.",
+                "properties": {
+                  "engines": {
+                    "description": "engines specify the container engines that will be used to collect metadata.\nSee https://github.com/falcosecurity/plugins/blob/main/plugins/container/README.md#configuration",
+                    "properties": {
+                      "libvirt_lxc": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "collectors": {
+                      "properties": {
+                        "containerEngine": {
+                          "properties": {
+                            "engines": {
+                              "properties": {
+                                "lxc": {}
+                              },
+                              "required": [
+                                "lxc"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "engines"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "containerEngine"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "collectors"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "collectors": {
+                    "properties": {
+                      "containerEngine": {
+                        "properties": {
+                          "engines": {
+                            "properties": {
+                              "lxc": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "lxc"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "engines"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "containerEngine"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "collectors"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "controller": {
+                              "properties": {
+                                "kind": {}
+                              },
+                              "required": [
+                                "kind"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "controller"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "controller": {
+                            "properties": {
+                              "kind": {
+                                "enum": [
+                                  "daemonset"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "controller"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "deployment"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "collectors": {
+            "description": "Collectors for data enrichment (scenario requirement)",
+            "properties": {
+              "containerEngine": {
+                "description": "This collector is designed to collect metadata from various container engines and provide a unified interface through the container plugin.\nWhen enabled, it will deploy the container plugin and use it to collect metadata from the container engines.\nKeep in mind that the old collectors (docker, containerd, crio, podman) will use the container plugin to collect metadata under the hood.",
+                "properties": {
+                  "engines": {
+                    "description": "engines specify the container engines that will be used to collect metadata.\nSee https://github.com/falcosecurity/plugins/blob/main/plugins/container/README.md#configuration",
+                    "properties": {
+                      "lxc": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "collectors": {
+                      "properties": {
+                        "containerEngine": {
+                          "properties": {
+                            "engines": {
+                              "properties": {
+                                "podman": {}
+                              },
+                              "required": [
+                                "podman"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "engines"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "containerEngine"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "collectors"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "collectors": {
+                    "properties": {
+                      "containerEngine": {
+                        "properties": {
+                          "engines": {
+                            "properties": {
+                              "podman": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "podman"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "engines"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "containerEngine"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "collectors"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "controller": {
+                              "properties": {
+                                "kind": {}
+                              },
+                              "required": [
+                                "kind"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "controller"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "controller": {
+                            "properties": {
+                              "kind": {
+                                "enum": [
+                                  "daemonset"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "controller"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "containerEngine": {
+                                  "properties": {
+                                    "enabled": {}
+                                  },
+                                  "required": [
+                                    "enabled"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "containerEngine"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "containerEngine": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "containerEngine"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "collectors": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "collectors"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "collectors": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "collectors"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "driver": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "driver"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "driver": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "driver"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "deployment"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "collectors": {
+            "description": "Collectors for data enrichment (scenario requirement)",
+            "properties": {
+              "containerEngine": {
+                "description": "This collector is designed to collect metadata from various container engines and provide a unified interface through the container plugin.\nWhen enabled, it will deploy the container plugin and use it to collect metadata from the container engines.\nKeep in mind that the old collectors (docker, containerd, crio, podman) will use the container plugin to collect metadata under the hood.",
+                "properties": {
+                  "engines": {
+                    "description": "engines specify the container engines that will be used to collect metadata.\nSee https://github.com/falcosecurity/plugins/blob/main/plugins/container/README.md#configuration",
+                    "properties": {
+                      "podman": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -2760,6 +6178,57 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "falco": {}
+              },
+              "required": [
+                "falco"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "falco": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "falco"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falco": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Directly set values in the falco.yaml configuration file.\nPlease, note that some values may be overridden by other chart settings,\nfor specific features are managed by the chart itself. This includes:\n- drivers configuration\n- collectors configuration (this affects container and k8smeta plugins configurations)\n- metrics configuration\nFalco config files settings #"
           }
         },
         "type": "object"
@@ -6596,6 +10065,79 @@
       "if": {
         "anyOf": [
           {
+            "not": {
+              "properties": {
+                "falcoctl": {
+                  "properties": {
+                    "config": {}
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "falcoctl"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "falcoctl": {
+                "properties": {
+                  "config": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcoctl"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcoctl": {
+            "description": "falcoctl config  #",
+            "properties": {
+              "config": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Configuration file of the falcoctl tool. It is saved in a configmap and mounted on the falcotl containers."
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "anyOf": [
@@ -7963,6 +11505,57 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "falcosidekick": {}
+              },
+              "required": [
+                "falcosidekick"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "falcosidekick": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml"
           }
         },
         "type": "object"
@@ -15143,6 +18736,226 @@
                   }
                 ],
                 "description": "namespaceOverride overrides the deployment namespace. It's useful for multi-namespace deployments in combined charts."
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "k8s-metacollector": {
+                      "properties": {
+                        "service": {
+                          "properties": {
+                            "ports": {}
+                          },
+                          "required": [
+                            "ports"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "service"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "k8s-metacollector"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "k8s-metacollector": {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "ports": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "ports"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "k8s-metacollector"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "collectors": {
+                        "properties": {
+                          "kubernetes": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "kubernetes"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "collectors"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "k8s-metacollector": {
+                        "properties": {
+                          "serviceMonitor": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "serviceMonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "k8s-metacollector"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "k8s-metacollector": {
+                        "properties": {
+                          "serviceMonitor": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "serviceMonitor"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "k8s-metacollector"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "collectors": {
+                        "properties": {
+                          "kubernetes": {
+                            "properties": {
+                              "enabled": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "kubernetes"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "collectors"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "k8s-metacollector": {
+            "properties": {
+              "service": {
+                "description": "service exposes the k8s-metacollector services to be accessed from within the cluster.\nref: https://kubernetes.io/docs/concepts/services-networking/service/",
+                "properties": {
+                  "ports": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "ports denotes all the ports on which the Service will listen."
+                  }
+                },
+                "type": "object"
               }
             },
             "type": "object"

@@ -2586,7 +2586,7 @@ any JSON type absent stronger evidence; a sequence splice must retain its
 sequence/item structure; a `tpl` string arm exists only with actual `tpl`
 evidence.
 
-### F57. A broad fragment alternative bypasses independent member/range contracts (PARTIAL 2026-07-13)
+### F57. A broad fragment alternative bypasses independent member/range contracts (FIXED 2026-07-14)
 
 Even where another use supplies exact structure, the new fragment lane is
 unioned as a bypass instead of being intersected under the correct guard. This
@@ -2722,7 +2722,7 @@ must remain `type: object` with open additional properties; a declared/rendered
 list must retain `type: array` and its item evidence. Add string/other lanes only
 when a real dispatch or `tpl` path supports them.
 
-### F63. Chained member reads do not require intermediate members (PARTIAL 2026-07-14)
+### F63. Chained member reads do not require intermediate members (FIXED 2026-07-14)
 
 Direct selector chains can fail before their leaf is rendered when an
 intermediate map member is absent. The schema records descendant descriptions
@@ -2760,7 +2760,7 @@ its narrowing child effect. Preserve an opaque/alternative branch or abstain
 from the narrowing until semver predicates can be represented faithfully.
 Pin both sides of the version guard so a globally strict fallback cannot pass.
 
-### F65. Ordered helper mutation is not reflected in accepted input domains (BLOCKED ON F57 ENCODING, 2026-07-14)
+### F65. Ordered helper mutation is not reflected in accepted input domains (FIXED 2026-07-14)
 
 NACK supports `jetstream.image` as a string or map. The `jsc.fixImage` helper
 checks for a string and mutates `.Values.jetstream.image` into a map with
@@ -2948,3 +2948,45 @@ reproducer verified to fail without it.
   after `cargo install` (the minio false terminal above was the only
   failure and is covered by
   `derived_text_aggregate_condition_does_not_negate_input_truthiness`).
+
+## Size-aware member-access contract encoding (2026-07-14)
+
+The design work that unblocked F57, F63's general case, and F65. The naive
+first cut (one guarded arm per member-read site) pushed umbrella-chart
+schemas past Helm's 5 MiB chart-file limit and was reverted; this encoding
+keeps the semantics with bounded output. All 966 workspace tests pass
+(the only remaining pin is the F53 literal-mode chain), scans stay at
+baseline, and check:local is green. Whole-chart fixtures grew +4.2 MB
+pretty total (~9%), with compact serialization far below every limit.
+
+**Semantics.** Go field access through a values path (`.Values.a.b`,
+`$d.repository` through a local, `.image` through a `with`/helper dot)
+aborts rendering when a nonterminal prefix is a truthy scalar or list,
+and yields nil when it is nil. Each access therefore implies
+`truthy(P) ⇒ object` for every accessed prefix `P`.
+
+**Encoding, size-aware by construction:**
+
+- Capture generation rides the existing fail channel: the evaluator's
+  Field/Selector arms emit `[truthy(P), ¬object(P)]` captures flagged
+  `member_access`, so ambient guards join at absorption, helper summaries
+  and subchart scoping map them like every capture, and approximate
+  conditions poison them like every fail negation. The access base is the
+  value's OWN identity (`AbstractValue::ValuesPath`) — influence through
+  synthetic `dict` contexts is not identity.
+- The signal builder folds captures per path instead of lowering each:
+  distinct lowerable outer-guard sets become ONE
+  `ContractFailImplication` whose condition is the any-of of the guard
+  sets (an unconditional access collapses it to plain `truthy(P)`), with
+  a fanout cap (8 sets) past which the requirement abstains.
+- The requirement is `FailValueRequirement::MemberHost`: object — or a
+  kind the chart's own type dispatch on that path provably handles
+  (positive `kindIs` tests collected per path), which is how nack's
+  `set`-converted string image form stays accepted while the untouched
+  scalar complement rejects (F65) without modeling mutation order.
+- Gen prunes the arm where the schema tree already enforces it: interior
+  nodes materialized by member reads are typed objects, so the
+  bypass-proof root arm is emitted only when a union lane can widen the
+  base (serialized/fragment/render/ranged/partial-scalar uses, a type
+  dispatch) or the declared default is not a mapping (F57's serialized
+  sibling is exactly such a lane).
