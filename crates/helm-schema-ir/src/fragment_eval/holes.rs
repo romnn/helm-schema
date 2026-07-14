@@ -59,6 +59,29 @@ fn required_call_subjects(expr: &TemplateExpr) -> Vec<&TemplateExpr> {
     subjects
 }
 
+/// Whether a `required` subject is Helm-empty by construction: `nil`, an
+/// empty string literal, an empty `dict`/`list`, or an `index`/`get` into
+/// one of those (which yields nil for every key).
+fn subject_is_statically_helm_empty(expr: &TemplateExpr) -> bool {
+    match expr.deparen() {
+        TemplateExpr::Literal(helm_schema_ast::Literal::Nil) => true,
+        TemplateExpr::Literal(
+            helm_schema_ast::Literal::String(text) | helm_schema_ast::Literal::RawString(text),
+        ) => text.is_empty(),
+        TemplateExpr::Call { function, args }
+            if matches!(function.as_str(), "dict" | "list") && args.is_empty() =>
+        {
+            true
+        }
+        TemplateExpr::Call { function, args }
+            if matches!(function.as_str(), "index" | "get") && !args.is_empty() =>
+        {
+            subject_is_statically_helm_empty(&args[0])
+        }
+        _ => false,
+    }
+}
+
 fn collect_required_subjects<'e>(expr: &'e TemplateExpr, out: &mut Vec<&'e TemplateExpr>) {
     match expr {
         TemplateExpr::Call { function, args } => {
@@ -146,16 +169,28 @@ impl Interpreter<'_> {
     /// subjects attach per-member requirements.
     pub(super) fn record_required_subjects(&mut self, exprs: &[TemplateExpr]) {
         let mut subject_paths = Vec::new();
+        let mut statically_empty = false;
         {
             let context = self.value_path_context();
             for expr in exprs {
                 for subject in required_call_subjects(expr) {
+                    // `required "msg" nil` (and its `index (dict) …`
+                    // spellings) is a pure validator: whenever control
+                    // reaches it, rendering terminates, so the ambient
+                    // predicates form a terminal clause (F51).
+                    if subject_is_statically_helm_empty(subject) {
+                        statically_empty = true;
+                        continue;
+                    }
                     let paths = context.paths_for_expr(subject);
                     if paths.len() == 1 {
                         subject_paths.extend(paths);
                     }
                 }
             }
+        }
+        if statically_empty {
+            self.record_fail_condition();
         }
         for path in subject_paths {
             self.record_required_condition(&path);
@@ -170,8 +205,18 @@ impl Interpreter<'_> {
             .without_helper_call_args();
         // Locals (`$x`) and root bindings (`.x`) are distinct namespaces:
         // roots stay in `root_fields` so a helper-arg key never shadows a
-        // same-named body local.
-        env.locals = self.locals.fragment_values.clone();
+        // same-named body local. Range VALUE variables resolve to member
+        // identity (`$arg` in `range $arg := .Values.args` is `args.*`),
+        // the same identity the range dot already carries, so member
+        // consumers (`tpl $arg`) bind their contracts per member (F59);
+        // explicit fragment values shadow them where both exist.
+        env.locals = self.locals.range_member_values.clone();
+        env.locals.extend(
+            self.locals
+                .fragment_values
+                .iter()
+                .map(|(name, value)| (name.clone(), value.clone())),
+        );
         env.local_default_paths = self.locals.default_paths.clone();
         env.local_output_meta = self.locals.output_meta.clone();
         env.bound_values =
@@ -307,8 +352,15 @@ impl Interpreter<'_> {
             .extend(effects.yaml_serialized_paths.iter().cloned());
         self.shape_erased_paths
             .extend(effects.shape_erased_paths.iter().cloned());
-        self.string_contract_paths
-            .extend(effects.string_contract_paths.iter().cloned());
+        // An APPROXIMATELY-lowered enclosing condition (a semver guard the
+        // encoding cannot represent) may gate this site: binding the strict
+        // contract path-wide would narrow states where the branch never
+        // runs, so the flag abstains there — the guarded captures are
+        // already poisoned by the same approximation (F64).
+        if self.approximate_condition_paths.is_empty() {
+            self.string_contract_paths
+                .extend(effects.string_contract_paths.iter().cloned());
+        }
         // Under ambient predicates the row lanes only hint (and hints
         // about a path under its OWN guard stay row-anchored); the
         // truthy⇒string capture carries the enforceable conditional arm
@@ -468,11 +520,21 @@ impl Interpreter<'_> {
         // rows merge with the locals' binding-time meta for lowering.
         let mut hole_meta = hole.effects.local_output_meta.clone();
         merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
+        // An APPROXIMATELY-lowered enclosing condition gates this hole:
+        // its rows' branch keys stand in for a guard the encoding cannot
+        // represent, so a string contract riding them would narrow states
+        // the real branch never reaches (F64).
+        let no_contracts = std::collections::BTreeSet::new();
+        let row_string_contract_paths = if self.approximate_condition_paths.is_empty() {
+            &hole.effects.string_contract_paths
+        } else {
+            &no_contracts
+        };
         let scope = LowerScope {
             defaulted_paths: &defaulted,
             encoded_paths: &hole.effects.encoded_paths,
             shape_erased_paths: &hole.effects.shape_erased_paths,
-            string_contract_paths: &hole.effects.string_contract_paths,
+            string_contract_paths: row_string_contract_paths,
             chart_value_defaults: &self.locals.chart_value_defaults,
             local_output_meta: &hole_meta,
         };
@@ -624,11 +686,21 @@ impl Interpreter<'_> {
         // rows merge with the locals' binding-time meta for lowering.
         let mut hole_meta = hole.effects.local_output_meta.clone();
         merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
+        // An APPROXIMATELY-lowered enclosing condition gates this hole:
+        // its rows' branch keys stand in for a guard the encoding cannot
+        // represent, so a string contract riding them would narrow states
+        // the real branch never reaches (F64).
+        let no_contracts = std::collections::BTreeSet::new();
+        let row_string_contract_paths = if self.approximate_condition_paths.is_empty() {
+            &hole.effects.string_contract_paths
+        } else {
+            &no_contracts
+        };
         let scope = LowerScope {
             defaulted_paths: &defaulted,
             encoded_paths: &hole.effects.encoded_paths,
             shape_erased_paths: &hole.effects.shape_erased_paths,
-            string_contract_paths: &hole.effects.string_contract_paths,
+            string_contract_paths: row_string_contract_paths,
             chart_value_defaults: &self.locals.chart_value_defaults,
             local_output_meta: &hole_meta,
         };
@@ -1061,11 +1133,19 @@ impl Interpreter<'_> {
                 };
                 let mut hole_meta = hole.effects.local_output_meta.clone();
                 merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
+                // Same F64 abstention as the block-scalar sites: no string
+                // contract meta under approximately-lowered conditions.
+                let no_contracts = std::collections::BTreeSet::new();
+                let row_string_contract_paths = if self.approximate_condition_paths.is_empty() {
+                    &hole.effects.string_contract_paths
+                } else {
+                    &no_contracts
+                };
                 let scope = LowerScope {
                     defaulted_paths: &defaulted,
                     encoded_paths: &hole.effects.encoded_paths,
                     shape_erased_paths: &hole.effects.shape_erased_paths,
-                    string_contract_paths: &hole.effects.string_contract_paths,
+                    string_contract_paths: row_string_contract_paths,
                     chart_value_defaults: &self.locals.chart_value_defaults,
                     local_output_meta: &hole_meta,
                 };

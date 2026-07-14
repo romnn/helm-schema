@@ -488,6 +488,39 @@ fn insert_map_member_row(
             object.insert("additionalProperties".to_string(), member.into_value());
             true
         }
+        // A union base (the runtime iterable domain) hosts the member row
+        // in EVERY collection arm: `range` iterates arrays and maps alike,
+        // so the member constrains array items and map values, while
+        // scalar, null, and CLOSED-object arms (the exact-empty off state)
+        // stay untouched (F59). Array arms merge into their `items`
+        // directly so repeated member rows fold instead of wrapping.
+        SchemaNode::Foreign(Value::Object(object)) if object.contains_key("anyOf") => {
+            let Some(arms) = object.get_mut("anyOf").and_then(Value::as_array_mut) else {
+                return false;
+            };
+            let mut hosted = false;
+            for arm in arms {
+                if let Some(arm_object) = arm.as_object_mut() {
+                    let is_array_arm = arm_object.get("type").and_then(Value::as_str)
+                        == Some("array")
+                        || arm_object.contains_key("items");
+                    if is_array_arm {
+                        let mut items = arm_object
+                            .get("items")
+                            .cloned()
+                            .map_or_else(SchemaNode::empty, SchemaNode::foreign);
+                        insert(&mut items);
+                        arm_object.insert("items".to_string(), items.into_value());
+                        hosted = true;
+                        continue;
+                    }
+                }
+                let mut arm_node = SchemaNode::foreign(std::mem::take(arm));
+                hosted |= insert_map_member_row(&mut arm_node, path_segments, leaf);
+                *arm = arm_node.into_value();
+            }
+            hosted
+        }
         _ => false,
     }
 }

@@ -370,6 +370,571 @@
       "if": {
         "anyOf": [
           {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
+            "properties": {
+              "webhookMode": {
+                "description": "command: /controller",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          },
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "imagePullSecrets": {
+            "items": {},
+            "type": "array"
+          },
+          "loadBalancerClass": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "nameOverride": {
+            "type": "string"
+          },
+          "prometheus": {
+            "properties": {
+              "metricsPort": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "port both controller and speaker will listen on for metrics (always HTTPS).\nMatches the port kube-rbac-proxy previously served on."
+              }
+            },
+            "type": "object"
+          },
+          "tls": {
+            "properties": {
+              "cipherSuites": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Comma-separated list of TLS cipher suites. If empty, uses Go defaults. Only applies to TLS 1.2."
+              },
+              "controllerMetricsTLSSecret": {
+                "description": "The name of the secret to be mounted in the controller pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated.",
+                "type": "string"
+              },
+              "curvePreferences": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Comma-separated list of numeric CurveID values (e.g. 29,4588). See https://pkg.go.dev/crypto/tls#CurveID. If empty, uses Go defaults."
+              },
+              "minVersion": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Minimum TLS version (VersionTLS12 or VersionTLS13). Defaults to VersionTLS13."
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "networkpolicies": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "networkpolicies"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
+            "properties": {
+              "webhookMode": {
+                "description": "command: /controller",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          },
+          "nameOverride": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "networkpolicies": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkpolicies"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
+            "properties": {
+              "webhookMode": {
+                "description": "command: /controller",
+                "not": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "networkpolicies": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkpolicies"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
+            "properties": {
+              "webhookMode": {
+                "description": "command: /controller",
+                "not": {
+                  "type": "integer"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "networkpolicies": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkpolicies"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
+            "properties": {
+              "webhookMode": {
+                "description": "command: /controller",
+                "not": {
+                  "type": "number"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "networkpolicies": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkpolicies"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
+            "properties": {
+              "webhookMode": {
+                "description": "command: /controller",
+                "not": {
+                  "type": "object"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "anyOf": [
               {
                 "not": {
@@ -4476,182 +5041,6 @@
           {
             "not": {
               "properties": {
-                "controller": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "controller"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "controller": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "controller"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "imagePullSecrets": {
-            "items": {},
-            "type": "array"
-          },
-          "loadBalancerClass": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          },
-          "nameOverride": {
-            "type": "string"
-          },
-          "prometheus": {
-            "properties": {
-              "metricsPort": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "port both controller and speaker will listen on for metrics (always HTTPS).\nMatches the port kube-rbac-proxy previously served on."
-              }
-            },
-            "type": "object"
-          },
-          "tls": {
-            "properties": {
-              "cipherSuites": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Comma-separated list of TLS cipher suites. If empty, uses Go defaults. Only applies to TLS 1.2."
-              },
-              "controllerMetricsTLSSecret": {
-                "description": "The name of the secret to be mounted in the controller pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated.",
-                "type": "string"
-              },
-              "curvePreferences": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Comma-separated list of numeric CurveID values (e.g. 29,4588). See https://pkg.go.dev/crypto/tls#CurveID. If empty, uses Go defaults."
-              },
-              "minVersion": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Minimum TLS version (VersionTLS12 or VersionTLS13). Defaults to VersionTLS13."
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
                 "speaker": {
                   "properties": {
                     "enabled": {}
@@ -6911,34 +7300,57 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "properties": {
-              "networkpolicies": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "speaker": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "speaker"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "speaker": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "enabled"
+                  "speaker"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "networkpolicies"
-            ],
-            "type": "object"
+            ]
           },
           {
-            "allOf": [
+            "anyOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
+                "not": {
+                  "properties": {
+                    "speaker": {
                       "properties": {
-                        "speaker": {
+                        "excludeInterfaces": {
                           "properties": {
                             "enabled": {}
                           },
@@ -6949,14 +7361,22 @@
                         }
                       },
                       "required": [
-                        "speaker"
+                        "excludeInterfaces"
                       ],
                       "type": "object"
                     }
                   },
-                  {
+                  "required": [
+                    "speaker"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "speaker": {
                     "properties": {
-                      "speaker": {
+                      "excludeInterfaces": {
                         "properties": {
                           "enabled": {
                             "$ref": "#/$defs/helm-truthy"
@@ -6969,69 +7389,15 @@
                       }
                     },
                     "required": [
-                      "speaker"
+                      "excludeInterfaces"
                     ],
                     "type": "object"
                   }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "speaker": {
-                          "properties": {
-                            "excludeInterfaces": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "excludeInterfaces"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "speaker"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "speaker": {
-                        "properties": {
-                          "excludeInterfaces": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "excludeInterfaces"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "speaker"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                },
+                "required": [
+                  "speaker"
+                ],
+                "type": "object"
               }
             ]
           }

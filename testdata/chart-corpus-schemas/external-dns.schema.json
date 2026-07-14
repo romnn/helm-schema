@@ -1294,6 +1294,96 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "sources": {}
+                  },
+                  "required": [
+                    "sources"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "sources": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "sources"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "sources": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "_Kubernetes_ resources to monitor for DNS entries."
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "not": {
           "properties": {
             "txtPrefix": {
@@ -1384,26 +1474,56 @@
                       "anyOf": [
                         {
                           "items": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "podAffinityTerm": {
+                            "anyOf": [
+                              {
                                 "additionalProperties": {},
                                 "properties": {
-                                  "labelSelector": {}
+                                  "podAffinityTerm": {
+                                    "additionalProperties": {},
+                                    "properties": {
+                                      "labelSelector": {}
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "additionalProperties": {},
+                                "properties": {
+                                  "weight": {}
                                 },
                                 "type": "object"
-                              },
-                              "weight": {}
-                            },
-                            "type": "object"
+                              }
+                            ]
                           },
                           "type": "array"
                         },
                         {
-                          "type": "null"
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "additionalProperties": {},
+                                "properties": {
+                                  "podAffinityTerm": {
+                                    "additionalProperties": {},
+                                    "properties": {
+                                      "labelSelector": {}
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "additionalProperties": {},
+                                "properties": {
+                                  "weight": {}
+                                },
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          "type": "object"
                         },
                         {
-                          "type": "object"
+                          "type": "null"
                         }
                       ]
                     }
@@ -1446,26 +1566,56 @@
                       "anyOf": [
                         {
                           "items": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "podAffinityTerm": {
+                            "anyOf": [
+                              {
                                 "additionalProperties": {},
                                 "properties": {
-                                  "labelSelector": {}
+                                  "podAffinityTerm": {
+                                    "additionalProperties": {},
+                                    "properties": {
+                                      "labelSelector": {}
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "additionalProperties": {},
+                                "properties": {
+                                  "weight": {}
                                 },
                                 "type": "object"
-                              },
-                              "weight": {}
-                            },
-                            "type": "object"
+                              }
+                            ]
                           },
                           "type": "array"
                         },
                         {
-                          "type": "null"
+                          "additionalProperties": {
+                            "anyOf": [
+                              {
+                                "additionalProperties": {},
+                                "properties": {
+                                  "podAffinityTerm": {
+                                    "additionalProperties": {},
+                                    "properties": {
+                                      "labelSelector": {}
+                                    }
+                                  }
+                                }
+                              },
+                              {
+                                "additionalProperties": {},
+                                "properties": {
+                                  "weight": {}
+                                },
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          "type": "object"
                         },
                         {
-                          "type": "object"
+                          "type": "null"
                         }
                       ]
                     }
@@ -1612,12 +1762,31 @@
           "type": "array"
         },
         {
+          "items": {
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
+          },
+          "type": "array"
+        },
+        {
           "type": "integer"
         },
         {
           "type": "null"
         },
         {
+          "additionalProperties": {
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
+          },
           "type": "object"
         }
       ],
@@ -1659,12 +1828,31 @@
           "type": "array"
         },
         {
+          "items": {
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
+          },
+          "type": "array"
+        },
+        {
           "type": "integer"
         },
         {
           "type": "null"
         },
         {
+          "additionalProperties": {
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
+          },
           "type": "object"
         }
       ],
@@ -1946,12 +2134,31 @@
           "type": "array"
         },
         {
+          "items": {
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
+          },
+          "type": "array"
+        },
+        {
           "type": "integer"
         },
         {
           "type": "null"
         },
         {
+          "additionalProperties": {
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
+          },
           "type": "object"
         }
       ],
@@ -2369,6 +2576,7 @@
       ],
       "properties": {
         "data": {
+          "additionalProperties": {},
           "description": "`Secret` data."
         },
         "enabled": {
@@ -2810,12 +3018,31 @@
           "type": "array"
         },
         {
+          "items": {
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
+          },
+          "type": "array"
+        },
+        {
           "type": "integer"
         },
         {
           "type": "null"
         },
         {
+          "additionalProperties": {
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
+          },
           "type": "object"
         }
       ],
@@ -2846,6 +3073,7 @@
           "type": "array"
         },
         {
+          "items": {},
           "type": "array"
         },
         {
@@ -2855,6 +3083,7 @@
           "type": "null"
         },
         {
+          "additionalProperties": {},
           "type": "object"
         }
       ],

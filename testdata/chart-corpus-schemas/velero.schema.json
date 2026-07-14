@@ -31,45 +31,73 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "configMaps": {
+            "anyOf": [
+              {
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Velero ConfigMaps.\nEg:\nconfigMaps:\nSee: https://velero.io/docs/v1.11/file-system-backup/\nfs-restore-action-config:\nlabels:\nvelero.io/plugin-config: \"\"\nvelero.io/pod-volume-restore: RestoreItemAction\ndata:\nimage: velero/velero:v1.17.1\ncpuRequest: 200m\nmemRequest: 128Mi\ncpuLimit: 200m\nmemLimit: 128Mi\nsecCtx: |\ncapabilities:\ndrop:\n- ALL\nadd: []\nallowPrivilegeEscalation: false\nreadOnlyRootFilesystem: true\nrunAsUser: 1001\nrunAsGroup: 999"
+          },
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
           {
             "properties": {
-              "fullnameOverride": {
+              "nameOverride": {
                 "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
-              "fullnameOverride"
+              "nameOverride"
             ],
             "type": "object"
           },
           {
-            "allOf": [
-              {
-                "properties": {
-                  "nameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "nameOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "fullnameOverride": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "fullnameOverride"
-                  ],
-                  "type": "object"
+            "not": {
+              "properties": {
+                "fullnameOverride": {
+                  "$ref": "#/$defs/helm-truthy"
                 }
-              }
-            ]
+              },
+              "required": [
+                "fullnameOverride"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
@@ -429,6 +457,91 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "configuration": {
+          "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
+          "properties": {
+            "uploaderType": {
+              "description": "These are server-level settings passed as CLI flags to the `velero server` command. Velero\nuses default values if they're not passed in, so they only need to be explicitly specified\nhere if using a non-default value. The `velero server` default values are shown in the\ncomments below.\n`velero server` default: kopia",
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "configuration": {
+          "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
+          "properties": {
+            "uploaderType": {
+              "description": "These are server-level settings passed as CLI flags to the `velero server` command. Velero\nuses default values if they're not passed in, so they only need to be explicitly specified\nhere if using a non-default value. The `velero server` default values are shown in the\ncomments below.\n`velero server` default: kopia",
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "configuration": {
+          "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
+          "properties": {
+            "uploaderType": {
+              "description": "These are server-level settings passed as CLI flags to the `velero server` command. Velero\nuses default values if they're not passed in, so they only need to be explicitly specified\nhere if using a non-default value. The `velero server` default values are shown in the\ncomments below.\n`velero server` default: kopia",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "configuration": {
+          "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
+          "properties": {
+            "uploaderType": {
+              "description": "These are server-level settings passed as CLI flags to the `velero server` command. Velero\nuses default values if they're not passed in, so they only need to be explicitly specified\nhere if using a non-default value. The `velero server` default values are shown in the\ncomments below.\n`velero server` default: kopia",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "configuration": {
+          "description": "Parameters for the `default` BackupStorageLocation and VolumeSnapshotLocation,\nand additional server settings.",
+          "properties": {
+            "uploaderType": {
+              "description": "These are server-level settings passed as CLI flags to the `velero server` command. Velero\nuses default values if they're not passed in, so they only need to be explicitly specified\nhere if using a non-default value. The `velero server` default values are shown in the\ncomments below.\n`velero server` default: kopia",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -1156,73 +1269,6 @@
                     "type": "object"
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "fullnameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "fullnameOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "namespace": {}
-                      },
-                      "required": [
-                        "namespace"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "namespace": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "namespace"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "namespace": {
-                    "properties": {
-                      "labels": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "labels"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "namespace"
-                ],
-                "type": "object"
               }
             ]
           },
@@ -2107,6 +2153,23 @@
             },
             "type": "object"
           },
+          "metrics": {
+            "description": "Settings for Velero's prometheus metrics. Enabled by default.",
+            "properties": {
+              "service": {
+                "description": "service metdata if metrics are enabled",
+                "properties": {
+                  "type": {
+                    "not": {
+                      "type": "array"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
           "readinessProbe": {
             "additionalProperties": {},
             "description": "Readiness probe of the pod",
@@ -2598,6 +2661,270 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "metrics": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "metrics"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "metrics": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "metrics": {
+            "description": "Settings for Velero's prometheus metrics. Enabled by default.",
+            "properties": {
+              "service": {
+                "description": "service metdata if metrics are enabled",
+                "properties": {
+                  "type": {
+                    "not": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "metrics": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "metrics"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "metrics": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "metrics": {
+            "description": "Settings for Velero's prometheus metrics. Enabled by default.",
+            "properties": {
+              "service": {
+                "description": "service metdata if metrics are enabled",
+                "properties": {
+                  "type": {
+                    "not": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "metrics": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "metrics"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "metrics": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "metrics": {
+            "description": "Settings for Velero's prometheus metrics. Enabled by default.",
+            "properties": {
+              "service": {
+                "description": "service metdata if metrics are enabled",
+                "properties": {
+                  "type": {
+                    "not": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "metrics": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "metrics"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "metrics": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "metrics": {
+            "description": "Settings for Velero's prometheus metrics. Enabled by default.",
+            "properties": {
+              "service": {
+                "description": "service metdata if metrics are enabled",
+                "properties": {
+                  "type": {
+                    "not": {
+                      "type": "object"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "nameOverride": {
             "$ref": "#/$defs/helm-truthy"
@@ -2619,6 +2946,162 @@
                 "type": "null"
               }
             ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "namespace": {}
+              },
+              "required": [
+                "namespace"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "namespace"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "namespace": {
+            "description": "Labels settings in namespace",
+            "properties": {
+              "labels": {
+                "description": "Enforce Pod Security Standards with Namespace Labels\nhttps://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/\npod-security.kubernetes.io/enforce: privileged\npod-security.kubernetes.io/enforce-version: latest\npod-security.kubernetes.io/audit: privileged\npod-security.kubernetes.io/audit-version: latest\npod-security.kubernetes.io/warn: privileged\npod-security.kubernetes.io/warn-version: latest",
+                "not": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "namespace": {}
+              },
+              "required": [
+                "namespace"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "namespace"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "namespace": {
+            "description": "Labels settings in namespace",
+            "properties": {
+              "labels": {
+                "description": "Enforce Pod Security Standards with Namespace Labels\nhttps://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/\npod-security.kubernetes.io/enforce: privileged\npod-security.kubernetes.io/enforce-version: latest\npod-security.kubernetes.io/audit: privileged\npod-security.kubernetes.io/audit-version: latest\npod-security.kubernetes.io/warn: privileged\npod-security.kubernetes.io/warn-version: latest",
+                "not": {
+                  "type": "integer"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "namespace": {}
+              },
+              "required": [
+                "namespace"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "namespace"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "namespace": {
+            "description": "Labels settings in namespace",
+            "properties": {
+              "labels": {
+                "description": "Enforce Pod Security Standards with Namespace Labels\nhttps://kubernetes.io/docs/tasks/configure-pod-container/enforce-standards-namespace-labels/\npod-security.kubernetes.io/enforce: privileged\npod-security.kubernetes.io/enforce-version: latest\npod-security.kubernetes.io/audit: privileged\npod-security.kubernetes.io/audit-version: latest\npod-security.kubernetes.io/warn: privileged\npod-security.kubernetes.io/warn-version: latest",
+                "not": {
+                  "type": "number"
+                }
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -4061,6 +4544,11 @@
               "const": null
             },
             {
+              "enum": [
+                "restic"
+              ]
+            },
+            {
               "type": "null"
             },
             {
@@ -4216,17 +4704,6 @@
           ]
         },
         "name": {
-          "anyOf": [
-            {
-              "const": null
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Name of the secret to create if `useSecret` is true and `existingSecret` is empty"
         },
         "secretContents": {
@@ -5669,13 +6146,57 @@
           "items": {
             "additionalProperties": {},
             "properties": {
-              "annotations": {},
+              "annotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "disabled": {},
-              "labels": {},
-              "paused": {},
-              "skipImmediately": {},
+              "labels": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "paused": {
+                "description": "Paused specifies whether the schedule is paused or not",
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "schedule": {},
+              "skipImmediately": {
+                "description": "SkipImmediately specifies whether to skip backup if schedule is due immediately from `schedule.status.lastBackup` timestamp when schedule is unpaused or if schedule is new.\nIf true, backup will be skipped immediately when schedule is unpaused if it is due based on .Status.LastBackupTimestamp or schedule is new, and will run at next schedule time.\nIf false, backup will not be skipped immediately when schedule is unpaused, but will run at next schedule time.\nIf empty, will follow server configuration (default: false).",
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
               "template": {},
-              "useOwnerReferencesInBackup": {}
+              "useOwnerReferencesInBackup": {
+                "description": "UseOwnerReferencesBackup specifies whether to use\nOwnerReferences on backups created by this Schedule.",
+                "nullable": true,
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
             },
             "type": "object"
           },
@@ -5685,6 +6206,63 @@
           "type": "null"
         },
         {
+          "additionalProperties": {
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "disabled": {},
+              "labels": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "paused": {
+                "description": "Paused specifies whether the schedule is paused or not",
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "schedule": {},
+              "skipImmediately": {
+                "description": "SkipImmediately specifies whether to skip backup if schedule is due immediately from `schedule.status.lastBackup` timestamp when schedule is unpaused or if schedule is new.\nIf true, backup will be skipped immediately when schedule is unpaused if it is due based on .Status.LastBackupTimestamp or schedule is new, and will run at next schedule time.\nIf false, backup will not be skipped immediately when schedule is unpaused, but will run at next schedule time.\nIf empty, will follow server configuration (default: false).",
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "template": {},
+              "useOwnerReferencesInBackup": {
+                "description": "UseOwnerReferencesBackup specifies whether to use\nOwnerReferences on backups created by this Schedule.",
+                "nullable": true,
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "type": "object"
+          },
           "type": "object"
         }
       ],

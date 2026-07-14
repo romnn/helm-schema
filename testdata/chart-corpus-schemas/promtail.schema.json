@@ -1598,6 +1598,74 @@
     },
     {
       "if": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "networkPolicy"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "extraPorts": {
+            "anyOf": [
+              {
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configure additional ports and services. For each configured port, a corresponding service is created.\nSee values.yaml for details\nsyslog:\nname: tcp-syslog\nannotations: {}\nlabels: {}\ncontainerPort: 1514\nprotocol: TCP\nservice:\ntype: ClusterIP\nclusterIP: null\nport: 1514\nexternalIPs: []\nnodePort: null\nloadBalancerIP: null\nloadBalancerSourceRanges: []\nexternalTrafficPolicy: null\ningress:\nFor Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated\nannotations: {}\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\npaths: \"/\"\nhosts:\n- chart-example.local\ntls: []\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
+          },
+          "networkPolicy": {
+            "properties": {
+              "k8sApi": {
+                "properties": {
+                  "cidrs": {
+                    "description": "Specifies specific network CIDRs you want to limit access to",
+                    "not": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "type": "object"
+              },
+              "metrics": {
+                "properties": {
+                  "cidrs": {
+                    "description": "Specifies specific network CIDRs which are allowed to access the metrics port.\nIn case you use namespaceSelector, you also have to specify your kubelet networks here.\nThe metrics ports are also used for probes.",
+                    "not": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -2999,6 +3067,174 @@
     },
     {
       "if": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "networkPolicy"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "k8sApi": {
+                "properties": {
+                  "cidrs": {
+                    "description": "Specifies specific network CIDRs you want to limit access to",
+                    "not": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "networkPolicy"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "k8sApi": {
+                "properties": {
+                  "cidrs": {
+                    "description": "Specifies specific network CIDRs you want to limit access to",
+                    "not": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "networkPolicy"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "metrics": {
+                "properties": {
+                  "cidrs": {
+                    "description": "Specifies specific network CIDRs which are allowed to access the metrics port.\nIn case you use namespaceSelector, you also have to specify your kubelet networks here.\nThe metrics ports are also used for probes.",
+                    "not": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "networkPolicy"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "metrics": {
+                "properties": {
+                  "cidrs": {
+                    "description": "Specifies specific network CIDRs which are allowed to access the metrics port.\nIn case you use namespaceSelector, you also have to specify your kubelet networks here.\nThe metrics ports are also used for probes.",
+                    "not": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -3994,9 +4230,50 @@
             "properties": {
               "k8sApi": {
                 "properties": {
+                  "cidrs": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Specifies specific network CIDRs you want to limit access to"
+                  },
                   "port": {
                     "description": "Specify the k8s API endpoint port",
                     "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              "metrics": {
+                "properties": {
+                  "cidrs": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Specifies specific network CIDRs which are allowed to access the metrics port.\nIn case you use namespaceSelector, you also have to specify your kubelet networks here.\nThe metrics ports are also used for probes."
                   }
                 },
                 "type": "object"
@@ -4015,9 +4292,7 @@
           "additionalProperties": {},
           "properties": {
             "cidrs": {
-              "description": "Specifies specific network CIDRs you want to limit access to",
-              "items": {},
-              "type": "array"
+              "description": "Specifies specific network CIDRs you want to limit access to"
             },
             "port": {
               "description": "Specify the k8s API endpoint port"
@@ -4029,9 +4304,7 @@
           "additionalProperties": {},
           "properties": {
             "cidrs": {
-              "description": "Specifies specific network CIDRs which are allowed to access the metrics port.\nIn case you use namespaceSelector, you also have to specify your kubelet networks here.\nThe metrics ports are also used for probes.",
-              "items": {},
-              "type": "array"
+              "description": "Specifies specific network CIDRs which are allowed to access the metrics port.\nIn case you use namespaceSelector, you also have to specify your kubelet networks here.\nThe metrics ports are also used for probes."
             },
             "namespaceSelector": {
               "description": "Specifies the namespaces which are allowed to access the metrics port"

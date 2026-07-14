@@ -31,6 +31,48 @@
   "allOf": [
     {
       "if": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "additionalArgs": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "additionalArgs"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "jetstream"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "additionalArgs": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional arguments to pass to the controller process"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {

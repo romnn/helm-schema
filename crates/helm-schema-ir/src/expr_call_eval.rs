@@ -38,12 +38,64 @@ pub(crate) fn eval_call_with_helper_calls(
         "first" if args.len() == 1 => eval_first(args, env, resolver),
         "reverse" if args.len() == 1 => eval_reverse(args, env, resolver),
         "splitList" if args.len() == 2 => eval_split_list(args, env, resolver),
-        "append" => eval_append(args, env, resolver),
+        "append" => {
+            let mut result = eval_append(args, env, resolver);
+            if args.len() == 2 {
+                record_truthy_kind_operands(
+                    &args[..1],
+                    "array",
+                    env,
+                    resolver,
+                    &mut result.effects,
+                );
+            }
+            result
+        }
         "omit" if !args.is_empty() => eval_omit(args, env, resolver),
         function if is_merge_function(function) => {
-            eval_merge(args, EvalResult::none(), env, resolver)
+            let mut result = eval_merge(args, EvalResult::none(), env, resolver);
+            record_truthy_kind_operands(args, "object", env, resolver, &mut result.effects);
+            result
         }
         "coalesce" => eval_all_args(args, env, resolver),
+        "eq" | "ne" if args.len() >= 2 => eval_comparison(args, env, resolver),
+        // These stay on eval_unknown_call's widened-value semantics: their
+        // results (a count, a membership bool, a rebuilt list) are dataflow
+        // through the call, not the operand's identity, so downstream string
+        // consumers must not type the operand through them.
+        "concat" => {
+            let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
+            record_truthy_kind_operands(args, "array", env, resolver, &mut result.effects);
+            result
+        }
+        // len/has additionally erase operand shape: only a derived count or
+        // membership bool reaches the sink, never the operand itself, so a
+        // scalar sink position must not text-type the operand.
+        "len" if args.len() == 1 => {
+            let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
+            record_length_bearing_operand(args, env, resolver, &mut result.effects);
+            let subject = eval_expr_with_helper_calls(&args[0], env, resolver);
+            record_total_conversion_effects(
+                identity_value_paths(&subject.value),
+                &mut result.effects,
+            );
+            result
+        }
+        "has" if args.len() == 2 => {
+            let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
+            record_truthy_kind_operands(&args[1..], "array", env, resolver, &mut result.effects);
+            let subject = eval_expr_with_helper_calls(&args[1], env, resolver);
+            record_total_conversion_effects(
+                identity_value_paths(&subject.value),
+                &mut result.effects,
+            );
+            result
+        }
+        "prepend" if args.len() == 2 => {
+            let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
+            record_truthy_kind_operands(&args[..1], "array", env, resolver, &mut result.effects);
+            result
+        }
         "ternary" => eval_ternary(args, Effects::default(), env, resolver),
         "print" => eval_print(args, env, resolver),
         "printf" => eval_printf(args, env, resolver),
@@ -1063,6 +1115,141 @@ fn eval_type_is(
         effects.add_tested_type_hints(paths, &schema_type);
     }
     EvalResult::with_effects(None, effects)
+}
+
+/// Go template `eq`/`ne` terminate on incomparable operand kinds: any
+/// composite (map/list) never compares, and a scalar literal fixes the
+/// basic kind the other operands must share. The contract is bounded to
+/// what a literal proves — nil/missing operands stay unmodeled (Helm
+/// charts routinely compare optional values).
+fn eval_comparison(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let literal_kinds: Vec<&str> = args
+        .iter()
+        .filter_map(|arg| match arg.deparen() {
+            TemplateExpr::Literal(Literal::String(_) | Literal::RawString(_)) => Some("string"),
+            TemplateExpr::Literal(Literal::Bool(_)) => Some("boolean"),
+            TemplateExpr::Literal(Literal::Int(_)) => Some("integer"),
+            TemplateExpr::Literal(Literal::Float(_)) => Some("number"),
+            _ => None,
+        })
+        .collect();
+    let mut result = eval_all_args(args, env, resolver);
+    let Some(literal_kind) = literal_kinds.first() else {
+        return result;
+    };
+    // Composites never compare; a mismatched scalar kind fails Go's
+    // basicKind check (numeric literals stay permissive across
+    // integer/number to keep int-or-string style values unharmed).
+    let mut failing_kinds = vec!["object", "array"];
+    for scalar in ["string", "boolean", "integer", "number"] {
+        let numeric_pair =
+            matches!(*literal_kind, "integer" | "number") && matches!(scalar, "integer" | "number");
+        if scalar != *literal_kind && !numeric_pair {
+            failing_kinds.push(scalar);
+        }
+    }
+    for arg in args {
+        if !matches!(
+            arg.deparen(),
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        ) {
+            continue;
+        }
+        let operand = eval_expr_with_helper_calls(arg, env, resolver);
+        for path in identity_value_paths(&operand.value) {
+            for kind in &failing_kinds {
+                let capture = crate::eval_effect::FailCapture {
+                    conjunction: vec![Predicate::from(crate::Guard::TypeIs {
+                        path: path.clone(),
+                        schema_type: (*kind).to_string(),
+                    })],
+                    approximate_condition_paths: BTreeSet::new(),
+                    direct_ranged_paths: BTreeSet::new(),
+                };
+                if !result.effects.helper_fails.contains(&capture) {
+                    result.effects.helper_fails.push(capture);
+                }
+            }
+        }
+    }
+    result
+}
+
+/// Truthy⇒kind operand contract of a strict collection function: the call
+/// type-asserts its operand (sprig `merge` subjects are maps, `concat`
+/// operands are lists), while falsy values only reach it through guards
+/// that skip the call, so they stay accepted.
+fn record_truthy_kind_operands(
+    args: &[TemplateExpr],
+    schema_type: &str,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+    effects: &mut Effects,
+) {
+    for arg in args {
+        if !matches!(
+            arg.deparen(),
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        ) {
+            continue;
+        }
+        let operand = eval_expr_with_helper_calls(arg, env, resolver);
+        for path in identity_value_paths(&operand.value) {
+            let capture = crate::eval_effect::FailCapture {
+                conjunction: vec![
+                    Predicate::truthy_path(path.clone()),
+                    Predicate::from(crate::Guard::TypeIs {
+                        path,
+                        schema_type: schema_type.to_string(),
+                    })
+                    .negated(),
+                ],
+                approximate_condition_paths: BTreeSet::new(),
+                direct_ranged_paths: BTreeSet::new(),
+            };
+            if !effects.helper_fails.contains(&capture) {
+                effects.helper_fails.push(capture);
+            }
+        }
+    }
+}
+
+/// `len` requires a length-bearing value (string, list, or map): numeric
+/// and boolean operands abort rendering outright.
+fn record_length_bearing_operand(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+    effects: &mut Effects,
+) {
+    for arg in args {
+        if !matches!(
+            arg.deparen(),
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        ) {
+            continue;
+        }
+        let operand = eval_expr_with_helper_calls(arg, env, resolver);
+        for path in identity_value_paths(&operand.value) {
+            for kind in ["boolean", "integer", "number"] {
+                let capture = crate::eval_effect::FailCapture {
+                    conjunction: vec![Predicate::from(crate::Guard::TypeIs {
+                        path: path.clone(),
+                        schema_type: kind.to_string(),
+                    })],
+                    approximate_condition_paths: BTreeSet::new(),
+                    direct_ranged_paths: BTreeSet::new(),
+                };
+                if !effects.helper_fails.contains(&capture) {
+                    effects.helper_fails.push(capture);
+                }
+            }
+        }
+    }
 }
 
 fn eval_all_args(

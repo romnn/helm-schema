@@ -30,6 +30,95 @@
   "additionalProperties": false,
   "allOf": [
     {
+      "properties": {
+        "antiAffinity": {
+          "description": "Pods anti-affinity\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nPossible values: soft, hard",
+          "not": {
+            "type": "array"
+          }
+        },
+        "updateStrategy": {
+          "description": "rollingUpdateMaxSurge: 25%\nrollingUpdateMaxUnavailable: \"25%",
+          "not": {
+            "type": "array"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "antiAffinity": {
+              "enum": [
+                "hard"
+              ]
+            }
+          },
+          "required": [
+            "antiAffinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "antiAffinity": {
+            "description": "Pods anti-affinity\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nPossible values: soft, hard",
+            "not": {
+              "type": "array"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "properties": {
+        "antiAffinity": {
+          "description": "Pods anti-affinity\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nPossible values: soft, hard",
+          "not": {
+            "type": "boolean"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "antiAffinity": {
+          "description": "Pods anti-affinity\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nPossible values: soft, hard",
+          "not": {
+            "type": "integer"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "antiAffinity": {
+          "description": "Pods anti-affinity\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nPossible values: soft, hard",
+          "not": {
+            "type": "number"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "antiAffinity": {
+          "description": "Pods anti-affinity\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nPossible values: soft, hard",
+          "not": {
+            "type": "object"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
       "if": {
         "properties": {
           "clusterScoped": {
@@ -90,6 +179,50 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "updateStrategy": {
+          "description": "rollingUpdateMaxSurge: 25%\nrollingUpdateMaxUnavailable: \"25%",
+          "not": {
+            "type": "boolean"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "updateStrategy": {
+          "description": "rollingUpdateMaxSurge: 25%\nrollingUpdateMaxUnavailable: \"25%",
+          "not": {
+            "type": "integer"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "updateStrategy": {
+          "description": "rollingUpdateMaxSurge: 25%\nrollingUpdateMaxUnavailable: \"25%",
+          "not": {
+            "type": "number"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "updateStrategy": {
+          "description": "rollingUpdateMaxSurge: 25%\nrollingUpdateMaxUnavailable: \"25%",
+          "not": {
+            "type": "object"
+          }
+        }
+      },
+      "type": "object"
     }
   ],
   "properties": {

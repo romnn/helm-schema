@@ -327,7 +327,8 @@ impl ResolvePolicy {
             // states where the range's branch never runs.
             let iterable = crate::runtime_iterable_schema(
                 !facts.contract.has_structured_item_descendants
-                    && !facts.contract.has_destructured_range_use,
+                    && !facts.contract.has_destructured_range_use
+                    && !facts.contract.has_string_contract_items,
             );
             if is_empty_schema(&resolved) {
                 // The direct range is the only evidence: its runtime

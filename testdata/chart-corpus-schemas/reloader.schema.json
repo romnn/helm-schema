@@ -567,6 +567,38 @@
                 }
               },
               "type": "object"
+            },
+            "isArgoRollouts": {
+              "not": {
+                "type": "array"
+              }
+            },
+            "readOnlyRootFileSystem": {
+              "description": "Set to true if you have a pod security policy that enforces readOnlyRootFilesystem",
+              "not": {
+                "type": "array"
+              }
+            },
+            "reloadOnCreate": {
+              "not": {
+                "type": "array"
+              }
+            },
+            "reloadOnDelete": {
+              "not": {
+                "type": "array"
+              }
+            },
+            "reloadStrategy": {
+              "description": "Set to default, env-vars or annotations",
+              "not": {
+                "type": "array"
+              }
+            },
+            "watchGlobally": {
+              "not": {
+                "type": "array"
+              }
             }
           },
           "type": "object"
@@ -1059,6 +1091,66 @@
       }
     },
     {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "isArgoRollouts": {
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "isArgoRollouts": {
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "isArgoRollouts": {
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "isArgoRollouts": {
+              "not": {
+                "type": "string"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
       "if": {
         "allOf": [
           {
@@ -1145,60 +1237,110 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "properties": {
-              "reloader": {
+            "anyOf": [
+              {
                 "properties": {
-                  "serviceMonitor": {
+                  "reloader": {
                     "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "deployment": {
+                        "properties": {
+                          "volumeMounts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "volumeMounts"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "enabled"
+                      "deployment"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "serviceMonitor"
+                  "reloader"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "reloader": {
+                    "properties": {
+                      "readOnlyRootFileSystem": {
+                        "enum": [
+                          true
+                        ]
+                      }
+                    },
+                    "required": [
+                      "readOnlyRootFileSystem"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "reloader"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "reloader"
-            ],
-            "type": "object"
+            ]
           },
           {
-            "properties": {
-              "reloader": {
+            "anyOf": [
+              {
                 "properties": {
-                  "serviceMonitor": {
+                  "reloader": {
                     "properties": {
-                      "namespace": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "deployment": {
+                        "properties": {
+                          "volumes": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "volumes"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "namespace"
+                      "deployment"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "serviceMonitor"
+                  "reloader"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "reloader": {
+                    "properties": {
+                      "readOnlyRootFileSystem": {
+                        "enum": [
+                          true
+                        ]
+                      }
+                    },
+                    "required": [
+                      "readOnlyRootFileSystem"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "reloader"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "reloader"
-            ],
-            "type": "object"
+            ]
           }
         ]
       },
@@ -1206,20 +1348,11 @@
         "properties": {
           "reloader": {
             "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "namespace": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
+              "readOnlyRootFileSystem": {
+                "description": "Set to true if you have a pod security policy that enforces readOnlyRootFilesystem",
+                "not": {
+                  "type": "array"
+                }
               }
             },
             "type": "object"
@@ -1227,6 +1360,314 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "readOnlyRootFileSystem": {
+              "description": "Set to true if you have a pod security policy that enforces readOnlyRootFilesystem",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "readOnlyRootFileSystem": {
+              "description": "Set to true if you have a pod security policy that enforces readOnlyRootFilesystem",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "readOnlyRootFileSystem": {
+              "description": "Set to true if you have a pod security policy that enforces readOnlyRootFilesystem",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "readOnlyRootFileSystem": {
+              "description": "Set to true if you have a pod security policy that enforces readOnlyRootFilesystem",
+              "not": {
+                "type": "string"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "reloadOnCreate": {
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "reloadOnCreate": {
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "reloadOnCreate": {
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "reloadOnCreate": {
+              "not": {
+                "type": "string"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "reloadOnDelete": {
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "reloadOnDelete": {
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "reloadOnDelete": {
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "reloadOnDelete": {
+              "not": {
+                "type": "string"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "reloadStrategy": {
+              "description": "Set to default, env-vars or annotations",
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "reloadStrategy": {
+              "description": "Set to default, env-vars or annotations",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "reloadStrategy": {
+              "description": "Set to default, env-vars or annotations",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "reloadStrategy": {
+              "description": "Set to default, env-vars or annotations",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "watchGlobally": {
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "watchGlobally": {
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "watchGlobally": {
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "reloader": {
+          "properties": {
+            "watchGlobally": {
+              "not": {
+                "type": "string"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     }
   ],
   "properties": {
@@ -1314,6 +1755,244 @@
     "reloader": {
       "additionalProperties": {},
       "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "autoReloadAll": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "autoReloadAll"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "custom_annotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "custom_annotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "enableCSIIntegration": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enableCSIIntegration"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "enableHA": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enableHA"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "ignoreConfigMaps": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "ignoreConfigMaps"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "ignoreCronJobs": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "ignoreCronJobs"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "ignoreJobs": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "ignoreJobs"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "ignoreNamespaces": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "ignoreNamespaces"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "ignoreSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "ignoreSecrets"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "isArgoRollouts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "isArgoRollouts"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "logFormat": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "logFormat"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "logLevel": {}
+                      },
+                      "required": [
+                        "logLevel"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "logLevel": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "logLevel"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "reloadOnCreate": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "reloadOnCreate"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "reloadOnDelete": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "reloadOnDelete"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "reloadStrategy": {}
+                      },
+                      "required": [
+                        "reloadStrategy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "reloadStrategy": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "reloadStrategy"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "resourceLabelSelector": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "resourceLabelSelector"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "custom_annotations": {
+                "description": "Optional flags to pass to the Reloader entrypoint\nExample:\ncustom_annotations:\nconfigmap: \"my.company.com/configmap\"\nsecret: \"my.company.com/secret\"\nignore: \"my.company.com/reloader-ignore\"",
+                "properties": {
+                  "configmap": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "secret": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              },
+              "webhookUrl": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
         {
           "if": {
             "anyOf": [
@@ -2879,226 +3558,6 @@
             },
             "type": "object"
           }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "autoReloadAll": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "autoReloadAll"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "custom_annotations": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "custom_annotations"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "enableCSIIntegration": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enableCSIIntegration"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "enableHA": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enableHA"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "ignoreConfigMaps": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "ignoreConfigMaps"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "ignoreCronJobs": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "ignoreCronJobs"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "ignoreJobs": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "ignoreJobs"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "ignoreNamespaces": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "ignoreNamespaces"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "ignoreSecrets": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "ignoreSecrets"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "isArgoRollouts": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "isArgoRollouts"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "logFormat": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "logFormat"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "logLevel": {}
-                      },
-                      "required": [
-                        "logLevel"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "logLevel": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "logLevel"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "reloadOnCreate": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "reloadOnCreate"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "reloadOnDelete": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "reloadOnDelete"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "reloadStrategy": {}
-                      },
-                      "required": [
-                        "reloadStrategy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "reloadStrategy": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "reloadStrategy"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "resourceLabelSelector": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "resourceLabelSelector"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "webhookUrl": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          }
         }
       ],
       "properties": {
@@ -3179,6 +3638,19 @@
                       "type": "null"
                     },
                     {
+                      "additionalProperties": {
+                        "anyOf": [
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
                       "type": "object"
                     }
                   ],
@@ -3194,6 +3666,7 @@
                       "type": "null"
                     },
                     {
+                      "additionalProperties": {},
                       "type": "object"
                     }
                   ],
@@ -3209,6 +3682,7 @@
                       "type": "null"
                     },
                     {
+                      "additionalProperties": {},
                       "type": "object"
                     }
                   ],

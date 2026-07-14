@@ -286,6 +286,10 @@ pub struct ContractValuePathFacts {
     /// path: rendering fails for non-string values, so this typing survives
     /// even when another use stringifies the path.
     pub has_string_contract: bool,
+    /// Some `path.*` member row carries a runtime string contract (`tpl`
+    /// over each ranged member): integer iteration yields int members the
+    /// contract rejects, so the integer lane closes.
+    pub has_string_contract_items: bool,
     pub used_as_pathless_fragment: bool,
     pub accepted_values_root_fragment: bool,
     pub accepted_dependency_values_root_fragment: bool,

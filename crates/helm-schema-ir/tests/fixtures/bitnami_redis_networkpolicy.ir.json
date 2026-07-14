@@ -1810,6 +1810,48 @@
             "type": "truthy"
           },
           {
+            "path": "networkPolicy.ingressNSMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.ingressNSMatchLabels",
+              "networkPolicy.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "networkPolicy.ingressNSMatchLabels",
+            "type": "range"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "spec",
+        "ingress[*]",
+        "from[*]",
+        "namespaceSelector",
+        "matchLabels"
+      ],
+      "resource": {
+        "api_version": "networking.k8s.io/v1",
+        "kind": "NetworkPolicy"
+      },
+      "source_expr": "networkPolicy.ingressNSMatchLabels.*"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
             "path": "networkPolicy.ingressNSPodMatchLabels",
             "type": "truthy"
           },
@@ -1917,6 +1959,48 @@
         "kind": "NetworkPolicy"
       },
       "source_expr": "networkPolicy.ingressNSPodMatchLabels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.ingressNSPodMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.ingressNSMatchLabels",
+              "networkPolicy.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "networkPolicy.ingressNSPodMatchLabels",
+            "type": "range"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "spec",
+        "ingress[*]",
+        "from[*]",
+        "podSelector",
+        "matchLabels"
+      ],
+      "resource": {
+        "api_version": "networking.k8s.io/v1",
+        "kind": "NetworkPolicy"
+      },
+      "source_expr": "networkPolicy.ingressNSPodMatchLabels.*"
     },
     {
       "condition": [
@@ -2087,6 +2171,52 @@
             "type": "truthy"
           },
           {
+            "path": "networkPolicy.metrics.ingressNSMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.metrics.ingressNSMatchLabels",
+              "networkPolicy.metrics.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSMatchLabels",
+            "type": "range"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "spec",
+        "ingress[*]",
+        "from[*]",
+        "namespaceSelector",
+        "matchLabels"
+      ],
+      "resource": {
+        "api_version": "networking.k8s.io/v1",
+        "kind": "NetworkPolicy"
+      },
+      "source_expr": "networkPolicy.metrics.ingressNSMatchLabels.*"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
             "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
             "type": "truthy"
           },
@@ -2206,6 +2336,52 @@
         "kind": "NetworkPolicy"
       },
       "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.metrics.allowExternal",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "networkPolicy.metrics.ingressNSMatchLabels",
+              "networkPolicy.metrics.ingressNSPodMatchLabels"
+            ],
+            "type": "or"
+          },
+          {
+            "path": "networkPolicy.metrics.ingressNSPodMatchLabels",
+            "type": "range"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "spec",
+        "ingress[*]",
+        "from[*]",
+        "podSelector",
+        "matchLabels"
+      ],
+      "resource": {
+        "api_version": "networking.k8s.io/v1",
+        "kind": "NetworkPolicy"
+      },
+      "source_expr": "networkPolicy.metrics.ingressNSPodMatchLabels.*"
     },
     {
       "condition": [

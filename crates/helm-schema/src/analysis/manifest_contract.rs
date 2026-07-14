@@ -33,6 +33,25 @@ pub(crate) fn collect_manifest_contract_for_chart(
         local_resource_schemas.extend(template_local_resource_schemas);
     }
 
+    // Helm executes `templates/NOTES.txt` too: its consumers and terminal
+    // effects (a `tpl` on a values string, a migration `fail`) are schema
+    // evidence like any manifest's. Its prose is NOT a manifest — resource
+    // schema extraction would try to YAML-parse free text (ASCII art,
+    // indented URLs) and fail, so only the contract lane runs here.
+    let notes = chart::files_with_role(
+        &chart.chart_dir,
+        include_tests,
+        chart::FileRole::NotesTemplate,
+    )?;
+    for path in notes {
+        let source = path.read_to_string()?;
+        let mut notes_contract =
+            symbolic_context.generate_contract_ir_for_source(&source, path.as_str());
+        notes_contract.map_value_paths(|path| chart::scope_values_path(path, &chart.values_prefix));
+        notes_contract = apply_chart_activation_guard_sets(notes_contract, &activation_guard_sets);
+        contract.append(notes_contract);
+    }
+
     Ok(ManifestContractAnalysis {
         contract,
         local_resource_schemas,

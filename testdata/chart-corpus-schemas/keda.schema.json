@@ -31,6 +31,115 @@
   "allOf": [
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "additionalAnnotations": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "additionalAnnotations"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "crds": {
+                      "properties": {
+                        "install": {}
+                      },
+                      "required": [
+                        "install"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "crds"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "crds": {
+                    "properties": {
+                      "install": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "install"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "crds"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "additionalAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "additionalAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "crds": {
+                    "properties": {
+                      "additionalAnnotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "additionalAnnotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "crds"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "additionalAnnotations": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Custom annotations to add into metadata"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -1640,6 +1749,128 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "crds": {
+                "properties": {
+                  "additionalAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "additionalAnnotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "crds": {
+                      "properties": {
+                        "install": {}
+                      },
+                      "required": [
+                        "install"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "crds"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "crds": {
+                    "properties": {
+                      "install": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "install"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "crds"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "additionalAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "additionalAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "crds": {
+                    "properties": {
+                      "additionalAnnotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "additionalAnnotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "crds"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "crds": {
+            "properties": {
+              "additionalAnnotations": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Custom annotations specifically for CRDs"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "anyOf": [
@@ -2313,6 +2544,86 @@
       }
     },
     {
+      "properties": {
+        "networkPolicy": {
+          "properties": {
+            "flavor": {
+              "description": "Flavor of the network policies (cilium, kubernetes)",
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "networkPolicy": {
+          "properties": {
+            "flavor": {
+              "description": "Flavor of the network policies (cilium, kubernetes)",
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "networkPolicy": {
+          "properties": {
+            "flavor": {
+              "description": "Flavor of the network policies (cilium, kubernetes)",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "networkPolicy": {
+          "properties": {
+            "flavor": {
+              "description": "Flavor of the network policies (cilium, kubernetes)",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "networkPolicy": {
+          "properties": {
+            "flavor": {
+              "description": "Flavor of the network policies (cilium, kubernetes)",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
       "if": {
         "allOf": [
           {
@@ -2572,6 +2883,385 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "permissions": {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "restrict": {
+                    "properties": {
+                      "allowAllServiceAccountTokenCreation": {
+                        "description": "Allow Keda to access all Service Token for KEDA operator",
+                        "not": {
+                          "type": "array"
+                        }
+                      },
+                      "serviceAccountTokenCreationRoles": {
+                        "anyOf": [
+                          {
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "object"
+                          }
+                        ],
+                        "description": "Creates roles and rolebindings from namespaced service accounts in the array which allow the KEDA operator\nto request service account tokens for use with the boundServiceAccountToken trigger source.\nIf the namespace does not exist, this will cause the helm chart installation to fail.\n- name: myServiceAccount\nnamespace: myServiceAccountNamespace"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "serviceAccount": {
+            "properties": {
+              "webhooks": {
+                "properties": {
+                  "name": {
+                    "description": "The name of the service account to use.",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "permissions": {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "restrict": {
+                    "properties": {
+                      "allowAllServiceAccountTokenCreation": {
+                        "description": "Allow Keda to access all Service Token for KEDA operator",
+                        "not": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "permissions": {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "restrict": {
+                    "properties": {
+                      "allowAllServiceAccountTokenCreation": {
+                        "description": "Allow Keda to access all Service Token for KEDA operator",
+                        "not": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "permissions": {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "restrict": {
+                    "properties": {
+                      "allowAllServiceAccountTokenCreation": {
+                        "description": "Allow Keda to access all Service Token for KEDA operator",
+                        "not": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "permissions": {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "restrict": {
+                    "properties": {
+                      "allowAllServiceAccountTokenCreation": {
+                        "description": "Allow Keda to access all Service Token for KEDA operator",
+                        "not": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -2669,102 +3359,6 @@
                       }
                     },
                     "type": "object"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "permissions": {
-            "properties": {
-              "operator": {
-                "properties": {
-                  "restrict": {
-                    "properties": {
-                      "serviceAccountTokenCreationRoles": {
-                        "anyOf": [
-                          {
-                            "items": {},
-                            "type": "array"
-                          },
-                          {
-                            "type": "integer"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "object"
-                          }
-                        ],
-                        "description": "Creates roles and rolebindings from namespaced service accounts in the array which allow the KEDA operator\nto request service account tokens for use with the boundServiceAccountToken trigger source.\nIf the namespace does not exist, this will cause the helm chart installation to fail.\n- name: myServiceAccount\nnamespace: myServiceAccountNamespace"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
-          "serviceAccount": {
-            "properties": {
-              "webhooks": {
-                "properties": {
-                  "name": {
-                    "description": "The name of the service account to use.",
-                    "type": "string"
                   }
                 },
                 "type": "object"
@@ -7012,12 +7606,14 @@
           "type": "object"
         },
         {
+          "items": {},
           "type": "array"
         },
         {
           "type": "null"
         },
         {
+          "additionalProperties": {},
           "type": "object"
         }
       ],
@@ -7460,12 +8056,28 @@
         "keda": {
           "anyOf": [
             {
+              "items": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
               "type": "array"
             },
             {
               "type": "null"
             },
             {
+              "additionalProperties": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
               "type": "object"
             }
           ],
@@ -10368,9 +10980,7 @@
           },
           "type": "object"
         },
-        "name": {
-          "type": "string"
-        },
+        "name": {},
         "operator": {
           "additionalProperties": {},
           "properties": {

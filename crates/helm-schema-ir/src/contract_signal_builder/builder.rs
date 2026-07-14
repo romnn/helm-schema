@@ -158,6 +158,7 @@ impl PathSchemaFactsAccumulator {
         self.facts.used_as_fragment |= facts.used_as_fragment;
         self.facts.used_as_serialized |= facts.used_as_serialized;
         self.facts.has_string_contract |= facts.has_string_contract;
+        self.facts.has_string_contract_items |= facts.has_string_contract_items;
         self.facts.used_as_pathless_fragment |= facts.used_as_pathless_fragment;
         self.facts.accepted_values_root_fragment |= facts.accepted_values_root_fragment;
         self.facts.accepted_dependency_values_root_fragment |=
@@ -291,6 +292,10 @@ fn record_contract_use_conjunction(
             _ => None,
         })
         .collect::<BTreeSet<_>>();
+    // A `x.*` member row fires BY `range x`: that Range predicate is the
+    // row's own iteration, not a foreign condition gating it. It is NOT a
+    // null-tolerance signal though — iteration does not skip null members.
+    let member_range_parent = contract_use.source_expr.strip_suffix(".*");
     let self_range_guarded = range_guard_paths.contains(contract_use.source_expr.as_str());
     let has_matching_self_guard = predicates
         .iter()
@@ -362,8 +367,17 @@ fn record_contract_use_conjunction(
         acc.requiredness.is_positive_header |= positive_header;
         // An UNCONDITIONAL string-contract row types the path itself;
         // a conditional one types only its own overlay branch (the branch
-        // facts carry it there).
-        if contract_use.has_string_contract && predicates.is_empty() {
+        // facts carry it there). A member row's own iteration does not
+        // scope it: `tpl` over each ranged member types every member.
+        let own_iteration_only = predicates.iter().all(|predicate| {
+            member_range_parent.is_some_and(|parent| {
+                matches!(
+                    predicate,
+                    Predicate::Guard(Guard::Range { path }) if path == parent
+                )
+            })
+        });
+        if contract_use.has_string_contract && own_iteration_only {
             acc.type_hints.insert("string".to_string());
         }
         acc.record_source_use(
@@ -671,16 +685,13 @@ fn record_fail_conjunction(
     if path_contains_wildcard(&target) {
         return;
     }
-    // An approximately-lowered enclosing condition that touches the tested
-    // path itself partitions the very domain being negated (kyverno's
-    // `eq (int .replicas) 0` inner check): negating without it would
-    // manufacture requirements. Foreign approximations only widen where
-    // the requirement applies, the bounded direction validators accept.
-    if capture.approximate_condition_paths.iter().any(|path| {
-        path == &target
-            || helm_schema_core::values_path_is_descendant(path, &target)
-            || helm_schema_core::values_path_is_descendant(&target, path)
-    }) {
+    // An approximately-lowered enclosing condition gates when the fail can
+    // fire at all: an `if semverCompare … .Values.version` degraded to a
+    // truthy fallback would make the arm apply in states where the branch
+    // never runs, narrowing values other paths render fine (F64). The
+    // requirement abstains under ANY approximation rather than binding a
+    // dead branch's contract.
+    if !capture.approximate_condition_paths.is_empty() {
         return;
     }
     requirements.sort();
@@ -836,6 +847,23 @@ fn finish_schema_signals(
     for path in &paths_with_referenced_descendants {
         path_accumulator(&mut paths, path);
     }
+    // A member row carrying a runtime string contract (`tpl` over each
+    // ranged member) closes the parent's integer-iteration lane: integer
+    // counts iterate int members, which the contract rejects (F59).
+    let string_contract_item_parents: Vec<String> = paths
+        .iter()
+        .filter_map(|(path, acc)| {
+            let parent = path.strip_suffix(".*")?;
+            (acc.facts.facts.has_string_contract || acc.type_hints.contains("string"))
+                .then(|| parent.to_string())
+        })
+        .collect();
+    for parent in string_contract_item_parents {
+        path_accumulator(&mut paths, &parent)
+            .facts
+            .facts
+            .has_string_contract_items = true;
+    }
 
     let schema_evidence_by_value_path = paths
         .into_iter()
@@ -941,7 +969,11 @@ impl ContractPathAccumulator {
             saw_unsupported_overlay,
             mut fail_implications,
         } = self;
-        if !facts.used_as_serialized {
+        // An approximately-guarded path (`saw_unsupported_overlay`) must
+        // not promote branch-scoped sink typing to the path level either:
+        // the branch may never run for the states the promotion would
+        // narrow (F64).
+        if !facts.used_as_serialized && !saw_unsupported_overlay {
             for provider_use in guarded_provider_schema_uses {
                 path_facts.record_provider_schema_use(provider_use);
             }
@@ -1016,17 +1048,12 @@ impl ContractPathAccumulator {
                 .collect()
         };
         // Branch-scoped hints ride the overlays' evidence copies. When no
-        // overlay can host them (none lowered, or an unsupported guard
-        // poisoned them), dropping them would lose the evidence entirely,
-        // so they degrade to path-level typing instead.
-        let (type_hints, guarded_type_hints) = if conditional_overlays.is_empty() {
-            (
-                type_hints.union(&guarded_type_hints).cloned().collect(),
-                BTreeSet::new(),
-            )
-        } else {
-            (type_hints, guarded_type_hints)
-        };
+        // overlay can host them (none lowered, or an unsupported or
+        // approximate guard poisoned them), they stay branch-scoped
+        // wideners rather than degrading to path-level typing: the guards
+        // the encoding could not represent decide when those branches run,
+        // so binding their typing path-wide would narrow states the branch
+        // never reaches (F64).
         fail_implications.sort();
         fail_implications.dedup();
         ContractPathSchemaEvidence {
@@ -1084,7 +1111,9 @@ fn lowerable_conditional_guard_set(
         // over a DIFFERENT path stays unlowerable.
         if matches!(
             predicate,
-            Predicate::Guard(Guard::Range { path }) if path == &contract_use.source_expr
+            Predicate::Guard(Guard::Range { path })
+                if path == &contract_use.source_expr
+                    || contract_use.source_expr.strip_suffix(".*") == Some(path.as_str())
         ) {
             continue;
         }

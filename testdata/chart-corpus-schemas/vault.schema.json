@@ -35,79 +35,6 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "csi": {
-                          "properties": {
-                            "agent": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "agent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "csi"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "csi": {
-                        "properties": {
-                          "agent": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "agent"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "csi"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "fullnameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "fullnameOverride"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
                 "properties": {
                   "fullnameOverride": {
                     "$ref": "#/$defs/helm-truthy"
@@ -134,48 +61,6 @@
                 },
                 "required": [
                   "injector"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "fullnameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "fullnameOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "server": {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "server"
                 ],
                 "type": "object"
               }
@@ -1780,79 +1665,6 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "csi": {
-                          "properties": {
-                            "agent": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "agent"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "csi"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "csi": {
-                        "properties": {
-                          "agent": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "agent"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "csi"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "nameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "nameOverride"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
                 "properties": {
                   "global": {
                     "properties": {
@@ -1940,48 +1752,6 @@
                 },
                 "required": [
                   "nameOverride"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "nameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "nameOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "server": {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "server"
                 ],
                 "type": "object"
               }
@@ -2263,6 +2033,116 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "server": {
+          "properties": {
+            "serviceAccount": {
+              "description": "Definition of the serviceAccount used to run Vault.\nThese options are also used when using an external Vault server to validate\nKubernetes tokens.",
+              "properties": {
+                "name": {
+                  "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template",
+                  "not": {
+                    "type": "array"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "server": {
+          "properties": {
+            "serviceAccount": {
+              "description": "Definition of the serviceAccount used to run Vault.\nThese options are also used when using an external Vault server to validate\nKubernetes tokens.",
+              "properties": {
+                "name": {
+                  "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template",
+                  "not": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "server": {
+          "properties": {
+            "serviceAccount": {
+              "description": "Definition of the serviceAccount used to run Vault.\nThese options are also used when using an external Vault server to validate\nKubernetes tokens.",
+              "properties": {
+                "name": {
+                  "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template",
+                  "not": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "server": {
+          "properties": {
+            "serviceAccount": {
+              "description": "Definition of the serviceAccount used to run Vault.\nThese options are also used when using an external Vault server to validate\nKubernetes tokens.",
+              "properties": {
+                "name": {
+                  "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template",
+                  "not": {
+                    "type": "number"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "server": {
+          "properties": {
+            "serviceAccount": {
+              "description": "Definition of the serviceAccount used to run Vault.\nThese options are also used when using an external Vault server to validate\nKubernetes tokens.",
+              "properties": {
+                "name": {
+                  "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template",
+                  "not": {
+                    "type": "object"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -3012,61 +2892,6 @@
     },
     "injector": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "properties": {
-                  "webhook": {
-                    "properties": {
-                      "annotations": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "annotations"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhook"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "webhookAnnotations": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "webhookAnnotations"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "properties": {
-              "webhookAnnotations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "type": "object"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Deprecated: please use 'webhook.annotations' instead\nExtra annotations to attach to the webhook"
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "properties": {
         "affinity": {
           "description": "Affinity Settings for injector pods\nThis can either be a multi-line string or YAML matching the PodSpec's affinity field.\nCommenting out or setting as empty the affinity variable, will allow\ndeployment of multiple replicas to single node services such as Minikube."
@@ -3220,9 +3045,16 @@
           "description": "Deprecated: Please use global.externalVaultAddr instead."
         },
         "extraEnvironmentVars": {
-          "additionalProperties": {},
-          "description": "extraEnvironmentVars is a list of extra environment variables to set in the\ninjector deployment.\nKUBERNETES_SERVICE_HOST: kubernetes.default.svc",
-          "type": "object"
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ],
+          "description": "extraEnvironmentVars is a list of extra environment variables to set in the\ninjector deployment.\nKUBERNETES_SERVICE_HOST: kubernetes.default.svc"
         },
         "extraLabels": {
           "anyOf": [
@@ -4127,9 +3959,16 @@
           "description": "extraContainers is a list of sidecar containers. Specified as a YAML list."
         },
         "extraEnvironmentVars": {
-          "additionalProperties": {},
-          "description": "extraEnvironmentVars is a list of extra environment variables to set with the stateful set. These could be\nused to include variables required for auto-unseal.\nGOOGLE_REGION: global\nGOOGLE_PROJECT: myproject\nGOOGLE_APPLICATION_CREDENTIALS: /vault/userconfig/myproject/myproject-creds.json",
-          "type": "object"
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ],
+          "description": "extraEnvironmentVars is a list of extra environment variables to set with the stateful set. These could be\nused to include variables required for auto-unseal.\nGOOGLE_REGION: global\nGOOGLE_PROJECT: myproject\nGOOGLE_APPLICATION_CREDENTIALS: /vault/userconfig/myproject/myproject-creds.json"
         },
         "extraInitContainers": {
           "description": "extraInitContainers is a list of init containers. Specified as a YAML list.\nThis is useful if you need to run a script to provision TLS certificates or\nwrite out configuration files in a dynamic way.\nThis example installs a plugin pulled from github into the /usr/local/libexec/vault/oauthapp folder,\nwhich is defined in the volumes value.\n- name: oauthapp\nimage: \"alpine\"\ncommand: [sh, -c]\nargs:\n- cd /tmp &&\nwget https://github.com/puppetlabs/vault-plugin-secrets-oauthapp/releases/download/v1.2.0/vault-plugin-secrets-oauthapp-v1.2.0-linux-amd64.tar.xz -O oauthapp.xz &&\ntar -xf oauthapp.xz &&\nmv vault-plugin-secrets-oauthapp-v1.2.0-linux-amd64 /usr/local/libexec/vault/oauthapp &&\nchmod +x /usr/local/libexec/vault/oauthapp\nvolumeMounts:\n- name: plugins\nmountPath: /usr/local/libexec/vault"

@@ -18,7 +18,7 @@ pub struct FinalizedContract {
 impl FinalizedContract {
     #[expect(
         clippy::too_many_arguments,
-        reason = "each parameter is one interpreter fact channel; a struct would                   mirror the same nine fields without adding an invariant"
+        reason = "each parameter is one interpreter fact channel; a struct would                   mirror the same fields without adding an invariant"
     )]
     pub(in crate::contract) fn new(
         normalized_uses: Vec<ContractUse>,

@@ -168,7 +168,9 @@
           },
           "managedBy": {
             "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
-            "type": "string"
+            "not": {
+              "type": "array"
+            }
           },
           "nameOverride": {
             "description": "nameOverride override operator name",
@@ -291,7 +293,9 @@
           },
           "managedBy": {
             "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
-            "type": "string"
+            "not": {
+              "type": "array"
+            }
           },
           "nameOverride": {
             "description": "nameOverride override operator name",
@@ -503,6 +507,201 @@
           "fullnameOverride"
         ],
         "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "fullnameOverride override operator full name"
+          },
+          "operator": {
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "namespace to install the operator, defaults to the .Release.Namespace"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "fullnameOverride": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "fullnameOverride"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "rbac": {
+                          "properties": {
+                            "create": {}
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "fullnameOverride": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "fullnameOverride"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "create": {}
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "fullnameOverride": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "fullnameOverride"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "serviceMonitor": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
       },
       "then": {
         "properties": {
@@ -954,7 +1153,9 @@
         "properties": {
           "managedBy": {
             "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
-            "type": "string"
+            "not": {
+              "type": "array"
+            }
           },
           "nameOverride": {
             "description": "nameOverride override operator name",
@@ -996,6 +1197,71 @@
     },
     {
       "if": {
+        "not": {
+          "properties": {
+            "trivy": {
+              "properties": {
+                "existingSecret": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "existingSecret"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "trivy"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "managedBy": {
+            "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
+            "not": {
+              "type": "array"
+            }
+          },
+          "nameOverride": {
+            "description": "nameOverride override operator name",
+            "type": "string"
+          },
+          "operator": {
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "namespace to install the operator, defaults to the .Release.Namespace"
+              }
+            },
+            "type": "object"
+          },
+          "trivy": {
+            "properties": {
+              "mode": {
+                "description": "mode is the Trivy client mode. Either Standalone or ClientServer. Depending\non the active mode other settings might be applicable or required.",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "trivy": {
             "properties": {
@@ -1018,7 +1284,9 @@
         "properties": {
           "managedBy": {
             "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
-            "type": "string"
+            "not": {
+              "type": "array"
+            }
           },
           "nameOverride": {
             "description": "nameOverride override operator name",
@@ -1055,7 +1323,351 @@
     },
     {
       "if": {
+        "not": {
+          "properties": {
+            "policiesBundle": {
+              "properties": {
+                "existingSecret": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "existingSecret"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "policiesBundle"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "managedBy": {
+            "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
+            "not": {
+              "type": "array"
+            }
+          },
+          "nameOverride": {
+            "description": "nameOverride override operator name",
+            "type": "string"
+          },
+          "operator": {
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "namespace to install the operator, defaults to the .Release.Namespace"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "properties": {
+        "managedBy": {
+          "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
+          "not": {
+            "type": "array"
+          }
+        },
+        "service": {
+          "description": "service only expose a metrics endpoint for prometheus to scrape,\ntrivy-operator does not have a user interface.",
+          "properties": {
+            "type": {
+              "description": "the Service type",
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        },
+        "trivyOperator": {
+          "properties": {
+            "vulnerabilityReportsPlugin": {
+              "description": "vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports `Trivy`",
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "managedBy": {
+          "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
+          "not": {
+            "type": "boolean"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "managedBy": {
+          "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
+          "not": {
+            "type": "integer"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "managedBy": {
+          "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
+          "not": {
+            "type": "number"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "managedBy": {
+          "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
+          "not": {
+            "type": "object"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "if": {
         "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "trivy": {
+                          "properties": {
+                            "createConfig": {}
+                          },
+                          "required": [
+                            "createConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "trivy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "trivy": {
+                        "properties": {
+                          "createConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "createConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivy"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "trivyOperator": {
+                          "properties": {
+                            "vulnerabilityReportsPlugin": {}
+                          },
+                          "required": [
+                            "vulnerabilityReportsPlugin"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "trivyOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "trivyOperator": {
+                        "properties": {
+                          "vulnerabilityReportsPlugin": {
+                            "enum": [
+                              "Trivy"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "vulnerabilityReportsPlugin"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivyOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "trivy": {
+                "properties": {
+                  "externalRegoPoliciesEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "externalRegoPoliciesEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "trivy"
+            ],
+            "type": "object"
+          },
           {
             "not": {
               "properties": {
@@ -1105,26 +1717,6 @@
           "managedBy": {
             "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
             "type": "string"
-          },
-          "nameOverride": {
-            "description": "nameOverride override operator name",
-            "type": "string"
-          },
-          "operator": {
-            "properties": {
-              "namespace": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "namespace to install the operator, defaults to the .Release.Namespace"
-              }
-            },
-            "type": "object"
           }
         },
         "type": "object"
@@ -1276,6 +1868,68 @@
               "builtInServerRegistryInsecure": {
                 "description": "builtInServerRegistryInsecure is the flag to enable insecure connection from the built-in Trivy server to the registry.",
                 "type": "boolean"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "fullnameOverride": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "fullnameOverride"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "nameOverride": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "nameOverride"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "operator": {
+            "properties": {
+              "namespace": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "namespace to install the operator, defaults to the .Release.Namespace"
               }
             },
             "type": "object"
@@ -1555,6 +2209,74 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "service": {
+          "description": "service only expose a metrics endpoint for prometheus to scrape,\ntrivy-operator does not have a user interface.",
+          "properties": {
+            "type": {
+              "description": "the Service type",
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "description": "service only expose a metrics endpoint for prometheus to scrape,\ntrivy-operator does not have a user interface.",
+          "properties": {
+            "type": {
+              "description": "the Service type",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "description": "service only expose a metrics endpoint for prometheus to scrape,\ntrivy-operator does not have a user interface.",
+          "properties": {
+            "type": {
+              "description": "the Service type",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "description": "service only expose a metrics endpoint for prometheus to scrape,\ntrivy-operator does not have a user interface.",
+          "properties": {
+            "type": {
+              "description": "the Service type",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -2694,6 +3416,751 @@
                     "type": "string"
                   }
                 ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivy": {
+                      "properties": {
+                        "createConfig": {}
+                      },
+                      "required": [
+                        "createConfig"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "trivy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "createConfig": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "createConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "trivyOperator": {
+                      "properties": {
+                        "vulnerabilityReportsPlugin": {}
+                      },
+                      "required": [
+                        "vulnerabilityReportsPlugin"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "trivyOperator"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "trivyOperator": {
+                    "properties": {
+                      "vulnerabilityReportsPlugin": {
+                        "enum": [
+                          "Trivy"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "vulnerabilityReportsPlugin"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivyOperator"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "operator": {
+                  "properties": {
+                    "builtInTrivyServer": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "builtInTrivyServer"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "trivy": {
+            "properties": {
+              "mode": {
+                "description": "mode is the Trivy client mode. Either Standalone or ClientServer. Depending\non the active mode other settings might be applicable or required.",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "trivy": {
+                          "properties": {
+                            "createConfig": {}
+                          },
+                          "required": [
+                            "createConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "trivy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "trivy": {
+                        "properties": {
+                          "createConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "createConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivy"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "trivyOperator": {
+                          "properties": {
+                            "vulnerabilityReportsPlugin": {}
+                          },
+                          "required": [
+                            "vulnerabilityReportsPlugin"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "trivyOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "trivyOperator": {
+                        "properties": {
+                          "vulnerabilityReportsPlugin": {
+                            "enum": [
+                              "Trivy"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "vulnerabilityReportsPlugin"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivyOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "operator": {
+                      "properties": {
+                        "builtInTrivyServer": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "builtInTrivyServer"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "operator"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "trivy": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "trivy"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "trivy": {
+            "properties": {
+              "mode": {
+                "description": "mode is the Trivy client mode. Either Standalone or ClientServer. Depending\non the active mode other settings might be applicable or required.",
+                "not": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "trivy": {
+                          "properties": {
+                            "createConfig": {}
+                          },
+                          "required": [
+                            "createConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "trivy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "trivy": {
+                        "properties": {
+                          "createConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "createConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivy"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "trivyOperator": {
+                          "properties": {
+                            "vulnerabilityReportsPlugin": {}
+                          },
+                          "required": [
+                            "vulnerabilityReportsPlugin"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "trivyOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "trivyOperator": {
+                        "properties": {
+                          "vulnerabilityReportsPlugin": {
+                            "enum": [
+                              "Trivy"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "vulnerabilityReportsPlugin"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivyOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "operator": {
+                      "properties": {
+                        "builtInTrivyServer": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "builtInTrivyServer"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "operator"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "trivy": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "trivy"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "trivy": {
+            "properties": {
+              "mode": {
+                "description": "mode is the Trivy client mode. Either Standalone or ClientServer. Depending\non the active mode other settings might be applicable or required.",
+                "not": {
+                  "type": "integer"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "trivy": {
+                          "properties": {
+                            "createConfig": {}
+                          },
+                          "required": [
+                            "createConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "trivy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "trivy": {
+                        "properties": {
+                          "createConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "createConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivy"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "trivyOperator": {
+                          "properties": {
+                            "vulnerabilityReportsPlugin": {}
+                          },
+                          "required": [
+                            "vulnerabilityReportsPlugin"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "trivyOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "trivyOperator": {
+                        "properties": {
+                          "vulnerabilityReportsPlugin": {
+                            "enum": [
+                              "Trivy"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "vulnerabilityReportsPlugin"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivyOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "operator": {
+                      "properties": {
+                        "builtInTrivyServer": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "builtInTrivyServer"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "operator"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "trivy": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "trivy"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "trivy": {
+            "properties": {
+              "mode": {
+                "description": "mode is the Trivy client mode. Either Standalone or ClientServer. Depending\non the active mode other settings might be applicable or required.",
+                "not": {
+                  "type": "number"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "trivy": {
+                          "properties": {
+                            "createConfig": {}
+                          },
+                          "required": [
+                            "createConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "trivy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "trivy": {
+                        "properties": {
+                          "createConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "createConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivy"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "trivyOperator": {
+                          "properties": {
+                            "vulnerabilityReportsPlugin": {}
+                          },
+                          "required": [
+                            "vulnerabilityReportsPlugin"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "trivyOperator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "trivyOperator": {
+                        "properties": {
+                          "vulnerabilityReportsPlugin": {
+                            "enum": [
+                              "Trivy"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "vulnerabilityReportsPlugin"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "trivyOperator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "operator": {
+                      "properties": {
+                        "builtInTrivyServer": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "builtInTrivyServer"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "operator"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "trivy": {
+                  "properties": {
+                    "existingSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingSecret"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "trivy"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "trivy": {
+            "properties": {
+              "mode": {
+                "description": "mode is the Trivy client mode. Either Standalone or ClientServer. Depending\non the active mode other settings might be applicable or required.",
+                "not": {
+                  "type": "object"
+                }
               }
             },
             "type": "object"
@@ -4239,6 +5706,70 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "trivyOperator": {
+          "properties": {
+            "vulnerabilityReportsPlugin": {
+              "description": "vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports `Trivy`",
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "trivyOperator": {
+          "properties": {
+            "vulnerabilityReportsPlugin": {
+              "description": "vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports `Trivy`",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "trivyOperator": {
+          "properties": {
+            "vulnerabilityReportsPlugin": {
+              "description": "vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports `Trivy`",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "trivyOperator": {
+          "properties": {
+            "vulnerabilityReportsPlugin": {
+              "description": "vulnerabilityReportsPlugin the name of the plugin that generates vulnerability reports `Trivy`",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -6212,7 +7743,8 @@
       "type": "object"
     },
     "targetNamespaces": {
-      "description": "targetNamespace defines where you want trivy-operator to operate. By\ndefault, it's a blank string to select all namespaces, but you can specify\nanother namespace, or a comma separated list of namespaces."
+      "description": "targetNamespace defines where you want trivy-operator to operate. By\ndefault, it's a blank string to select all namespaces, but you can specify\nanother namespace, or a comma separated list of namespaces.",
+      "type": "string"
     },
     "targetWorkloads": {
       "description": "targetWorkloads is a comma seperated list of Kubernetes workload resources\nto be included in the vulnerability and config-audit scans\nif left blank, all workload resources will be scanned",

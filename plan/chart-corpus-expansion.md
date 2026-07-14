@@ -2448,7 +2448,7 @@ null-dropping behavior; valid sibling values were rendered wherever necessary
 to distinguish a missing alternative from an invalid chart state. Shipped
 `values.schema.json` files were not used as evidence.
 
-### F51. `required` effects are still lost for sentinels, pipelines, and helper calls (OPEN, VERIFIED 2026-07-13)
+### F51. `required` effects are still lost for sentinels, pipelines, and helper calls (FIXED 2026-07-14)
 
 F30/F32 capture only a subset of `required(message, subject)` call shapes.
 The call disappears when its empty subject has no values-path identity, when a
@@ -2488,7 +2488,7 @@ named-helper summaries, and calls. Track simple loop-local reductions such as
 "any item matches" structurally, or conservatively keep the valid alternative
 when the condition cannot be represented.
 
-### F52. Helm-executed `NOTES.txt` templates are excluded from analysis (OPEN, VERIFIED 2026-07-13)
+### F52. Helm-executed `NOTES.txt` templates are excluded from analysis (FIXED 2026-07-14)
 
 Chart discovery currently recognizes template `tpl`, `yaml`, and `yml` files,
 but Helm also executes `templates/NOTES.txt`. Runtime consumers and termination
@@ -2505,7 +2505,7 @@ phase while keeping their prose out of YAML resource detection. Parse their Go
 template actions structurally, propagate helper calls and terminal effects,
 and pin both a strict consumer and an explicit migration failure.
 
-### F53. `tpl` contracts inside named helpers do not reach callers (PARTIAL 2026-07-13)
+### F53. `tpl` contracts inside named helpers do not reach callers (PARTIAL 2026-07-14)
 
 F45 and the F50 summary claim helper summaries carry truthy-to-string `tpl`
 contracts, but current chart fixtures still lose them.
@@ -2627,7 +2627,7 @@ binding arity. Admit integer only for range forms the supported Helm/Go runtime
 can execute, while preserving array/map behavior for two-variable key/value
 iteration. Pin zero-, one-, and two-variable forms.
 
-### F59. Range-body requirements still do not reach every iterable lane (OPEN, VERIFIED 2026-07-13)
+### F59. Range-body requirements still do not reach every iterable lane (FIXED 2026-07-14)
 
 F39 can remove a bare integer arm in some direct cases, but consumer/member
 requirements from the body still fail to constrain integer iteration, array
@@ -2650,7 +2650,7 @@ lane: integer iteration values, array `items`, and map
 calls, and apply string/member/map requirements after the iterable domain is
 formed. Pin all three lane shapes rather than only the collection root.
 
-### F60. `eq`/`ne` predicates do not preserve runtime-compatible operand domains (OPEN, VERIFIED 2026-07-13)
+### F60. `eq`/`ne` predicates do not preserve runtime-compatible operand domains (FIXED 2026-07-14)
 
 Comparison predicates are used for branch selection but often emit no input
 contract. Go-template equality then terminates on incompatible dynamic types
@@ -2673,7 +2673,7 @@ semantic operand contract, including Helm's numeric compatibility and nil
 behavior. Propagate relative/helper operand identities, retain ambient guards,
 and do not scope unconditional evidence under a sibling branch.
 
-### F61. Strict collection functions have missing or wrong input signatures (OPEN, VERIFIED 2026-07-13)
+### F61. Strict collection functions have missing or wrong input signatures (FIXED 2026-07-14)
 
 String consumers gained a semantic catalog, but collection functions still
 lack precise input-domain effects. The result includes both false acceptances
@@ -2722,7 +2722,7 @@ must remain `type: object` with open additional properties; a declared/rendered
 list must retain `type: array` and its item evidence. Add string/other lanes only
 when a real dispatch or `tpl` path supports them.
 
-### F63. Chained member reads do not require intermediate members (OPEN, VERIFIED 2026-07-13)
+### F63. Chained member reads do not require intermediate members (PARTIAL 2026-07-14)
 
 Direct selector chains can fail before their leaf is rendered when an
 intermediate map member is absent. The schema records descendant descriptions
@@ -2741,7 +2741,7 @@ Do not automatically require the final leaf when Go-template rendering would
 tolerate a missing leaf; pin the intermediate-missing and empty-intermediate
 cases separately.
 
-### F64. Dropping an unlowerable outer guard leaks strict contracts into dead branches (OPEN, VERIFIED 2026-07-13)
+### F64. Dropping an unlowerable outer guard leaks strict contracts into dead branches (FIXED 2026-07-14)
 
 Airflow's webserver Deployment is guarded by
 `semverCompare "<3.0.0" .Values.airflowVersion` at
@@ -2760,7 +2760,7 @@ its narrowing child effect. Preserve an opaque/alternative branch or abstain
 from the narrowing until semver predicates can be represented faithfully.
 Pin both sides of the version guard so a globally strict fallback cannot pass.
 
-### F65. Ordered helper mutation is not reflected in accepted input domains (OPEN, VERIFIED 2026-07-13)
+### F65. Ordered helper mutation is not reflected in accepted input domains (BLOCKED ON F57 ENCODING, 2026-07-14)
 
 NACK supports `jetstream.image` as a string or map. The `jsc.fixImage` helper
 checks for a string and mutates `.Values.jetstream.image` into a map with
@@ -2854,3 +2854,97 @@ facet scans are empty; every dotted key is literal or beneath an open parent;
 remains 5/119 rejected, but one residual is now positively identified as F54
 (`oauth2-proxy/extra-args-as-list-values.yaml` is Helm-valid), rather than all
 five being an adjudicated baseline. Only this plan file is modified.
+
+## Round F51-F65 round-2 fix summary (2026-07-14)
+
+Second pass over the remaining F51-F65 findings. All 963 workspace tests
+pass (3 pinned `#[ignore]` reproducers); closed-object/facet/dotted scans
+clean (dotted entries are literal-ok or under open parents); CI-values
+residual stays 4/119 (aws-lb genuine `required`, datadog root-strictness,
+two adjudicated oauth2 tpl classes). Every fix below carries a minimal
+reproducer verified to fail without it.
+
+- **F51 (fixed)**: `required "msg" nil` (and `index (dict) …` spellings)
+  is a pure validator — the ambient predicates become a terminal clause
+  (`subject_is_statically_helm_empty` in `holes.rs`). Terminal clauses all
+  of whose guards can hold VACUOUSLY (absence-flavored) anchor at the
+  ROOT, so a helper's `required global.version` also rejects documents
+  with no `global` at all (`guard_holds_vacuously` in
+  `overlay_lowering.rs`). Ranged-member subjects (argo-cd) and
+  helper-internal subjects (kyverno) verified by reproducers; the airflow
+  loop-computed sentinel stays conservatively unbound (its guard is
+  unrepresentable, and the capture is approximation-poisoned).
+- **F52 (fixed)**: `templates/NOTES.txt` runs through the contract lane
+  only (`FileRole::NotesTemplate`); resource-schema extraction is skipped
+  because notes prose (ASCII art, indented URLs) is not YAML — the first
+  cut ran the manifest path and aborted whole-chart analysis on
+  `yaml error` for nack/surveyor-style notes.
+- **F53 (partial)**: the plain helper-internal self-guarded `tpl`
+  (oauth2 `alphaConfig.configFile`) is verified fixed. The
+  `eq (include "mode" .) "literal"` chain (oauth2 legacy-config) needs
+  helper literal-return branch decoding — reproducer pinned `#[ignore]`.
+- **F59 (fixed)**: range VALUE variables resolve to member identity in
+  hole evaluation (`$arg` in `range $arg := .Values.args` is `args.*`),
+  so member consumers bind per member. Member rows fire BY their own
+  iteration (the parent Range predicate is self-firing for hints and
+  overlay keys). Member rows project onto every collection arm of a
+  union base (array `items` and object `additionalProperties`;
+  closed-object off-states stay untouched). A member string contract
+  closes the parent's integer-iteration lane
+  (`has_string_contract_items`).
+- **F60 (fixed)**: `eq`/`ne` against a literal emit operand comparability
+  captures (composites always fail; mismatched scalar kinds fail Go's
+  basicKind check; int/number pairs stay permissive).
+- **F61 (fixed)**: operand contracts for `merge`/`mergeOverwrite`
+  (truthy⇒object), `concat`/`append`/`prepend` list operands
+  (truthy⇒array), `has` (truthy⇒array), and `len` (rejects
+  boolean/integer/number). `len`/`has` also shape-erase their operands:
+  only a derived count/bool reaches the sink, so scalar sinks must not
+  text-type the operand. `join` totality pinned.
+- **F63 (partial)**: the chained-selector reproducer
+  (`chained_member_read_requires_intermediate_objects`) now passes and is
+  un-ignored; the F57/F65 member-arm encoding remains open.
+- **F64 (fixed, redesigned)**: three abstention gates replace the interim
+  path-poison channel: (1) interpreter-level string contracts are not
+  recorded under approximate conditions; (2) row-level splice
+  string-contract meta is stripped under approximate conditions, so
+  branch overlays keyed on DEGRADED predicates carry no contract typing;
+  (3) condition string captures carry the ambient approximate paths, so
+  their implications abstain. Branch-scoped hints never degrade to
+  path-level typing when overlays are poisoned (they stay widen-only).
+  The earlier `approximate_guarded_paths` poison channel was DELETED: it
+  marked `saw_unsupported_overlay` per path, which dropped well-guarded
+  overlays and flipped gen's base classification so the declared default
+  narrowed the base (signoz `smtpVars.existingSecret.name` regression —
+  provider sink typing under partially-decoded guards is the accepted
+  corpus convention and stays).
+- **F65 (blocked)**: both valid nack forms (string image, map image)
+  verified accepted; rejecting the untouched scalar complement needs the
+  F57 member-contract encoding. Reproducer pinned `#[ignore]`.
+- **Extras**: destructured ranges over LITERAL dicts bind the key
+  variable's exact domain, so `get map $k` selector reads resolve to the
+  finite member set (signoz smtp shape). Pretty JSON output degrades to
+  compact when it would cross Helm's 5 MiB chart-file limit
+  (`write_schema_json`), and the helm-lint harness mirrors that policy —
+  the signoz umbrella schema (6.1 MB pretty, 1.7 MB compact) now ships.
+- **F52 follow-ups found by check:local**: (1) the first notes lane ran
+  manifest resource-schema extraction over prose and aborted whole-chart
+  analysis with `yaml error` (nack/surveyor ASCII art); notes now run the
+  contract lane only. (2) bitnami `validateValues` aggregators surfaced a
+  false terminal: `$message := join "\n" $messages` + `if $message` was
+  decoded as a FAITHFUL truthy over the flowing input identities, so the
+  fail negated "all three drive counts truthy" instead of "some validator
+  fired" and rejected default minio values. Truthiness of a DERIVED-TEXT
+  local is now an approximation (`condition_lowering_is_faithful`), so
+  the capture poisons and the terminal abstains. The same rule removed
+  derived-local stand-in arms from cilium/bitnami-postgresql/loki
+  (`deploymentMode`-style include-derived guards).
+- **Fixture churn**: 50 whole-chart schemas (3 of them twice), 8 gen
+  fixtures, 2 ir fixtures, 2 fragment goldens, and the disable-k8s
+  fixture regenerated and adjudicated (classes: F60 not-type arms, F51
+  terminals, F59 member typing/map lanes, F64 contract abstention,
+  restored pre-poison arms, derived-text stand-in arm removal).
+- **check:local**: green end to end against the luup3 deployment charts
+  after `cargo install` (the minio false terminal above was the only
+  failure and is covered by
+  `derived_text_aggregate_condition_does_not_negate_input_truthiness`).

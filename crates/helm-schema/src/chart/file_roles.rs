@@ -16,6 +16,10 @@ pub(crate) enum FileRole {
     StaticCrd,
     /// A static YAML/template fragment reachable through `.Files.Get`.
     FilesGetSource,
+    /// `templates/NOTES.txt`: Helm executes it at install/upgrade time, so
+    /// its consumers and terminal effects are schema evidence, while its
+    /// prose stays out of YAML resource detection.
+    NotesTemplate,
 }
 
 #[derive(Debug, Clone)]
@@ -88,6 +92,9 @@ fn collect_template_roles(
         if is_define_index_template(&path) {
             insert_role(files, path.clone(), FileRole::DefineIndexTemplate);
         }
+        if is_notes_template(&path) {
+            insert_role(files, path.clone(), FileRole::NotesTemplate);
+        }
         if is_manifest_template(&path) {
             insert_role(files, path, FileRole::ManifestTemplate);
         }
@@ -142,6 +149,10 @@ fn is_manifest_template(path: &VfsPath) -> bool {
     }
 
     extension_is_one_of(path, &["yaml", "yml"])
+}
+
+fn is_notes_template(path: &VfsPath) -> bool {
+    path.filename() == "NOTES.txt"
 }
 
 fn is_static_crd_source(path: &VfsPath) -> bool {

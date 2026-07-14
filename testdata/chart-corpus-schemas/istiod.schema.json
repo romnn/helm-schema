@@ -81,6 +81,1414 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "all"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "namespace"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "istiodRemote": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "istiodRemote"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "istiodRemote": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "istiodRemote"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "istiodRemote": {
+                        "properties": {
+                          "enabledLocalInjectorIstiod": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabledLocalInjectorIstiod"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "istiodRemote"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "env": {
+            "properties": {
+              "ENABLE_CLUSTER_TRUST_BUNDLE_API": {
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          },
+          "revision": {
+            "not": {
+              "type": "array"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "all"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "cluster"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "istiodRemote": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "istiodRemote"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "istiodRemote": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "istiodRemote"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "global": {
+                            "properties": {
+                              "configCluster": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "configCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "global"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabledLocalInjectorIstiod": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabledLocalInjectorIstiod"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "env": {
+            "properties": {
+              "ENABLE_CLUSTER_TRUST_BUNDLE_API": {
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "namespace"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabledLocalInjectorIstiod": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabledLocalInjectorIstiod"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "env": {
+            "properties": {
+              "ENABLE_CLUSTER_TRUST_BUNDLE_API": {
+                "not": {
+                  "type": "integer"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "namespace"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabledLocalInjectorIstiod": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabledLocalInjectorIstiod"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "env": {
+            "properties": {
+              "ENABLE_CLUSTER_TRUST_BUNDLE_API": {
+                "not": {
+                  "type": "number"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "namespace"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabledLocalInjectorIstiod": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabledLocalInjectorIstiod"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "env": {
+            "properties": {
+              "ENABLE_CLUSTER_TRUST_BUNDLE_API": {
+                "not": {
+                  "type": "object"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "namespace"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabledLocalInjectorIstiod": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabledLocalInjectorIstiod"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "env": {
+            "properties": {
+              "ENABLE_CLUSTER_TRUST_BUNDLE_API": {
+                "not": {
+                  "type": "string"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -155,6 +1563,22 @@
                 }
               ]
             }
+          },
+          "revisionTags": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object"
@@ -249,6 +1673,566 @@
                 "type": "null"
               }
             ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "properties": {
+        "global": {
+          "properties": {
+            "pilotCertProvider": {
+              "not": {
+                "type": "array"
+              }
+            },
+            "resourceScope": {
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "global": {
+          "properties": {
+            "pilotCertProvider": {
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "global": {
+          "properties": {
+            "pilotCertProvider": {
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "global": {
+          "properties": {
+            "pilotCertProvider": {
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "global": {
+          "properties": {
+            "pilotCertProvider": {
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configMap": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "configMap"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "meshConfig": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "meshConfig"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "all"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "namespace"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "properties": {
+              "proxy": {
+                "properties": {
+                  "tracer": {
+                    "not": {
+                      "type": "array"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configMap": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "configMap"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "meshConfig": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "meshConfig"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "all"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "namespace"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "properties": {
+              "proxy": {
+                "properties": {
+                  "tracer": {
+                    "not": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configMap": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "configMap"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "meshConfig": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "meshConfig"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "all"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "namespace"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "properties": {
+              "proxy": {
+                "properties": {
+                  "tracer": {
+                    "not": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configMap": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "configMap"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "meshConfig": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "meshConfig"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "all"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "namespace"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "properties": {
+              "proxy": {
+                "properties": {
+                  "tracer": {
+                    "not": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configMap": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "configMap"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "meshConfig": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "meshConfig"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "all"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "resourceScope": {
+                        "enum": [
+                          "namespace"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "resourceScope"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "global": {
+            "properties": {
+              "proxy": {
+                "properties": {
+                  "tracer": {
+                    "not": {
+                      "type": "object"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -363,6 +2347,66 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "global": {
+          "properties": {
+            "resourceScope": {
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "global": {
+          "properties": {
+            "resourceScope": {
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "global": {
+          "properties": {
+            "resourceScope": {
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "global": {
+          "properties": {
+            "resourceScope": {
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -511,80 +2555,393 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
+            "allOf": [
+              {
+                "properties": {
+                  "experimental": {
+                    "properties": {
+                      "stableValidationPolicy": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "stableValidationPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "experimental"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "namespace"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "configValidation": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "configValidation"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
               {
                 "not": {
                   "properties": {
-                    "revision": {}
+                    "global": {
+                      "properties": {
+                        "operatorManageWebhooks": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "operatorManageWebhooks"
+                      ],
+                      "type": "object"
+                    }
                   },
                   "required": [
-                    "revision"
+                    "global"
                   ],
                   "type": "object"
                 }
               },
               {
-                "properties": {
-                  "revision": {
-                    "not": {
-                      "enum": [
-                        ""
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "revision"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "global": {
+                "anyOf": [
+                  {
                     "properties": {
-                      "resourceScope": {
-                        "enum": [
-                          "all"
-                        ]
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "resourceScope"
+                      "global"
                     ],
                     "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "global": {
+                  },
+                  {
                     "properties": {
-                      "resourceScope": {
-                        "enum": [
-                          "namespace"
-                        ]
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "resourceScope"
+                      "global"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
+                ]
               }
             ]
           }
@@ -592,21 +2949,2098 @@
       },
       "then": {
         "properties": {
-          "revisionTags": {
-            "anyOf": [
+          "revision": {
+            "not": {
+              "type": "array"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
               {
-                "type": "array"
-              },
-              {
+                "properties": {
+                  "experimental": {
+                    "properties": {
+                      "stableValidationPolicy": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "stableValidationPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "experimental"
+                ],
                 "type": "object"
               },
               {
-                "type": "integer"
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "namespace"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
               },
               {
-                "type": "null"
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
               }
             ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "configValidation": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "configValidation"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "operatorManageWebhooks": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "operatorManageWebhooks"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "namespace"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabledLocalInjectorIstiod": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabledLocalInjectorIstiod"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "revision": {
+            "not": {
+              "type": "boolean"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "experimental": {
+                    "properties": {
+                      "stableValidationPolicy": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "stableValidationPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "experimental"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "namespace"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "configValidation": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "configValidation"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "operatorManageWebhooks": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "operatorManageWebhooks"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "namespace"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabledLocalInjectorIstiod": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabledLocalInjectorIstiod"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "revision": {
+            "not": {
+              "type": "integer"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "experimental": {
+                    "properties": {
+                      "stableValidationPolicy": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "stableValidationPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "experimental"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "namespace"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "configValidation": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "configValidation"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "operatorManageWebhooks": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "operatorManageWebhooks"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "namespace"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabledLocalInjectorIstiod": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabledLocalInjectorIstiod"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "revision": {
+            "not": {
+              "type": "number"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "experimental": {
+                    "properties": {
+                      "stableValidationPolicy": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "stableValidationPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "experimental"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "namespace"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "configValidation": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "configValidation"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "global": {
+                                "properties": {
+                                  "configCluster": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "configCluster"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "global"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "properties": {
+                              "istiodRemote": {
+                                "properties": {
+                                  "enabledLocalInjectorIstiod": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabledLocalInjectorIstiod"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "istiodRemote"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "operatorManageWebhooks": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "operatorManageWebhooks"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "cluster"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "all"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "resourceScope": {
+                            "enum": [
+                              "namespace"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "resourceScope"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "istiodRemote": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "istiodRemote"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "istiodRemote": {
+                            "properties": {
+                              "enabledLocalInjectorIstiod": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabledLocalInjectorIstiod"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "istiodRemote"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "revision": {
+            "not": {
+              "type": "object"
+            }
           }
         },
         "type": "object"
@@ -2389,9 +6823,11 @@
     "deploymentLabels": {
       "anyOf": [
         {
+          "items": {},
           "type": "array"
         },
         {
+          "additionalProperties": {},
           "type": "object"
         },
         {
@@ -2401,6 +6837,10 @@
     },
     "env": {
       "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
         {
           "additionalProperties": {},
           "properties": {
@@ -2424,9 +6864,6 @@
           "type": "object"
         },
         {
-          "type": "array"
-        },
-        {
           "type": "null"
         }
       ]
@@ -2444,6 +6881,24 @@
     "gateways": {},
     "global": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "pilotCertProvider": {
+                "enum": [
+                  "kubernetes"
+                ]
+              }
+            },
+            "required": [
+              "pilotCertProvider"
+            ],
+            "type": "object"
+          },
+          "then": false
+        }
+      ],
       "properties": {
         "certSigners": {
           "anyOf": [
@@ -2452,13 +6907,14 @@
               "type": "array"
             },
             {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
               "type": "integer"
             },
             {
               "type": "null"
-            },
-            {
-              "type": "object"
             }
           ]
         },
@@ -2489,13 +6945,14 @@
               "type": "array"
             },
             {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
               "type": "integer"
             },
             {
               "type": "null"
-            },
-            {
-              "type": "object"
             }
           ]
         },
@@ -2506,13 +6963,14 @@
               "type": "array"
             },
             {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
               "type": "integer"
             },
             {
               "type": "null"
-            },
-            {
-              "type": "object"
             }
           ]
         },
@@ -2571,7 +7029,18 @@
         },
         "omitSidecarInjectorConfigMap": {},
         "operatorManageWebhooks": {},
-        "pilotCertProvider": {},
+        "pilotCertProvider": {
+          "anyOf": [
+            {
+              "enum": [
+                "kubernetes"
+              ]
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
         "platform": {},
         "priorityClassName": {},
         "profile": {},
@@ -2740,13 +7209,14 @@
           "type": "array"
         },
         {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
           "type": "integer"
         },
         {
           "type": "null"
-        },
-        {
-          "type": "object"
         }
       ]
     },
@@ -2779,12 +7249,7 @@
       }
     },
     "nodeSelector": {},
-    "ownerName": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "ownerName": {},
     "pdb": {
       "additionalProperties": {},
       "properties": {
@@ -2812,9 +7277,11 @@
     "podLabels": {
       "anyOf": [
         {
+          "items": {},
           "type": "array"
         },
         {
+          "additionalProperties": {},
           "type": "object"
         },
         {
@@ -2822,7 +7289,12 @@
         }
       ]
     },
-    "profile": {},
+    "profile": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "replicaCount": {},
     "resources": {},
     "revision": {

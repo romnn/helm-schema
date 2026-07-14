@@ -125,6 +125,12 @@
             ],
             "description": "List of signer names that cert-manager will approve by default. CertificateRequests\nreferencing these signer names will be auto-approved by cert-manager. Defaults to just\napproving the cert-manager.io Issuer and ClusterIssuer issuers. When set to an empty\narray, ALL issuers will be auto-approved by cert-manager. To disable the auto-approval,\nbecause, e.g., you are using approver-policy, you can enable 'disableAutoApproval'.\nref: https://cert-manager.io/docs/concepts/certificaterequest/#approval\n+docs:property"
           },
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
           "fullnameOverride": {
             "type": [
               "string",
@@ -293,6 +299,12 @@
             },
             "type": "object"
           },
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
           "namespace": {
             "description": "This namespace allows you to define where the services are installed into.\nIf not set then they use the namespace of the release.\nThis is helpful when installing cert manager as a chart dependency (sub chart).",
             "type": "string"
@@ -392,6 +404,12 @@
               }
             },
             "type": "object"
+          },
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
           }
         },
         "type": "object"
@@ -548,34 +566,12 @@
               }
             },
             "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+          },
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
           }
         },
         "type": "object"
@@ -626,6 +622,12 @@
       },
       "then": {
         "properties": {
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
           "fullnameOverride": {
             "type": [
               "string",
@@ -779,6 +781,12 @@
       },
       "then": {
         "properties": {
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
           "fullnameOverride": {
             "type": [
               "string",
@@ -909,6 +917,12 @@
       },
       "then": {
         "properties": {
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
           "fullnameOverride": {
             "type": [
               "string",
@@ -1013,6 +1027,12 @@
       },
       "then": {
         "properties": {
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
           "fullnameOverride": {
             "type": [
               "string",
@@ -1049,189 +1069,6 @@
               }
             ],
             "description": "This namespace allows you to define where the services are installed into.\nIf not set then they use the namespace of the release.\nThis is helpful when installing cert manager as a chart dependency (sub chart)."
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "prometheus"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "prometheus": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "prometheus"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "podmonitor": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "podmonitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "prometheus"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "prometheus": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "prometheus"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "servicemonitor": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "servicemonitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "fullnameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "global": {
-            "description": "Default values for cert-manager.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-            "properties": {
-              "commonLabels": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Labels to apply to all resources.\nPlease note that this does not add labels to the resources created dynamically by the controllers.\nFor these resources, you have to add the labels in the template in the cert-manager custom resource:\nFor example, podTemplate/ ingressTemplate in ACMEChallengeSolverHTTP01Ingress\nFor more information, see the [cert-manager documentation](https://cert-manager.io/docs/reference/api-docs/#acme.cert-manager.io/v1.ACMEChallengeSolverHTTP01Ingress).\nFor example, secretTemplate in CertificateSpec\nFor more information, see the [cert-manager documentation](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec)."
-              }
-            },
-            "type": "object"
           }
         },
         "type": "object"
@@ -1298,6 +1135,12 @@
       },
       "then": {
         "properties": {
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
           "fullnameOverride": {
             "type": [
               "string",
@@ -1365,6 +1208,12 @@
       },
       "then": {
         "properties": {
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
           "fullnameOverride": {
             "type": [
               "string",
@@ -1412,68 +1261,54 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
+            "anyOf": [
               {
-                "properties": {
-                  "config": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "config": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "config"
-                    ],
-                    "type": "object"
+                "not": {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "rbac": {
+                          "properties": {
+                            "aggregateClusterRoles": {}
+                          },
+                          "required": [
+                            "aggregateClusterRoles"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
+                    }
                   },
-                  {
-                    "properties": {
-                      "volumes": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "volumes"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              },
               {
                 "properties": {
                   "global": {
                     "properties": {
-                      "podSecurityPolicy": {
+                      "rbac": {
                         "properties": {
-                          "enabled": {
+                          "aggregateClusterRoles": {
                             "$ref": "#/$defs/helm-truthy"
                           }
                         },
                         "required": [
-                          "enabled"
+                          "aggregateClusterRoles"
                         ],
                         "type": "object"
                       }
                     },
                     "required": [
-                      "podSecurityPolicy"
+                      "rbac"
                     ],
                     "type": "object"
                   }
@@ -1482,285 +1317,64 @@
                   "global"
                 ],
                 "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "serviceAccount": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
-                    "type": "object"
-                  }
-                ]
               }
             ]
           },
           {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "rbac": {
-                              "properties": {
-                                "aggregateClusterRoles": {}
-                              },
-                              "required": [
-                                "aggregateClusterRoles"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "rbac"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "rbac": {
-                            "properties": {
-                              "aggregateClusterRoles": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "aggregateClusterRoles"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "rbac"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "rbac": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "rbac"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "rbac": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "rbac"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "rbac": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "rbac"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "global": {
-                        "properties": {
-                          "rbac": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "rbac"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "global"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "serviceAccount": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
+            "anyOf": [
               {
                 "not": {
                   "properties": {
-                    "disableAutoApproval": {
-                      "$ref": "#/$defs/helm-truthy"
+                    "global": {
+                      "properties": {
+                        "rbac": {
+                          "properties": {
+                            "create": {}
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
                     }
                   },
                   "required": [
-                    "disableAutoApproval"
+                    "global"
                   ],
                   "type": "object"
                 }
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
               }
             ]
           }
@@ -1768,6 +1382,12 @@
       },
       "then": {
         "properties": {
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
           "fullnameOverride": {
             "type": [
               "string",
@@ -1989,6 +1609,12 @@
       },
       "then": {
         "properties": {
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
           "global": {
             "description": "Default values for cert-manager.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
@@ -2136,6 +1762,12 @@
       },
       "then": {
         "properties": {
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
           "global": {
             "description": "Default values for cert-manager.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
@@ -2347,6 +1979,12 @@
       },
       "then": {
         "properties": {
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
           "global": {
             "description": "Default values for cert-manager.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
@@ -2419,6 +2057,12 @@
       },
       "then": {
         "properties": {
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
           "global": {
             "description": "Default values for cert-manager.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
             "properties": {
@@ -2438,6 +2082,641 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "podSecurityPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podSecurityPolicy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "startupapicheck": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "startupapicheck"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "startupapicheck": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "startupapicheck"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "creator": {
+            "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+            "not": {
+              "type": "array"
+            }
+          },
+          "startupapicheck": {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "annotations for the startup API Check job RBAC and PSP resources.\n+docs:property"
+                  }
+                },
+                "type": "object"
+              },
+              "serviceAccount": {
+                "properties": {
+                  "name": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "properties": {
+        "creator": {
+          "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+          "not": {
+            "type": "array"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "creator": {
+          "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+          "not": {
+            "type": "boolean"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "creator": {
+          "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+          "not": {
+            "type": "integer"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "creator": {
+          "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+          "not": {
+            "type": "number"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "creator": {
+          "description": "Field used by our release pipeline to produce the static manifests.\nThe field defaults to \"helm\" but is set to \"static\" when we render\nthe static YAML manifests.\n+docs:hidden",
+          "not": {
+            "type": "object"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "prometheus": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "prometheus"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "prometheus": {
+                    "properties": {
+                      "podmonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "podmonitor"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheus"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "prometheus": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "prometheus"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "prometheus": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "prometheus": {
+                    "properties": {
+                      "servicemonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "servicemonitor"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheus"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "global": {
+            "description": "Default values for cert-manager.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "commonLabels": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Labels to apply to all resources.\nPlease note that this does not add labels to the resources created dynamically by the controllers.\nFor these resources, you have to add the labels in the template in the cert-manager custom resource:\nFor example, podTemplate/ ingressTemplate in ACMEChallengeSolverHTTP01Ingress\nFor more information, see the [cert-manager documentation](https://cert-manager.io/docs/reference/api-docs/#acme.cert-manager.io/v1.ACMEChallengeSolverHTTP01Ingress).\nFor example, secretTemplate in CertificateSpec\nFor more information, see the [cert-manager documentation](https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec)."
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "config": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "config": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "volumes": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "volumes"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "podSecurityPolicy": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "podSecurityPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "create": {}
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "global": {
+                          "properties": {
+                            "rbac": {
+                              "properties": {
+                                "create": {}
+                              },
+                              "required": [
+                                "create"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "rbac"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "global"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "rbac": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "rbac"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "create": {}
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "disableAutoApproval": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "disableAutoApproval"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "type": "object"
@@ -2864,121 +3143,6 @@
                   "string",
                   "null"
                 ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "global": {
-                "properties": {
-                  "podSecurityPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "podSecurityPolicy"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "startupapicheck": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "startupapicheck"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "startupapicheck": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "startupapicheck"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "startupapicheck": {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "annotations for the startup API Check job RBAC and PSP resources.\n+docs:property"
-                  }
-                },
-                "type": "object"
-              },
-              "serviceAccount": {
-                "properties": {
-                  "name": {
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  }
-                },
-                "type": "object"
               }
             },
             "type": "object"
@@ -4255,19 +4419,24 @@
     "extraObjects": {
       "anyOf": [
         {
-          "items": {},
+          "items": {
+            "type": "string"
+          },
           "type": "array"
         },
         {
+          "items": {
+            "type": "string"
+          },
           "type": "array"
-        },
-        {
-          "type": "integer"
         },
         {
           "type": "null"
         },
         {
+          "additionalProperties": {
+            "type": "string"
+          },
           "type": "object"
         }
       ],

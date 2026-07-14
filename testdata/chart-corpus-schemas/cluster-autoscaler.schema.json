@@ -137,6 +137,18 @@
             ],
             "description": "- color: green\n- shape: circle\nautoscalingGroups -- For AWS, Azure AKS, Exoscale or Magnum. At least one element is required if not using `autoDiscovery`. For example:\n<pre>\n- name: asg1<br />\nmaxSize: 2<br />\nminSize: 1\n</pre>\nFor Hetzner Cloud, the `instanceType` and `region` keys are also required.\n<pre>\n- name: mypool<br />\nmaxSize: 2<br />\nminSize: 1<br />\ninstanceType: CPX21<br />\nregion: FSN1\n</pre>\n- name: asg1\nmaxSize: 2\nminSize: 1\n- name: asg2\nmaxSize: 2\nminSize: 1"
           },
+          "cloudProvider": {
+            "description": "cloudProvider -- The cloud provider where the autoscaler runs.\nCurrently only `gce`, `aws`, `azure`, `magnum`, `clusterapi`, `civo` and `coreweave` are supported.\n`aws` supported for AWS. `gce` for GCE. `azure` for Azure AKS.\n`magnum` for OpenStack Magnum, `clusterapi` for Cluster API.\n`civo` for Civo Cloud.\n`coreweave` for CoreWeave.",
+            "not": {
+              "type": "array"
+            }
+          },
+          "clusterAPIMode": {
+            "description": "clusterAPIMode --  Cluster API mode, see https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/clusterapi/README.md#connecting-cluster-autoscaler-to-cluster-api-management-and-workload-clusters\nSyntax: workloadClusterMode-ManagementClusterMode\nfor `kubeconfig-kubeconfig`, `incluster-kubeconfig` and `single-kubeconfig` you always must mount the external kubeconfig using either `extraVolumeSecrets` or `extraMounts` and `extraVolumes`\nif you dont set `clusterAPIKubeconfigSecret`and thus use an in-cluster config or want to use a non capi generated kubeconfig you must do so for the workload kubeconfig as well\nincluster-incluster, incluster-kubeconfig, kubeconfig-incluster, kubeconfig-kubeconfig, single-kubeconfig",
+            "not": {
+              "type": "array"
+            }
+          },
           "customArgs": {
             "anyOf": [
               {
@@ -379,6 +391,81 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "additionalLabels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "additionalLabels -- Labels to add to each object of the chart."
+          },
+          "cloudProvider": {
+            "description": "cloudProvider -- The cloud provider where the autoscaler runs.\nCurrently only `gce`, `aws`, `azure`, `magnum`, `clusterapi`, `civo` and `coreweave` are supported.\n`aws` supported for AWS. `gce` for GCE. `azure` for Azure AKS.\n`magnum` for OpenStack Magnum, `clusterapi` for Cluster API.\n`civo` for Civo Cloud.\n`coreweave` for CoreWeave.",
+            "not": {
+              "type": "array"
+            }
+          },
+          "clusterAPIMode": {
+            "description": "clusterAPIMode --  Cluster API mode, see https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/clusterapi/README.md#connecting-cluster-autoscaler-to-cluster-api-management-and-workload-clusters\nSyntax: workloadClusterMode-ManagementClusterMode\nfor `kubeconfig-kubeconfig`, `incluster-kubeconfig` and `single-kubeconfig` you always must mount the external kubeconfig using either `extraVolumeSecrets` or `extraMounts` and `extraVolumes`\nif you dont set `clusterAPIKubeconfigSecret`and thus use an in-cluster config or want to use a non capi generated kubeconfig you must do so for the workload kubeconfig as well\nincluster-incluster, incluster-kubeconfig, kubeconfig-incluster, kubeconfig-kubeconfig, single-kubeconfig",
+            "not": {
+              "type": "array"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "rbac": {
             "properties": {
@@ -504,44 +591,106 @@
             ]
           },
           {
-            "anyOf": [
+            "allOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
+                "anyOf": [
+                  {
+                    "not": {
                       "properties": {
-                        "create": {}
+                        "rbac": {
+                          "properties": {
+                            "create": {}
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
-                        "create"
+                        "rbac"
                       ],
                       "type": "object"
                     }
                   },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "rbac": {
+                  {
                     "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "create"
+                      "rbac"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "rbac": {
+                          "properties": {
+                            "serviceAccount": {
+                              "properties": {
+                                "create": {}
+                              },
+                              "required": [
+                                "create"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "rbac"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "serviceAccount": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "serviceAccount"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           },
@@ -1990,78 +2139,6 @@
     },
     {
       "if": {
-        "not": {
-          "properties": {
-            "secretKeyRefNameOverride": {
-              "$ref": "#/$defs/helm-truthy"
-            }
-          },
-          "required": [
-            "secretKeyRefNameOverride"
-          ],
-          "type": "object"
-        }
-      },
-      "then": {
-        "properties": {
-          "awsAccessKeyID": {
-            "description": "awsAccessKeyID -- AWS access key ID ([if AWS user keys used](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md#using-aws-credentials))",
-            "type": "string"
-          },
-          "awsSecretAccessKey": {
-            "description": "awsSecretAccessKey -- AWS access secret key ([if AWS user keys used](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md#using-aws-credentials))",
-            "type": "string"
-          },
-          "azureClientID": {
-            "description": "azureClientID -- Service Principal ClientID with contributor permission to Cluster and Node ResourceGroup.\nRequired if `cloudProvider=azure`",
-            "type": "string"
-          },
-          "azureClientSecret": {
-            "description": "azureClientSecret -- Service Principal ClientSecret with contributor permission to Cluster and Node ResourceGroup.\nRequired if `cloudProvider=azure`",
-            "type": "string"
-          },
-          "azureResourceGroup": {
-            "description": "azureResourceGroup -- Azure resource group that the cluster is located.\nRequired if `cloudProvider=azure`",
-            "type": "string"
-          },
-          "azureSubscriptionID": {
-            "description": "azureSubscriptionID -- Azure subscription where the resources are located.\nRequired if `cloudProvider=azure`",
-            "type": "string"
-          },
-          "azureTenantID": {
-            "description": "azureTenantID -- Azure tenant where the resources are located.\nRequired if `cloudProvider=azure`",
-            "type": "string"
-          },
-          "azureUserAssignedIdentityID": {
-            "description": "azureUserAssignedIdentityID -- When vmss has multiple user assigned identity assigned, azureUserAssignedIdentityID specifies which identity to be used",
-            "type": "string"
-          },
-          "azureVMType": {
-            "description": "azureVMType -- Azure VM type.",
-            "type": "string"
-          },
-          "civoApiKey": {
-            "description": "civoApiKey -- API key for the Civo API.\nRequired if `cloudProvider=civo`",
-            "type": "string"
-          },
-          "civoApiUrl": {
-            "description": "civoApiUrl -- URL for the Civo API.\nRequired if `cloudProvider=civo`",
-            "type": "string"
-          },
-          "civoClusterID": {
-            "description": "civoClusterID -- Cluster ID for the Civo cluster.\nRequired if `cloudProvider=civo`",
-            "type": "string"
-          },
-          "civoRegion": {
-            "description": "civoRegion -- Region for the Civo cluster.\nRequired if `cloudProvider=civo`",
-            "type": "string"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -2194,6 +2271,175 @@
               }
             ],
             "description": "cloudConfigPath -- Configuration file for cloud provider."
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "cloudProvider": {}
+                  },
+                  "required": [
+                    "cloudProvider"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "cloudProvider": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "cloudProvider"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "secretKeyRefNameOverride": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "secretKeyRefNameOverride"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "azureClientID": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "azureClientID -- Service Principal ClientID with contributor permission to Cluster and Node ResourceGroup.\nRequired if `cloudProvider=azure`"
+          },
+          "azureClientSecret": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "azureClientSecret -- Service Principal ClientSecret with contributor permission to Cluster and Node ResourceGroup.\nRequired if `cloudProvider=azure`"
+          },
+          "azureResourceGroup": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "azureResourceGroup -- Azure resource group that the cluster is located.\nRequired if `cloudProvider=azure`"
+          },
+          "azureSubscriptionID": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "azureSubscriptionID -- Azure subscription where the resources are located.\nRequired if `cloudProvider=azure`"
+          },
+          "azureTenantID": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "azureTenantID -- Azure tenant where the resources are located.\nRequired if `cloudProvider=azure`"
+          },
+          "azureUserAssignedIdentityID": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "azureUserAssignedIdentityID -- When vmss has multiple user assigned identity assigned, azureUserAssignedIdentityID specifies which identity to be used"
+          },
+          "azureVMType": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "azureVMType -- Azure VM type."
           }
         },
         "type": "object"
@@ -2897,6 +3143,405 @@
       "if": {
         "allOf": [
           {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "autoscalingGroups"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "cloudProvider": {
+                    "enum": [
+                      "magnum"
+                    ]
+                  }
+                },
+                "required": [
+                  "cloudProvider"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "clusterAPIKubeconfigSecret": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterAPIKubeconfigSecret"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "extraVolumeSecrets": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumeSecrets"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "extraVolumes": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumes"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "cloudProvider": {
+            "description": "cloudProvider -- The cloud provider where the autoscaler runs.\nCurrently only `gce`, `aws`, `azure`, `magnum`, `clusterapi`, `civo` and `coreweave` are supported.\n`aws` supported for AWS. `gce` for GCE. `azure` for Azure AKS.\n`magnum` for OpenStack Magnum, `clusterapi` for Cluster API.\n`civo` for Civo Cloud.\n`coreweave` for CoreWeave.",
+            "not": {
+              "type": "array"
+            }
+          },
+          "clusterAPIKubeconfigSecret": {
+            "description": "clusterAPIKubeconfigSecret -- Secret containing kubeconfig for connecting to Cluster API managed workloadcluster\nRequired if `cloudProvider=clusterapi` and `clusterAPIMode=kubeconfig-kubeconfig,kubeconfig-incluster or incluster-kubeconfig`",
+            "type": "string"
+          },
+          "extraVolumeSecrets": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "maxProperties": 0,
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "properties": {},
+                "type": "object"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "extraVolumeSecrets -- Additional volumes to mount from Secrets.\nautoscaler-vol:\nmountPath: /data/autoscaler/\ncustom-vol:\nname: custom-secret\nmountPath: /data/custom/\nitems:\n- key: subkey\npath: mypath"
+          },
+          "extraVolumes": {
+            "description": "extraVolumes -- Additional volumes.\n- name: ssl-certs\nhostPath:\npath: /etc/ssl/certs/ca-bundle.crt",
+            "items": {},
+            "type": "array"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "autoscalingGroups"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "cloudProvider": {
+                    "enum": [
+                      "magnum"
+                    ]
+                  }
+                },
+                "required": [
+                  "cloudProvider"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "clusterAPIKubeconfigSecret": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterAPIKubeconfigSecret"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "extraVolumeMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumeMounts"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "extraVolumeSecrets": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumeSecrets"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "cloudProvider": {
+            "description": "cloudProvider -- The cloud provider where the autoscaler runs.\nCurrently only `gce`, `aws`, `azure`, `magnum`, `clusterapi`, `civo` and `coreweave` are supported.\n`aws` supported for AWS. `gce` for GCE. `azure` for Azure AKS.\n`magnum` for OpenStack Magnum, `clusterapi` for Cluster API.\n`civo` for Civo Cloud.\n`coreweave` for CoreWeave.",
+            "not": {
+              "type": "array"
+            }
+          },
+          "extraVolumeMounts": {
+            "description": "extraVolumeMounts -- Additional volumes to mount.\n- name: ssl-certs\nmountPath: /etc/ssl/certs/ca-certificates.crt\nreadOnly: true",
+            "items": {},
+            "type": "array"
+          },
+          "extraVolumeSecrets": {
+            "additionalProperties": {
+              "required": [
+                "mountPath"
+              ],
+              "type": "object"
+            },
+            "description": "extraVolumeSecrets -- Additional volumes to mount from Secrets.\nautoscaler-vol:\nmountPath: /data/autoscaler/\ncustom-vol:\nname: custom-secret\nmountPath: /data/custom/\nitems:\n- key: subkey\npath: mypath",
+            "items": {
+              "required": [
+                "mountPath"
+              ],
+              "type": "object"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "properties": {
+        "cloudProvider": {
+          "description": "cloudProvider -- The cloud provider where the autoscaler runs.\nCurrently only `gce`, `aws`, `azure`, `magnum`, `clusterapi`, `civo` and `coreweave` are supported.\n`aws` supported for AWS. `gce` for GCE. `azure` for Azure AKS.\n`magnum` for OpenStack Magnum, `clusterapi` for Cluster API.\n`civo` for Civo Cloud.\n`coreweave` for CoreWeave.",
+          "not": {
+            "type": "array"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "cloudProvider": {
+          "description": "cloudProvider -- The cloud provider where the autoscaler runs.\nCurrently only `gce`, `aws`, `azure`, `magnum`, `clusterapi`, `civo` and `coreweave` are supported.\n`aws` supported for AWS. `gce` for GCE. `azure` for Azure AKS.\n`magnum` for OpenStack Magnum, `clusterapi` for Cluster API.\n`civo` for Civo Cloud.\n`coreweave` for CoreWeave.",
+          "not": {
+            "type": "boolean"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "cloudProvider": {
+          "description": "cloudProvider -- The cloud provider where the autoscaler runs.\nCurrently only `gce`, `aws`, `azure`, `magnum`, `clusterapi`, `civo` and `coreweave` are supported.\n`aws` supported for AWS. `gce` for GCE. `azure` for Azure AKS.\n`magnum` for OpenStack Magnum, `clusterapi` for Cluster API.\n`civo` for Civo Cloud.\n`coreweave` for CoreWeave.",
+          "not": {
+            "type": "integer"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "cloudProvider": {
+          "description": "cloudProvider -- The cloud provider where the autoscaler runs.\nCurrently only `gce`, `aws`, `azure`, `magnum`, `clusterapi`, `civo` and `coreweave` are supported.\n`aws` supported for AWS. `gce` for GCE. `azure` for Azure AKS.\n`magnum` for OpenStack Magnum, `clusterapi` for Cluster API.\n`civo` for Civo Cloud.\n`coreweave` for CoreWeave.",
+          "not": {
+            "type": "number"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "cloudProvider": {
+          "description": "cloudProvider -- The cloud provider where the autoscaler runs.\nCurrently only `gce`, `aws`, `azure`, `magnum`, `clusterapi`, `civo` and `coreweave` are supported.\n`aws` supported for AWS. `gce` for GCE. `azure` for Azure AKS.\n`magnum` for OpenStack Magnum, `clusterapi` for Cluster API.\n`civo` for Civo Cloud.\n`coreweave` for CoreWeave.",
+          "not": {
+            "type": "object"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "properties": {
               "cloudProvider": {
                 "enum": [
@@ -3508,6 +4153,79 @@
       "if": {
         "allOf": [
           {
+            "properties": {
+              "cloudProvider": {
+                "enum": [
+                  "clusterapi"
+                ]
+              }
+            },
+            "required": [
+              "cloudProvider"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "cloudProvider": {}
+                    },
+                    "required": [
+                      "cloudProvider"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "cloudProvider": {
+                      "enum": [
+                        "aws"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "cloudProvider"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "cloudProvider": {
+                  "enum": [
+                    "gce"
+                  ]
+                }
+              },
+              "required": [
+                "cloudProvider"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "cloudProvider": {
+                  "enum": [
+                    "magnum"
+                  ]
+                }
+              },
+              "required": [
+                "cloudProvider"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "anyOf": [
               {
                 "properties": {
@@ -3582,19 +4300,76 @@
                 ]
               }
             ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "clusterAPIMode": {
+            "description": "clusterAPIMode --  Cluster API mode, see https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/clusterapi/README.md#connecting-cluster-autoscaler-to-cluster-api-management-and-workload-clusters\nSyntax: workloadClusterMode-ManagementClusterMode\nfor `kubeconfig-kubeconfig`, `incluster-kubeconfig` and `single-kubeconfig` you always must mount the external kubeconfig using either `extraVolumeSecrets` or `extraMounts` and `extraVolumes`\nif you dont set `clusterAPIKubeconfigSecret`and thus use an in-cluster config or want to use a non capi generated kubeconfig you must do so for the workload kubeconfig as well\nincluster-incluster, incluster-kubeconfig, kubeconfig-incluster, kubeconfig-kubeconfig, single-kubeconfig",
+            "not": {
+              "type": "array"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
           },
           {
             "anyOf": [
               {
                 "properties": {
-                  "cloudProvider": {
-                    "enum": [
-                      "magnum"
-                    ]
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "cloudProvider"
+                  "autoscalingGroups"
                 ],
                 "type": "object"
               },
@@ -3602,34 +4377,58 @@
                 "anyOf": [
                   {
                     "properties": {
-                      "clusterAPIKubeconfigSecret": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "clusterAPIKubeconfigSecret"
+                      "autoDiscovery"
                     ],
                     "type": "object"
                   },
                   {
                     "properties": {
-                      "extraVolumeSecrets": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "extraVolumeSecrets"
+                      "autoDiscovery"
                     ],
                     "type": "object"
                   },
                   {
                     "properties": {
-                      "extraVolumes": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "extraVolumes"
+                      "autoDiscovery"
                     ],
                     "type": "object"
                   }
@@ -3641,35 +4440,416 @@
       },
       "then": {
         "properties": {
-          "clusterAPIKubeconfigSecret": {
-            "description": "clusterAPIKubeconfigSecret -- Secret containing kubeconfig for connecting to Cluster API managed workloadcluster\nRequired if `cloudProvider=clusterapi` and `clusterAPIMode=kubeconfig-kubeconfig,kubeconfig-incluster or incluster-kubeconfig`",
-            "type": "string"
-          },
-          "extraVolumeSecrets": {
+          "clusterAPIMode": {
+            "description": "clusterAPIMode --  Cluster API mode, see https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/clusterapi/README.md#connecting-cluster-autoscaler-to-cluster-api-management-and-workload-clusters\nSyntax: workloadClusterMode-ManagementClusterMode\nfor `kubeconfig-kubeconfig`, `incluster-kubeconfig` and `single-kubeconfig` you always must mount the external kubeconfig using either `extraVolumeSecrets` or `extraMounts` and `extraVolumes`\nif you dont set `clusterAPIKubeconfigSecret`and thus use an in-cluster config or want to use a non capi generated kubeconfig you must do so for the workload kubeconfig as well\nincluster-incluster, incluster-kubeconfig, kubeconfig-incluster, kubeconfig-kubeconfig, single-kubeconfig",
+            "not": {
+              "type": "boolean"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "anyOf": [
               {
-                "additionalProperties": false,
-                "maxProperties": 0,
-                "properties": {},
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
                 "type": "object"
-              },
-              {
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "type": "array"
-              },
-              {
-                "type": "null"
               }
-            ],
-            "description": "extraVolumeSecrets -- Additional volumes to mount from Secrets.\nautoscaler-vol:\nmountPath: /data/autoscaler/\ncustom-vol:\nname: custom-secret\nmountPath: /data/custom/\nitems:\n- key: subkey\npath: mypath"
+            ]
           },
-          "extraVolumes": {
-            "description": "extraVolumes -- Additional volumes.\n- name: ssl-certs\nhostPath:\npath: /etc/ssl/certs/ca-bundle.crt",
-            "items": {},
-            "type": "array"
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "autoscalingGroups"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "clusterAPIMode": {
+            "description": "clusterAPIMode --  Cluster API mode, see https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/clusterapi/README.md#connecting-cluster-autoscaler-to-cluster-api-management-and-workload-clusters\nSyntax: workloadClusterMode-ManagementClusterMode\nfor `kubeconfig-kubeconfig`, `incluster-kubeconfig` and `single-kubeconfig` you always must mount the external kubeconfig using either `extraVolumeSecrets` or `extraMounts` and `extraVolumes`\nif you dont set `clusterAPIKubeconfigSecret`and thus use an in-cluster config or want to use a non capi generated kubeconfig you must do so for the workload kubeconfig as well\nincluster-incluster, incluster-kubeconfig, kubeconfig-incluster, kubeconfig-kubeconfig, single-kubeconfig",
+            "not": {
+              "type": "integer"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "autoscalingGroups"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "clusterAPIMode": {
+            "description": "clusterAPIMode --  Cluster API mode, see https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/clusterapi/README.md#connecting-cluster-autoscaler-to-cluster-api-management-and-workload-clusters\nSyntax: workloadClusterMode-ManagementClusterMode\nfor `kubeconfig-kubeconfig`, `incluster-kubeconfig` and `single-kubeconfig` you always must mount the external kubeconfig using either `extraVolumeSecrets` or `extraMounts` and `extraVolumes`\nif you dont set `clusterAPIKubeconfigSecret`and thus use an in-cluster config or want to use a non capi generated kubeconfig you must do so for the workload kubeconfig as well\nincluster-incluster, incluster-kubeconfig, kubeconfig-incluster, kubeconfig-kubeconfig, single-kubeconfig",
+            "not": {
+              "type": "number"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "autoscalingGroups"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "clusterAPIMode": {
+            "description": "clusterAPIMode --  Cluster API mode, see https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/clusterapi/README.md#connecting-cluster-autoscaler-to-cluster-api-management-and-workload-clusters\nSyntax: workloadClusterMode-ManagementClusterMode\nfor `kubeconfig-kubeconfig`, `incluster-kubeconfig` and `single-kubeconfig` you always must mount the external kubeconfig using either `extraVolumeSecrets` or `extraMounts` and `extraVolumes`\nif you dont set `clusterAPIKubeconfigSecret`and thus use an in-cluster config or want to use a non capi generated kubeconfig you must do so for the workload kubeconfig as well\nincluster-incluster, incluster-kubeconfig, kubeconfig-incluster, kubeconfig-kubeconfig, single-kubeconfig",
+            "not": {
+              "type": "object"
+            }
           }
         },
         "type": "object"
@@ -4704,98 +5884,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "extraArgs": {
-                "properties": {
-                  "expander": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "expander"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "extraArgs"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "extraArgs": {
-                        "properties": {
-                          "expander": {}
-                        },
-                        "required": [
-                          "expander"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "extraArgs"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "extraArgs": {
-                      "properties": {
-                        "expander": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      },
-                      "required": [
-                        "expander"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "extraArgs"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "extraArgs": {
-            "description": "extraArgs -- Additional container arguments.\nRefer to https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-are-the-parameters-to-ca for the full list of cluster autoscaler\nparameters and their default values.\nEverything after the first _ will be ignored allowing the use of multi-string arguments.",
-            "properties": {
-              "expander": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -4876,7 +5964,12 @@
           "extraEnvConfigMaps": {
             "anyOf": [
               {
-                "additionalProperties": {},
+                "additionalProperties": false,
+                "maxProperties": 0,
+                "properties": {},
+                "type": "object"
+              },
+              {
                 "properties": {},
                 "type": "object"
               },
@@ -4975,7 +6068,12 @@
           "extraEnvSecrets": {
             "anyOf": [
               {
-                "additionalProperties": {},
+                "additionalProperties": false,
+                "maxProperties": 0,
+                "properties": {},
+                "type": "object"
+              },
+              {
                 "properties": {},
                 "type": "object"
               },
@@ -4987,167 +6085,6 @@
               }
             ],
             "description": "extraEnvSecrets -- Additional container environment variables from Secrets."
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "autoscalingGroups": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "autoscalingGroups"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "clusterName": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "clusterName"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "labels": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "labels"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "namespace": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "namespace"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "cloudProvider": {
-                    "enum": [
-                      "magnum"
-                    ]
-                  }
-                },
-                "required": [
-                  "cloudProvider"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "clusterAPIKubeconfigSecret": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "clusterAPIKubeconfigSecret"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "extraVolumeMounts": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "extraVolumeMounts"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "extraVolumeSecrets": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "extraVolumeSecrets"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "extraVolumeMounts": {
-            "description": "extraVolumeMounts -- Additional volumes to mount.\n- name: ssl-certs\nmountPath: /etc/ssl/certs/ca-certificates.crt\nreadOnly: true",
-            "items": {},
-            "type": "array"
-          },
-          "extraVolumeSecrets": {
-            "additionalProperties": {
-              "required": [
-                "mountPath"
-              ],
-              "type": "object"
-            },
-            "description": "extraVolumeSecrets -- Additional volumes to mount from Secrets.\nautoscaler-vol:\nmountPath: /data/autoscaler/\ncustom-vol:\nname: custom-secret\nmountPath: /data/custom/\nitems:\n- key: subkey\npath: mypath",
-            "items": {
-              "required": [
-                "mountPath"
-              ],
-              "type": "object"
-            }
           }
         },
         "type": "object"
@@ -6351,78 +7288,6 @@
             "allOf": [
               {
                 "properties": {
-                  "expanderPriorities": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "expanderPriorities"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "nameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "nameOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "properties": {
-                          "extraArgs": {
-                            "properties": {
-                              "expander": {}
-                            },
-                            "required": [
-                              "expander"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "extraArgs"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    {
-                      "properties": {
-                        "extraArgs": {
-                          "properties": {
-                            "expander": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          },
-                          "required": [
-                            "expander"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "extraArgs"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
                   "nameOverride": {
                     "$ref": "#/$defs/helm-truthy"
                   }
@@ -7549,6 +8414,7 @@
               "type": "array"
             },
             {
+              "additionalProperties": {},
               "type": "object"
             }
           ],
@@ -7573,13 +8439,15 @@
       "description": "autoscalingGroupsnamePrefix -- For GCE. At least one element is required if not using `autoDiscovery`. For example:\n<pre>\n- name: ig01<br />\nmaxSize: 10<br />\nminSize: 0\n</pre>\n- name: ig01\nmaxSize: 10\nminSize: 0\n- name: ig02\nmaxSize: 10\nminSize: 0"
     },
     "awsAccessKeyID": {
-      "description": "awsAccessKeyID -- AWS access key ID ([if AWS user keys used](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md#using-aws-credentials))"
+      "description": "awsAccessKeyID -- AWS access key ID ([if AWS user keys used](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md#using-aws-credentials))",
+      "type": "string"
     },
     "awsRegion": {
       "description": "awsRegion -- AWS region (required if `cloudProvider=aws`)"
     },
     "awsSecretAccessKey": {
-      "description": "awsSecretAccessKey -- AWS access secret key ([if AWS user keys used](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md#using-aws-credentials))"
+      "description": "awsSecretAccessKey -- AWS access secret key ([if AWS user keys used](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md#using-aws-credentials))",
+      "type": "string"
     },
     "azureClientID": {
       "description": "azureClientID -- Service Principal ClientID with contributor permission to Cluster and Node ResourceGroup.\nRequired if `cloudProvider=azure`"
@@ -7617,16 +8485,20 @@
       "description": "azureVMType -- Azure VM type."
     },
     "civoApiKey": {
-      "description": "civoApiKey -- API key for the Civo API.\nRequired if `cloudProvider=civo`"
+      "description": "civoApiKey -- API key for the Civo API.\nRequired if `cloudProvider=civo`",
+      "type": "string"
     },
     "civoApiUrl": {
-      "description": "civoApiUrl -- URL for the Civo API.\nRequired if `cloudProvider=civo`"
+      "description": "civoApiUrl -- URL for the Civo API.\nRequired if `cloudProvider=civo`",
+      "type": "string"
     },
     "civoClusterID": {
-      "description": "civoClusterID -- Cluster ID for the Civo cluster.\nRequired if `cloudProvider=civo`"
+      "description": "civoClusterID -- Cluster ID for the Civo cluster.\nRequired if `cloudProvider=civo`",
+      "type": "string"
     },
     "civoRegion": {
-      "description": "civoRegion -- Region for the Civo cluster.\nRequired if `cloudProvider=civo`"
+      "description": "civoRegion -- Region for the Civo cluster.\nRequired if `cloudProvider=civo`",
+      "type": "string"
     },
     "cloudConfigPath": {
       "description": "cloudConfigPath -- Configuration file for cloud provider."

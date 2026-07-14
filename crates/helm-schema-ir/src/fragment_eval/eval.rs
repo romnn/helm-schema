@@ -156,6 +156,9 @@ pub(crate) struct ControlFacts {
     /// The VALUE variable of a destructured range header (`$v` in
     /// `range $k, $v := …`).
     pub(super) range_value_variable: Option<String>,
+    /// The KEY variable of a destructured range header (`$k` in
+    /// `range $k, $v := …`).
+    pub(super) range_key_variable: Option<String>,
     /// The whole region's end byte (through `{{ end }}`), for regions that
     /// only surface as holes (block-scalar bodies).
     pub(super) region_end: usize,
@@ -198,6 +201,7 @@ fn collect_control_facts(
                     header: control_header(source, node),
                     range_destructured: false,
                     range_value_variable: None,
+                    range_key_variable: None,
                     region_end: node.end_byte(),
                 },
             );
@@ -209,6 +213,9 @@ fn collect_control_facts(
                     header: range_header_from_source(node, source),
                     range_destructured: range_has_destructured_variable_definition(node),
                     range_value_variable: helm_schema_ast::range_destructured_value_variable(
+                        node, source,
+                    ),
+                    range_key_variable: helm_schema_ast::range_destructured_key_variable(
                         node, source,
                     ),
                     region_end: node.end_byte(),
@@ -428,6 +435,7 @@ pub(super) enum ArmSpec {
         header: Option<TemplateHeader>,
         destructured: bool,
         value_variable: Option<String>,
+        key_variable: Option<String>,
     },
     Else,
 }

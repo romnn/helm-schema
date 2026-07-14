@@ -8286,7 +8286,6 @@ fn member_read_beside_serialize_requires_object_when_truthy() {
 /// absent-or-object under the executing guard; the leaf itself stays free
 /// (surveyor `config.credentials.secret.key` shape).
 #[test]
-#[ignore = "F63 open: member-access object contracts need a size-aware encoding — the naive per-read arms pushed umbrella-chart schemas past helm's 5MiB chart-file limit (signoz)"]
 fn chained_member_read_requires_intermediate_objects() {
     let src = indoc! {r#"
         apiVersion: v1
@@ -8360,6 +8359,519 @@ fn destructured_range_excludes_integer_iteration() {
     );
 }
 
+/// A destructured range over a LITERAL dict binds the key variable's
+/// exact domain, so `get map $k` selector reads resolve to the finite
+/// member set, and the enabled-scoped secret-name sink typing stays
+/// branch-scoped (signoz `smtpVars.existingSecret` shape). Scoping the
+/// arm further to "some literal key set" needs per-key iteration or a
+/// lowerable any-of guard — the no-keys state is deliberately unpinned.
+#[test]
+fn literal_dict_range_key_domain_decodes_get_conditions() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: main
+              env:
+                {{- if .Values.smtp.enabled }}
+                {{- range $keyName, $envName := dict "fromKey" "SMTP_FROM" "hostKey" "SMTP_HOST" }}
+                {{- $keyInSecret := get $.Values.smtp.existingSecret $keyName }}
+                {{- if $keyInSecret }}
+                - name: {{ $envName }}
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ $.Values.smtp.existingSecret.name }}
+                      key: {{ $keyInSecret }}
+                {{- end }}
+                {{- end }}
+                {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        smtp:
+          enabled: false
+          existingSecret: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "smtp": {
+            "enabled": true,
+            "existingSecret": { "fromKey": "smtp-from", "name": "creds" }
+        } }),
+        serde_json::json!({ "smtp": {
+            "enabled": false,
+            "existingSecret": { "fromKey": "smtp-from", "name": 7 }
+        } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "named secrets and disabled SMTP render: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "smtp": {
+                "enabled": true,
+                "existingSecret": { "fromKey": "smtp-from", "name": 7 }
+            } })
+        ),
+        "a configured key renders the secretKeyRef and its name sink \
+         requires a string: {schema}"
+    );
+}
+
+/// F52 follow-up (bitnami `validateValues` aggregators): a local bound to
+/// DERIVED TEXT (`$message := join "\n" $messages`) is falsy when NO
+/// validator fired, not when its input identities are falsy — the truthy
+/// stand-in over the flowing paths must count as approximate so the fail
+/// negation abstains instead of rejecting every document whose inputs are
+/// truthy (bitnami minio drive-count validator, surfaced by NOTES.txt
+/// analysis).
+#[test]
+fn derived_text_aggregate_condition_does_not_negate_input_truthiness() {
+    let src = indoc! {r#"
+        Thank you for installing.
+
+        {{- include "app.validateValues" . }}
+    "#};
+    let helpers = indoc! {r#"
+        {{- define "app.validateValues.totalDrives" -}}
+        {{- $replicaCount := int .Values.statefulset.replicaCount }}
+        {{- $drivesPerNode := int .Values.statefulset.drivesPerNode }}
+        {{- $zones := int .Values.statefulset.zones }}
+        {{- $totalDrives := mul $replicaCount $zones $drivesPerNode }}
+        {{- if and (eq .Values.mode "distributed") (lt $totalDrives 4) -}}
+        minio: total drives
+        {{- end -}}
+        {{- end -}}
+
+        {{- define "app.validateValues" -}}
+        {{- $messages := list -}}
+        {{- $messages := append $messages (include "app.validateValues.totalDrives" .) -}}
+        {{- $messages := without $messages "" -}}
+        {{- $message := join "
+" $messages -}}
+        {{- if $message -}}
+        {{-   printf "
+VALUES VALIDATION:
+%s" $message | fail -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let values_yaml = indoc! {"
+        mode: standalone
+        statefulset:
+          replicaCount: 1
+          drivesPerNode: 1
+          zones: 1
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "mode": "standalone",
+                "statefulset": { "replicaCount": 1, "drivesPerNode": 1, "zones": 1 }
+            })
+        ),
+        "standalone mode never reaches the drive-count validator; truthy \
+         inputs must not satisfy the aggregate's negation: {schema}"
+    );
+}
+
+/// F53: a self-guarded `tpl` inside a named helper binds its
+/// truthy-implies-string contract at every call site (oauth2-proxy
+/// `alphaConfig.configFile` shape).
+#[test]
+fn helper_internal_self_guarded_tpl_contract_reaches_callers() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          config: {{ include "app.alpha" . | quote }}
+    "#};
+    let helpers = indoc! {r#"
+        {{- define "app.alpha" -}}
+        {{- if .Values.alphaConfig.configFile }}
+        {{- tpl .Values.alphaConfig.configFile $ }}
+        {{- end }}
+        {{- end -}}
+    "#};
+    let values_yaml = indoc! {r#"
+        alphaConfig:
+          configFile: ""
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "alphaConfig": { "configFile": "cfg" } }),
+        serde_json::json!({}),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "strings feed tpl and the falsy state skips it: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "alphaConfig": { "configFile": { "a": 1 } } })
+        ),
+        "a truthy map reaches the helper's tpl and aborts: {schema}"
+    );
+}
+
+/// F53 (literal-returning helper condition): a `tpl` guarded by
+/// `eq (include "mode" .) "literal"` binds where the mode helper's OWN
+/// branch guards select that literal (oauth2-proxy
+/// `legacy-config.content` chain). The valid forms already validate;
+/// the rejection needs literal-return dispatch decoding — expanding the
+/// mode helper's branch→literal map into the eq condition's predicate.
+#[test]
+#[ignore = "F53 residual: `eq (include …) \"literal\"` conditions need helper literal-return branch decoding"]
+fn tpl_behind_literal_helper_mode_condition_binds_branch_guards() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          config: {{ include "app.content" . | quote }}
+    "#};
+    let helpers = indoc! {r#"
+        {{- define "app.mode" -}}
+        {{- if .Values.config.existingConfig -}}
+        existing-configmap
+        {{- else if .Values.config.configFile -}}
+        inline-custom
+        {{- else -}}
+        no-config
+        {{- end -}}
+        {{- end -}}
+
+        {{- define "app.content" -}}
+        {{- if eq (include "app.mode" .) "inline-custom" -}}
+        {{- tpl .Values.config.configFile $ -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let values_yaml = indoc! {r#"
+        config:
+          existingConfig: ~
+          configFile: ~
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "config": { "configFile": "cfg" } }),
+        serde_json::json!({ "config": { "existingConfig": "cm", "configFile": { "a": 1 } } }),
+        serde_json::json!({}),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "strings render, and other modes never reach the tpl: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "config": { "configFile": { "a": 1 } } })
+        ),
+        "inline-custom mode feeds the map to tpl and aborts: {schema}"
+    );
+}
+
+/// F65: an ordered `set` mutation converts the string image form into the
+/// map the later member reads require — the accepted union is EXACTLY
+/// string-or-map, and untouched scalars still abort the member read (nack
+/// `jsc.fixImage`/`jsc.image` shape). Both valid forms already validate;
+/// rejecting the untouched scalar needs the dispatch COMPLEMENT arm to
+/// carry the downstream member-read object requirement, which is the
+/// F57/F63 member-contract encoding.
+#[test]
+#[ignore = "F65 open: rejecting the untouched complement needs the F57 size-aware member-access contract encoding"]
+fn ordered_set_mutation_accepts_converted_and_map_forms() {
+    let src = indoc! {r#"
+        {{- include "app.fiximage" .Values.jetstream -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          image: {{ include "app.image" . | quote }}
+    "#};
+    let helpers = indoc! {r#"
+        {{- define "app.fiximage" -}}
+        {{- if kindIs "string" .image }}
+        {{- $_ := set . "image" (dict "repository" (split ":" .image)._0 "tag" ((split ":" .image)._1 | default "latest")) }}
+        {{- end }}
+        {{- end -}}
+
+        {{- define "app.image" -}}
+        {{- $d := .Values.jetstream.image -}}
+        {{- printf "%s:%s" $d.repository (default "latest" $d.tag) -}}
+        {{- end -}}
+    "#};
+    let values_yaml = indoc! {r#"
+        jetstream:
+          image: nats:2.9
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "jetstream": { "image": "repo:tag" } }),
+        serde_json::json!({ "jetstream": { "image": { "repository": "r" } } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "the string form converts and the map form reads directly: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!({ "jetstream": { "image": 7 } })),
+        "an untouched scalar reaches the member read and aborts: {schema}"
+    );
+}
+
+/// F51 (statically empty subject): `required "msg" nil` is a pure guarded
+/// validator — under its branch guards rendering always terminates, so the
+/// guard conjunction is a terminal clause (airflow check-values
+/// `elasticsearch/opensearch` mutual exclusion; ingress-nginx
+/// `required (index (dict) ".")`).
+#[test]
+fn required_nil_subject_is_a_guarded_terminal_clause() {
+    let src = indoc! {r#"
+        {{- if and .Values.elasticsearch.enabled .Values.opensearch.enabled }}
+        {{ required "You must not set both elasticsearch and opensearch" nil }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        elasticsearch:
+          enabled: false
+        opensearch:
+          enabled: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "elasticsearch": { "enabled": true } }),
+        serde_json::json!({ "opensearch": { "enabled": true } }),
+        serde_json::json!({}),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "outside the guarded branch the validator never runs: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "elasticsearch": { "enabled": true },
+                "opensearch": { "enabled": true }
+            })
+        ),
+        "both enabled reaches the required-nil terminal: {schema}"
+    );
+}
+
+/// F51 (ranged member subject): `required` over each member's field
+/// survives the conversion pipeline and binds per member (argo-cd
+/// `configs.clusterCredentials.*.config` shape).
+#[test]
+fn required_ranged_member_field_binds_per_member() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- range $index, $cred := .Values.creds }}
+          entry{{ $index }}: {{ required "each entry needs config" $cred.config | quote }}
+          {{- end }}
+    "#};
+    let values_yaml = "creds: ~\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "creds": [{ "config": "c1" }] }),
+        serde_json::json!({ "creds": [] }),
+        serde_json::json!({}),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "complete entries and empty collections render: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!({ "creds": [{ "name": "a" }] })),
+        "an entry without `config` hits required and aborts: {schema}"
+    );
+}
+
+/// F51 (helper-internal subject): a `required` inside a named helper holds
+/// at every call site (kyverno `kyverno.chartVersion` requires
+/// `global.templating.version` before `replace`).
+#[test]
+fn required_inside_helper_reaches_callers() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          version: {{ include "chart.version" . | quote }}
+    "#};
+    let helpers = indoc! {r#"
+        {{- define "chart.version" -}}
+        {{- required "version is required" .Values.global.version | replace "+" "_" -}}
+        {{- end -}}
+    "#};
+    let values_yaml = indoc! {r#"
+        global:
+          version: ""
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "global": { "version": "1.2.3" } })
+        ),
+        "a nonempty version renders: {schema}"
+    );
+    for instance in [
+        serde_json::json!({ "global": { "version": "" } }),
+        serde_json::json!({}),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a Helm-empty version fails the helper's required: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// F51 (unrepresentable sentinel, conservative pin): a `required nil`
+/// behind a loop-computed local guard must NOT bind — the valid
+/// alternative (the matching env entry) stays accepted (airflow broker-url
+/// sentinel shape).
+#[test]
+fn required_nil_behind_loop_local_guard_abstains() {
+    let src = indoc! {r#"
+        {{- $found := false }}
+        {{- range .Values.env }}
+        {{- if eq .name "BROKER_URL" }}
+        {{- $found = true }}
+        {{- end }}
+        {{- end }}
+        {{- if not $found }}
+        {{ required "an env entry named BROKER_URL is required" nil }}
+        {{- end }}
+    "#};
+    let values_yaml = "env: []\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "env": [{ "name": "BROKER_URL" }] })
+        ),
+        "the loop-derived guard cannot lower; the terminal must abstain \
+         rather than reject the valid alternative: {schema}"
+    );
+}
+
+/// F59: a range body that reads MEMBER STRUCTURE (`.tls` on each item)
+/// constrains every iterable lane — array items and map values must be
+/// objects, and integer iteration (whose members are ints) is impossible
+/// (surveyor `config.jetstream.accounts` shape).
+#[test]
+fn range_member_structure_constrains_all_iterable_lanes() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- range .Values.accounts }}
+          {{ .tls }}: enabled
+          {{- end }}
+    "#};
+    let values_yaml = "accounts: ~
+";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "accounts": [{ "tls": "on" }] }),
+        serde_json::json!({ "accounts": { "A": { "tls": "on" } } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "object members provide `.tls`: instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({ "accounts": [7] }),
+        serde_json::json!({ "accounts": { "A": 7 } }),
+        serde_json::json!({ "accounts": 2 }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a scalar member cannot provide `.tls`; rendering aborts: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// F59 (string body): a range body that feeds each member to a STRING
+/// consumer (`tpl $arg $`) requires string members on every lane — scalar
+/// non-string items and integer iteration (int members) abort rendering
+/// (jaeger `args` / jenkins `installPlugins` shape).
+#[test]
+fn range_string_consumer_constrains_all_iterable_lanes() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- range $index, $arg := .Values.args }}
+          arg{{ $index }}: {{ tpl $arg $ | quote }}
+          {{- end }}
+    "#};
+    let values_yaml = "args: ~
+";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({ "args": ["--flag"] })),
+        "string items feed tpl: {schema}"
+    );
+    for instance in [
+        serde_json::json!({ "args": [7] }),
+        serde_json::json!({ "args": 2 }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a non-string member reaches tpl and aborts rendering: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// F58 (guarded lane): the branch-scoped iterable domain of a GUARDED
 /// two-variable range excludes integers too (kyverno/prometheus extraArgs
 /// shape — the range sits under an enable guard).
@@ -8401,4 +8913,239 @@ fn guarded_destructured_range_excludes_integer_iteration() {
         ),
         "a two-variable range cannot iterate an integer in the live branch: {schema}"
     );
+}
+
+/// F64: a strict consumer under an UNDECODABLE outer guard (semverCompare)
+/// must not bind its contract globally — with the shipped version the
+/// branch is dead and the raw value renders through other paths (airflow
+/// `config.webserver.base_url` shape).
+#[test]
+fn unlowerable_outer_guard_abstains_from_child_string_contract() {
+    let src = indoc! {r#"
+        {{- if semverCompare "<3.0.0" .Values.airflowVersion }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: legacy
+        data:
+          airflow.cfg: |
+            base_url = {{ trunc 63 .Values.baseUrl }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {r#"
+        airflowVersion: "3.2.2"
+        baseUrl: ~
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({ "baseUrl": { "a": 1 } })),
+        "the semver guard cannot lower; the branch-scoped string contract \
+         must abstain rather than bind globally: {schema}"
+    );
+}
+
+/// F64 (control): the SAME consumer under a decodable guard keeps its
+/// branch-scoped contract — abstention is only for guards the encoding
+/// cannot represent.
+#[test]
+fn decodable_guard_keeps_child_string_contract() {
+    let src = indoc! {r#"
+        {{- if .Values.enabled }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: legacy
+        data:
+          airflow.cfg: |
+            base_url = {{ trunc 63 .Values.baseUrl }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        enabled: false
+        baseUrl: ~
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "enabled": true, "baseUrl": { "a": 1 } })
+        ),
+        "inside the live decodable branch the string contract holds: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "enabled": false, "baseUrl": { "a": 1 } })
+        ),
+        "outside the branch the raw value never reaches trunc: {schema}"
+    );
+}
+
+/// F64 (hint degradation): when an approximate guard poisons a path's
+/// conditional overlays, its branch-scoped "string" hint must stay a
+/// widen-only guarded hint instead of degrading to path-level typing —
+/// the unconditional total render proves non-strings pass (bitnami
+/// postgresql `auth.password` through `common.secrets.passwords.manage`).
+#[test]
+fn approximate_guard_hints_stay_branch_scoped() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          plain: {{ .Values.password | toString | quote }}
+          {{- if semverCompare ">=1.2.0" .Values.appVersion }}
+          guarded: {{ .Values.password | default "pw" }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        password: ~
+        appVersion: ~
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({ "password": "secret" })),
+        "strings always render: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({ "password": 123 })),
+        "the default-literal string hint lives behind a semver guard the \
+         encoding cannot represent; it must not bind the base the total \
+         stringification renders: {schema}"
+    );
+}
+
+/// F60: Go-template `eq`/`ne` against a STRING literal terminates on
+/// incomparable operand kinds — maps, lists, and mismatched scalars abort
+/// rendering while the schema accepted them (harbor `logLevel`, reloader
+/// `reloadStrategy` shapes).
+#[test]
+fn string_literal_comparison_binds_operand_kind_contract() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if eq .Values.logLevel "debug" }}
+          verbosity: high
+          {{- end }}
+          {{- if ne .Values.reloadStrategy "env-vars" }}
+          strategy: other
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        logLevel: ~
+        reloadStrategy: ~
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "logLevel": "debug" }),
+        serde_json::json!({ "logLevel": "info" }),
+        serde_json::json!({}),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "strings compare fine and missing operands never reach eq: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({ "logLevel": { "a": 1 } }),
+        serde_json::json!({ "logLevel": [1] }),
+        serde_json::json!({ "reloadStrategy": 7 }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "an incomparable operand kind aborts the comparison: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// F61: strict collection functions bind their operand domains — `merge`
+/// subjects are maps, `concat` operands are lists, `len` needs a
+/// length-bearing value, and `has` searches a list. Falsy values stay
+/// accepted where a guard skips the call.
+#[test]
+fn collection_function_operands_bind_kind_contracts() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          merged: {{ merge .Values.overrides .Values.defaults | toYaml | quote }}
+          combined: {{ concat .Values.extraEnv .Values.env | toYaml | quote }}
+          count: "{{ len .Values.extraVolumes }}"
+          {{- if has "certs" .Values.collectors }}
+          certs: enabled
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        overrides: ~
+        defaults: ~
+        extraEnv: ~
+        env: ~
+        extraVolumes: ~
+        collectors: ~
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "overrides": { "a": 1 }, "defaults": { "b": 2 } }),
+        serde_json::json!({ "extraEnv": [1], "env": [2] }),
+        serde_json::json!({ "extraVolumes": ["v"] }),
+        serde_json::json!({ "extraVolumes": "vols" }),
+        serde_json::json!({ "collectors": ["certs"] }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "the accepted operand kinds render: instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({ "overrides": "s" }),
+        serde_json::json!({ "extraEnv": "s" }),
+        serde_json::json!({ "extraVolumes": 7 }),
+        serde_json::json!({ "collectors": 7 }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "an incompatible operand kind aborts the call: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// F61 (join is total): sprig `join` stringifies non-list operands instead
+/// of failing, so a `join | split` chain accepts BOTH the comma-string and
+/// the list form (kube-state-metrics `namespaces` shape).
+#[test]
+fn join_accepts_lists_and_strings_alike() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          namespaces: {{ join "," .Values.namespaces | quote }}
+    "#};
+    let values_yaml = "namespaces: \"\"\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "namespaces": "a,b" }),
+        serde_json::json!({ "namespaces": ["a", "b"] }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "join stringifies any operand: instance={instance}; schema={schema}"
+        );
+    }
 }

@@ -260,7 +260,16 @@
               "caBundle": {
                 "anyOf": [
                   {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
                     "type": "null"
+                  },
+                  {
+                    "type": "number"
                   },
                   {
                     "type": "string"
@@ -350,6 +359,17 @@
             "properties": {
               "port": {
                 "type": "integer"
+              }
+            },
+            "type": "object"
+          },
+          "tls": {
+            "properties": {
+              "type": {
+                "description": "Set the TLS method to use. Supported values:\n- `metrics-server` : Metrics-server will generate a self-signed certificate\n- `helm`           : Helm will generate a self-signed certificate\n- `cert-manager`   : Use cert-manager.io to create and maintain the certificate\n- `existingSecret` : Reuse an existing secret. No new secret will be created",
+                "not": {
+                  "type": "array"
+                }
               }
             },
             "type": "object"
@@ -712,6 +732,57 @@
     },
     {
       "if": {
+        "properties": {
+          "tls": {
+            "properties": {
+              "type": {
+                "not": {
+                  "enum": [
+                    "metrics-server"
+                  ]
+                }
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tls"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "tls": {
+            "properties": {
+              "type": {
+                "description": "Set the TLS method to use. Supported values:\n- `metrics-server` : Metrics-server will generate a self-signed certificate\n- `helm`           : Helm will generate a self-signed certificate\n- `cert-manager`   : Use cert-manager.io to create and maintain the certificate\n- `existingSecret` : Reuse an existing secret. No new secret will be created",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -939,29 +1010,6 @@
                     "enum": [
                       "cert-manager"
                     ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "type": {
-                    "not": {
-                      "enum": [
-                        "metrics-server"
-                      ]
-                    }
                   }
                 },
                 "required": [
@@ -1203,6 +1251,86 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "tls": {
+          "properties": {
+            "type": {
+              "description": "Set the TLS method to use. Supported values:\n- `metrics-server` : Metrics-server will generate a self-signed certificate\n- `helm`           : Helm will generate a self-signed certificate\n- `cert-manager`   : Use cert-manager.io to create and maintain the certificate\n- `existingSecret` : Reuse an existing secret. No new secret will be created",
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "tls": {
+          "properties": {
+            "type": {
+              "description": "Set the TLS method to use. Supported values:\n- `metrics-server` : Metrics-server will generate a self-signed certificate\n- `helm`           : Helm will generate a self-signed certificate\n- `cert-manager`   : Use cert-manager.io to create and maintain the certificate\n- `existingSecret` : Reuse an existing secret. No new secret will be created",
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "tls": {
+          "properties": {
+            "type": {
+              "description": "Set the TLS method to use. Supported values:\n- `metrics-server` : Metrics-server will generate a self-signed certificate\n- `helm`           : Helm will generate a self-signed certificate\n- `cert-manager`   : Use cert-manager.io to create and maintain the certificate\n- `existingSecret` : Reuse an existing secret. No new secret will be created",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "tls": {
+          "properties": {
+            "type": {
+              "description": "Set the TLS method to use. Supported values:\n- `metrics-server` : Metrics-server will generate a self-signed certificate\n- `helm`           : Helm will generate a self-signed certificate\n- `cert-manager`   : Use cert-manager.io to create and maintain the certificate\n- `existingSecret` : Reuse an existing secret. No new secret will be created",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "tls": {
+          "properties": {
+            "type": {
+              "description": "Set the TLS method to use. Supported values:\n- `metrics-server` : Metrics-server will generate a self-signed certificate\n- `helm`           : Helm will generate a self-signed certificate\n- `cert-manager`   : Use cert-manager.io to create and maintain the certificate\n- `existingSecret` : Reuse an existing secret. No new secret will be created",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     }
   ],
   "properties": {
@@ -1501,6 +1629,7 @@
           "type": "array"
         },
         {
+          "items": {},
           "type": "array"
         },
         {
@@ -1510,6 +1639,7 @@
           "type": "null"
         },
         {
+          "additionalProperties": {},
           "type": "object"
         }
       ]
@@ -1537,12 +1667,21 @@
           "type": "array"
         },
         {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        {
           "type": "integer"
         },
         {
           "type": "null"
         },
         {
+          "additionalProperties": {
+            "type": "string"
+          },
           "type": "object"
         }
       ]

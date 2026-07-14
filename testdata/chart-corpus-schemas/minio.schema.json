@@ -77,7 +77,9 @@
             "description": "Update strategy for Deployments",
             "properties": {
               "type": {
-                "type": "string"
+                "not": {
+                  "type": "array"
+                }
               }
             },
             "type": "object"
@@ -208,6 +210,12 @@
           "tolerations": {
             "items": {},
             "type": "array"
+          },
+          "trustedCertsSecret": {
+            "description": "Trusted Certificates Settings for MinIO. Ref: https://min.io/docs/minio/linux/operations/network-encryption.html#third-party-certificate-authorities\nBundle multiple trusted certificates into one secret and pass that here. Ref: https://github.com/minio/minio/tree/master/docs/tls/kubernetes#2-create-kubernetes-secret\nWhen using self-signed certificates, remember to include MinIO's own certificate in the bundle with key public.crt.\nIf certSecret is left empty and tls is enabled, this chart installs the public certificate from .Values.tls.certSecret.",
+            "not": {
+              "type": "array"
+            }
           }
         },
         "type": "object"
@@ -411,6 +419,12 @@
           "topologySpreadConstraints": {
             "items": {},
             "type": "array"
+          },
+          "trustedCertsSecret": {
+            "description": "Trusted Certificates Settings for MinIO. Ref: https://min.io/docs/minio/linux/operations/network-encryption.html#third-party-certificate-authorities\nBundle multiple trusted certificates into one secret and pass that here. Ref: https://github.com/minio/minio/tree/master/docs/tls/kubernetes#2-create-kubernetes-secret\nWhen using self-signed certificates, remember to include MinIO's own certificate in the bundle with key public.crt.\nIf certSecret is left empty and tls is enabled, this chart installs the public certificate from .Values.tls.certSecret.",
+            "not": {
+              "type": "array"
+            }
           }
         },
         "type": "object"
@@ -997,6 +1011,109 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "consoleService": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        },
+        "mode": {
+          "description": "minio mode, i.e. standalone or distributed\n# other supported values are \"standalone\"",
+          "not": {
+            "type": "array"
+          }
+        },
+        "networkPolicy": {
+          "properties": {
+            "flavor": {
+              "description": "Specifies whether the policies created will be standard Network Policies (flavor: kubernetes)\nor Cilium Network Policies (flavor: cilium)",
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        },
+        "service": {
+          "description": "Expose the MinIO service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
+          "properties": {
+            "type": {
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "consoleService": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "consoleService": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "consoleService": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "consoleService": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -1658,6 +1775,159 @@
               },
               "maxUnavailable": {
                 "type": "integer"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "enum": [
+              "standalone"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "deploymentUpdate": {
+            "description": "Update strategy for Deployments",
+            "properties": {
+              "type": {
+                "not": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "enum": [
+              "standalone"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "deploymentUpdate": {
+            "description": "Update strategy for Deployments",
+            "properties": {
+              "type": {
+                "not": {
+                  "type": "integer"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "enum": [
+              "standalone"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "deploymentUpdate": {
+            "description": "Update strategy for Deployments",
+            "properties": {
+              "type": {
+                "not": {
+                  "type": "number"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "enum": [
+              "standalone"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "deploymentUpdate": {
+            "description": "Update strategy for Deployments",
+            "properties": {
+              "type": {
+                "not": {
+                  "type": "object"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "mode": {
+            "enum": [
+              "standalone"
+            ]
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "deploymentUpdate": {
+            "description": "Update strategy for Deployments",
+            "properties": {
+              "type": {
+                "type": "string"
               }
             },
             "type": "object"
@@ -2597,6 +2867,50 @@
       }
     },
     {
+      "properties": {
+        "mode": {
+          "description": "minio mode, i.e. standalone or distributed\n# other supported values are \"standalone\"",
+          "not": {
+            "type": "boolean"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "mode": {
+          "description": "minio mode, i.e. standalone or distributed\n# other supported values are \"standalone\"",
+          "not": {
+            "type": "integer"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "mode": {
+          "description": "minio mode, i.e. standalone or distributed\n# other supported values are \"standalone\"",
+          "not": {
+            "type": "number"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "mode": {
+          "description": "minio mode, i.e. standalone or distributed\n# other supported values are \"standalone\"",
+          "not": {
+            "type": "object"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
       "if": {
         "properties": {
           "nameOverride": {
@@ -2624,6 +2938,70 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "networkPolicy": {
+          "properties": {
+            "flavor": {
+              "description": "Specifies whether the policies created will be standard Network Policies (flavor: kubernetes)\nor Cilium Network Policies (flavor: cilium)",
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "networkPolicy": {
+          "properties": {
+            "flavor": {
+              "description": "Specifies whether the policies created will be standard Network Policies (flavor: kubernetes)\nor Cilium Network Policies (flavor: cilium)",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "networkPolicy": {
+          "properties": {
+            "flavor": {
+              "description": "Specifies whether the policies created will be standard Network Policies (flavor: kubernetes)\nor Cilium Network Policies (flavor: cilium)",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "networkPolicy": {
+          "properties": {
+            "flavor": {
+              "description": "Specifies whether the policies created will be standard Network Policies (flavor: kubernetes)\nor Cilium Network Policies (flavor: cilium)",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -3299,6 +3677,596 @@
           },
           {
             "properties": {
+              "persistence": {
+                "properties": {
+                  "storageClass": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "standalone"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "persistence": {
+                  "properties": {
+                    "existingClaim": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingClaim"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "persistence": {
+            "description": "Enable persistence using Persistent Volume Claims\nref: http://kubernetes.io/docs/user-guide/persistent-volumes/",
+            "properties": {
+              "storageClass": {
+                "description": "minio data Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.  (gp2 on AWS, standard on\nGKE, AWS & OpenStack)\nStorage class of PV to bind. By default it looks for standard storage class.\nIf the PV uses a different storage class, specify that here.",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "persistence": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "persistence"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "persistence": {
+                "properties": {
+                  "storageClass": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "standalone"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "persistence": {
+                  "properties": {
+                    "existingClaim": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingClaim"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "persistence": {
+            "description": "Enable persistence using Persistent Volume Claims\nref: http://kubernetes.io/docs/user-guide/persistent-volumes/",
+            "properties": {
+              "storageClass": {
+                "description": "minio data Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.  (gp2 on AWS, standard on\nGKE, AWS & OpenStack)\nStorage class of PV to bind. By default it looks for standard storage class.\nIf the PV uses a different storage class, specify that here.",
+                "not": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "persistence": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "persistence"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "persistence": {
+                "properties": {
+                  "storageClass": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "standalone"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "persistence": {
+                  "properties": {
+                    "existingClaim": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingClaim"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "persistence": {
+            "description": "Enable persistence using Persistent Volume Claims\nref: http://kubernetes.io/docs/user-guide/persistent-volumes/",
+            "properties": {
+              "storageClass": {
+                "description": "minio data Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.  (gp2 on AWS, standard on\nGKE, AWS & OpenStack)\nStorage class of PV to bind. By default it looks for standard storage class.\nIf the PV uses a different storage class, specify that here.",
+                "not": {
+                  "type": "integer"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "persistence": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "persistence"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "persistence": {
+                "properties": {
+                  "storageClass": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "standalone"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "persistence": {
+                  "properties": {
+                    "existingClaim": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingClaim"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "persistence": {
+            "description": "Enable persistence using Persistent Volume Claims\nref: http://kubernetes.io/docs/user-guide/persistent-volumes/",
+            "properties": {
+              "storageClass": {
+                "description": "minio data Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.  (gp2 on AWS, standard on\nGKE, AWS & OpenStack)\nStorage class of PV to bind. By default it looks for standard storage class.\nIf the PV uses a different storage class, specify that here.",
+                "not": {
+                  "type": "number"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "persistence": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "persistence"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "persistence": {
+                "properties": {
+                  "storageClass": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "standalone"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "persistence": {
+                  "properties": {
+                    "existingClaim": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingClaim"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "persistence"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "persistence": {
+            "description": "Enable persistence using Persistent Volume Claims\nref: http://kubernetes.io/docs/user-guide/persistent-volumes/",
+            "properties": {
+              "storageClass": {
+                "description": "minio data Persistent Volume Storage Class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is\nset, choosing the default provisioner.  (gp2 on AWS, standard on\nGKE, AWS & OpenStack)\nStorage class of PV to bind. By default it looks for standard storage class.\nIf the PV uses a different storage class, specify that here.",
+                "not": {
+                  "type": "object"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "persistence": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "persistence"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "persistence": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "persistence"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
               "mode": {
                 "enum": [
                   "standalone"
@@ -3590,6 +4558,70 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "service": {
+          "description": "Expose the MinIO service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
+          "properties": {
+            "type": {
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "description": "Expose the MinIO service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
+          "properties": {
+            "type": {
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "description": "Expose the MinIO service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
+          "properties": {
+            "type": {
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "description": "Expose the MinIO service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
+          "properties": {
+            "type": {
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -4273,7 +5305,9 @@
           },
           "trustedCertsSecret": {
             "description": "Trusted Certificates Settings for MinIO. Ref: https://min.io/docs/minio/linux/operations/network-encryption.html#third-party-certificate-authorities\nBundle multiple trusted certificates into one secret and pass that here. Ref: https://github.com/minio/minio/tree/master/docs/tls/kubernetes#2-create-kubernetes-secret\nWhen using self-signed certificates, remember to include MinIO's own certificate in the bundle with key public.crt.\nIf certSecret is left empty and tls is enabled, this chart installs the public certificate from .Values.tls.certSecret.",
-            "type": "string"
+            "not": {
+              "type": "array"
+            }
           }
         },
         "type": "object"
@@ -4442,6 +5476,378 @@
               }
             },
             "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "mode": {}
+                  },
+                  "required": [
+                    "mode"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "distributed"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "standalone"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "trustedCertsSecret": {
+            "description": "Trusted Certificates Settings for MinIO. Ref: https://min.io/docs/minio/linux/operations/network-encryption.html#third-party-certificate-authorities\nBundle multiple trusted certificates into one secret and pass that here. Ref: https://github.com/minio/minio/tree/master/docs/tls/kubernetes#2-create-kubernetes-secret\nWhen using self-signed certificates, remember to include MinIO's own certificate in the bundle with key public.crt.\nIf certSecret is left empty and tls is enabled, this chart installs the public certificate from .Values.tls.certSecret.",
+            "not": {
+              "type": "boolean"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "mode": {}
+                  },
+                  "required": [
+                    "mode"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "distributed"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "standalone"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "trustedCertsSecret": {
+            "description": "Trusted Certificates Settings for MinIO. Ref: https://min.io/docs/minio/linux/operations/network-encryption.html#third-party-certificate-authorities\nBundle multiple trusted certificates into one secret and pass that here. Ref: https://github.com/minio/minio/tree/master/docs/tls/kubernetes#2-create-kubernetes-secret\nWhen using self-signed certificates, remember to include MinIO's own certificate in the bundle with key public.crt.\nIf certSecret is left empty and tls is enabled, this chart installs the public certificate from .Values.tls.certSecret.",
+            "not": {
+              "type": "integer"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "mode": {}
+                  },
+                  "required": [
+                    "mode"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "distributed"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "standalone"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "trustedCertsSecret": {
+            "description": "Trusted Certificates Settings for MinIO. Ref: https://min.io/docs/minio/linux/operations/network-encryption.html#third-party-certificate-authorities\nBundle multiple trusted certificates into one secret and pass that here. Ref: https://github.com/minio/minio/tree/master/docs/tls/kubernetes#2-create-kubernetes-secret\nWhen using self-signed certificates, remember to include MinIO's own certificate in the bundle with key public.crt.\nIf certSecret is left empty and tls is enabled, this chart installs the public certificate from .Values.tls.certSecret.",
+            "not": {
+              "type": "number"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "mode": {}
+                  },
+                  "required": [
+                    "mode"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "distributed"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "mode": {
+                "enum": [
+                  "standalone"
+                ]
+              }
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "trustedCertsSecret": {
+            "description": "Trusted Certificates Settings for MinIO. Ref: https://min.io/docs/minio/linux/operations/network-encryption.html#third-party-certificate-authorities\nBundle multiple trusted certificates into one secret and pass that here. Ref: https://github.com/minio/minio/tree/master/docs/tls/kubernetes#2-create-kubernetes-secret\nWhen using self-signed certificates, remember to include MinIO's own certificate in the bundle with key public.crt.\nIf certSecret is left empty and tls is enabled, this chart installs the public certificate from .Values.tls.certSecret.",
+            "not": {
+              "type": "object"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "mode": {}
+                      },
+                      "required": [
+                        "mode"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "mode": {
+                        "enum": [
+                          "distributed"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "mode"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "trustedCertsSecret": {
+                        "not": {
+                          "enum": [
+                            ""
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "trustedCertsSecret"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "mode": {
+                    "enum": [
+                      "standalone"
+                    ]
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "trustedCertsSecret": {
+                        "not": {
+                          "enum": [
+                            ""
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "trustedCertsSecret"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "trustedCertsSecret": {
+            "description": "Trusted Certificates Settings for MinIO. Ref: https://min.io/docs/minio/linux/operations/network-encryption.html#third-party-certificate-authorities\nBundle multiple trusted certificates into one secret and pass that here. Ref: https://github.com/minio/minio/tree/master/docs/tls/kubernetes#2-create-kubernetes-secret\nWhen using self-signed certificates, remember to include MinIO's own certificate in the bundle with key public.crt.\nIf certSecret is left empty and tls is enabled, this chart installs the public certificate from .Values.tls.certSecret.",
+            "type": "string"
           }
         },
         "type": "object"
@@ -4685,12 +6091,14 @@
               "type": "array"
             },
             {
+              "items": {},
               "type": "array"
             },
             {
               "type": "null"
             },
             {
+              "additionalProperties": {},
               "type": "object"
             }
           ]
@@ -5406,16 +6814,67 @@
     },
     "networkPolicy": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "flavor": {
+                    "enum": [
+                      "cilium"
+                    ]
+                  }
+                },
+                "required": [
+                  "flavor"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "egressEntities": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "only when using flavor: cilium"
+              }
+            },
+            "type": "object"
+          }
+        }
+      ],
       "properties": {
         "allowExternal": {
           "type": "boolean"
         },
         "egressEntities": {
-          "description": "only when using flavor: cilium",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "description": "only when using flavor: cilium"
         },
         "enabled": {
           "type": "boolean"
@@ -5757,12 +7216,14 @@
               "type": "array"
             },
             {
+              "items": {},
               "type": "array"
             },
             {
               "type": "null"
             },
             {
+              "additionalProperties": {},
               "type": "object"
             }
           ]
@@ -5829,6 +7290,15 @@
             "additionalProperties": {},
             "properties": {
               "policy": {}
+            }
+          },
+          "type": "array"
+        },
+        {
+          "items": {
+            "additionalProperties": {},
+            "properties": {
+              "policy": {}
             },
             "type": "object"
           },
@@ -5838,6 +7308,13 @@
           "type": "null"
         },
         {
+          "additionalProperties": {
+            "additionalProperties": {},
+            "properties": {
+              "policy": {}
+            },
+            "type": "object"
+          },
           "type": "object"
         },
         {

@@ -1048,6 +1048,99 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "settings": {
+                      "properties": {
+                        "clusterName": {}
+                      },
+                      "required": [
+                        "clusterName"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "settings"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "settings": {
+                    "properties": {
+                      "clusterName": {
+                        "enum": [
+                          ""
+                        ]
+                      }
+                    },
+                    "required": [
+                      "clusterName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "settings"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "clusterName": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "clusterName"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "clusterName": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "clusterName"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     }
   ],
   "properties": {
@@ -1747,69 +1840,6 @@
     },
     "settings": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "clusterName": {}
-                      },
-                      "required": [
-                        "clusterName"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "clusterName": {
-                        "enum": [
-                          ""
-                        ]
-                      }
-                    },
-                    "required": [
-                      "clusterName"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "clusterName": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "clusterName"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "clusterName": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "clusterName"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": false
-        }
-      ],
       "description": "Global Settings to configure Karpenter",
       "properties": {
         "batchIdleDuration": {

@@ -2685,6 +2685,223 @@
     },
     {
       "if": {
+        "not": {
+          "properties": {
+            "affinity": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "affinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "nodeAffinityPreset": {
+            "properties": {
+              "type": {
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          },
+          "podAffinityPreset": {
+            "not": {
+              "type": "array"
+            }
+          },
+          "podAntiAffinityPreset": {
+            "not": {
+              "type": "array"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "affinity": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "affinity"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "nodeAffinityPreset": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "soft"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "nodeAffinityPreset"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "nodeAffinityPreset": {
+            "properties": {
+              "type": {
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "affinity": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "affinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "nodeAffinityPreset": {
+            "properties": {
+              "type": {
+                "not": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "affinity": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "affinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "nodeAffinityPreset": {
+            "properties": {
+              "type": {
+                "not": {
+                  "type": "integer"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "affinity": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "affinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "nodeAffinityPreset": {
+            "properties": {
+              "type": {
+                "not": {
+                  "type": "number"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "affinity": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "affinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "nodeAffinityPreset": {
+            "properties": {
+              "type": {
+                "not": {
+                  "type": "object"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "nodeSelector": {
             "$ref": "#/$defs/helm-truthy"
@@ -3726,6 +3943,150 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "affinity": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "affinity"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "podAffinityPreset": {
+                  "enum": [
+                    "soft"
+                  ]
+                }
+              },
+              "required": [
+                "podAffinityPreset"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "podAffinityPreset": {
+            "not": {
+              "type": "array"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "affinity": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "affinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "podAffinityPreset": {
+            "not": {
+              "type": "boolean"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "affinity": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "affinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "podAffinityPreset": {
+            "not": {
+              "type": "integer"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "affinity": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "affinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "podAffinityPreset": {
+            "not": {
+              "type": "number"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "affinity": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "affinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "podAffinityPreset": {
+            "not": {
+              "type": "object"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "podAnnotations": {
             "$ref": "#/$defs/helm-truthy"
@@ -3752,6 +4113,165 @@
                 "type": "string"
               }
             ]
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "affinity": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "affinity"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "podAntiAffinityPreset": {}
+                    },
+                    "required": [
+                      "podAntiAffinityPreset"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "podAntiAffinityPreset": {
+                      "enum": [
+                        "soft"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "podAntiAffinityPreset"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "podAntiAffinityPreset": {
+            "not": {
+              "type": "array"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "affinity": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "affinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "podAntiAffinityPreset": {
+            "not": {
+              "type": "boolean"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "affinity": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "affinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "podAntiAffinityPreset": {
+            "not": {
+              "type": "integer"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "affinity": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "affinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "podAntiAffinityPreset": {
+            "not": {
+              "type": "number"
+            }
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "affinity": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "affinity"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "properties": {
+          "podAntiAffinityPreset": {
+            "not": {
+              "type": "object"
+            }
           }
         },
         "type": "object"
@@ -6212,10 +6732,6 @@
     "namespaceOverride": {
       "anyOf": [
         {
-          "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-          "type": "string"
-        },
-        {
           "type": "boolean"
         },
         {
@@ -6226,6 +6742,9 @@
         },
         {
           "type": "number"
+        },
+        {
+          "type": "string"
         }
       ]
     },

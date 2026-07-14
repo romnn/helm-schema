@@ -306,6 +306,746 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "agent": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agent"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "JCasC": {
+                          "properties": {
+                            "defaultConfig": {}
+                          },
+                          "required": [
+                            "defaultConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "JCasC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "JCasC": {
+                        "properties": {
+                          "defaultConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "JCasC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "agent": {
+                  "properties": {
+                    "disableDefaultAgent": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "disableDefaultAgent"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "agent"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agent": {
+            "properties": {
+              "image": {
+                "properties": {
+                  "registry": {
+                    "description": "Registry to pull the agent jnlp image from",
+                    "not": {
+                      "type": "array"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "agent": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agent"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "JCasC": {
+                          "properties": {
+                            "defaultConfig": {}
+                          },
+                          "required": [
+                            "defaultConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "JCasC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "JCasC": {
+                        "properties": {
+                          "defaultConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "JCasC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "agent": {
+                  "properties": {
+                    "disableDefaultAgent": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "disableDefaultAgent"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "agent"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agent": {
+            "properties": {
+              "image": {
+                "properties": {
+                  "registry": {
+                    "description": "Registry to pull the agent jnlp image from",
+                    "not": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "agent": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agent"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "JCasC": {
+                          "properties": {
+                            "defaultConfig": {}
+                          },
+                          "required": [
+                            "defaultConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "JCasC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "JCasC": {
+                        "properties": {
+                          "defaultConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "JCasC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "agent": {
+                  "properties": {
+                    "disableDefaultAgent": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "disableDefaultAgent"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "agent"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agent": {
+            "properties": {
+              "image": {
+                "properties": {
+                  "registry": {
+                    "description": "Registry to pull the agent jnlp image from",
+                    "not": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "agent": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agent"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "JCasC": {
+                          "properties": {
+                            "defaultConfig": {}
+                          },
+                          "required": [
+                            "defaultConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "JCasC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "JCasC": {
+                        "properties": {
+                          "defaultConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "JCasC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "agent": {
+                  "properties": {
+                    "disableDefaultAgent": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "disableDefaultAgent"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "agent"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agent": {
+            "properties": {
+              "image": {
+                "properties": {
+                  "registry": {
+                    "description": "Registry to pull the agent jnlp image from",
+                    "not": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "agent": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agent"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "JCasC": {
+                          "properties": {
+                            "defaultConfig": {}
+                          },
+                          "required": [
+                            "defaultConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "JCasC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "JCasC": {
+                        "properties": {
+                          "defaultConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "JCasC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "agent": {
+                  "properties": {
+                    "disableDefaultAgent": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "disableDefaultAgent"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "agent"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agent": {
+            "properties": {
+              "image": {
+                "properties": {
+                  "registry": {
+                    "description": "Registry to pull the agent jnlp image from",
+                    "not": {
+                      "type": "object"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -1117,6 +1857,841 @@
             "properties": {
               "agent": {
                 "properties": {
+                  "workspaceVolume": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "workspaceVolume"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agent"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "JCasC": {
+                          "properties": {
+                            "defaultConfig": {}
+                          },
+                          "required": [
+                            "defaultConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "JCasC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "JCasC": {
+                        "properties": {
+                          "defaultConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "JCasC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "agent": {
+                  "properties": {
+                    "disableDefaultAgent": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "disableDefaultAgent"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "agent"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agent": {
+            "properties": {
+              "workspaceVolume": {
+                "description": "Workspace volume (defaults to EmptyDir)\nDynamicPVC example\n- type: DynamicPVC\nconfigMapName: myconfigmap\nEmptyDir example\n- type: EmptyDir\nmemory: false\nEphemeralVolume example\n- type: EphemeralVolume\naccessModes: ReadWriteOnce\nrequestsSize: 10Gi\nstorageClassName: mystorageclass\nHostPath example\n- type: HostPath\nhostPath: /var/lib/containers\nNFS example\n- type: Nfs\nreadOnly: false\nserverAddress: \"192.0.2.0\"\nserverPath: /var/lib/containers\nPVC example\n- type: PVC\nclaimName: mypvc\nreadOnly: false",
+                "properties": {
+                  "type": {
+                    "not": {
+                      "type": "array"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "agent": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agent"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "agent": {
+                "properties": {
+                  "workspaceVolume": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "workspaceVolume"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agent"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "JCasC": {
+                          "properties": {
+                            "defaultConfig": {}
+                          },
+                          "required": [
+                            "defaultConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "JCasC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "JCasC": {
+                        "properties": {
+                          "defaultConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "JCasC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "agent": {
+                  "properties": {
+                    "disableDefaultAgent": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "disableDefaultAgent"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "agent"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agent": {
+            "properties": {
+              "workspaceVolume": {
+                "description": "Workspace volume (defaults to EmptyDir)\nDynamicPVC example\n- type: DynamicPVC\nconfigMapName: myconfigmap\nEmptyDir example\n- type: EmptyDir\nmemory: false\nEphemeralVolume example\n- type: EphemeralVolume\naccessModes: ReadWriteOnce\nrequestsSize: 10Gi\nstorageClassName: mystorageclass\nHostPath example\n- type: HostPath\nhostPath: /var/lib/containers\nNFS example\n- type: Nfs\nreadOnly: false\nserverAddress: \"192.0.2.0\"\nserverPath: /var/lib/containers\nPVC example\n- type: PVC\nclaimName: mypvc\nreadOnly: false",
+                "properties": {
+                  "type": {
+                    "not": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "agent": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agent"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "agent": {
+                "properties": {
+                  "workspaceVolume": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "workspaceVolume"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agent"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "JCasC": {
+                          "properties": {
+                            "defaultConfig": {}
+                          },
+                          "required": [
+                            "defaultConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "JCasC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "JCasC": {
+                        "properties": {
+                          "defaultConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "JCasC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "agent": {
+                  "properties": {
+                    "disableDefaultAgent": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "disableDefaultAgent"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "agent"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agent": {
+            "properties": {
+              "workspaceVolume": {
+                "description": "Workspace volume (defaults to EmptyDir)\nDynamicPVC example\n- type: DynamicPVC\nconfigMapName: myconfigmap\nEmptyDir example\n- type: EmptyDir\nmemory: false\nEphemeralVolume example\n- type: EphemeralVolume\naccessModes: ReadWriteOnce\nrequestsSize: 10Gi\nstorageClassName: mystorageclass\nHostPath example\n- type: HostPath\nhostPath: /var/lib/containers\nNFS example\n- type: Nfs\nreadOnly: false\nserverAddress: \"192.0.2.0\"\nserverPath: /var/lib/containers\nPVC example\n- type: PVC\nclaimName: mypvc\nreadOnly: false",
+                "properties": {
+                  "type": {
+                    "not": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "agent": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agent"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "agent": {
+                "properties": {
+                  "workspaceVolume": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "workspaceVolume"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agent"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "JCasC": {
+                          "properties": {
+                            "defaultConfig": {}
+                          },
+                          "required": [
+                            "defaultConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "JCasC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "JCasC": {
+                        "properties": {
+                          "defaultConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "JCasC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "agent": {
+                  "properties": {
+                    "disableDefaultAgent": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "disableDefaultAgent"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "agent"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agent": {
+            "properties": {
+              "workspaceVolume": {
+                "description": "Workspace volume (defaults to EmptyDir)\nDynamicPVC example\n- type: DynamicPVC\nconfigMapName: myconfigmap\nEmptyDir example\n- type: EmptyDir\nmemory: false\nEphemeralVolume example\n- type: EphemeralVolume\naccessModes: ReadWriteOnce\nrequestsSize: 10Gi\nstorageClassName: mystorageclass\nHostPath example\n- type: HostPath\nhostPath: /var/lib/containers\nNFS example\n- type: Nfs\nreadOnly: false\nserverAddress: \"192.0.2.0\"\nserverPath: /var/lib/containers\nPVC example\n- type: PVC\nclaimName: mypvc\nreadOnly: false",
+                "properties": {
+                  "type": {
+                    "not": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "agent": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agent"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "agent": {
+                "properties": {
+                  "workspaceVolume": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "workspaceVolume"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "agent"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "JCasC": {
+                          "properties": {
+                            "defaultConfig": {}
+                          },
+                          "required": [
+                            "defaultConfig"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "JCasC"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "JCasC": {
+                        "properties": {
+                          "defaultConfig": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "defaultConfig"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "JCasC"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "agent": {
+                  "properties": {
+                    "disableDefaultAgent": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "disableDefaultAgent"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "agent"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "agent": {
+            "properties": {
+              "workspaceVolume": {
+                "description": "Workspace volume (defaults to EmptyDir)\nDynamicPVC example\n- type: DynamicPVC\nconfigMapName: myconfigmap\nEmptyDir example\n- type: EmptyDir\nmemory: false\nEphemeralVolume example\n- type: EphemeralVolume\naccessModes: ReadWriteOnce\nrequestsSize: 10Gi\nstorageClassName: mystorageclass\nHostPath example\n- type: HostPath\nhostPath: /var/lib/containers\nNFS example\n- type: Nfs\nreadOnly: false\nserverAddress: \"192.0.2.0\"\nserverPath: /var/lib/containers\nPVC example\n- type: PVC\nclaimName: mypvc\nreadOnly: false",
+                "properties": {
+                  "type": {
+                    "not": {
+                      "type": "object"
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "agent": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "agent"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "agent": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "agent": {
+                "properties": {
                   "yamlTemplate": {
                     "$ref": "#/$defs/helm-truthy"
                   }
@@ -1643,6 +3218,306 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "agentListenerEnabled": {}
+                  },
+                  "required": [
+                    "agentListenerEnabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "agentListenerEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "agentListenerEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "agentListenerServiceType": {
+                "description": "Defines how to expose the agentListener service",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "agentListenerEnabled": {}
+                  },
+                  "required": [
+                    "agentListenerEnabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "agentListenerEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "agentListenerEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "agentListenerServiceType": {
+                "description": "Defines how to expose the agentListener service",
+                "not": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "agentListenerEnabled": {}
+                  },
+                  "required": [
+                    "agentListenerEnabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "agentListenerEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "agentListenerEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "agentListenerServiceType": {
+                "description": "Defines how to expose the agentListener service",
+                "not": {
+                  "type": "integer"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "agentListenerEnabled": {}
+                  },
+                  "required": [
+                    "agentListenerEnabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "agentListenerEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "agentListenerEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "agentListenerServiceType": {
+                "description": "Defines how to expose the agentListener service",
+                "not": {
+                  "type": "number"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "agentListenerEnabled": {}
+                  },
+                  "required": [
+                    "agentListenerEnabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "agentListenerEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "agentListenerEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "agentListenerServiceType": {
+                "description": "Defines how to expose the agentListener service",
+                "not": {
+                  "type": "object"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -1815,6 +3690,201 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "controller": {
+          "properties": {
+            "image": {
+              "properties": {
+                "registry": {
+                  "description": "Controller image registry",
+                  "not": {
+                    "type": "array"
+                  }
+                },
+                "repository": {
+                  "description": "Controller image repository",
+                  "not": {
+                    "type": "array"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "controller": {
+          "properties": {
+            "image": {
+              "properties": {
+                "registry": {
+                  "description": "Controller image registry",
+                  "not": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "controller": {
+          "properties": {
+            "image": {
+              "properties": {
+                "registry": {
+                  "description": "Controller image registry",
+                  "not": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "controller": {
+          "properties": {
+            "image": {
+              "properties": {
+                "registry": {
+                  "description": "Controller image registry",
+                  "not": {
+                    "type": "number"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "controller": {
+          "properties": {
+            "image": {
+              "properties": {
+                "registry": {
+                  "description": "Controller image registry",
+                  "not": {
+                    "type": "object"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "controller": {
+          "properties": {
+            "image": {
+              "properties": {
+                "repository": {
+                  "description": "Controller image repository",
+                  "not": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "controller": {
+          "properties": {
+            "image": {
+              "properties": {
+                "repository": {
+                  "description": "Controller image repository",
+                  "not": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "controller": {
+          "properties": {
+            "image": {
+              "properties": {
+                "repository": {
+                  "description": "Controller image repository",
+                  "not": {
+                    "type": "number"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "controller": {
+          "properties": {
+            "image": {
+              "properties": {
+                "repository": {
+                  "description": "Controller image repository",
+                  "not": {
+                    "type": "object"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -2195,6 +4265,270 @@
             "properties": {
               "controller": {
                 "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "tls": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {
+                      "not": {
+                        "type": "boolean"
+                      }
+                    },
+                    "description": "Primary Ingress TLS configuration\n- secretName: jenkins.cluster.local\nhosts:\n- jenkins.cluster.local",
+                    "items": {
+                      "not": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "tls": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {
+                      "not": {
+                        "type": "integer"
+                      }
+                    },
+                    "description": "Primary Ingress TLS configuration\n- secretName: jenkins.cluster.local\nhosts:\n- jenkins.cluster.local",
+                    "items": {
+                      "not": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "tls": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {
+                      "not": {
+                        "type": "number"
+                      }
+                    },
+                    "description": "Primary Ingress TLS configuration\n- secretName: jenkins.cluster.local\nhosts:\n- jenkins.cluster.local",
+                    "items": {
+                      "not": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "properties": {
                   "secondaryingress": {
                     "properties": {
                       "enabled": {
@@ -2364,6 +4698,273 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "secondaryingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secondaryingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "secondaryingress": {
+                    "properties": {
+                      "tls": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secondaryingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "secondaryingress": {
+                "description": "often you want to have your controller all locked down and private,\nbut you still want to get webhooks from your SCM\nA secondary ingress will let you expose different urls\nwith a different configuration",
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {
+                      "not": {
+                        "type": "boolean"
+                      }
+                    },
+                    "description": "Secondary Ingress TLS configuration\n- secretName: jenkins-external.example.com\nhosts:\n- jenkins-external.example.com",
+                    "items": {
+                      "not": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "secondaryingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secondaryingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "secondaryingress": {
+                    "properties": {
+                      "tls": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secondaryingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "secondaryingress": {
+                "description": "often you want to have your controller all locked down and private,\nbut you still want to get webhooks from your SCM\nA secondary ingress will let you expose different urls\nwith a different configuration",
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {
+                      "not": {
+                        "type": "integer"
+                      }
+                    },
+                    "description": "Secondary Ingress TLS configuration\n- secretName: jenkins-external.example.com\nhosts:\n- jenkins-external.example.com",
+                    "items": {
+                      "not": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "secondaryingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secondaryingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "secondaryingress": {
+                    "properties": {
+                      "tls": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "secondaryingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "secondaryingress": {
+                "description": "often you want to have your controller all locked down and private,\nbut you still want to get webhooks from your SCM\nA secondary ingress will let you expose different urls\nwith a different configuration",
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {
+                      "not": {
+                        "type": "number"
+                      }
+                    },
+                    "description": "Secondary Ingress TLS configuration\n- secretName: jenkins-external.example.com\nhosts:\n- jenkins-external.example.com",
+                    "items": {
+                      "not": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "fullnameOverride": {
             "$ref": "#/$defs/helm-truthy"
@@ -2512,6 +5113,404 @@
                   }
                 ],
                 "description": "List of `SecretClaim` resources to create\n- name: secretName        # required\npath: testPath          # required\ntype: kubernetes.io/tls # optional\nrenew: 60               # optional"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "serviceType": {}
+                      },
+                      "required": [
+                        "serviceType"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "serviceType": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "serviceType"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "ingress": {
+                      "properties": {
+                        "hostName": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "hostName"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "ingress"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "serviceType": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "k8s service type"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "serviceEnabled": {}
+                  },
+                  "required": [
+                    "serviceEnabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "serviceEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "serviceEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "serviceType": {
+                "description": "k8s service type",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "serviceEnabled": {}
+                  },
+                  "required": [
+                    "serviceEnabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "serviceEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "serviceEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "serviceType": {
+                "description": "k8s service type",
+                "not": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "serviceEnabled": {}
+                  },
+                  "required": [
+                    "serviceEnabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "serviceEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "serviceEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "serviceType": {
+                "description": "k8s service type",
+                "not": {
+                  "type": "integer"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "serviceEnabled": {}
+                  },
+                  "required": [
+                    "serviceEnabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "serviceEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "serviceEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "serviceType": {
+                "description": "k8s service type",
+                "not": {
+                  "type": "number"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "controller": {
+                  "properties": {
+                    "serviceEnabled": {}
+                  },
+                  "required": [
+                    "serviceEnabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "controller"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "serviceEnabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "serviceEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "serviceType": {
+                "description": "k8s service type",
+                "not": {
+                  "type": "object"
+                }
               }
             },
             "type": "object"
@@ -4185,84 +7184,6 @@
                   {
                     "not": {
                       "properties": {
-                        "persistence": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "persistence"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "persistence": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "persistence"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "properties": {
-                    "persistence": {
-                      "properties": {
-                        "volumes": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "volumes"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "fullnameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "fullnameOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
                         "rbac": {
                           "properties": {
                             "create": {}
@@ -4910,159 +7831,6 @@
                   }
                 },
                 "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "persistence": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "persistence": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "persistence"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "persistence": {
-                "properties": {
-                  "storageClass": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "storageClass"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "persistence"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "persistence": {
-                  "properties": {
-                    "existingClaim": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "existingClaim"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "persistence"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "persistence": {
-                  "properties": {
-                    "volumes": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "volumes"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "persistence"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "persistence": {
-                  "properties": {
-                    "storageClass": {
-                      "enum": [
-                        "-"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "storageClass"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "persistence"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "persistence": {
-            "properties": {
-              "storageClass": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Storage class for the PVC"
               }
             },
             "type": "object"
@@ -7311,14 +10079,24 @@
       "type": "object"
     },
     "additionalClouds": {
-      "additionalProperties": {
-        "additionalProperties": {},
-        "properties": {
-          "additionalAgentsOverride": {}
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "items": {
+            "additionalProperties": {},
+            "properties": {
+              "additionalAgentsOverride": {}
+            }
+          },
+          "type": "array"
         }
-      },
-      "description": "Here you can add additional clouds\nThey inherit all values from the default cloud (including the main agent), so\nyou only need to specify values which differ. If you want to override\ndefault additionalAgents with the additionalClouds.additionalAgents set\nadditionalAgentsOverride to `true`.\nremote-cloud-1:\nkubernetesURL: https://api.remote-cloud.com\nadditionalAgentsOverride: true\nadditionalAgents:\nmaven-2:\npodName: maven-2\ncustomJenkinsLabels: maven\nAn example of overriding the jnlp container\nsideContainerName: jnlp\nimage:\nrepository: jenkins/jnlp-agent-maven\ntag: latest\nnamespace: my-other-maven-namespace\nremote-cloud-2:\nkubernetesURL: https://api.remote-cloud.com",
-      "type": "object"
+      ],
+      "description": "Here you can add additional clouds\nThey inherit all values from the default cloud (including the main agent), so\nyou only need to specify values which differ. If you want to override\ndefault additionalAgents with the additionalClouds.additionalAgents set\nadditionalAgentsOverride to `true`.\nremote-cloud-1:\nkubernetesURL: https://api.remote-cloud.com\nadditionalAgentsOverride: true\nadditionalAgents:\nmaven-2:\npodName: maven-2\ncustomJenkinsLabels: maven\nAn example of overriding the jnlp container\nsideContainerName: jnlp\nimage:\nrepository: jenkins/jnlp-agent-maven\ntag: latest\nnamespace: my-other-maven-namespace\nremote-cloud-2:\nkubernetesURL: https://api.remote-cloud.com"
     },
     "agent": {
       "additionalProperties": {},
@@ -7446,10 +10224,34 @@
         "envVars": {
           "anyOf": [
             {
-              "items": {},
+              "items": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "name": {}
+                    }
+                  },
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "value": {}
+                    },
+                    "type": "object"
+                  }
+                ]
+              },
               "type": "array"
             },
             {
+              "additionalProperties": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {},
+                  "value": {}
+                },
+                "type": "object"
+              },
               "type": "object"
             }
           ],
@@ -7640,10 +10442,38 @@
         "secretEnvVars": {
           "anyOf": [
             {
-              "items": {},
+              "items": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "key": {}
+                    }
+                  },
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "optional": {},
+                      "secretKey": {},
+                      "secretName": {}
+                    },
+                    "type": "object"
+                  }
+                ]
+              },
               "type": "array"
             },
             {
+              "additionalProperties": {
+                "additionalProperties": {},
+                "properties": {
+                  "key": {},
+                  "optional": {},
+                  "secretKey": {},
+                  "secretName": {}
+                },
+                "type": "object"
+              },
               "type": "object"
             }
           ],
@@ -7736,8 +10566,7 @@
                       }
                     ]
                   }
-                },
-                "type": "object"
+                }
               },
               "type": "array"
             },
@@ -7745,6 +10574,53 @@
               "type": "null"
             },
             {
+              "additionalProperties": {
+                "additionalProperties": {},
+                "properties": {
+                  "type": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "ConfigMap"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "EmptyDir"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "EphemeralVolume"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "HostPath"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "Nfs"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "PVC"
+                        ]
+                      },
+                      {
+                        "enum": [
+                          "Secret"
+                        ]
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              },
               "type": "object"
             },
             {
@@ -7974,21 +10850,8 @@
                 "type": "string"
               },
               "jenkinsUriPrefix": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Root URI Jenkins will be served on"
+                "description": "Root URI Jenkins will be served on",
+                "type": "string"
               }
             },
             "type": "object"
@@ -9523,6 +12386,33 @@
           "anyOf": [
             {
               "items": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "name": {}
+                    }
+                  },
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "value": {
+                        "type": [
+                          "boolean",
+                          "integer",
+                          "number",
+                          "string"
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "items": {
                 "additionalProperties": {},
                 "properties": {
                   "name": {},
@@ -9543,6 +12433,21 @@
               "type": "null"
             },
             {
+              "additionalProperties": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {},
+                  "value": {
+                    "type": [
+                      "boolean",
+                      "integer",
+                      "number",
+                      "string"
+                    ]
+                  }
+                },
+                "type": "object"
+              },
               "type": "object"
             }
           ],
@@ -9632,7 +12537,13 @@
               "description": "The key in the existing admin secret containing the username"
             },
             "username": {
-              "description": "Admin username created as a secret if `controller.admin.createSecret` is true"
+              "description": "Admin username created as a secret if `controller.admin.createSecret` is true",
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             }
           },
           "type": "object"
@@ -10334,22 +13245,48 @@
               "type": "string"
             },
             "registry": {
-              "description": "Controller image registry",
-              "type": [
-                "boolean",
-                "integer",
-                "number",
-                "string"
-              ]
+              "anyOf": [
+                {
+                  "enum": [
+                    "docker.io"
+                  ]
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Controller image registry"
             },
             "repository": {
-              "description": "Controller image repository",
-              "type": [
-                "boolean",
-                "integer",
-                "number",
-                "string"
-              ]
+              "anyOf": [
+                {
+                  "enum": [
+                    "jenkins/jenkins"
+                  ]
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Controller image repository"
             },
             "tag": {
               "anyOf": [
@@ -10516,12 +13453,14 @@
         "initScripts": {
           "anyOf": [
             {
+              "items": {},
               "type": "array"
             },
             {
               "type": "null"
             },
             {
+              "additionalProperties": {},
               "type": "object"
             }
           ],
@@ -10598,11 +13537,7 @@
           "description": "Set Jenkins URL if you are not using the ingress definitions provided by the chart"
         },
         "jenkinsUrlProtocol": {
-          "description": "Set protocol for Jenkins URL; `https` if `controller.ingress.tls`, `http` otherwise",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "Set protocol for Jenkins URL; `https` if `controller.ingress.tls`, `http` otherwise"
         },
         "jenkinsWar": {
           "description": "Path to the jenkins war file which is used by jenkins-plugin-cli.\nOverride the default arguments passed to the war\noverrideArgs:\n- --httpPort=8080",
@@ -10660,13 +13595,26 @@
         "overrideArgs": {
           "anyOf": [
             {
+              "items": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
               "type": "array"
             },
             {
+              "additionalProperties": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
               "type": "object"
-            },
-            {
-              "type": "integer"
             },
             {
               "type": "null"
@@ -10783,12 +13731,14 @@
               "type": "object"
             },
             {
+              "items": {},
               "type": "array"
             },
             {
               "type": "null"
             },
             {
+              "additionalProperties": {},
               "type": "object"
             }
           ],
@@ -11195,6 +14145,7 @@
               "type": "array"
             },
             {
+              "additionalProperties": {},
               "type": "object"
             }
           ],
@@ -11650,12 +14601,14 @@
               "type": "object"
             },
             {
+              "items": {},
               "type": "array"
             },
             {
               "type": "null"
             },
             {
+              "additionalProperties": {},
               "type": "object"
             }
           ],
@@ -11743,12 +14696,6 @@
     "fullnameOverride": {
       "anyOf": [
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        {
           "const": null
         },
         {
@@ -11801,17 +14748,6 @@
     },
     "master": {},
     "nameOverride": {
-      "anyOf": [
-        {
-          "const": null
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Override the resource name prefix"
     },
     "namespaceOverride": {

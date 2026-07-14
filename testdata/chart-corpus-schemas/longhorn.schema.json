@@ -2778,6 +2778,238 @@
       }
     },
     {
+      "properties": {
+        "longhornDriver": {
+          "properties": {
+            "log": {
+              "properties": {
+                "format": {
+                  "description": "Format of longhorn-driver logs. (Options: \"plain\", \"json\")",
+                  "not": {
+                    "type": "array"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "longhornManager": {
+          "properties": {
+            "log": {
+              "properties": {
+                "format": {
+                  "description": "Format of Longhorn Manager logs. (Options: \"plain\", \"json\")",
+                  "not": {
+                    "type": "array"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "networkPolicies": {
+          "properties": {
+            "type": {
+              "description": "Distribution that determines the policy for allowing access for an ingress. (Options: \"k3s\", \"rke2\", \"rke1\")",
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        },
+        "service": {
+          "properties": {
+            "ui": {
+              "properties": {
+                "type": {
+                  "description": "Service type for Longhorn UI. (Options: \"ClusterIP\", \"NodePort\", \"LoadBalancer\", \"Rancher-Proxy\")",
+                  "not": {
+                    "type": "array"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "longhornDriver": {
+          "properties": {
+            "log": {
+              "properties": {
+                "format": {
+                  "description": "Format of longhorn-driver logs. (Options: \"plain\", \"json\")",
+                  "not": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "longhornDriver": {
+          "properties": {
+            "log": {
+              "properties": {
+                "format": {
+                  "description": "Format of longhorn-driver logs. (Options: \"plain\", \"json\")",
+                  "not": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "longhornDriver": {
+          "properties": {
+            "log": {
+              "properties": {
+                "format": {
+                  "description": "Format of longhorn-driver logs. (Options: \"plain\", \"json\")",
+                  "not": {
+                    "type": "number"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "longhornDriver": {
+          "properties": {
+            "log": {
+              "properties": {
+                "format": {
+                  "description": "Format of longhorn-driver logs. (Options: \"plain\", \"json\")",
+                  "not": {
+                    "type": "object"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "longhornManager": {
+          "properties": {
+            "log": {
+              "properties": {
+                "format": {
+                  "description": "Format of Longhorn Manager logs. (Options: \"plain\", \"json\")",
+                  "not": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "longhornManager": {
+          "properties": {
+            "log": {
+              "properties": {
+                "format": {
+                  "description": "Format of Longhorn Manager logs. (Options: \"plain\", \"json\")",
+                  "not": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "longhornManager": {
+          "properties": {
+            "log": {
+              "properties": {
+                "format": {
+                  "description": "Format of Longhorn Manager logs. (Options: \"plain\", \"json\")",
+                  "not": {
+                    "type": "number"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "longhornManager": {
+          "properties": {
+            "log": {
+              "properties": {
+                "format": {
+                  "description": "Format of Longhorn Manager logs. (Options: \"plain\", \"json\")",
+                  "not": {
+                    "type": "object"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
       "if": {
         "properties": {
           "nameOverride": {
@@ -2804,6 +3036,176 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "networkPolicies": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicies"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicies": {
+                      "properties": {
+                        "type": {}
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicies"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "networkPolicies": {
+                    "properties": {
+                      "type": {
+                        "not": {
+                          "enum": [
+                            ""
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicies"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "networkPolicies": {
+            "properties": {
+              "type": {
+                "description": "Distribution that determines the policy for allowing access for an ingress. (Options: \"k3s\", \"rke2\", \"rke1\")",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "properties": {
+        "networkPolicies": {
+          "properties": {
+            "type": {
+              "description": "Distribution that determines the policy for allowing access for an ingress. (Options: \"k3s\", \"rke2\", \"rke1\")",
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "networkPolicies": {
+          "properties": {
+            "type": {
+              "description": "Distribution that determines the policy for allowing access for an ingress. (Options: \"k3s\", \"rke2\", \"rke1\")",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "networkPolicies": {
+          "properties": {
+            "type": {
+              "description": "Distribution that determines the policy for allowing access for an ingress. (Options: \"k3s\", \"rke2\", \"rke1\")",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "networkPolicies": {
+          "properties": {
+            "type": {
+              "description": "Distribution that determines the policy for allowing access for an ingress. (Options: \"k3s\", \"rke2\", \"rke1\")",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -2869,6 +3271,90 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "ui": {
+              "properties": {
+                "type": {
+                  "description": "Service type for Longhorn UI. (Options: \"ClusterIP\", \"NodePort\", \"LoadBalancer\", \"Rancher-Proxy\")",
+                  "not": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "ui": {
+              "properties": {
+                "type": {
+                  "description": "Service type for Longhorn UI. (Options: \"ClusterIP\", \"NodePort\", \"LoadBalancer\", \"Rancher-Proxy\")",
+                  "not": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "ui": {
+              "properties": {
+                "type": {
+                  "description": "Service type for Longhorn UI. (Options: \"ClusterIP\", \"NodePort\", \"LoadBalancer\", \"Rancher-Proxy\")",
+                  "not": {
+                    "type": "number"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "ui": {
+              "properties": {
+                "type": {
+                  "description": "Service type for Longhorn UI. (Options: \"ClusterIP\", \"NodePort\", \"LoadBalancer\", \"Rancher-Proxy\")",
+                  "not": {
+                    "type": "object"
+                  }
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     }
   ],
   "properties": {
@@ -5549,12 +6035,7 @@
       },
       "type": "object"
     },
-    "nameOverride": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
+    "nameOverride": {},
     "namespaceOverride": {
       "anyOf": [
         {

@@ -964,6 +964,469 @@
       }
     },
     {
+      "properties": {
+        "controller": {
+          "description": "Sensors dislocation configuration (scenario requirement)",
+          "properties": {
+            "kind": {
+              "description": "Available options: deployment, daemonset.",
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        },
+        "driver": {
+          "description": "Driver settings (scenario requirement)",
+          "properties": {
+            "kind": {
+              "description": "kind tells Falco which driver to use. Available options: kmod (kernel driver), modern_ebpf (modern eBPF probe).",
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "controller": {
+          "description": "Sensors dislocation configuration (scenario requirement)",
+          "properties": {
+            "kind": {
+              "description": "Available options: deployment, daemonset.",
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "controller": {
+          "description": "Sensors dislocation configuration (scenario requirement)",
+          "properties": {
+            "kind": {
+              "description": "Available options: deployment, daemonset.",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "controller": {
+          "description": "Sensors dislocation configuration (scenario requirement)",
+          "properties": {
+            "kind": {
+              "description": "Available options: deployment, daemonset.",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "controller": {
+          "description": "Sensors dislocation configuration (scenario requirement)",
+          "properties": {
+            "kind": {
+              "description": "Available options: deployment, daemonset.",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "kind": {}
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "daemonset"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "deployment"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "driver": {
+            "description": "Driver settings (scenario requirement)",
+            "properties": {
+              "kind": {
+                "description": "kind tells Falco which driver to use. Available options: kmod (kernel driver), modern_ebpf (modern eBPF probe).",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          },
+          "extra": {
+            "properties": {
+              "args": {
+                "description": "Extra command-line arguments.",
+                "items": {},
+                "type": "array"
+              },
+              "initContainers": {
+                "description": "Additional initContainers for Falco pods.",
+                "items": {},
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "image": {
+            "properties": {
+              "pullPolicy": {
+                "description": "The image pull policy.",
+                "type": "string"
+              },
+              "registry": {
+                "description": "The image registry to pull from.",
+                "type": "string"
+              },
+              "tag": {
+                "description": "The image tag to pull. Overrides the image tag whose default is the chart appVersion.",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "imagePullSecrets": {
+            "description": "Secrets containing credentials when pulling from private/secure registries.",
+            "items": {},
+            "type": "array"
+          },
+          "mounts": {
+            "description": "File access configuration (scenario requirement)",
+            "properties": {
+              "volumeMounts": {
+                "description": "A list of volumes you want to add to the Falco pods.",
+                "items": {},
+                "type": "array"
+              },
+              "volumes": {
+                "description": "A list of volumes you want to add to the Falco pods.",
+                "items": {},
+                "type": "array"
+              }
+            },
+            "type": "object"
+          },
+          "podAnnotations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Add additional pod annotations"
+          },
+          "podLabels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Add additional pod labels"
+          },
+          "resources": {
+            "additionalProperties": {},
+            "properties": {
+              "limits": {
+                "additionalProperties": {},
+                "description": "Maximum amount of resources that Falco container could get.\nIf you are enabling more than one source in falco, than consider to increase\nthe cpu limits.",
+                "properties": {
+                  "cpu": {
+                    "type": "string"
+                  },
+                  "memory": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "requests": {
+                "additionalProperties": {},
+                "description": "Although resources needed are subjective on the actual workload we provide\na sane defaults ones. If you have more questions or concerns, please refer\nto #falco slack channel for more info about it.",
+                "properties": {
+                  "cpu": {
+                    "type": "string"
+                  },
+                  "memory": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          },
+          "serviceAccount": {
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
+              }
+            },
+            "type": "object"
+          },
+          "tolerations": {
+            "description": "Tolerations to allow Falco to run on Kubernetes masters.",
+            "items": {
+              "additionalProperties": {},
+              "properties": {
+                "effect": {
+                  "type": "string"
+                },
+                "key": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "tty": {
+            "description": "Attach the Falco process to a tty inside the container. Needed to flush Falco logs as soon as they are emitted.\nSet it to \"true\" when you need the Falco logs to be immediately displayed.",
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "driver": {
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "driver"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "driver": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "driver"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "driver": {
+            "description": "Driver settings (scenario requirement)",
+            "properties": {
+              "kind": {
+                "description": "kind tells Falco which driver to use. Available options: kmod (kernel driver), modern_ebpf (modern eBPF probe).",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "properties": {
+        "driver": {
+          "description": "Driver settings (scenario requirement)",
+          "properties": {
+            "kind": {
+              "description": "kind tells Falco which driver to use. Available options: kmod (kernel driver), modern_ebpf (modern eBPF probe).",
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "driver": {
+          "description": "Driver settings (scenario requirement)",
+          "properties": {
+            "kind": {
+              "description": "kind tells Falco which driver to use. Available options: kmod (kernel driver), modern_ebpf (modern eBPF probe).",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "driver": {
+          "description": "Driver settings (scenario requirement)",
+          "properties": {
+            "kind": {
+              "description": "kind tells Falco which driver to use. Available options: kmod (kernel driver), modern_ebpf (modern eBPF probe).",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "driver": {
+          "description": "Driver settings (scenario requirement)",
+          "properties": {
+            "kind": {
+              "description": "kind tells Falco which driver to use. Available options: kmod (kernel driver), modern_ebpf (modern eBPF probe).",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -1752,25 +2215,92 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
+            "allOf": [
               {
-                "not": {
-                  "properties": {
-                    "controller": {
+                "properties": {
+                  "extra": {
+                    "properties": {
+                      "args": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "extra"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
                       "properties": {
-                        "kind": {}
+                        "controller": {
+                          "properties": {
+                            "kind": {}
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
-                        "kind"
+                        "controller"
                       ],
                       "type": "object"
                     }
                   },
-                  "required": [
-                    "controller"
-                  ],
-                  "type": "object"
-                }
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "daemonset"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "extra": {
+                    "properties": {
+                      "args": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "args"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "extra"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -1778,7 +2308,7 @@
                     "properties": {
                       "kind": {
                         "enum": [
-                          "daemonset"
+                          "deployment"
                         ]
                       }
                     },
@@ -1794,27 +2324,6 @@
                 "type": "object"
               }
             ]
-          },
-          {
-            "properties": {
-              "controller": {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "controller"
-            ],
-            "type": "object"
           }
         ]
       },
@@ -1823,151 +2332,18 @@
           "extra": {
             "properties": {
               "args": {
-                "description": "Extra command-line arguments.",
-                "items": {},
-                "type": "array"
-              },
-              "initContainers": {
-                "description": "Additional initContainers for Falco pods.",
-                "items": {},
-                "type": "array"
-              }
-            },
-            "type": "object"
-          },
-          "image": {
-            "properties": {
-              "pullPolicy": {
-                "description": "The image pull policy.",
-                "type": "string"
-              },
-              "registry": {
-                "description": "The image registry to pull from.",
-                "type": "string"
-              },
-              "tag": {
-                "description": "The image tag to pull. Overrides the image tag whose default is the chart appVersion.",
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          "imagePullSecrets": {
-            "description": "Secrets containing credentials when pulling from private/secure registries.",
-            "items": {},
-            "type": "array"
-          },
-          "mounts": {
-            "description": "File access configuration (scenario requirement)",
-            "properties": {
-              "volumeMounts": {
-                "description": "A list of volumes you want to add to the Falco pods.",
-                "items": {},
-                "type": "array"
-              },
-              "volumes": {
-                "description": "A list of volumes you want to add to the Falco pods.",
-                "items": {},
-                "type": "array"
-              }
-            },
-            "type": "object"
-          },
-          "podAnnotations": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Add additional pod annotations"
-          },
-          "podLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Add additional pod labels"
-          },
-          "resources": {
-            "additionalProperties": {},
-            "properties": {
-              "limits": {
-                "additionalProperties": {},
-                "description": "Maximum amount of resources that Falco container could get.\nIf you are enabling more than one source in falco, than consider to increase\nthe cpu limits.",
-                "properties": {
-                  "cpu": {
-                    "type": "string"
-                  },
-                  "memory": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "requests": {
-                "additionalProperties": {},
-                "description": "Although resources needed are subjective on the actual workload we provide\na sane defaults ones. If you have more questions or concerns, please refer\nto #falco slack channel for more info about it.",
-                "properties": {
-                  "cpu": {
-                    "type": "string"
-                  },
-                  "memory": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
-          "serviceAccount": {
-            "properties": {
-              "name": {
                 "anyOf": [
                   {
-                    "type": "null"
+                    "type": "array"
                   },
                   {
-                    "type": "string"
+                    "type": "null"
                   }
                 ],
-                "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
+                "description": "Extra command-line arguments."
               }
             },
             "type": "object"
-          },
-          "tolerations": {
-            "description": "Tolerations to allow Falco to run on Kubernetes masters.",
-            "items": {
-              "additionalProperties": {},
-              "properties": {
-                "effect": {
-                  "type": "string"
-                },
-                "key": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "tty": {
-            "description": "Attach the Falco process to a tty inside the container. Needed to flush Falco logs as soon as they are emitted.\nSet it to \"true\" when you need the Falco logs to be immediately displayed.",
-            "type": "boolean"
           }
         },
         "type": "object"
@@ -6222,6 +6598,1382 @@
           {
             "allOf": [
               {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "collectors": {
+                          "properties": {
+                            "containerEngine": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "containerEngine"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "collectors"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "collectors": {
+                        "properties": {
+                          "containerEngine": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "containerEngine"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "collectors"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "collectors": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "collectors"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "collectors": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "collectors"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "driver": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "driver"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "driver": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "driver"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "falcoctl": {
+                          "properties": {
+                            "config": {
+                              "properties": {
+                                "artifact": {
+                                  "properties": {
+                                    "allowedTypes": {}
+                                  },
+                                  "required": [
+                                    "allowedTypes"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "artifact"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "config"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "falcoctl"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "falcoctl": {
+                        "properties": {
+                          "config": {
+                            "properties": {
+                              "artifact": {
+                                "properties": {
+                                  "allowedTypes": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "allowedTypes"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "artifact"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "config"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "falcoctl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "collectors": {
+                    "properties": {
+                      "kubernetes": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubernetes"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "collectors"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "driver": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "driver"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "driver": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "driver"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "falcoctl": {
+                          "properties": {
+                            "config": {
+                              "properties": {
+                                "artifact": {
+                                  "properties": {
+                                    "allowedTypes": {}
+                                  },
+                                  "required": [
+                                    "allowedTypes"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "artifact"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "config"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "falcoctl"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "falcoctl": {
+                        "properties": {
+                          "config": {
+                            "properties": {
+                              "artifact": {
+                                "properties": {
+                                  "allowedTypes": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "allowedTypes"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "artifact"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "config"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "falcoctl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "falcoctl": {
+                          "properties": {
+                            "config": {
+                              "properties": {
+                                "artifact": {
+                                  "properties": {
+                                    "allowedTypes": {}
+                                  },
+                                  "required": [
+                                    "allowedTypes"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "artifact"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "config"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "falcoctl"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "falcoctl": {
+                        "properties": {
+                          "config": {
+                            "properties": {
+                              "artifact": {
+                                "properties": {
+                                  "allowedTypes": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "allowedTypes"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "artifact"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "config"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "falcoctl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "controller": {
+                          "properties": {
+                            "kind": {}
+                          },
+                          "required": [
+                            "kind"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "controller"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "daemonset"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "falcoctl": {
+                              "properties": {
+                                "artifact": {
+                                  "properties": {
+                                    "follow": {
+                                      "properties": {
+                                        "enabled": {}
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "follow"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "artifact"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "falcoctl"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "falcoctl": {
+                            "properties": {
+                              "artifact": {
+                                "properties": {
+                                  "follow": {
+                                    "properties": {
+                                      "enabled": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "enabled"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "follow"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "artifact"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "falcoctl"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "falcoctl": {
+                              "properties": {
+                                "artifact": {
+                                  "properties": {
+                                    "install": {
+                                      "properties": {
+                                        "enabled": {}
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "install"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "artifact"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "falcoctl"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "falcoctl": {
+                            "properties": {
+                              "artifact": {
+                                "properties": {
+                                  "install": {
+                                    "properties": {
+                                      "enabled": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "enabled"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "install"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "artifact"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "falcoctl"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "falcoctl": {
+                          "properties": {
+                            "config": {
+                              "properties": {
+                                "artifact": {
+                                  "properties": {
+                                    "allowedTypes": {}
+                                  },
+                                  "required": [
+                                    "allowedTypes"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "artifact"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "config"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "falcoctl"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "falcoctl": {
+                        "properties": {
+                          "config": {
+                            "properties": {
+                              "artifact": {
+                                "properties": {
+                                  "allowedTypes": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "allowedTypes"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "artifact"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "config"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "falcoctl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "deployment"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "falcoctl": {
+                              "properties": {
+                                "artifact": {
+                                  "properties": {
+                                    "follow": {
+                                      "properties": {
+                                        "enabled": {}
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "follow"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "artifact"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "falcoctl"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "falcoctl": {
+                            "properties": {
+                              "artifact": {
+                                "properties": {
+                                  "follow": {
+                                    "properties": {
+                                      "enabled": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "enabled"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "follow"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "artifact"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "falcoctl"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "falcoctl": {
+                              "properties": {
+                                "artifact": {
+                                  "properties": {
+                                    "install": {
+                                      "properties": {
+                                        "enabled": {}
+                                      },
+                                      "required": [
+                                        "enabled"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "install"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "artifact"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "falcoctl"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "falcoctl": {
+                            "properties": {
+                              "artifact": {
+                                "properties": {
+                                  "install": {
+                                    "properties": {
+                                      "enabled": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "enabled"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "install"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "artifact"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "falcoctl"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcoctl": {
+            "description": "falcoctl config  #",
+            "properties": {
+              "config": {
+                "description": "Configuration file of the falcoctl tool. It is saved in a configmap and mounted on the falcotl containers.",
+                "properties": {
+                  "artifact": {
+                    "description": "Configuration used by the artifact commands.",
+                    "properties": {
+                      "allowedTypes": {
+                        "anyOf": [
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "List of artifact types that falcoctl will handle. If the configured refs resolves to an artifact whose type is not contained\nin the list it will refuse to download and install that artifact."
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "collectors": {
+                          "properties": {
+                            "containerEngine": {
+                              "properties": {
+                                "enabled": {}
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "containerEngine"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "collectors"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "collectors": {
+                        "properties": {
+                          "containerEngine": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "containerEngine"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "collectors"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "collectors": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "collectors"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "collectors": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "collectors"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "driver": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "driver"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "driver": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "driver"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "falcoctl": {
+                          "properties": {
+                            "config": {
+                              "properties": {
+                                "artifact": {
+                                  "properties": {
+                                    "install": {
+                                      "properties": {
+                                        "refs": {}
+                                      },
+                                      "required": [
+                                        "refs"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "install"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "artifact"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "config"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "falcoctl"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "falcoctl": {
+                        "properties": {
+                          "config": {
+                            "properties": {
+                              "artifact": {
+                                "properties": {
+                                  "install": {
+                                    "properties": {
+                                      "refs": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "refs"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "install"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "artifact"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "config"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "falcoctl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "collectors": {
+                    "properties": {
+                      "kubernetes": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubernetes"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "collectors"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "driver": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "driver"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "driver": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "driver"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "falcoctl": {
+                          "properties": {
+                            "config": {
+                              "properties": {
+                                "artifact": {
+                                  "properties": {
+                                    "install": {
+                                      "properties": {
+                                        "refs": {}
+                                      },
+                                      "required": [
+                                        "refs"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "install"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "artifact"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "config"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "falcoctl"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "falcoctl": {
+                        "properties": {
+                          "config": {
+                            "properties": {
+                              "artifact": {
+                                "properties": {
+                                  "install": {
+                                    "properties": {
+                                      "refs": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "refs"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "install"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "artifact"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "config"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "falcoctl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcoctl": {
+            "description": "falcoctl config  #",
+            "properties": {
+              "config": {
+                "description": "Configuration file of the falcoctl tool. It is saved in a configmap and mounted on the falcotl containers.",
+                "properties": {
+                  "artifact": {
+                    "description": "Configuration used by the artifact commands.",
+                    "properties": {
+                      "install": {
+                        "properties": {
+                          "refs": {
+                            "anyOf": [
+                              {
+                                "type": "array"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "List of artifacts to be installed by the falcoctl init container."
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "properties": {
                   "falcosidekick": {
                     "properties": {
@@ -7772,6 +9524,382 @@
       "if": {
         "anyOf": [
           {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "config": {
+                "properties": {
+                  "loki": {
+                    "properties": {
+                      "hostport": {
+                        "description": "Loki <http://host:port>, if not `empty`, Loki is *enabled*",
+                        "not": {
+                          "type": "array"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "tlsserver": {
+                    "properties": {
+                      "notlspaths": {
+                        "description": "a comma separated list of endpoints, if not empty, and tlsserver.deploy is true, a separate http server will be deployed for the specified endpoints (/ping endpoint needs to be notls for Kubernetes to be able to perform the healthchecks)",
+                        "not": {
+                          "type": "array"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "config": {
+                "properties": {
+                  "loki": {
+                    "properties": {
+                      "hostport": {
+                        "description": "Loki <http://host:port>, if not `empty`, Loki is *enabled*",
+                        "not": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "config": {
+                "properties": {
+                  "loki": {
+                    "properties": {
+                      "hostport": {
+                        "description": "Loki <http://host:port>, if not `empty`, Loki is *enabled*",
+                        "not": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "config": {
+                "properties": {
+                  "loki": {
+                    "properties": {
+                      "hostport": {
+                        "description": "Loki <http://host:port>, if not `empty`, Loki is *enabled*",
+                        "not": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "config": {
+                "properties": {
+                  "loki": {
+                    "properties": {
+                      "hostport": {
+                        "description": "Loki <http://host:port>, if not `empty`, Loki is *enabled*",
+                        "not": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "properties": {
@@ -8090,6 +10218,298 @@
       "if": {
         "anyOf": [
           {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "config": {
+                "properties": {
+                  "tlsserver": {
+                    "properties": {
+                      "notlspaths": {
+                        "description": "a comma separated list of endpoints, if not empty, and tlsserver.deploy is true, a separate http server will be deployed for the specified endpoints (/ping endpoint needs to be notls for Kubernetes to be able to perform the healthchecks)",
+                        "not": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "config": {
+                "properties": {
+                  "tlsserver": {
+                    "properties": {
+                      "notlspaths": {
+                        "description": "a comma separated list of endpoints, if not empty, and tlsserver.deploy is true, a separate http server will be deployed for the specified endpoints (/ping endpoint needs to be notls for Kubernetes to be able to perform the healthchecks)",
+                        "not": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "config": {
+                "properties": {
+                  "tlsserver": {
+                    "properties": {
+                      "notlspaths": {
+                        "description": "a comma separated list of endpoints, if not empty, and tlsserver.deploy is true, a separate http server will be deployed for the specified endpoints (/ping endpoint needs to be notls for Kubernetes to be able to perform the healthchecks)",
+                        "not": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "falcosidekick": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "config": {
+                "properties": {
+                  "tlsserver": {
+                    "properties": {
+                      "notlspaths": {
+                        "description": "a comma separated list of endpoints, if not empty, and tlsserver.deploy is true, a separate http server will be deployed for the specified endpoints (/ping endpoint needs to be notls for Kubernetes to be able to perform the healthchecks)",
+                        "not": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "properties": {
@@ -8306,6 +10726,261 @@
                   }
                 ],
                 "description": "Override name"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "falcosidekick": {
+                          "properties": {
+                            "service": {
+                              "properties": {
+                                "type": {}
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "falcosidekick"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "falcosidekick": {
+                        "properties": {
+                          "service": {
+                            "properties": {
+                              "type": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "falcosidekick"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "falcosidekick": {
+                      "properties": {
+                        "ingress": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "falcosidekick"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "falcosidekick": {
+                          "properties": {
+                            "service": {
+                              "properties": {
+                                "type": {}
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "falcosidekick"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "falcosidekick": {
+                        "properties": {
+                          "service": {
+                            "properties": {
+                              "type": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "falcosidekick"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "falcosidekick": {
+                      "properties": {
+                        "ingress": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "falcosidekick"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "service": {
+                "properties": {
+                  "type": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Service type"
+                  }
+                },
+                "type": "object"
               }
             },
             "type": "object"
@@ -8726,6 +11401,692 @@
                   "falcosidekick"
                 ],
                 "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "webui": {
+                "properties": {
+                  "redis": {
+                    "properties": {
+                      "existingSecret": {
+                        "description": "Existing secret with configuration",
+                        "not": {
+                          "type": "array"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "service": {
+                    "properties": {
+                      "type": {
+                        "description": "The web UI service type",
+                        "not": {
+                          "type": "array"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "webui": {
+                "properties": {
+                  "redis": {
+                    "properties": {
+                      "existingSecret": {
+                        "description": "Existing secret with configuration",
+                        "not": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "webui": {
+                "properties": {
+                  "redis": {
+                    "properties": {
+                      "existingSecret": {
+                        "description": "Existing secret with configuration",
+                        "not": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "webui": {
+                "properties": {
+                  "redis": {
+                    "properties": {
+                      "existingSecret": {
+                        "description": "Existing secret with configuration",
+                        "not": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "webui": {
+                "properties": {
+                  "redis": {
+                    "properties": {
+                      "existingSecret": {
+                        "description": "Existing secret with configuration",
+                        "not": {
+                          "type": "object"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
               },
               {
                 "properties": {
@@ -8872,6 +12233,908 @@
                           }
                         ],
                         "description": "Set a password for Redis"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "falcosidekick": {
+                          "properties": {
+                            "webui": {
+                              "properties": {
+                                "service": {
+                                  "properties": {
+                                    "type": {}
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "service"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "webui"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "falcosidekick"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "falcosidekick": {
+                        "properties": {
+                          "webui": {
+                            "properties": {
+                              "service": {
+                                "properties": {
+                                  "type": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "type"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "service"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "webui"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "falcosidekick"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "falcosidekick": {
+                      "properties": {
+                        "webui": {
+                          "properties": {
+                            "ingress": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "ingress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webui"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "falcosidekick"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "falcosidekick": {
+                          "properties": {
+                            "webui": {
+                              "properties": {
+                                "service": {
+                                  "properties": {
+                                    "type": {}
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "service"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "webui"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "falcosidekick"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "falcosidekick": {
+                        "properties": {
+                          "webui": {
+                            "properties": {
+                              "service": {
+                                "properties": {
+                                  "type": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "type"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "service"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "webui"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "falcosidekick"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "falcosidekick": {
+                      "properties": {
+                        "webui": {
+                          "properties": {
+                            "ingress": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "ingress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webui"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "falcosidekick"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "webui": {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "type": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "The web UI service type"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "webui": {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "type": {
+                        "description": "The web UI service type",
+                        "not": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "webui": {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "type": {
+                        "description": "The web UI service type",
+                        "not": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "webui": {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "type": {
+                        "description": "The web UI service type",
+                        "not": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "falcosidekick": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "falcosidekick"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "properties": {
+              "webui": {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "type": {
+                        "description": "The web UI service type",
+                        "not": {
+                          "type": "object"
+                        }
                       }
                     },
                     "type": "object"
@@ -11567,6 +15830,91 @@
         "allOf": [
           {
             "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "selector": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "selector"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "selector": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "selector"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "serviceMonitor": {
+            "description": "serviceMonitor holds the configuration for the ServiceMonitor CRD.\nA ServiceMonitor is a custom resource definition (CRD) used to configure how Prometheus should\ndiscover and scrape metrics from the Falco service.",
+            "properties": {
+              "selector": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "selector set of labels that should match the labels on the Service targeted by the current serviceMonitor."
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "responseActions": {
                 "properties": {
                   "enabled": {
@@ -12287,8 +16635,8 @@
                       "type": "boolean"
                     },
                     "sockets": {
-                      "additionalProperties": {},
-                      "type": "object"
+                      "items": {},
+                      "type": "array"
                     }
                   },
                   "type": "object"
@@ -12303,11 +16651,20 @@
                       "anyOf": [
                         {
                           "items": {
-                            "type": "string"
+                            "type": [
+                              "string",
+                              "null"
+                            ]
                           },
                           "type": "array"
                         },
                         {
+                          "additionalProperties": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "type": "object"
                         }
                       ]
@@ -12325,11 +16682,20 @@
                       "anyOf": [
                         {
                           "items": {
-                            "type": "string"
+                            "type": [
+                              "string",
+                              "null"
+                            ]
                           },
                           "type": "array"
                         },
                         {
+                          "additionalProperties": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "type": "object"
                         }
                       ]
@@ -12347,11 +16713,20 @@
                       "anyOf": [
                         {
                           "items": {
-                            "type": "string"
+                            "type": [
+                              "string",
+                              "null"
+                            ]
                           },
                           "type": "array"
                         },
                         {
+                          "additionalProperties": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "type": "object"
                         }
                       ]
@@ -12366,8 +16741,8 @@
                       "type": "boolean"
                     },
                     "sockets": {
-                      "additionalProperties": {},
-                      "type": "object"
+                      "items": {},
+                      "type": "array"
                     }
                   },
                   "type": "object"
@@ -12379,8 +16754,8 @@
                       "type": "boolean"
                     },
                     "sockets": {
-                      "additionalProperties": {},
-                      "type": "object"
+                      "items": {},
+                      "type": "array"
                     }
                   },
                   "type": "object"
@@ -12395,11 +16770,20 @@
                       "anyOf": [
                         {
                           "items": {
-                            "type": "string"
+                            "type": [
+                              "string",
+                              "null"
+                            ]
                           },
                           "type": "array"
                         },
                         {
+                          "additionalProperties": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
                           "type": "object"
                         }
                       ]
@@ -12690,12 +17074,14 @@
     "customRules": {
       "anyOf": [
         {
+          "items": {},
           "type": "array"
         },
         {
           "type": "null"
         },
         {
+          "additionalProperties": {},
           "type": "object"
         }
       ],
@@ -13079,9 +17465,27 @@
           "type": "object"
         },
         "load_plugins": {
-          "description": "List of plugins to load.\nNOTICE: Falco default value for this setting differs from the one used in this Helm chart.\nFor `container` and `k8saudit` plugins, this Helm chart provides a managed integration.\nTo use these plugins with this chart, please refer to `collectors` settings.",
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ],
+          "description": "List of plugins to load.\nNOTICE: Falco default value for this setting differs from the one used in this Helm chart.\nFor `container` and `k8saudit` plugins, this Helm chart provides a managed integration.\nTo use these plugins with this chart, please refer to `collectors` settings."
         },
         "log_level": {
           "description": "The `log_level` setting determines the minimum log level to include in Falco's\nlogs related to the functioning of the software. This setting is separate from\nthe `priority` field of rules and specifically controls the log level of\nFalco's operational logging. By specifying a log level, you can control the\nverbosity of Falco's operational logs. Only logs of a certain severity level\nor higher will be emitted. Supported levels: \"emergency\", \"alert\", \"critical\",\n\"error\", \"warning\", \"notice\", \"info\", \"debug\".",
@@ -14361,11 +18765,27 @@
                       "description": "Same as the one above but for the artifacts."
                     },
                     "refs": {
-                      "description": "List of artifacts to be installed by the falcoctl init container.",
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
+                      "anyOf": [
+                        {
+                          "items": {
+                            "type": "string"
+                          },
+                          "type": "array"
+                        },
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object"
+                        }
+                      ],
+                      "description": "List of artifacts to be installed by the falcoctl init container."
                     },
                     "resolveDeps": {
                       "description": "Resolve the dependencies for artifacts.",
@@ -26476,6 +30896,376 @@
         },
         {
           "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "service": {
+                              "properties": {
+                                "type": {}
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "service": {
+                            "properties": {
+                              "type": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "webui": {
+                          "properties": {
+                            "ingress": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "ingress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webui"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "webui": {
+                                "properties": {
+                                  "service": {
+                                    "properties": {
+                                      "type": {}
+                                    },
+                                    "required": [
+                                      "type"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "service"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "webui"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "properties": {
+                            "webui": {
+                              "properties": {
+                                "service": {
+                                  "properties": {
+                                    "type": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "service"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "webui"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "service": {
+                              "properties": {
+                                "type": {}
+                              },
+                              "required": [
+                                "type"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "service"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "service": {
+                            "properties": {
+                              "type": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "service"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "webui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webui"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "webui": {
+                          "properties": {
+                            "ingress": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "ingress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webui"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "properties": {
+                              "webui": {
+                                "properties": {
+                                  "service": {
+                                    "properties": {
+                                      "type": {}
+                                    },
+                                    "required": [
+                                      "type"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "service"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "webui"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        {
+                          "properties": {
+                            "webui": {
+                              "properties": {
+                                "service": {
+                                  "properties": {
+                                    "type": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "service"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "webui"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "webui": {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "port": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "The web UI service port dor the falcosidekick-ui"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        {
+          "if": {
             "allOf": [
               {
                 "properties": {
@@ -30923,10 +35713,6 @@
                   "type": "object"
                 },
                 {
-                  "items": {},
-                  "type": "array"
-                },
-                {
                   "type": "null"
                 }
               ],
@@ -31354,11 +36140,7 @@
       "type": "object"
     },
     "nameOverride": {
-      "description": "Put here the new name if you want to override the release name used for Falco components.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "description": "Put here the new name if you want to override the release name used for Falco components."
     },
     "namespaceOverride": {
       "description": "Override the deployment namespace",
@@ -31693,40 +36475,92 @@
       "anyOf": [
         {
           "items": {
-            "additionalProperties": {},
-            "properties": {
-              "Chart": {
+            "anyOf": [
+              {
                 "additionalProperties": {},
                 "properties": {
-                  "AppVersion": {},
-                  "Name": {},
-                  "Version": {}
-                },
-                "type": "object"
+                  "Chart": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "AppVersion": {},
+                      "Name": {},
+                      "Version": {}
+                    },
+                    "type": "object"
+                  }
+                }
               },
-              "Release": {
+              {
                 "additionalProperties": {},
                 "properties": {
-                  "Name": {
-                    "type": "string"
+                  "Release": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "Name": {
+                        "type": "string"
+                      },
+                      "Namespace": {
+                        "type": "string"
+                      },
+                      "Service": {}
+                    },
+                    "type": "object"
                   },
-                  "Namespace": {
+                  "name": {
                     "type": "string"
-                  },
-                  "Service": {}
+                  }
                 },
                 "type": "object"
               }
-            },
-            "type": "object"
+            ]
           },
           "type": "array"
         },
         {
-          "type": "null"
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "Chart": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "AppVersion": {},
+                      "Name": {},
+                      "Version": {}
+                    },
+                    "type": "object"
+                  }
+                }
+              },
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "Release": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "Name": {
+                        "type": "string"
+                      },
+                      "Namespace": {
+                        "type": "string"
+                      },
+                      "Service": {}
+                    },
+                    "type": "object"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            ]
+          },
+          "type": "object"
         },
         {
-          "type": "object"
+          "type": "null"
         }
       ],
       "description": "Network services configuration (scenario requirement)\nAdd here your services to be deployed together with Falco.\nExample configuration for the \"k8sauditlog\" plugin\n- name: k8saudit-webhook\ntype: NodePort\nports:\n- port: 9765 # See plugin open_params\nnodePort: 30007\nprotocol: TCP"

@@ -160,6 +160,12 @@
             "items": {},
             "type": "array"
           },
+          "kind": {
+            "description": "kind -- DaemonSet or Deployment",
+            "not": {
+              "type": "array"
+            }
+          },
           "labels": {
             "anyOf": [
               {
@@ -320,6 +326,12 @@
           "imagePullSecrets": {
             "items": {},
             "type": "array"
+          },
+          "kind": {
+            "description": "kind -- DaemonSet or Deployment",
+            "not": {
+              "type": "array"
+            }
           },
           "labels": {
             "anyOf": [
@@ -1848,6 +1860,71 @@
       }
     },
     {
+      "properties": {
+        "kind": {
+          "description": "kind -- DaemonSet or Deployment",
+          "not": {
+            "type": "array"
+          }
+        },
+        "service": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "kind": {
+          "description": "kind -- DaemonSet or Deployment",
+          "not": {
+            "type": "boolean"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "kind": {
+          "description": "kind -- DaemonSet or Deployment",
+          "not": {
+            "type": "integer"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "kind": {
+          "description": "kind -- DaemonSet or Deployment",
+          "not": {
+            "type": "number"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "kind": {
+          "description": "kind -- DaemonSet or Deployment",
+          "not": {
+            "type": "object"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
       "if": {
         "properties": {
           "autoscaling": {
@@ -2229,6 +2306,66 @@
       }
     },
     {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -2279,94 +2416,6 @@
                 "type": [
                   "string",
                   "null"
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "metricRelabelings": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "metricRelabelings"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "metricRelabelings": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "metricRelabelings"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "serviceMonitor": {
-            "properties": {
-              "metricRelabelings": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
                 ]
               }
             },

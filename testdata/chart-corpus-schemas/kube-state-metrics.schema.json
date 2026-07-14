@@ -63,6 +63,104 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "customResourceState": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "customResourceState"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "customResourceState": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "customResourceState"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "customResourceState": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "customResourceState"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations to be added to the deployment/statefulset"
+          },
+          "customResourceState": {
+            "description": "Enabling support for customResourceState, will create a configMap including your config that will be read from kube-state-metrics",
+            "properties": {
+              "name": {
+                "description": "Name of the ConfigMap that holds the config. If empty, name will be generated based on the release name.",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "properties": {
           "kubeRBACProxy": {
             "properties": {
@@ -191,6 +289,208 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
+                      "properties": {
+                        "flavor": {}
+                      },
+                      "required": [
+                        "flavor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "flavor": {
+                        "enum": [
+                          "kubernetes"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "flavor"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "annotations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Annotations to be added to the deployment/statefulset"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "customResourceState": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "customResourceState"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "customResourceState": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "customResourceState"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "kubeRBACProxy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "kubeRBACProxy"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "kubeconfig": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "kubeconfig"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "volumes": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "volumes"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "customResourceState": {
+            "description": "Enabling support for customResourceState, will create a configMap including your config that will be read from kube-state-metrics",
+            "properties": {
+              "name": {
+                "description": "Name of the ConfigMap that holds the config. If empty, name will be generated based on the release name.",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -261,7 +561,7 @@
             "allOf": [
               {
                 "properties": {
-                  "networkPolicy": {
+                  "customResourceState": {
                     "properties": {
                       "enabled": {
                         "$ref": "#/$defs/helm-truthy"
@@ -274,49 +574,77 @@
                   }
                 },
                 "required": [
-                  "networkPolicy"
+                  "customResourceState"
                 ],
                 "type": "object"
               },
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "flavor": {}
-                          },
-                          "required": [
-                            "flavor"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
                     "properties": {
-                      "networkPolicy": {
+                      "customResourceState": {
                         "properties": {
-                          "flavor": {
-                            "enum": [
-                              "kubernetes"
-                            ]
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
                           }
                         },
                         "required": [
-                          "flavor"
+                          "enabled"
                         ],
                         "type": "object"
                       }
                     },
                     "required": [
-                      "networkPolicy"
+                      "customResourceState"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "kubeRBACProxy": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubeRBACProxy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "kubeconfig": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubeconfig"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "volumes": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "volumes"
                     ],
                     "type": "object"
                   }
@@ -328,19 +656,566 @@
       },
       "then": {
         "properties": {
-          "annotations": {
-            "anyOf": [
+          "customResourceState": {
+            "description": "Enabling support for customResourceState, will create a configMap including your config that will be read from kube-state-metrics",
+            "properties": {
+              "name": {
+                "description": "Name of the ConfigMap that holds the config. If empty, name will be generated based on the release name.",
+                "not": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "customResourceState": {
+                          "properties": {
+                            "create": {}
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "customResourceState"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "customResourceState": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "customResourceState"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "customResourceState": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
                 },
+                "required": [
+                  "customResourceState"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "customResourceState": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "customResourceState"
+                ],
                 "type": "object"
               },
               {
-                "type": "null"
+                "anyOf": [
+                  {
+                    "properties": {
+                      "customResourceState": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "customResourceState"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "kubeRBACProxy": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubeRBACProxy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "kubeconfig": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubeconfig"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "volumes": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "volumes"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
-            ],
-            "description": "Annotations to be added to the deployment/statefulset"
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "customResourceState": {
+            "description": "Enabling support for customResourceState, will create a configMap including your config that will be read from kube-state-metrics",
+            "properties": {
+              "name": {
+                "description": "Name of the ConfigMap that holds the config. If empty, name will be generated based on the release name.",
+                "not": {
+                  "type": "integer"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "customResourceState": {
+                          "properties": {
+                            "create": {}
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "customResourceState"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "customResourceState": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "customResourceState"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "customResourceState": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "customResourceState"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "customResourceState": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "customResourceState"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "customResourceState": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "customResourceState"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "kubeRBACProxy": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubeRBACProxy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "kubeconfig": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubeconfig"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "volumes": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "volumes"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "customResourceState": {
+            "description": "Enabling support for customResourceState, will create a configMap including your config that will be read from kube-state-metrics",
+            "properties": {
+              "name": {
+                "description": "Name of the ConfigMap that holds the config. If empty, name will be generated based on the release name.",
+                "not": {
+                  "type": "number"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "customResourceState": {
+                          "properties": {
+                            "create": {}
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "customResourceState"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "customResourceState": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "customResourceState"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "customResourceState": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "customResourceState"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "customResourceState": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "customResourceState"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "customResourceState": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "customResourceState"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "kubeRBACProxy": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubeRBACProxy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "kubeconfig": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubeconfig"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "volumes": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "volumes"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "customResourceState": {
+            "description": "Enabling support for customResourceState, will create a configMap including your config that will be read from kube-state-metrics",
+            "properties": {
+              "name": {
+                "description": "Name of the ConfigMap that holds the config. If empty, name will be generated based on the release name.",
+                "not": {
+                  "type": "object"
+                }
+              }
+            },
+            "type": "object"
           }
         },
         "type": "object"
@@ -373,6 +1248,126 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "kubeRBACProxy": {
+          "description": "Configure kube-rbac-proxy. When enabled, creates one kube-rbac-proxy container per exposed HTTP endpoint (metrics and telemetry if enabled).\nThe requests are served through the same service but requests are then HTTPS.",
+          "properties": {
+            "enabled": {
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        },
+        "networkPolicy": {
+          "description": "Configure network policy for kube-state-metrics",
+          "properties": {
+            "flavor": {
+              "description": "networkPolicy.flavor -- Flavor of the network policy to use.\nCan be:\n* kubernetes for networking.k8s.io/v1/NetworkPolicy\n* cilium     for cilium.io/v2/CiliumNetworkPolicy",
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        },
+        "rbac": {
+          "properties": {
+            "create": {
+              "description": "If true, create & use RBAC resources",
+              "not": {
+                "type": "array"
+              }
+            },
+            "useClusterRole": {
+              "description": "If set to false - Run without Cluteradmin privs needed - ONLY works if namespace is also set (if useExistingRole is set this name is used as ClusterRole or Role to bind to)",
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        },
+        "service": {
+          "properties": {
+            "type": {
+              "description": "Default to clusterIP for backward compatibility",
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "kubeRBACProxy": {
+          "description": "Configure kube-rbac-proxy. When enabled, creates one kube-rbac-proxy container per exposed HTTP endpoint (metrics and telemetry if enabled).\nThe requests are served through the same service but requests are then HTTPS.",
+          "properties": {
+            "enabled": {
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "kubeRBACProxy": {
+          "description": "Configure kube-rbac-proxy. When enabled, creates one kube-rbac-proxy container per exposed HTTP endpoint (metrics and telemetry if enabled).\nThe requests are served through the same service but requests are then HTTPS.",
+          "properties": {
+            "enabled": {
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "kubeRBACProxy": {
+          "description": "Configure kube-rbac-proxy. When enabled, creates one kube-rbac-proxy container per exposed HTTP endpoint (metrics and telemetry if enabled).\nThe requests are served through the same service but requests are then HTTPS.",
+          "properties": {
+            "enabled": {
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "kubeRBACProxy": {
+          "description": "Configure kube-rbac-proxy. When enabled, creates one kube-rbac-proxy container per exposed HTTP endpoint (metrics and telemetry if enabled).\nThe requests are served through the same service but requests are then HTTPS.",
+          "properties": {
+            "enabled": {
+              "not": {
+                "type": "string"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -482,6 +1477,202 @@
         },
         "type": "object"
       }
+    },
+    {
+      "properties": {
+        "networkPolicy": {
+          "description": "Configure network policy for kube-state-metrics",
+          "properties": {
+            "flavor": {
+              "description": "networkPolicy.flavor -- Flavor of the network policy to use.\nCan be:\n* kubernetes for networking.k8s.io/v1/NetworkPolicy\n* cilium     for cilium.io/v2/CiliumNetworkPolicy",
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "networkPolicy": {
+          "description": "Configure network policy for kube-state-metrics",
+          "properties": {
+            "flavor": {
+              "description": "networkPolicy.flavor -- Flavor of the network policy to use.\nCan be:\n* kubernetes for networking.k8s.io/v1/NetworkPolicy\n* cilium     for cilium.io/v2/CiliumNetworkPolicy",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "networkPolicy": {
+          "description": "Configure network policy for kube-state-metrics",
+          "properties": {
+            "flavor": {
+              "description": "networkPolicy.flavor -- Flavor of the network policy to use.\nCan be:\n* kubernetes for networking.k8s.io/v1/NetworkPolicy\n* cilium     for cilium.io/v2/CiliumNetworkPolicy",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "networkPolicy": {
+          "description": "Configure network policy for kube-state-metrics",
+          "properties": {
+            "flavor": {
+              "description": "networkPolicy.flavor -- Flavor of the network policy to use.\nCan be:\n* kubernetes for networking.k8s.io/v1/NetworkPolicy\n* cilium     for cilium.io/v2/CiliumNetworkPolicy",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "rbac": {
+          "properties": {
+            "create": {
+              "description": "If true, create & use RBAC resources",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "rbac": {
+          "properties": {
+            "create": {
+              "description": "If true, create & use RBAC resources",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "rbac": {
+          "properties": {
+            "create": {
+              "description": "If true, create & use RBAC resources",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "rbac": {
+          "properties": {
+            "create": {
+              "description": "If true, create & use RBAC resources",
+              "not": {
+                "type": "string"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "rbac": {
+          "properties": {
+            "useClusterRole": {
+              "description": "If set to false - Run without Cluteradmin privs needed - ONLY works if namespace is also set (if useExistingRole is set this name is used as ClusterRole or Role to bind to)",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "rbac": {
+          "properties": {
+            "useClusterRole": {
+              "description": "If set to false - Run without Cluteradmin privs needed - ONLY works if namespace is also set (if useExistingRole is set this name is used as ClusterRole or Role to bind to)",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "rbac": {
+          "properties": {
+            "useClusterRole": {
+              "description": "If set to false - Run without Cluteradmin privs needed - ONLY works if namespace is also set (if useExistingRole is set this name is used as ClusterRole or Role to bind to)",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "rbac": {
+          "properties": {
+            "useClusterRole": {
+              "description": "If set to false - Run without Cluteradmin privs needed - ONLY works if namespace is also set (if useExistingRole is set this name is used as ClusterRole or Role to bind to)",
+              "not": {
+                "type": "string"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -730,6 +1921,107 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "selfMonitor": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "selfMonitor"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "service": {
+            "properties": {
+              "type": {
+                "description": "Default to clusterIP for backward compatibility",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "description": "Default to clusterIP for backward compatibility",
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "description": "Default to clusterIP for backward compatibility",
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "description": "Default to clusterIP for backward compatibility",
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "description": "Default to clusterIP for backward compatibility",
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     {
       "if": {
@@ -1453,16 +2745,48 @@
             "httpHeaders": {
               "anyOf": [
                 {
-                  "items": {},
+                  "items": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "properties": {
+                          "name": {}
+                        }
+                      },
+                      {
+                        "additionalProperties": {},
+                        "properties": {
+                          "value": {}
+                        },
+                        "type": "object"
+                      }
+                    ]
+                  },
                   "type": "array"
                 },
                 {
+                  "items": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "name": {},
+                      "value": {}
+                    },
+                    "type": "object"
+                  },
                   "type": "array"
                 },
                 {
                   "type": "null"
                 },
                 {
+                  "additionalProperties": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "name": {},
+                      "value": {}
+                    },
+                    "type": "object"
+                  },
                   "type": "object"
                 }
               ]
@@ -2126,16 +3450,48 @@
             "httpHeaders": {
               "anyOf": [
                 {
-                  "items": {},
+                  "items": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "properties": {
+                          "name": {}
+                        }
+                      },
+                      {
+                        "additionalProperties": {},
+                        "properties": {
+                          "value": {}
+                        },
+                        "type": "object"
+                      }
+                    ]
+                  },
                   "type": "array"
                 },
                 {
+                  "items": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "name": {},
+                      "value": {}
+                    },
+                    "type": "object"
+                  },
                   "type": "array"
                 },
                 {
                   "type": "null"
                 },
                 {
+                  "additionalProperties": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "name": {},
+                      "value": {}
+                    },
+                    "type": "object"
+                  },
                   "type": "object"
                 }
               ]
@@ -2408,6 +3764,7 @@
               "type": "array"
             },
             {
+              "items": {},
               "type": "array"
             },
             {
@@ -2417,6 +3774,7 @@
               "type": "null"
             },
             {
+              "additionalProperties": {},
               "type": "object"
             }
           ],

@@ -1,7 +1,8 @@
 use std::collections::BTreeMap;
 
 use helm_schema_core::{
-    ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, ResourceSchemaOracle,
+    ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardValue,
+    ResourceSchemaOracle,
 };
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
@@ -124,7 +125,8 @@ pub(crate) fn collect_conditional_schemas(
                     target_schema,
                     crate::runtime_iterable_schema(
                         !overlay.evidence.facts.has_structured_item_descendants
-                            && !overlay.evidence.facts.has_destructured_range_use,
+                            && !overlay.evidence.facts.has_destructured_range_use
+                            && !overlay.evidence.facts.has_string_contract_items,
                     ),
                 ])
             } else {
@@ -305,7 +307,17 @@ pub(crate) fn append_terminal_clauses(
     values_yaml_doc: &YamlValue,
 ) {
     for guards in clauses {
-        let ancestor_segments = shared_guard_ancestor_segments(guards);
+        // A clause every guard of which can hold VACUOUSLY (with the
+        // guarded path or an ancestor absent) must anchor at the root: an
+        // `if` nested under `properties.<ancestor>` never fires for
+        // documents missing the ancestor — exactly a state such a clause
+        // covers (a helper's `required global.version` rejects a document
+        // with no `global` at all, F51).
+        let ancestor_segments = if guards.iter().all(guard_holds_vacuously) {
+            Vec::new()
+        } else {
+            shared_guard_ancestor_segments(guards)
+        };
         if !guards
             .iter()
             .all(|guard| guard_encodes_fully(guard, &ancestor_segments, values_yaml_doc))
@@ -322,6 +334,22 @@ pub(crate) fn append_terminal_clauses(
             condition,
             SchemaNode::foreign(Value::Bool(false)),
         );
+    }
+}
+
+/// Whether the guard can be satisfied with its path (or an ancestor)
+/// absent from the document.
+fn guard_holds_vacuously(guard: &ConditionalGuard) -> bool {
+    match guard {
+        ConditionalGuard::Truthy { .. }
+        | ConditionalGuard::With { .. }
+        | ConditionalGuard::TypeIs { .. } => false,
+        ConditionalGuard::Eq { value, .. } => matches!(value, GuardValue::Null),
+        ConditionalGuard::NotEq { .. }
+        | ConditionalGuard::Absent { .. }
+        | ConditionalGuard::Not(_) => true,
+        ConditionalGuard::AllOf(inner) => inner.iter().all(guard_holds_vacuously),
+        ConditionalGuard::AnyOf(inner) => inner.iter().any(guard_holds_vacuously),
     }
 }
 

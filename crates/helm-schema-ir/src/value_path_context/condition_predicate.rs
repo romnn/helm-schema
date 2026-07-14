@@ -179,8 +179,28 @@ impl ValuePathContext<'_> {
     /// does not, so it consults this before trusting a captured stack.
     pub(crate) fn condition_lowering_is_faithful(&self, expr: &TemplateExpr) -> bool {
         match expr.deparen() {
-            TemplateExpr::Field(_) | TemplateExpr::Selector { .. } | TemplateExpr::Variable(_) => {
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => {
                 !self.paths_for_expr(expr).is_empty()
+            }
+            // A local bound to DERIVED TEXT (`$message := join "\n"
+            // $messages`) is falsy when the derivation produced nothing,
+            // not when its input identities are falsy: a truthy stand-in
+            // over the flowing paths would let negation fire on states the
+            // branch never reaches (bitnami `validateValues` aggregators).
+            TemplateExpr::Variable(name) => {
+                let paths = self.paths_for_expr(expr);
+                if paths.is_empty() {
+                    return false;
+                }
+                let metas = self
+                    .template_output_meta
+                    .get(name)
+                    .or_else(|| self.template_output_meta.get(name.trim_start_matches('$')));
+                !paths.iter().any(|path| {
+                    metas
+                        .and_then(|metas| metas.get(path))
+                        .is_some_and(|meta| meta.derived_text || meta.shape_erased)
+                })
             }
             TemplateExpr::Call { function, args } => match function.as_str() {
                 "and" | "or" => args

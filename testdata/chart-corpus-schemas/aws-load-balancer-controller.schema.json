@@ -584,6 +584,61 @@
       }
     },
     {
+      "properties": {
+        "defaultTargetType": {
+          "description": "Default target type. Used as the default value of the \"alb.ingress.kubernetes.io/target-type\" and\n\"service.beta.kubernetes.io/aws-load-balancer-nlb-target-type\" annotations.\nPossible values are \"ip\" and \"instance\"\nThe value \"ip\" should be used for ENI-based CNIs, such as the Amazon VPC CNI,\nCalico with encapsulation disabled, or Cilium with masquerading disabled.\nThe value \"instance\" should be used for overlay-based CNIs, such as Calico in VXLAN or IPIP mode or\nCilium with masquerading enabled.",
+          "not": {
+            "type": "array"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "defaultTargetType": {
+          "description": "Default target type. Used as the default value of the \"alb.ingress.kubernetes.io/target-type\" and\n\"service.beta.kubernetes.io/aws-load-balancer-nlb-target-type\" annotations.\nPossible values are \"ip\" and \"instance\"\nThe value \"ip\" should be used for ENI-based CNIs, such as the Amazon VPC CNI,\nCalico with encapsulation disabled, or Cilium with masquerading disabled.\nThe value \"instance\" should be used for overlay-based CNIs, such as Calico in VXLAN or IPIP mode or\nCilium with masquerading enabled.",
+          "not": {
+            "type": "boolean"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "defaultTargetType": {
+          "description": "Default target type. Used as the default value of the \"alb.ingress.kubernetes.io/target-type\" and\n\"service.beta.kubernetes.io/aws-load-balancer-nlb-target-type\" annotations.\nPossible values are \"ip\" and \"instance\"\nThe value \"ip\" should be used for ENI-based CNIs, such as the Amazon VPC CNI,\nCalico with encapsulation disabled, or Cilium with masquerading disabled.\nThe value \"instance\" should be used for overlay-based CNIs, such as Calico in VXLAN or IPIP mode or\nCilium with masquerading enabled.",
+          "not": {
+            "type": "integer"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "defaultTargetType": {
+          "description": "Default target type. Used as the default value of the \"alb.ingress.kubernetes.io/target-type\" and\n\"service.beta.kubernetes.io/aws-load-balancer-nlb-target-type\" annotations.\nPossible values are \"ip\" and \"instance\"\nThe value \"ip\" should be used for ENI-based CNIs, such as the Amazon VPC CNI,\nCalico with encapsulation disabled, or Cilium with masquerading disabled.\nThe value \"instance\" should be used for overlay-based CNIs, such as Calico in VXLAN or IPIP mode or\nCilium with masquerading enabled.",
+          "not": {
+            "type": "number"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "defaultTargetType": {
+          "description": "Default target type. Used as the default value of the \"alb.ingress.kubernetes.io/target-type\" and\n\"service.beta.kubernetes.io/aws-load-balancer-nlb-target-type\" annotations.\nPossible values are \"ip\" and \"instance\"\nThe value \"ip\" should be used for ENI-based CNIs, such as the Amazon VPC CNI,\nCalico with encapsulation disabled, or Cilium with masquerading disabled.\nThe value \"instance\" should be used for overlay-based CNIs, such as Calico in VXLAN or IPIP mode or\nCilium with masquerading enabled.",
+          "not": {
+            "type": "object"
+          }
+        }
+      },
+      "type": "object"
+    },
+    {
       "if": {
         "allOf": [
           {
@@ -1652,12 +1707,26 @@
       "description": "controllerConfig specifies controller configuration",
       "properties": {
         "featureGates": {
-          "additionalProperties": {},
-          "description": "featureGates set of key: value pairs that describe AWS load balance controller features\nListenerRulesTagging: true\nWeightedTargetGroups: true\nServiceTypeLoadBalancerOnly: false\nEndpointsFailOpen: true\nEnableServiceController: true\nEnableIPTargetType: true\nEnableTCPUDPListener: false\nEnableRGTAPI: false\nSubnetsClusterTagCheck: true\nNLBHealthCheckAdvancedConfig: true\nNLBSecurityGroup: true\nALBSingleSubnet: false\nLBCapacityReservation: true\nSubnetDiscoveryByReachability: true\nNLBGatewayAPI: true\nALBGatewayAPI: true\nGatewayListenerSet: true\nGlobalAcceleratorController: false\nIngressPlanAnnotation: false\nEnhancedDefaultBehavior: false\nEnableDefaultTagsLowPriority: false\nALBTargetControlAgent: false\nEnableCertificateManagement: false",
-          "properties": {
-            "GlobalAcceleratorController": {}
-          },
-          "type": "object"
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "additionalProperties": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
+              "properties": {
+                "GlobalAcceleratorController": {}
+              },
+              "type": "object"
+            }
+          ],
+          "description": "featureGates set of key: value pairs that describe AWS load balance controller features\nListenerRulesTagging: true\nWeightedTargetGroups: true\nServiceTypeLoadBalancerOnly: false\nEndpointsFailOpen: true\nEnableServiceController: true\nEnableIPTargetType: true\nEnableTCPUDPListener: false\nEnableRGTAPI: false\nSubnetsClusterTagCheck: true\nNLBHealthCheckAdvancedConfig: true\nNLBSecurityGroup: true\nALBSingleSubnet: false\nLBCapacityReservation: true\nSubnetDiscoveryByReachability: true\nNLBGatewayAPI: true\nALBGatewayAPI: true\nGatewayListenerSet: true\nGlobalAcceleratorController: false\nIngressPlanAnnotation: false\nEnhancedDefaultBehavior: false\nEnableDefaultTagsLowPriority: false\nALBTargetControlAgent: false\nEnableCertificateManagement: false"
         }
       },
       "type": "object"
@@ -1714,9 +1783,23 @@
       "description": "defaultSSLPolicy specifies the default SSL policy to use for TLS/HTTPS listeners"
     },
     "defaultTags": {
-      "additionalProperties": {},
-      "description": "defaultTags are the tags to apply to all AWS resources managed by this controller\ndefault_tag1: value1\ndefault_tag2: value2",
-      "type": "object"
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "additionalProperties": {
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
+          },
+          "type": "object"
+        }
+      ],
+      "description": "defaultTags are the tags to apply to all AWS resources managed by this controller\ndefault_tag1: value1\ndefault_tag2: value2"
     },
     "defaultTargetType": {
       "description": "Default target type. Used as the default value of the \"alb.ingress.kubernetes.io/target-type\" and\n\"service.beta.kubernetes.io/aws-load-balancer-nlb-target-type\" annotations.\nPossible values are \"ip\" and \"instance\"\nThe value \"ip\" should be used for ENI-based CNIs, such as the Amazon VPC CNI,\nCalico with encapsulation disabled, or Cilium with masquerading disabled.\nThe value \"instance\" should be used for overlay-based CNIs, such as Calico in VXLAN or IPIP mode or\nCilium with masquerading enabled.",
@@ -1785,9 +1868,11 @@
     "env": {
       "anyOf": [
         {
+          "items": {},
           "type": "array"
         },
         {
+          "additionalProperties": {},
           "type": "object"
         },
         {
@@ -2770,9 +2855,23 @@
       "description": "The VPC ID for the Kubernetes cluster. Set this manually when your pods are unable to use the metadata service to determine this automatically"
     },
     "vpcTags": {
-      "additionalProperties": {},
-      "description": "This is alternative to vpcId. Set this when your pods are unable to use the metadata service to determine VPC automatically.\nAll specified tags are used as AND filters for VPC lookup.\nName: tagValue",
-      "type": "object"
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "additionalProperties": {
+            "type": [
+              "boolean",
+              "integer",
+              "number",
+              "string"
+            ]
+          },
+          "type": "object"
+        }
+      ],
+      "description": "This is alternative to vpcId. Set this when your pods are unable to use the metadata service to determine VPC automatically.\nAll specified tags are used as AND filters for VPC lookup.\nName: tagValue"
     },
     "watchNamespace": {
       "anyOf": [

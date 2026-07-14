@@ -10,7 +10,7 @@ use helm_schema_ast::{TemplateExpr, TemplateHeader, range_variable_name_expr};
 use helm_schema_syntax::{ControlKind, ControlRegion, Node, ScalarPart};
 
 use crate::abstract_value::AbstractValue;
-use crate::bound_value_analysis::parse_literal_list_range_expr;
+use crate::bound_value_analysis::{literal_dict_range_keys, parse_literal_list_range_expr};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::{Guard, ValueKind};
 use helm_schema_core::Predicate;
@@ -247,6 +247,7 @@ impl Interpreter<'_> {
                     header: facts.and_then(|facts| facts.header.clone()),
                     destructured: facts.is_some_and(|facts| facts.range_destructured),
                     value_variable: facts.and_then(|facts| facts.range_value_variable.clone()),
+                    key_variable: facts.and_then(|facts| facts.range_key_variable.clone()),
                 },
                 ControlKind::Define | ControlKind::Block => ArmSpec::Else,
             };
@@ -290,10 +291,12 @@ impl Interpreter<'_> {
                 header,
                 destructured,
                 value_variable,
+                key_variable,
             } => self.activate_range(
                 header.as_ref(),
                 *destructured,
                 value_variable.as_deref(),
+                key_variable.as_deref(),
                 nodes,
                 region_start,
             ),
@@ -316,7 +319,15 @@ impl Interpreter<'_> {
                     })
                     .negated(),
                 ],
-                approximate_condition_paths: BTreeSet::new(),
+                // An approximately-lowered enclosing condition gates when
+                // this consumer runs at all: the capture carries it so the
+                // implication abstains instead of binding a branch whose
+                // real guard the encoding cannot represent (F64).
+                approximate_condition_paths: self
+                    .approximate_condition_paths
+                    .iter()
+                    .cloned()
+                    .collect(),
                 direct_ranged_paths: BTreeSet::new(),
             })
             .collect();
@@ -386,7 +397,9 @@ impl Interpreter<'_> {
             sink.entry(path.clone())
                 .or_default()
                 .insert("string".to_string());
-            self.string_contract_paths.insert(path);
+            if self.approximate_condition_paths.is_empty() {
+                self.string_contract_paths.insert(path);
+            }
         }
         // Helper-body conditions over bound helper calls resolve through the
         // call's summary: its claim paths become guard reads, and when the
@@ -438,8 +451,10 @@ impl Interpreter<'_> {
         // helper hold regardless of where the call sits.
         self.shape_erased_paths
             .extend(hole.effects.shape_erased_paths.iter().cloned());
-        self.string_contract_paths
-            .extend(hole.effects.string_contract_paths.iter().cloned());
+        if self.approximate_condition_paths.is_empty() {
+            self.string_contract_paths
+                .extend(hole.effects.string_contract_paths.iter().cloned());
+        }
         // The helper's own guarded reads carry its type-dispatch facts
         // (`kindIs "string" .Values.x` arms prove the chart handles that
         // kind), and its `fail` captures its rejected complement: both
@@ -546,6 +561,7 @@ impl Interpreter<'_> {
         header: Option<&TemplateHeader>,
         destructured: bool,
         value_variable: Option<&str>,
+        key_variable: Option<&str>,
         nodes: &[NodeView<'_>],
         region_start: usize,
     ) -> (
@@ -559,6 +575,13 @@ impl Interpreter<'_> {
         };
         if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
             self.locals.insert_range_domain(variable, literals);
+        } else if let Some(variable) = key_variable
+            && let Some(keys) = literal_dict_range_keys(header.expr())
+        {
+            // `range $k, $v := dict "a" … "b" …` iterates exactly the
+            // literal keys: `$k`'s domain makes `get map $k` reads decode
+            // to the finite member set.
+            self.locals.insert_range_domain(variable.to_string(), keys);
         }
         // A range over a helper's output (`range (include … . | fromJson)`)
         // evaluates the helper whenever control reaches the header: its

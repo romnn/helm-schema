@@ -128,6 +128,39 @@ fn get_binding_plan_from_expr(
     })
 }
 
+/// The KEY domain of a literal-dict range expression
+/// (`range $k, $v := dict "a" … "b" …`): `$k` iterates exactly the literal
+/// keys, so `get map $k` reads decode to that finite member set. The
+/// two-variable header surfaces only the range EXPRESSION, but the plain
+/// assignment forms are unwrapped too.
+pub(crate) fn literal_dict_range_keys(expr: &TemplateExpr) -> Option<Vec<String>> {
+    let expr = match expr.deparen() {
+        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
+            value.deparen()
+        }
+        expr => expr,
+    };
+    literal_dict_keys(expr)
+}
+
+fn literal_dict_keys(expr: &TemplateExpr) -> Option<Vec<String>> {
+    let TemplateExpr::Call { function, args } = expr else {
+        return None;
+    };
+    if function != "dict" || args.is_empty() || args.len() % 2 != 0 {
+        return None;
+    }
+    let keys = args
+        .chunks(2)
+        .map(|pair| {
+            string_literal_value(pair[0].deparen())
+                .filter(|key| !key.is_empty())
+                .map(str::to_string)
+        })
+        .collect::<Option<Vec<_>>>()?;
+    (!keys.is_empty()).then_some(keys)
+}
+
 fn literal_list_values(expr: &TemplateExpr) -> Option<Vec<String>> {
     let TemplateExpr::Call { function, args } = expr else {
         return None;

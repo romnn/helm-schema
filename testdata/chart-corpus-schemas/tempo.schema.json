@@ -493,6 +493,81 @@
       }
     },
     {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "array"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "boolean"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "integer"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "number"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
+      "properties": {
+        "service": {
+          "properties": {
+            "type": {
+              "not": {
+                "type": "object"
+              }
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -1408,13 +1483,50 @@
         "extraArgs": {
           "anyOf": [
             {
-              "items": {},
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
               "type": "array"
             },
             {
               "type": "null"
             },
             {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
               "type": "object"
             }
           ],
@@ -1595,13 +1707,14 @@
               "type": "array"
             },
             {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
               "type": "integer"
             },
             {
               "type": "null"
-            },
-            {
-              "type": "object"
             }
           ]
         },
@@ -2101,13 +2214,14 @@
               "type": "array"
             },
             {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            {
               "type": "integer"
             },
             {
               "type": "null"
-            },
-            {
-              "type": "object"
             }
           ]
         },

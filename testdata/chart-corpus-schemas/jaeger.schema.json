@@ -1171,6 +1171,12 @@
                   }
                 },
                 "type": "object"
+              },
+              "type": {
+                "description": "allowed values (cassandra, elasticsearch)",
+                "not": {
+                  "type": "array"
+                }
               }
             },
             "type": "object"
@@ -1220,7 +1226,9 @@
             "properties": {
               "type": {
                 "description": "allowed values (cassandra, elasticsearch)",
-                "type": "string"
+                "not": {
+                  "type": "array"
+                }
               }
             },
             "type": "object"
@@ -1810,6 +1818,100 @@
         "allOf": [
           {
             "properties": {
+              "esIndexCleaner": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esIndexCleaner"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "esIndexCleaner": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "esIndexCleaner"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "esIndexCleaner": {
+                    "properties": {
+                      "image": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "esIndexCleaner"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "esIndexCleaner": {
+            "properties": {
+              "image": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "commonAnnotations": {
                 "$ref": "#/$defs/helm-truthy"
               }
@@ -1972,6 +2074,100 @@
                     "additionalProperties": {
                       "type": "string"
                     },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "esLookback": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esLookback"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "esLookback": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "esLookback"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "esLookback": {
+                    "properties": {
+                      "image": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "esLookback"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "esLookback": {
+            "properties": {
+              "image": {
+                "anyOf": [
+                  {
                     "type": "object"
                   },
                   {
@@ -2193,6 +2389,100 @@
         "allOf": [
           {
             "properties": {
+              "esRollover": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esRollover"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "esRollover": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "esRollover"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "esRollover": {
+                    "properties": {
+                      "image": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "esRollover"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "esRollover": {
+            "properties": {
+              "image": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "commonAnnotations": {
                 "$ref": "#/$defs/helm-truthy"
               }
@@ -2295,135 +2585,6 @@
                           "type": "string"
                         },
                         "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "fullnameOverride": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "fullnameOverride"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "jaeger": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "jaeger"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "jaeger": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "jaeger"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "jaeger": {
-                "properties": {
-                  "ingress": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "ingress"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "jaeger"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "jaeger": {
-            "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
-            "properties": {
-              "ingress": {
-                "description": "- name: name\nport:\ntargetPort:\nprotocol: (optional)",
-                "properties": {
-                  "hosts": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
                       },
                       {
                         "type": "null"
@@ -2575,6 +2736,124 @@
                   }
                 },
                 "type": "object"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "jaeger": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "jaeger"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "jaeger": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jaeger"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "jaeger": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "jaeger"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "jaeger": {
+                    "properties": {
+                      "image": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jaeger"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "jaeger": {
+            "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
+            "properties": {
+              "image": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "type": "object"
@@ -3675,6 +3954,503 @@
         },
         "type": "object"
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "spark": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "spark"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "storage": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "cassandra"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "storage"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "storage": {
+            "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
+            "properties": {
+              "type": {
+                "description": "allowed values (cassandra, elasticsearch)",
+                "not": {
+                  "type": "array"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "esIndexCleaner": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esIndexCleaner"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "esLookback": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esLookback"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "esRollover": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esRollover"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "spark": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "spark"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "storage": {
+            "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
+            "properties": {
+              "type": {
+                "description": "allowed values (cassandra, elasticsearch)",
+                "not": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "esIndexCleaner": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esIndexCleaner"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "esLookback": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esLookback"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "esRollover": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esRollover"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "spark": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "spark"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "storage": {
+            "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
+            "properties": {
+              "type": {
+                "description": "allowed values (cassandra, elasticsearch)",
+                "not": {
+                  "type": "integer"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "esIndexCleaner": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esIndexCleaner"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "esLookback": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esLookback"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "esRollover": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esRollover"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "spark": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "spark"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "storage": {
+            "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
+            "properties": {
+              "type": {
+                "description": "allowed values (cassandra, elasticsearch)",
+                "not": {
+                  "type": "number"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "esIndexCleaner": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esIndexCleaner"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "esLookback": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esLookback"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "esRollover": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esRollover"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "spark": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "spark"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "storage": {
+            "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
+            "properties": {
+              "type": {
+                "description": "allowed values (cassandra, elasticsearch)",
+                "not": {
+                  "type": "object"
+                }
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "spark": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "spark"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "properties": {
+          "storage": {
+            "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
+            "properties": {
+              "type": {
+                "description": "allowed values (cassandra, elasticsearch)",
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      }
     }
   ],
   "properties": {
@@ -4052,14 +4828,7 @@
             "pullPolicy": {},
             "pullSecrets": {
               "items": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "additionalProperties": {}
               },
               "type": "array"
             },
@@ -4486,14 +5255,7 @@
             "pullPolicy": {},
             "pullSecrets": {
               "items": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "additionalProperties": {}
               },
               "type": "array"
             },
@@ -4953,14 +5715,7 @@
             "pullPolicy": {},
             "pullSecrets": {
               "items": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "additionalProperties": {}
               },
               "type": "array"
             },
@@ -5149,14 +5904,7 @@
       "properties": {
         "imagePullSecrets": {
           "items": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "additionalProperties": {}
           },
           "type": "array"
         },
@@ -5594,14 +6342,7 @@
             "pullPolicy": {},
             "pullSecrets": {
               "items": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "additionalProperties": {}
               },
               "type": "array"
             },
@@ -5615,6 +6356,42 @@
         },
         "ingress": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              "then": {
+                "properties": {
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            }
+          ],
           "description": "- name: name\nport:\ntargetPort:\nprotocol: (optional)",
           "properties": {
             "annotations": {
@@ -5639,17 +6416,6 @@
               "type": "object"
             },
             "pathType": {
-              "anyOf": [
-                {
-                  "const": null
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Used to create an Ingress record.\nhosts:\n- chart-example.local\nannotations:\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nlabels:\napp: jaeger\ntls:\nSecrets must be manually created in the namespace.\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
             },
             "tls": {}
@@ -5695,6 +6461,28 @@
               "anyOf": [
                 {
                   "items": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "properties": {
+                          "name": {}
+                        }
+                      },
+                      {
+                        "additionalProperties": {},
+                        "properties": {
+                          "port": {},
+                          "protocol": {},
+                          "targetPort": {}
+                        },
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                },
+                {
+                  "items": {
                     "additionalProperties": {},
                     "properties": {
                       "name": {},
@@ -5710,6 +6498,16 @@
                   "type": "null"
                 },
                 {
+                  "additionalProperties": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "name": {},
+                      "port": {},
+                      "protocol": {},
+                      "targetPort": {}
+                    },
+                    "type": "object"
+                  },
                   "type": "object"
                 }
               ]
@@ -6152,14 +6950,7 @@
             "pullPolicy": {},
             "pullSecrets": {
               "items": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "additionalProperties": {}
               },
               "type": "array"
             },
@@ -6257,8 +7048,8 @@
               "type": "object"
             },
             "env": {
-              "additionalProperties": {},
-              "type": "object"
+              "items": {},
+              "type": "array"
             },
             "existingSecret": {},
             "extraEnv": {
