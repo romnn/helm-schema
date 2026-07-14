@@ -519,8 +519,14 @@ fn source_fingerprint(source: &ProviderSchemaSource) -> String {
     hasher.update([0]);
     hasher.update(source.pointer().as_bytes());
 
-    let hex = format!("{:x}", hasher.finalize());
-    hex.chars().take(12).collect()
+    // 12 hex chars = the digest's first 6 bytes; sha2 0.11's output array no longer implements
+    // `LowerHex`, so format the bytes directly.
+    hasher
+        .finalize()
+        .iter()
+        .take(6)
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
 }
 
 #[cfg(test)]

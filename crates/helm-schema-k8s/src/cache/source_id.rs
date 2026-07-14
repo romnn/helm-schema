@@ -15,9 +15,13 @@ pub const fn default_source_id() -> &'static str {
 /// Hash a mirror URL into a stable 12-hex-char short identifier.
 #[must_use]
 pub fn source_id_for_url(url: &str) -> String {
-    let digest = Sha256::digest(url.as_bytes());
-    let hex = format!("{digest:x}");
-    hex.chars().take(12).collect()
+    // 12 hex chars = the digest's first 6 bytes; sha2 0.11's output array no longer implements
+    // `LowerHex`, so format the bytes directly.
+    Sha256::digest(url.as_bytes())
+        .iter()
+        .take(6)
+        .map(|byte| format!("{byte:02x}"))
+        .collect()
 }
 
 #[cfg(test)]
