@@ -19,32 +19,17 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     guarded_type_hints: &BTreeMap<String, BTreeSet<String>>,
     shape_erased_value_paths: &BTreeSet<String>,
     string_contract_value_paths: &BTreeSet<String>,
-    direct_range_source_paths: &BTreeSet<String>,
-    json_decoded_range_source_paths: &BTreeSet<String>,
-    destructured_range_source_paths: &BTreeSet<String>,
+    range_modes: &crate::range_modes::RangeModes,
     fail_conditions: &[crate::eval_effect::FailCapture],
     dependency_values_root_fragments: &BTreeSet<String>,
 ) -> ContractSchemaSignals {
     let mut paths = BTreeMap::new();
     let mut terminal_clauses = Vec::new();
     for contract_use in uses {
-        record_contract_use(
-            &mut paths,
-            contract_use,
-            direct_range_source_paths,
-            json_decoded_range_source_paths,
-            destructured_range_source_paths,
-        );
+        record_contract_use(&mut paths, contract_use, range_modes);
     }
     for capture in fail_conditions {
-        record_fail_conjunction(
-            &mut paths,
-            &mut terminal_clauses,
-            capture,
-            direct_range_source_paths,
-            json_decoded_range_source_paths,
-            destructured_range_source_paths,
-        );
+        record_fail_conjunction(&mut paths, &mut terminal_clauses, capture, range_modes);
     }
     for value_path in dependency_values_root_fragments {
         if !value_path.trim().is_empty() {
@@ -266,9 +251,7 @@ fn partition_compatible_hints(
 fn record_contract_use(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     contract_use: &ContractUse,
-    direct_range_source_paths: &BTreeSet<String>,
-    json_decoded_range_source_paths: &BTreeSet<String>,
-    destructured_range_source_paths: &BTreeSet<String>,
+    range_modes: &crate::range_modes::RangeModes,
 ) {
     let conjunctions = contract_use
         .condition
@@ -277,14 +260,7 @@ fn record_contract_use(
         .map(|conjunction| conjunction.iter().cloned().collect::<Vec<_>>())
         .collect::<Vec<_>>();
     for predicates in conjunctions {
-        record_contract_use_conjunction(
-            paths,
-            contract_use,
-            &predicates,
-            direct_range_source_paths,
-            json_decoded_range_source_paths,
-            destructured_range_source_paths,
-        );
+        record_contract_use_conjunction(paths, contract_use, &predicates, range_modes);
     }
 }
 
@@ -292,21 +268,19 @@ fn record_contract_use_conjunction(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     contract_use: &ContractUse,
     predicates: &[Predicate],
-    direct_range_source_paths: &BTreeSet<String>,
-    json_decoded_range_source_paths: &BTreeSet<String>,
-    destructured_range_source_paths: &BTreeSet<String>,
+    range_modes: &crate::range_modes::RangeModes,
 ) {
     if predicates.iter().any(Predicate::contains_approximation) {
         return;
     }
     if ranged_member_parent(&contract_use.source_expr).is_some_and(|parent| {
-        !direct_range_source_paths.contains(parent)
+        !range_modes.mode(parent).direct
             && !predicates.is_empty()
             && predicates.iter().all(|predicate| {
                 matches!(
                     predicate,
                     Predicate::Guard(Guard::Range { path })
-                        if !direct_range_source_paths.contains(path)
+                        if !range_modes.mode(path).direct
                 )
             })
     }) {
@@ -317,10 +291,9 @@ fn record_contract_use_conjunction(
     }
     let lowerable_guards =
         lowerable_conditional_guard_set(contract_use, predicates).or_else(|| {
-            (contract_use.path.0.is_empty()
-                && direct_range_source_paths.contains(&contract_use.source_expr))
-            .then(|| lowerable_range_outer_guards(&contract_use.source_expr, predicates))
-            .flatten()
+            (contract_use.path.0.is_empty() && range_modes.mode(&contract_use.source_expr).direct)
+                .then(|| lowerable_range_outer_guards(&contract_use.source_expr, predicates))
+                .flatten()
         });
     if ranged_member_parent(&contract_use.source_expr).is_some()
         && predicates
@@ -497,7 +470,7 @@ fn record_contract_use_conjunction(
     }
     if has_source {
         for path in range_guard_paths {
-            let direct = direct_range_source_paths.contains(&path);
+            let direct = range_modes.mode(&path).direct;
             let outer_guards = direct
                 .then(|| lowerable_range_outer_guards(&path, predicates))
                 .flatten();
@@ -509,10 +482,10 @@ fn record_contract_use_conjunction(
                 is_direct_ranged_source: direct && unconditional,
                 has_destructured_range_use: direct
                     && unconditional
-                    && destructured_range_source_paths.contains(&path),
+                    && range_modes.mode(&path).destructured,
                 has_json_decoded_range_use: direct
                     && unconditional
-                    && json_decoded_range_source_paths.contains(&path),
+                    && range_modes.mode(&path).json_decoded,
                 is_nullable: true,
                 ..ContractValuePathFacts::default()
             };
@@ -525,24 +498,25 @@ fn record_contract_use_conjunction(
                     // $values` where `$values` holds each member of a
                     // directly ranged map): every member must itself be
                     // rangeable, or the inner range aborts rendering.
+                    let parent_mode = range_modes.mode(parent);
+                    let path_mode = range_modes.mode(&path);
                     record_member_range_requirement(
                         paths,
                         parent,
                         predicates,
-                        !destructured_range_source_paths.contains(parent)
-                            && !json_decoded_range_source_paths.contains(parent),
-                        !destructured_range_source_paths.contains(&path)
-                            && !json_decoded_range_source_paths.contains(&path),
+                        !parent_mode.destructured && !parent_mode.json_decoded,
+                        !path_mode.destructured && !path_mode.json_decoded,
                     );
                 } else if let Some(guards) = outer_guards
                     && !guards.is_empty()
                 {
+                    let mode = range_modes.mode(&path);
                     record_guarded_range_requirement(
                         paths,
                         &path,
                         guards,
-                        destructured_range_source_paths.contains(&path),
-                        json_decoded_range_source_paths.contains(&path),
+                        mode.destructured,
+                        mode.json_decoded,
                     );
                 }
             }
@@ -662,28 +636,21 @@ fn record_fail_conjunction(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     terminal_clauses: &mut Vec<Vec<ConditionalGuard>>,
     capture: &crate::eval_effect::FailCapture,
-    direct_range_source_paths: &BTreeSet<String>,
-    json_decoded_range_source_paths: &BTreeSet<String>,
-    destructured_range_source_paths: &BTreeSet<String>,
+    range_modes: &crate::range_modes::RangeModes,
 ) {
-    if !capture.range_key_string_paths.is_empty() {
-        record_range_key_string_requirements(paths, capture, direct_range_source_paths);
+    if let crate::eval_effect::CaptureKind::RangeKeyStrings {
+        paths: range_key_string_paths,
+    } = &capture.kind
+    {
+        record_range_key_string_requirements(paths, capture, range_key_string_paths, range_modes);
         return;
     }
-    // An approximate enclosing condition with NO resolvable paths (the
-    // empty marker) could gate anything, and a `$local` name leaking into
-    // predicate paths means the condition lowering lost the real subject:
-    // both make negation unsound for the whole capture.
+    // An approximate enclosing condition could gate anything (even one with
+    // no resolvable paths), and a `$local` name leaking into predicate paths
+    // means the condition lowering lost the real subject: both make negation
+    // unsound for the whole capture.
     let conjunction = remove_redundant_approximate_conditions(&capture.conjunction);
     if conjunction.iter().any(Predicate::contains_approximation) {
-        return;
-    }
-    if !capture.approximate_condition_paths.is_empty()
-        && !capture
-            .conjunction
-            .iter()
-            .any(Predicate::contains_approximation)
-    {
         return;
     }
     if conjunction
@@ -693,13 +660,8 @@ fn record_fail_conjunction(
     {
         return;
     }
-    if capture.member_access {
-        record_member_access_capture(
-            paths,
-            capture,
-            json_decoded_range_source_paths,
-            destructured_range_source_paths,
-        );
+    if let crate::eval_effect::CaptureKind::MemberAccess { handled_kinds } = &capture.kind {
+        record_member_access_capture(paths, capture, handled_kinds, range_modes);
         return;
     }
     // A multi-path `with` header (`with (coalesce a b)`) contributes its
@@ -748,9 +710,7 @@ fn record_fail_conjunction(
     let ranged = ranged
         .iter()
         .copied()
-        .filter(|path| {
-            direct_range_source_paths.contains(*path) || capture.direct_ranged_paths.contains(*path)
-        })
+        .filter(|path| range_modes.mode(path).direct || capture.ranged.mode(path).direct)
         .filter(|path| {
             let member = format!("{path}.*");
             test_candidate_paths.iter().any(|candidate| {
@@ -873,8 +833,8 @@ fn record_fail_conjunction(
         target: ranged.map_or(ContractRequirementTarget::Value, |_| {
             ContractRequirementTarget::Members {
                 allow_integer: ranged.is_some_and(|path| {
-                    !destructured_range_source_paths.contains(path)
-                        && !json_decoded_range_source_paths.contains(path)
+                    let mode = range_modes.mode(path);
+                    !mode.destructured && !mode.json_decoded
                 }),
             }
         }),
@@ -890,15 +850,15 @@ fn record_fail_conjunction(
 fn record_range_key_string_requirements(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
-    direct_range_source_paths: &BTreeSet<String>,
+    range_key_string_paths: &BTreeSet<String>,
+    range_modes: &crate::range_modes::RangeModes,
 ) {
-    if !capture.approximate_condition_paths.is_empty() {
+    if capture.contains_approximation() {
         return;
     }
-    for path in &capture.range_key_string_paths {
+    for path in range_key_string_paths {
         if path_contains_wildcard(path)
-            || (!direct_range_source_paths.contains(path)
-                && !capture.direct_ranged_paths.contains(path))
+            || (!range_modes.mode(path).direct && !capture.ranged.mode(path).direct)
         {
             continue;
         }
@@ -1012,10 +972,10 @@ fn requirements_from_holding(
 fn record_member_access_capture(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     capture: &crate::eval_effect::FailCapture,
-    json_decoded_range_source_paths: &BTreeSet<String>,
-    destructured_range_source_paths: &BTreeSet<String>,
+    handled_kinds: &BTreeSet<String>,
+    range_modes: &crate::range_modes::RangeModes,
 ) {
-    if !capture.approximate_condition_paths.is_empty() {
+    if capture.contains_approximation() {
         return;
     }
     let mut target = None;
@@ -1033,7 +993,7 @@ fn record_member_access_capture(
     if let Some(parent) = target.strip_suffix(".*")
         && !path_contains_wildcard(parent)
     {
-        if !capture.direct_ranged_paths.contains(parent) {
+        if !capture.ranged.mode(parent).direct {
             return;
         }
         let mut outer_guards = Vec::new();
@@ -1069,10 +1029,14 @@ fn record_member_access_capture(
         let implication = ContractFailImplication {
             outer_guards,
             target: ContractRequirementTarget::Members {
-                allow_integer: !destructured_range_source_paths.contains(parent)
-                    && !capture.destructured_ranged_paths.contains(parent)
-                    && !json_decoded_range_source_paths.contains(parent)
-                    && !capture.json_decoded_ranged_paths.contains(parent),
+                allow_integer: {
+                    let mode = range_modes.mode(parent);
+                    let capture_mode = capture.ranged.mode(parent);
+                    !mode.destructured
+                        && !capture_mode.destructured
+                        && !mode.json_decoded
+                        && !capture_mode.json_decoded
+                },
             },
             requirements: vec![FailValueRequirement::SchemaType("object".to_string())],
         };
@@ -1122,13 +1086,7 @@ fn record_member_access_capture(
     outer.dedup();
     path_accumulator(paths, &target)
         .member_access_guard_sets
-        .entry(
-            capture
-                .member_access_handled_kinds
-                .iter()
-                .cloned()
-                .collect(),
-        )
+        .entry(handled_kinds.iter().cloned().collect())
         .or_default()
         .insert(outer);
 }

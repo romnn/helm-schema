@@ -14,6 +14,7 @@ mod fragment_expr_eval;
 mod helper_literal_dispatch;
 mod helper_meta;
 mod node_eval;
+mod range_modes;
 mod resource_identity;
 mod static_file_template;
 mod symbolic;

@@ -76,9 +76,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
             encoded_paths: summary.encoded_paths(),
             shape_erased_paths: summary.shape_erased_paths.clone(),
             string_contract_paths: summary.string_contract_paths.clone(),
-            direct_range_source_paths: summary.direct_range_source_paths.clone(),
-            json_decoded_range_source_paths: summary.json_decoded_range_source_paths.clone(),
-            destructured_range_source_paths: summary.destructured_range_source_paths.clone(),
+            range_modes: summary.range_modes.clone(),
             // An include renders its body to text, so every path the value
             // carries is derived text at the call site: a consuming stage
             // (`include … | trimAll`) must not claim contracts on the

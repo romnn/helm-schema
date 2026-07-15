@@ -283,15 +283,17 @@ fn get_requires_its_values_backed_host_to_be_an_object() {
     let result = eval_expr(&single_expr(r#"get $context "creds""#), &env);
 
     assert!(result.effects.helper_fails.iter().any(|capture| {
-        capture.member_access
-            && capture.conjunction
-                == vec![
-                    Predicate::from(Guard::TypeIs {
-                        path: "contexts.*".to_string(),
-                        schema_type: "object".to_string(),
-                    })
-                    .negated(),
-                ]
+        matches!(
+            capture.kind,
+            crate::eval_effect::CaptureKind::MemberAccess { .. }
+        ) && capture.conjunction
+            == vec![
+                Predicate::from(Guard::TypeIs {
+                    path: "contexts.*".to_string(),
+                    schema_type: "object".to_string(),
+                })
+                .negated(),
+            ]
     }));
 }
 
@@ -313,18 +315,20 @@ fn grouped_selector_requires_an_object_only_when_receiver_is_present() {
         .helper_fails
         .iter()
         .find(|capture| {
-            capture.member_access
-                && capture.conjunction.iter().any(|predicate| {
-                    matches!(
-                        predicate,
-                        Predicate::Not(inner)
-                            if matches!(
-                                inner.as_ref(),
-                                Predicate::Guard(Guard::TypeIs { path, schema_type })
-                                    if path == "resources.limits" && schema_type == "object"
-                            )
-                    )
-                })
+            matches!(
+                capture.kind,
+                crate::eval_effect::CaptureKind::MemberAccess { .. }
+            ) && capture.conjunction.iter().any(|predicate| {
+                matches!(
+                    predicate,
+                    Predicate::Not(inner)
+                        if matches!(
+                            inner.as_ref(),
+                            Predicate::Guard(Guard::TypeIs { path, schema_type })
+                                if path == "resources.limits" && schema_type == "object"
+                        )
+                )
+            })
         })
         .expect("grouped receiver member-host capture");
     sim_assert_eq!(
@@ -349,12 +353,14 @@ fn ungrouped_selector_still_requires_the_intermediate_member() {
     );
 
     assert!(result.effects.helper_fails.iter().any(|capture| {
-        capture.member_access
-            && capture.conjunction
-                == vec![Predicate::Not(Box::new(Predicate::Guard(Guard::TypeIs {
-                    path: "resources.limits".to_string(),
-                    schema_type: "object".to_string(),
-                })))]
+        matches!(
+            capture.kind,
+            crate::eval_effect::CaptureKind::MemberAccess { .. }
+        ) && capture.conjunction
+            == vec![Predicate::Not(Box::new(Predicate::Guard(Guard::TypeIs {
+                path: "resources.limits".to_string(),
+                schema_type: "object".to_string(),
+            })))]
     }));
 }
 

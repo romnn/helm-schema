@@ -9,12 +9,15 @@
 //! calls splice those summaries at their call sites or consume their value
 //! projection inside expressions.
 
+mod assignments;
 mod control;
 mod domain;
 mod dump;
 mod eval;
 mod files;
+mod hole_effects;
 mod holes;
+mod inline_regions;
 mod lower;
 mod project;
 pub(crate) mod summary;

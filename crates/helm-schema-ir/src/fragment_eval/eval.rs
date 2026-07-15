@@ -52,7 +52,7 @@ use helm_schema_syntax::{
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
-use crate::eval_effect::FailCapture;
+use crate::eval_effect::{CaptureKind, FailCapture};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::{HelperOutputMeta, merge_provenance_sites};
 use crate::node_eval::control_header;
@@ -88,17 +88,11 @@ pub struct EvaluatedDocument {
     /// Paths carrying a real runtime string contract (`trunc`, `b64enc`,
     /// `fromYaml`, a dynamic `printf` format) somewhere in the source.
     pub(crate) string_contract_paths: BTreeSet<String>,
-    /// Paths a `range` iterates DIRECTLY (`range .Values.x`), as opposed to
-    /// ranging a derived expression over them: only these carry an iterable
-    /// input domain.
-    pub(crate) direct_range_source_paths: BTreeSet<String>,
-    /// Direct range sources whose runtime values were decoded from JSON.
-    pub(crate) json_decoded_range_source_paths: BTreeSet<String>,
+    /// The observed per-path range facts (direct iteration, JSON-decoded
+    /// values, key/value destructuring).
+    pub(crate) range_modes: crate::range_modes::RangeModes,
     /// Chart value subtrees supplying defaults to the effective values tree.
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
-    /// The subset of direct range sources iterated with TWO variables:
-    /// integers iterate single-variable ranges only.
-    pub(crate) destructured_range_source_paths: BTreeSet<String>,
     /// `fail` captures (see [`FailCapture`]): no valid values document may
     /// satisfy one of these conjunctions.
     pub(crate) fail_conditions: Vec<FailCapture>,
@@ -145,10 +139,8 @@ pub(crate) fn eval_document(
         guarded_type_hints: interpreter.guarded_type_hints,
         shape_erased_paths: interpreter.shape_erased_paths,
         string_contract_paths: interpreter.string_contract_paths,
-        direct_range_source_paths: interpreter.direct_range_source_paths,
-        json_decoded_range_source_paths: interpreter.json_decoded_range_source_paths,
+        range_modes: interpreter.range_modes,
         values_default_sources: interpreter.values_default_sources_observed,
-        destructured_range_source_paths: interpreter.destructured_range_source_paths,
         fail_conditions: interpreter.fail_conditions,
     }
 }
@@ -503,25 +495,14 @@ pub(super) struct Interpreter<'a> {
     /// Paths on which a string-consuming transform bound a real runtime
     /// string contract somewhere in the source.
     pub(super) string_contract_paths: BTreeSet<String>,
-    /// Paths a `range` iterates DIRECTLY (`range .Values.x`): only these
-    /// carry an iterable input domain.
-    pub(super) direct_range_source_paths: BTreeSet<String>,
-    /// Direct range sources whose runtime values were decoded from JSON.
-    pub(super) json_decoded_range_source_paths: BTreeSet<String>,
-    /// The subset of direct range sources iterated with TWO variables
-    /// (`range $k, $v := …`): integers iterate single-variable ranges only
-    /// ("can't use 2 to iterate over more than one variable").
-    pub(super) destructured_range_source_paths: BTreeSet<String>,
+    /// The per-path range facts observed anywhere in this source (direct
+    /// iteration, JSON-decoded values, key/value destructuring).
+    pub(super) range_modes: crate::range_modes::RangeModes,
     /// `fail` captures (see [`FailCapture`]): no valid values document may
     /// satisfy one of these conjunctions.
     pub(super) fail_conditions: Vec<FailCapture>,
     /// Object-producing mutations observed before subsequent member reads.
     pub(super) member_host_conversions: BTreeSet<crate::eval_effect::MemberHostConversion>,
-    /// Values paths of enclosing conditions whose lowering is APPROXIMATE
-    /// (truthy fallbacks, dropped conjuncts), stacked with the region walk.
-    /// Rows tolerate wider conditions; fail NEGATION abstains when the
-    /// imprecision touches the tested path, so captures snapshot this.
-    pub(super) approximate_condition_paths: Vec<String>,
     /// Directly ranged paths active on the walk. Helper-scope ranges mark
     /// membership with truthy predicates (the summary lane's flavor), so
     /// fail capture re-adds the range facts from here.
@@ -595,12 +576,9 @@ impl<'a> Interpreter<'a> {
             guarded_type_hints: BTreeMap::new(),
             shape_erased_paths: BTreeSet::new(),
             string_contract_paths: BTreeSet::new(),
-            direct_range_source_paths: BTreeSet::new(),
-            json_decoded_range_source_paths: BTreeSet::new(),
-            destructured_range_source_paths: BTreeSet::new(),
+            range_modes: crate::range_modes::RangeModes::default(),
             fail_conditions: Vec::new(),
             member_host_conversions: BTreeSet::new(),
-            approximate_condition_paths: Vec::new(),
             active_direct_ranged_paths: Vec::new(),
             suppress_predicate_paths: BTreeSet::new(),
             chart_defaults_observed: BTreeSet::new(),
@@ -767,13 +745,8 @@ impl<'a> Interpreter<'a> {
     pub(super) fn record_fail_condition(&mut self) {
         let capture = FailCapture {
             conjunction: self.fail_capture_conjunction(Vec::new()),
-            approximate_condition_paths: self.approximate_condition_paths.iter().cloned().collect(),
-            direct_ranged_paths: self.active_direct_ranged_paths.iter().cloned().collect(),
-            json_decoded_ranged_paths: self.json_decoded_range_source_paths.clone(),
-            destructured_ranged_paths: self.destructured_range_source_paths.clone(),
-            member_access: false,
-            member_access_handled_kinds: BTreeSet::new(),
-            range_key_string_paths: BTreeSet::new(),
+            ranged: self.capture_ranged_modes(),
+            kind: CaptureKind::Fail,
         };
         if capture
             .conjunction
@@ -806,13 +779,8 @@ impl<'a> Interpreter<'a> {
         ]);
         let capture = FailCapture {
             conjunction: self.fail_capture_conjunction(vec![empty]),
-            approximate_condition_paths: self.approximate_condition_paths.iter().cloned().collect(),
-            direct_ranged_paths: self.active_direct_ranged_paths.iter().cloned().collect(),
-            json_decoded_ranged_paths: self.json_decoded_range_source_paths.clone(),
-            destructured_ranged_paths: self.destructured_range_source_paths.clone(),
-            member_access: false,
-            member_access_handled_kinds: BTreeSet::new(),
-            range_key_string_paths: BTreeSet::new(),
+            ranged: self.capture_ranged_modes(),
+            kind: CaptureKind::Fail,
         };
         if capture
             .conjunction
@@ -840,6 +808,26 @@ impl<'a> Interpreter<'a> {
         conjunction
     }
 
+    /// The range facts a fail capture rides: paths actively ranged at the
+    /// capture site are `direct` (only these have member identities), while
+    /// the JSON-decoded and destructured flavors carry every occurrence
+    /// observed in this source.
+    fn capture_ranged_modes(&self) -> crate::range_modes::RangeModes {
+        let mut ranged = crate::range_modes::RangeModes::default();
+        for path in &self.active_direct_ranged_paths {
+            ranged.mark_direct(path);
+        }
+        for (path, mode) in self.range_modes.iter() {
+            if mode.json_decoded {
+                ranged.mark_json_decoded(path);
+            }
+            if mode.destructured {
+                ranged.mark_destructured(path);
+            }
+        }
+        ranged
+    }
+
     pub(super) fn ambient_condition(&self) -> GuardDnf {
         GuardDnf::from_conjunction(self.active_predicates.iter().cloned())
     }
@@ -848,6 +836,19 @@ impl<'a> Interpreter<'a> {
         if !predicate.is_trivial() && !self.active_predicates.contains(&predicate) {
             self.active_predicates.push(predicate);
         }
+    }
+
+    /// Whether an enclosing condition's lowering is APPROXIMATE (truthy
+    /// fallbacks, dropped conjuncts). Activation pushes the approximation
+    /// onto the predicate stack as a [`Predicate::Approximate`] conjunct
+    /// (later arms carry it inside the negated prior), so scanning the
+    /// active predicates sees exactly the enclosing approximations. Rows
+    /// tolerate wider conditions; string-contract metadata and fail
+    /// NEGATION abstain under one.
+    pub(super) fn under_approximate_condition(&self) -> bool {
+        self.active_predicates
+            .iter()
+            .any(Predicate::contains_approximation)
     }
 
     /// A site-scoped pathless read: condition operands, bound-value reads,
@@ -1041,19 +1042,11 @@ impl<'a> Interpreter<'a> {
     /// the same scoping helper reads get.
     pub(super) fn absorb_helper_fails(&mut self, fails: &[FailCapture]) {
         for body_capture in fails {
-            let mut approximate: BTreeSet<String> =
-                self.approximate_condition_paths.iter().cloned().collect();
-            approximate.extend(body_capture.approximate_condition_paths.iter().cloned());
-            let mut direct_ranged: BTreeSet<String> =
-                self.active_direct_ranged_paths.iter().cloned().collect();
-            direct_ranged.extend(body_capture.direct_ranged_paths.iter().cloned());
-            let mut json_decoded_ranged = self.json_decoded_range_source_paths.clone();
-            json_decoded_ranged.extend(body_capture.json_decoded_ranged_paths.iter().cloned());
-            let mut destructured_ranged = self.destructured_range_source_paths.clone();
-            destructured_ranged.extend(body_capture.destructured_ranged_paths.iter().cloned());
+            let mut ranged = self.capture_ranged_modes();
+            ranged.merge(&body_capture.ranged);
             let conjunction = self.fail_capture_conjunction(body_capture.conjunction.clone());
-            let mut member_access_handled_kinds = body_capture.member_access_handled_kinds.clone();
-            if body_capture.member_access {
+            let mut kind = body_capture.kind.clone();
+            if let CaptureKind::MemberAccess { handled_kinds } = &mut kind {
                 let target = conjunction.iter().find_map(|predicate| match predicate {
                     Predicate::Not(inner) => match inner.as_ref() {
                         Predicate::Guard(Guard::TypeIs { path, schema_type })
@@ -1066,7 +1059,7 @@ impl<'a> Interpreter<'a> {
                     _ => None,
                 });
                 if let Some(target) = target {
-                    member_access_handled_kinds.extend(
+                    handled_kinds.extend(
                         self.member_host_conversions
                             .iter()
                             .filter(|conversion| {
@@ -1082,13 +1075,8 @@ impl<'a> Interpreter<'a> {
             }
             let capture = FailCapture {
                 conjunction,
-                approximate_condition_paths: approximate,
-                direct_ranged_paths: direct_ranged,
-                json_decoded_ranged_paths: json_decoded_ranged,
-                destructured_ranged_paths: destructured_ranged,
-                member_access: body_capture.member_access,
-                member_access_handled_kinds,
-                range_key_string_paths: body_capture.range_key_string_paths.clone(),
+                ranged,
+                kind,
             };
             if capture
                 .conjunction

@@ -280,13 +280,8 @@ fn contract_ir_activation_guards_gate_fail_captures() {
             helm_schema_core::Predicate::truthy_path("auth.enabled"),
             helm_schema_core::Predicate::truthy_path("auth.usePassword"),
         ],
-        approximate_condition_paths: std::collections::BTreeSet::new(),
-        direct_ranged_paths: std::collections::BTreeSet::new(),
-        json_decoded_ranged_paths: std::collections::BTreeSet::new(),
-        destructured_ranged_paths: std::collections::BTreeSet::new(),
-        member_access: false,
-        member_access_handled_kinds: std::collections::BTreeSet::new(),
-        range_key_string_paths: std::collections::BTreeSet::new(),
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::Fail,
     }]);
 
     contract.append_guards_to_all_uses(&[Guard::Truthy {

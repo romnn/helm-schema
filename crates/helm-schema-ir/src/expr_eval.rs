@@ -151,13 +151,8 @@ fn record_member_host_capture(
     );
     let capture = crate::eval_effect::FailCapture {
         conjunction,
-        approximate_condition_paths: BTreeSet::new(),
-        direct_ranged_paths: BTreeSet::new(),
-        json_decoded_ranged_paths: BTreeSet::new(),
-        destructured_ranged_paths: BTreeSet::new(),
-        member_access: true,
-        member_access_handled_kinds: handled_kinds,
-        range_key_string_paths: BTreeSet::new(),
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::MemberAccess { handled_kinds },
     };
     if !effects.helper_fails.contains(&capture) {
         effects.helper_fails.push(capture);

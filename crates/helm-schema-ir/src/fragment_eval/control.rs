@@ -51,7 +51,6 @@ impl Interpreter<'_> {
         let entry_locals = self.locals.clone();
         let entry_predicates = self.active_predicates.len();
         let entry_dots = self.dot_stack.len();
-        let entry_approximate = self.approximate_condition_paths.len();
         let entry_ranged = self.active_direct_ranged_paths.len();
 
         let mut out = Contributions::default();
@@ -59,18 +58,12 @@ impl Interpreter<'_> {
         let mut prior_conditions: Vec<PathCondition> = Vec::new();
         let mut has_unconditional_else = false;
         let mut promote_body_outcome = false;
-        let mut prior_approximate_paths: Vec<String> = Vec::new();
 
         for (index, _branch) in region.branches.iter().enumerate() {
             self.locals = entry_locals.clone();
             self.active_predicates.truncate(entry_predicates);
             self.dot_stack.truncate(entry_dots);
-            self.approximate_condition_paths.truncate(entry_approximate);
             self.active_direct_ranged_paths.truncate(entry_ranged);
-            // An arm under the negation of an approximately-lowered prior
-            // is approximate on the same paths.
-            self.approximate_condition_paths
-                .extend(prior_approximate_paths.iter().cloned());
 
             let mut arm_condition = Predicate::True;
             // Later arms run under the negations of every earlier decoded
@@ -91,14 +84,8 @@ impl Interpreter<'_> {
             // region intersects (none when it spans several documents).
             let region_site = self.region_site(region.span);
             let previous_site = std::mem::replace(&mut self.current_site, region_site);
-            let arm_entry_approximate = self.approximate_condition_paths.len();
             let (own_condition, extra, iterations) =
                 self.activate_arm(&arm, nodes, region.span.start, index);
-            prior_approximate_paths.extend(
-                self.approximate_condition_paths[arm_entry_approximate..]
-                    .iter()
-                    .cloned(),
-            );
             self.current_site = previous_site;
             if let Some(own) = own_condition {
                 arm_condition = and_conditions(arm_condition, own.clone());
@@ -157,7 +144,6 @@ impl Interpreter<'_> {
         self.locals = entry_locals.clone();
         self.active_predicates.truncate(entry_predicates);
         self.dot_stack.truncate(entry_dots);
-        self.approximate_condition_paths.truncate(entry_approximate);
         self.active_direct_ranged_paths.truncate(entry_ranged);
         if promote_body_outcome {
             // A statically nonempty exact range definitely ran its body:
@@ -333,23 +319,15 @@ impl Interpreter<'_> {
                 {
                     conjunction.insert(0, Predicate::truthy_path(path.clone()));
                 }
+                // An approximately-lowered enclosing condition gates when
+                // this consumer runs at all: the ambient predicates the
+                // absorption prepends carry it as an `Approximate` conjunct,
+                // so the implication abstains instead of binding a branch
+                // whose real guard the encoding cannot represent.
                 crate::eval_effect::FailCapture {
                     conjunction,
-                    // An approximately-lowered enclosing condition gates when
-                    // this consumer runs at all: the capture carries it so the
-                    // implication abstains instead of binding a branch whose
-                    // real guard the encoding cannot represent.
-                    approximate_condition_paths: self
-                        .approximate_condition_paths
-                        .iter()
-                        .cloned()
-                        .collect(),
-                    direct_ranged_paths: BTreeSet::new(),
-                    json_decoded_ranged_paths: BTreeSet::new(),
-                    destructured_ranged_paths: BTreeSet::new(),
-                    member_access: false,
-                    member_access_handled_kinds: BTreeSet::new(),
-                    range_key_string_paths: BTreeSet::new(),
+                    ranged: crate::range_modes::RangeModes::default(),
+                    kind: crate::eval_effect::CaptureKind::Fail,
                 }
             })
             .collect();
@@ -374,17 +352,6 @@ impl Interpreter<'_> {
         let helper_paths = self.absorb_header_execution_effects(header.expr());
         if !faithful {
             let marker = format!("{}:{region_start}:{branch_index}", self.source_offset);
-            let paths = self
-                .value_path_context()
-                .resolved_values_paths_from_expr(header.expr());
-            if paths.is_empty() {
-                // An undecodable condition with no resolvable paths could
-                // gate ANYTHING; the empty marker poisons fail negation
-                // globally under it.
-                self.approximate_condition_paths.push(String::new());
-            }
-            self.approximate_condition_paths
-                .extend(paths.iter().cloned());
             predicate = self
                 .value_path_context()
                 .approximate_condition_predicate_expr(header.expr(), &marker);
@@ -477,14 +444,6 @@ impl Interpreter<'_> {
         }
         if !faithful {
             let marker = format!("{}:{region_start}:{branch_index}", self.source_offset);
-            let paths = self
-                .value_path_context()
-                .resolved_values_paths_from_expr(header.expr());
-            if paths.is_empty() {
-                self.approximate_condition_paths.push(String::new());
-            }
-            self.approximate_condition_paths
-                .extend(paths.iter().cloned());
             predicate = self
                 .value_path_context()
                 .approximate_condition_predicate_expr(header.expr(), &marker);
@@ -600,19 +559,19 @@ impl Interpreter<'_> {
         // iterates the path ITSELF: `range until (int .Values.n)` iterates a
         // DERIVED list, so it says nothing about the path's own shape.
         if let Some(path) = &direct_path {
-            self.direct_range_source_paths.insert(path.clone());
+            self.range_modes.mark_direct(path);
             if destructured {
-                self.destructured_range_source_paths.insert(path.clone());
+                self.range_modes.mark_destructured(path);
             }
         }
         if let Some(path) = &direct_variable_path {
-            self.direct_range_source_paths.insert(path.clone());
+            self.range_modes.mark_direct(path);
             if destructured {
-                self.destructured_range_source_paths.insert(path.clone());
+                self.range_modes.mark_destructured(path);
             }
         }
         if let Some(path) = &json_decoded_path {
-            self.json_decoded_range_source_paths.insert(path.clone());
+            self.range_modes.mark_json_decoded(path);
         }
 
         let mut own = Vec::new();

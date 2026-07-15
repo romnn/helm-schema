@@ -27,16 +27,11 @@ pub struct ContractIr {
     /// Paths carrying a real runtime string contract (`trunc`, `b64enc`,
     /// `fromYaml`, a dynamic `printf` format) anywhere.
     string_contract_value_paths: BTreeSet<String>,
-    /// Paths a `range` iterates DIRECTLY (`range .Values.x`): only these
-    /// carry an iterable input domain.
-    direct_range_source_paths: BTreeSet<String>,
-    /// Direct range sources whose runtime values were decoded from JSON.
-    json_decoded_range_source_paths: BTreeSet<String>,
+    /// The chart's per-path range facts (direct iteration, JSON-decoded
+    /// values, key/value destructuring).
+    range_modes: crate::range_modes::RangeModes,
     /// Chart value subtrees supplying defaults to effective values subtrees.
     values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
-    /// The subset of direct range sources iterated with TWO variables:
-    /// integers iterate single-variable ranges only.
-    destructured_range_source_paths: BTreeSet<String>,
     /// `fail` captures: no valid values document may satisfy one of these
     /// conjunctions.
     fail_conditions: Vec<crate::eval_effect::FailCapture>,
@@ -107,14 +102,9 @@ impl ContractIr {
             .append(&mut other.shape_erased_value_paths);
         self.string_contract_value_paths
             .append(&mut other.string_contract_value_paths);
-        self.direct_range_source_paths
-            .append(&mut other.direct_range_source_paths);
-        self.json_decoded_range_source_paths
-            .append(&mut other.json_decoded_range_source_paths);
+        self.range_modes.merge(&other.range_modes);
         self.values_default_sources
             .append(&mut other.values_default_sources);
-        self.destructured_range_source_paths
-            .append(&mut other.destructured_range_source_paths);
         for condition in std::mem::take(&mut other.fail_conditions) {
             if !self.fail_conditions.contains(&condition) {
                 self.fail_conditions.push(condition);
@@ -194,10 +184,7 @@ impl ContractIr {
             .into_iter()
             .map(|path| map(&path))
             .collect();
-        self.direct_range_source_paths = std::mem::take(&mut self.direct_range_source_paths)
-            .into_iter()
-            .map(|path| map(&path))
-            .collect();
+        self.range_modes.map_value_paths(&mut map);
         self.values_default_sources = std::mem::take(&mut self.values_default_sources)
             .into_iter()
             .map(|source| crate::ValuesDefaultSource {
@@ -205,11 +192,6 @@ impl ContractIr {
                 source_path: map(&source.source_path),
             })
             .collect();
-        self.destructured_range_source_paths =
-            std::mem::take(&mut self.destructured_range_source_paths)
-                .into_iter()
-                .map(|path| map(&path))
-                .collect();
         self.fail_conditions = std::mem::take(&mut self.fail_conditions)
             .into_iter()
             .map(|mut capture| {
@@ -218,16 +200,7 @@ impl ContractIr {
                     .into_iter()
                     .map(|predicate| predicate.map_value_paths(&mut map))
                     .collect();
-                capture.approximate_condition_paths = capture
-                    .approximate_condition_paths
-                    .into_iter()
-                    .map(|path| map(&path))
-                    .collect();
-                capture.direct_ranged_paths = capture
-                    .direct_ranged_paths
-                    .into_iter()
-                    .map(|path| map(&path))
-                    .collect();
+                capture.ranged.map_value_paths(&mut map);
                 capture
             })
             .collect();
@@ -305,20 +278,8 @@ impl ContractIr {
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
     }
 
-    pub(crate) fn extend_direct_range_source_paths(
-        &mut self,
-        paths: impl IntoIterator<Item = String>,
-    ) {
-        self.direct_range_source_paths
-            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
-    }
-
-    pub(crate) fn extend_json_decoded_range_source_paths(
-        &mut self,
-        paths: impl IntoIterator<Item = String>,
-    ) {
-        self.json_decoded_range_source_paths
-            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
+    pub(crate) fn merge_range_modes(&mut self, range_modes: &crate::range_modes::RangeModes) {
+        self.range_modes.merge(range_modes);
     }
 
     pub(crate) fn extend_values_default_sources(
@@ -326,14 +287,6 @@ impl ContractIr {
         sources: impl IntoIterator<Item = crate::ValuesDefaultSource>,
     ) {
         self.values_default_sources.extend(sources);
-    }
-
-    pub(crate) fn extend_destructured_range_source_paths(
-        &mut self,
-        paths: impl IntoIterator<Item = String>,
-    ) {
-        self.destructured_range_source_paths
-            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
     }
 
     pub(crate) fn extend_fail_conditions(
@@ -359,10 +312,8 @@ impl ContractIr {
             guarded_type_hints,
             shape_erased_value_paths,
             string_contract_value_paths,
-            direct_range_source_paths,
-            json_decoded_range_source_paths,
+            range_modes,
             values_default_sources,
-            destructured_range_source_paths,
             mut fail_conditions,
             dependency_values_root_fragments,
         } = self;
@@ -390,10 +341,8 @@ impl ContractIr {
             guarded_type_hints,
             shape_erased_value_paths,
             string_contract_value_paths,
-            direct_range_source_paths,
-            json_decoded_range_source_paths,
+            range_modes,
             values_default_sources,
-            destructured_range_source_paths,
             fail_conditions,
             dependency_values_root_fragments,
         )

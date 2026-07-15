@@ -26,10 +26,8 @@ impl FinalizedContract {
         guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
         shape_erased_value_paths: BTreeSet<String>,
         string_contract_value_paths: BTreeSet<String>,
-        direct_range_source_paths: BTreeSet<String>,
-        json_decoded_range_source_paths: BTreeSet<String>,
+        range_modes: crate::range_modes::RangeModes,
         values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
-        destructured_range_source_paths: BTreeSet<String>,
         fail_conditions: Vec<crate::eval_effect::FailCapture>,
         dependency_values_root_fragments: BTreeSet<String>,
     ) -> Self {
@@ -39,9 +37,7 @@ impl FinalizedContract {
             &guarded_type_hints,
             &shape_erased_value_paths,
             &string_contract_value_paths,
-            &direct_range_source_paths,
-            &json_decoded_range_source_paths,
-            &destructured_range_source_paths,
+            &range_modes,
             &fail_conditions,
             &dependency_values_root_fragments,
         )

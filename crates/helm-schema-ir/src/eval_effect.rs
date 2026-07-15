@@ -33,12 +33,8 @@ pub(crate) struct Effects {
     /// bound a real runtime string contract: rendering fails for non-string
     /// values, so a later total stringification must not erase their shape.
     pub(crate) string_contract_paths: BTreeSet<String>,
-    /// Direct range identities exported by called helper bodies.
-    pub(crate) direct_range_source_paths: BTreeSet<String>,
-    /// Direct helper range identities whose values came through JSON decoding.
-    pub(crate) json_decoded_range_source_paths: BTreeSet<String>,
-    /// Direct helper range identities iterated with key and value variables.
-    pub(crate) destructured_range_source_paths: BTreeSet<String>,
+    /// Range identities exported by called helper bodies.
+    pub(crate) range_modes: crate::range_modes::RangeModes,
     /// The subset of string contracts recorded by consumers evaluated in
     /// THIS expression (never copied across a helper-summary boundary):
     /// only these may become ambient-scoped truthy⇒string fail captures —
@@ -89,35 +85,55 @@ pub(crate) struct MemberHostConversion {
     pub(crate) outer_predicates: Vec<helm_schema_core::Predicate>,
 }
 
-/// One captured `fail` call: the predicate conjunction reaching it, plus
-/// the values paths of enclosing conditions whose lowering was APPROXIMATE
-/// (truthy fallbacks, dropped conjuncts). Raw predicates, not
-/// [`helm_schema_core::GuardDnf`]: the DNF conversion drops conjuncts it
-/// cannot represent, which is safe for row conditions (wider arms) but
-/// unsound for fail NEGATION. The approximate paths let the negation
-/// abstain when the imprecision touches the tested path itself.
+/// One captured `fail` call: the predicate conjunction reaching it. Raw
+/// predicates, not [`helm_schema_core::GuardDnf`]: the DNF conversion drops
+/// conjuncts it cannot represent, which is safe for row conditions (wider
+/// arms) but unsound for fail NEGATION. Enclosing conditions whose lowering
+/// was APPROXIMATE (truthy fallbacks, dropped conjuncts) appear in the
+/// conjunction as [`helm_schema_core::Predicate::Approximate`] conjuncts,
+/// so the negation can abstain instead of manufacturing requirements the
+/// chart never stated.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct FailCapture {
     pub(crate) conjunction: Vec<helm_schema_core::Predicate>,
-    pub(crate) approximate_condition_paths: BTreeSet<String>,
-    /// Ranged paths in the conjunction that iterate the path DIRECTLY
-    /// (`range .Values.x`): only these have member identities, and
+    /// The range facts the capture rides: `direct` marks paths the capture
+    /// site was actively ranging (only these have member identities, and
     /// helper-scope ranges never reach the document-lane directness
-    /// channel.
-    pub(crate) direct_ranged_paths: BTreeSet<String>,
-    /// Direct range sources whose values came through JSON decoding.
-    pub(crate) json_decoded_ranged_paths: BTreeSet<String>,
-    /// Direct range sources iterated with key and value variables.
-    pub(crate) destructured_ranged_paths: BTreeSet<String>,
+    /// channel); JSON-decoded and destructured flavors carry every observed
+    /// occurrence.
+    pub(crate) ranged: crate::range_modes::RangeModes,
+    pub(crate) kind: CaptureKind,
+}
+
+/// How a [`FailCapture`]'s conjunction lowers into schema requirements.
+/// The variants select mutually exclusive lowering paths in the signal
+/// builder; the payloads exist only for their variant's lane.
+#[derive(Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum CaptureKind {
+    /// A direct `fail`-style capture: the failing TEST conjunct is negated
+    /// wherever the outer guards hold.
+    #[default]
+    Fail,
+    /// Collections whose range key reaches a strict string consumer.
+    RangeKeyStrings { paths: BTreeSet<String> },
     /// A member-access capture (`[outer…, ¬object(P)]` from a field access
     /// through `P`): the signal builder folds these per path into one
     /// bypass-proof arm instead of lowering each as its own implication.
-    pub(crate) member_access: bool,
-    /// Raw input kinds converted to an object by a proven earlier mutation
-    /// on every execution path reaching this member access.
-    pub(crate) member_access_handled_kinds: BTreeSet<String>,
-    /// Collections whose range key reaches a strict string consumer.
-    pub(crate) range_key_string_paths: BTreeSet<String>,
+    MemberAccess {
+        /// Raw input kinds converted to an object by a proven earlier
+        /// mutation on every execution path reaching this member access.
+        handled_kinds: BTreeSet<String>,
+    },
+}
+
+impl FailCapture {
+    /// Whether any enclosing condition's lowering was approximate: the
+    /// negation-based lowering must abstain for the whole capture.
+    pub(crate) fn contains_approximation(&self) -> bool {
+        self.conjunction
+            .iter()
+            .any(helm_schema_core::Predicate::contains_approximation)
+    }
 }
 
 impl Effects {
@@ -129,84 +145,106 @@ impl Effects {
     }
 
     pub(crate) fn merge(&mut self, other: Self) {
-        self.output_paths.extend(other.output_paths);
-        self.bound_output_paths.extend(other.bound_output_paths);
-        self.defaults.extend(other.defaults);
-        self.parsed_yaml_input_paths
-            .extend(other.parsed_yaml_input_paths);
-        self.yaml_serialized_paths
-            .extend(other.yaml_serialized_paths);
-        self.json_serialized_paths
-            .extend(other.json_serialized_paths);
-        self.encoded_paths.extend(other.encoded_paths);
-        self.shape_erased_paths.extend(other.shape_erased_paths);
-        self.derived_text_paths.extend(other.derived_text_paths);
-        self.derived_range_key_paths
-            .extend(other.derived_range_key_paths);
-        self.string_contract_paths
-            .extend(other.string_contract_paths);
-        self.direct_range_source_paths
-            .extend(other.direct_range_source_paths);
-        self.json_decoded_range_source_paths
-            .extend(other.json_decoded_range_source_paths);
-        self.destructured_range_source_paths
-            .extend(other.destructured_range_source_paths);
+        // Exhaustive destructuring: a new channel refuses to compile until
+        // this merge decides how to combine it, instead of being silently
+        // dropped across expression boundaries.
+        let Self {
+            output_paths,
+            bound_output_paths,
+            defaults,
+            type_hints,
+            guarded_type_hints,
+            tested_type_hints,
+            parsed_yaml_input_paths,
+            yaml_serialized_paths,
+            json_serialized_paths,
+            encoded_paths,
+            shape_erased_paths,
+            derived_text_paths,
+            derived_range_key_paths,
+            string_contract_paths,
+            range_modes,
+            direct_string_consumer_paths,
+            chart_default_paths,
+            local_default_paths,
+            local_output_meta,
+            local_source_paths,
+            local_set_mutations,
+            root_set_mutations,
+            root_set_predicates,
+            values_default_sources,
+            helper_reads,
+            helper_rendered,
+            helper_dependency_rendered,
+            helper_suppressed_paths,
+            helper_fails,
+            member_host_conversions,
+        } = other;
+        self.output_paths.extend(output_paths);
+        self.bound_output_paths.extend(bound_output_paths);
+        self.defaults.extend(defaults);
+        self.parsed_yaml_input_paths.extend(parsed_yaml_input_paths);
+        self.yaml_serialized_paths.extend(yaml_serialized_paths);
+        self.json_serialized_paths.extend(json_serialized_paths);
+        self.encoded_paths.extend(encoded_paths);
+        self.shape_erased_paths.extend(shape_erased_paths);
+        self.derived_text_paths.extend(derived_text_paths);
+        self.derived_range_key_paths.extend(derived_range_key_paths);
+        self.string_contract_paths.extend(string_contract_paths);
+        self.range_modes.merge(&range_modes);
         self.direct_string_consumer_paths
-            .extend(other.direct_string_consumer_paths);
-        self.chart_default_paths.extend(other.chart_default_paths);
-        self.local_default_paths.extend(other.local_default_paths);
-        self.local_source_paths.extend(other.local_source_paths);
-        for (path, meta) in other.local_output_meta {
+            .extend(direct_string_consumer_paths);
+        self.chart_default_paths.extend(chart_default_paths);
+        self.local_default_paths.extend(local_default_paths);
+        self.local_source_paths.extend(local_source_paths);
+        for (path, meta) in local_output_meta {
             self.local_output_meta.entry(path).or_default().merge(&meta);
         }
-        for (name, entries) in other.local_set_mutations {
+        for (name, entries) in local_set_mutations {
             self.local_set_mutations
                 .entry(name)
                 .or_default()
                 .extend(entries);
         }
-        for key in other.root_set_mutations.keys() {
+        for key in root_set_mutations.keys() {
             self.root_set_predicates.remove(key);
         }
-        self.root_set_mutations.extend(other.root_set_mutations);
-        self.root_set_predicates.extend(other.root_set_predicates);
-        self.values_default_sources
-            .extend(other.values_default_sources);
-        for read in other.helper_reads {
+        self.root_set_mutations.extend(root_set_mutations);
+        self.root_set_predicates.extend(root_set_predicates);
+        self.values_default_sources.extend(values_default_sources);
+        for read in helper_reads {
             if !self.helper_reads.contains(&read) {
                 self.helper_reads.push(read);
             }
         }
-        for row in other.helper_rendered {
+        for row in helper_rendered {
             if !self.helper_rendered.contains(&row) {
                 self.helper_rendered.push(row);
             }
         }
-        for row in other.helper_dependency_rendered {
+        for row in helper_dependency_rendered {
             if !self.helper_dependency_rendered.contains(&row) {
                 self.helper_dependency_rendered.push(row);
             }
         }
-        self.helper_suppressed_paths
-            .extend(other.helper_suppressed_paths);
-        for condition in other.helper_fails {
+        self.helper_suppressed_paths.extend(helper_suppressed_paths);
+        for condition in helper_fails {
             if !self.helper_fails.contains(&condition) {
                 self.helper_fails.push(condition);
             }
         }
-        self.member_host_conversions
-            .extend(other.member_host_conversions);
-        for (path, hints) in other.type_hints {
+        self.member_host_conversions.extend(member_host_conversions);
+        for (path, hints) in type_hints {
             for hint in hints {
                 insert_type_hint(&mut self.type_hints, path.clone(), &hint);
             }
         }
-        for (path, hints) in other.guarded_type_hints {
+        for (path, hints) in guarded_type_hints {
             for hint in hints {
                 insert_type_hint(&mut self.guarded_type_hints, path.clone(), &hint);
             }
         }
-        for (path, hints) in other.tested_type_hints {
+        for (path, hints) in tested_type_hints {
             for hint in hints {
                 insert_type_hint(&mut self.tested_type_hints, path.clone(), &hint);
             }
@@ -220,22 +258,79 @@ impl Effects {
     /// helper reads, and mutations still execute even when the callee ignores
     /// its context. The argument value itself does not render at the call
     /// site; its output identity and selection metadata must not leak there.
-    pub(crate) fn execution_only(mut self) -> Self {
-        self.output_paths.clear();
-        self.bound_output_paths.clear();
-        self.defaults.clear();
-        self.type_hints.clear();
-        self.guarded_type_hints.clear();
-        self.tested_type_hints.clear();
-        self.local_default_paths.clear();
-        self.local_output_meta.clear();
-        self.local_source_paths.clear();
-        for row in std::mem::take(&mut self.helper_rendered) {
-            if !self.helper_dependency_rendered.contains(&row) {
-                self.helper_dependency_rendered.push(row);
+    pub(crate) fn execution_only(self) -> Self {
+        // Exhaustive rebuild: a new channel refuses to compile until this
+        // boundary decides whether it describes the value (discard) or its
+        // evaluation (keep).
+        let Self {
+            output_paths: _,
+            bound_output_paths: _,
+            defaults: _,
+            type_hints: _,
+            guarded_type_hints: _,
+            tested_type_hints: _,
+            parsed_yaml_input_paths,
+            yaml_serialized_paths,
+            json_serialized_paths,
+            encoded_paths,
+            shape_erased_paths,
+            derived_text_paths,
+            derived_range_key_paths,
+            string_contract_paths,
+            range_modes,
+            direct_string_consumer_paths,
+            chart_default_paths,
+            local_default_paths: _,
+            local_output_meta: _,
+            local_source_paths: _,
+            local_set_mutations,
+            root_set_mutations,
+            root_set_predicates,
+            values_default_sources,
+            helper_reads,
+            helper_rendered,
+            mut helper_dependency_rendered,
+            helper_suppressed_paths,
+            helper_fails,
+            member_host_conversions,
+        } = self;
+        for row in helper_rendered {
+            if !helper_dependency_rendered.contains(&row) {
+                helper_dependency_rendered.push(row);
             }
         }
-        self
+        Self {
+            output_paths: BTreeSet::new(),
+            bound_output_paths: BTreeSet::new(),
+            defaults: BTreeSet::new(),
+            type_hints: BTreeMap::new(),
+            guarded_type_hints: BTreeMap::new(),
+            tested_type_hints: BTreeMap::new(),
+            parsed_yaml_input_paths,
+            yaml_serialized_paths,
+            json_serialized_paths,
+            encoded_paths,
+            shape_erased_paths,
+            derived_text_paths,
+            derived_range_key_paths,
+            string_contract_paths,
+            range_modes,
+            direct_string_consumer_paths,
+            chart_default_paths,
+            local_default_paths: BTreeSet::new(),
+            local_output_meta: BTreeMap::new(),
+            local_source_paths: BTreeSet::new(),
+            local_set_mutations,
+            root_set_mutations,
+            root_set_predicates,
+            values_default_sources,
+            helper_reads,
+            helper_rendered: Vec::new(),
+            helper_dependency_rendered,
+            helper_suppressed_paths,
+            helper_fails,
+            member_host_conversions,
+        }
     }
 
     pub(crate) fn add_default_paths(&mut self, paths: BTreeSet<String>) {

@@ -61,13 +61,10 @@ pub(crate) struct FragmentSummary {
     pub(crate) shape_erased_paths: BTreeSet<String>,
     /// Paths carrying a real runtime string contract in the body.
     pub(crate) string_contract_paths: BTreeSet<String>,
-    /// Values paths ranged directly by the helper body after bound-context
-    /// resolution. Callers need this identity to project the runtime domain.
-    pub(crate) direct_range_source_paths: BTreeSet<String>,
-    /// Direct helper range sources whose runtime identity came through JSON decoding.
-    pub(crate) json_decoded_range_source_paths: BTreeSet<String>,
-    /// Direct helper range sources iterated with key and value variables.
-    pub(crate) destructured_range_source_paths: BTreeSet<String>,
+    /// The body's per-path range facts after bound-context resolution
+    /// (direct iteration identity, JSON-decoded values, destructuring).
+    /// Callers need the direct identity to project the runtime domain.
+    pub(crate) range_modes: crate::range_modes::RangeModes,
     /// `fail` captures of the body, helper-internal state only.
     pub(crate) fail_conditions: Vec<crate::eval_effect::FailCapture>,
     /// Object-producing value mutations observed in source order.
@@ -151,9 +148,7 @@ pub(crate) fn eval_bound_helper_fragment(
         yaml_serialized_paths: interpreter.yaml_serialized_paths,
         shape_erased_paths: interpreter.shape_erased_paths,
         string_contract_paths: interpreter.string_contract_paths,
-        direct_range_source_paths: interpreter.direct_range_source_paths,
-        json_decoded_range_source_paths: interpreter.json_decoded_range_source_paths,
-        destructured_range_source_paths: interpreter.destructured_range_source_paths,
+        range_modes: interpreter.range_modes,
         fail_conditions: interpreter.fail_conditions,
         member_host_conversions: interpreter.member_host_conversions,
         chart_defaults: interpreter.chart_defaults_observed,

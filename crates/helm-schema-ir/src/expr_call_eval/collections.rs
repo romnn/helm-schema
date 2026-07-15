@@ -1,0 +1,384 @@
+use std::collections::{BTreeMap, BTreeSet};
+
+use helm_schema_ast::{Literal, TemplateExpr};
+
+use crate::abstract_value::AbstractValue;
+use crate::eval_effect::{Effects, EvalResult};
+use crate::eval_env::EvalEnv;
+use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
+use helm_schema_ast::expression_schema_type;
+use helm_schema_core::Predicate;
+
+use super::strict_operands::{
+    pipeline_string_operand_facts, record_range_key_string_consumer_effects,
+    record_raw_range_key_string_consumer_paths, record_string_call_consumers,
+    record_string_consumer_effects,
+};
+use super::value_facts::{identity_value_paths, value_strings};
+use super::{eval_all_args, merge_arg_effects, merge_arg_values};
+
+/// `default FALLBACK PRIMARY` and `PRIMARY | default FALLBACK` are one rule:
+/// the primary's identity paths become defaulted (typed by a literal
+/// fallback), and the value is the choice of primary and fallback values.
+pub(super) fn eval_default(
+    primary: EvalResult,
+    fallback_args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut effects = primary.effects;
+    let primary_paths = identity_value_paths(&primary.value);
+    let primary_identity = direct_raw_identity_path(primary.value.as_ref());
+    effects.add_default_paths(primary_paths.clone());
+    // Only a LITERAL fallback types the path: `default "x" .Values.name`
+    // documents a string-shaped input. A call fallback (`default (include
+    // …) .Values.ns`) only proves the fallback renders text; the path
+    // itself accepts whatever the render site accepts.
+    if let Some(schema_type) = fallback_args
+        .first()
+        .map(TemplateExpr::deparen)
+        .filter(|expr| matches!(expr, TemplateExpr::Literal(_)))
+        .and_then(expression_schema_type)
+    {
+        effects.add_type_hints(primary_paths, schema_type);
+    }
+    let mut values = primary.value.into_iter().collect::<Vec<_>>();
+    let mut fallback_paths = BTreeSet::new();
+    for fallback in fallback_args {
+        let result = eval_expr_with_helper_calls(fallback, env, resolver);
+        fallback_paths.extend(identity_value_paths(&result.value));
+        effects.merge(result.effects);
+        if let Some(value) = result.value {
+            values.push(value);
+        }
+    }
+    if let Some(primary_path) = primary_identity {
+        let overlaps_fallback = fallback_paths.remove(&primary_path);
+        if !overlaps_fallback {
+            effects
+                .local_output_meta
+                .entry(primary_path.clone())
+                .or_default()
+                .conjoin_branches(&BTreeSet::from([Predicate::truthy_path(
+                    primary_path.clone(),
+                )]));
+        }
+        let fallback_condition = BTreeSet::from([Predicate::truthy_path(primary_path).negated()]);
+        for path in fallback_paths {
+            effects
+                .local_output_meta
+                .entry(path)
+                .or_default()
+                .conjoin_branches(&fallback_condition);
+        }
+    }
+    EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+pub(super) fn direct_raw_identity_path(value: Option<&AbstractValue>) -> Option<String> {
+    match value? {
+        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+            Some(path.clone())
+        }
+        _ => None,
+    }
+}
+
+pub(super) fn eval_coalesce(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut effects = Effects::default();
+    let mut values = Vec::new();
+    let mut default_paths = BTreeSet::new();
+    let mut candidate_paths = Vec::with_capacity(args.len());
+    for arg in args {
+        let result = eval_expr_with_helper_calls(arg, env, resolver);
+        default_paths.extend(identity_value_paths(&result.value));
+        let candidate_path = matches!(
+            arg.deparen(),
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        )
+        .then(|| direct_raw_identity_path(result.value.as_ref()))
+        .flatten()
+        .filter(|path| !path.is_empty());
+        candidate_paths.push(candidate_path);
+        effects.merge(result.effects);
+        if let Some(value) = result.value {
+            values.push(value);
+        }
+    }
+    // `coalesce` selects only non-empty candidates. Downstream strict consumers therefore see
+    // each source path only while it is truthy, just as they see a `default` primary.
+    effects.add_default_paths(default_paths);
+    // A computed candidate makes every later arm depend on a truthiness test
+    // we cannot name, so only claim ordered selection when every arm has a
+    // direct identity.
+    if candidate_paths.iter().all(Option::is_some) {
+        let mut previous_false = BTreeSet::new();
+        let mut seen = BTreeSet::new();
+        for path in candidate_paths.into_iter().flatten() {
+            if seen.insert(path.clone()) {
+                let mut selection = previous_false.clone();
+                selection.insert(Predicate::truthy_path(path.clone()));
+                effects
+                    .local_output_meta
+                    .entry(path.clone())
+                    .or_default()
+                    .conjoin_branches(&selection);
+            }
+            previous_false.insert(Predicate::truthy_path(path).negated());
+        }
+    }
+    EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+pub(super) fn eval_dict(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut map = BTreeMap::new();
+    let mut effects = Effects::default();
+    let mut index = 0usize;
+    while index + 1 < args.len() {
+        let TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) = &args[index]
+        else {
+            index += 1;
+            continue;
+        };
+        let value = eval_expr_with_helper_calls(&args[index + 1], env, resolver);
+        effects.merge(value.effects);
+        map.insert(key.clone(), value.value.unwrap_or(AbstractValue::Unknown));
+        index += 2;
+    }
+    EvalResult::with_effects(Some(AbstractValue::Dict(map)), effects)
+}
+
+pub(super) fn eval_pick(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut subject = eval_expr_with_helper_calls(&args[0], env, resolver);
+    let mut keys = BTreeSet::new();
+    for arg in &args[1..] {
+        let key = eval_expr_with_helper_calls(arg, env, resolver);
+        keys.extend(value_strings(&key.value));
+        subject.effects.merge(key.effects);
+    }
+    let value = subject.value.map(|value| {
+        let entries = keys
+            .into_iter()
+            .filter_map(|key| {
+                value
+                    .apply_to_path(std::slice::from_ref(&key))
+                    .map(|picked| (key, picked))
+            })
+            .collect();
+        AbstractValue::Dict(entries)
+    });
+    EvalResult::with_effects(value, subject.effects)
+}
+
+pub(super) fn eval_list(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut items = Vec::new();
+    let mut effects = Effects::default();
+    for arg in args {
+        let item = eval_expr_with_helper_calls(arg, env, resolver);
+        effects.merge(item.effects);
+        items.push(item.value.unwrap_or(AbstractValue::Unknown));
+    }
+    EvalResult::with_effects(Some(AbstractValue::List(items)), effects)
+}
+
+pub(super) fn eval_first(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    eval_first_result(eval_expr_with_helper_calls(&args[0], env, resolver))
+}
+
+pub(super) fn eval_first_result(result: EvalResult) -> EvalResult {
+    let value = match result.value {
+        Some(AbstractValue::List(items)) => items.first().cloned(),
+        other => other,
+    };
+    EvalResult::with_effects(value, result.effects)
+}
+
+pub(super) fn eval_reverse(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    eval_reverse_result(eval_expr_with_helper_calls(&args[0], env, resolver))
+}
+
+pub(super) fn eval_reverse_result(result: EvalResult) -> EvalResult {
+    let value = match result.value {
+        Some(AbstractValue::List(mut items)) => {
+            items.reverse();
+            Some(AbstractValue::List(items))
+        }
+        other => other,
+    };
+    EvalResult::with_effects(value, result.effects)
+}
+
+pub(super) fn eval_split_list(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let separator = match args[0].deparen() {
+        TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => value,
+        _ => return eval_all_args(args, env, resolver),
+    };
+    let mut result = eval_expr_with_helper_calls(&args[1], env, resolver);
+    // The subject must be a Go string at runtime whatever the split
+    // produces: the literal-split fast path below is value refinement on
+    // top of that contract, not a replacement for it.
+    record_string_consumer_effects(&identity_value_paths(&result.value), &mut result.effects);
+    let value = result.value.clone();
+    record_range_key_string_consumer_effects(&value, &mut result.effects);
+    let Some(strings) = result.value.as_ref().map(AbstractValue::strings) else {
+        return EvalResult::with_effects(None, result.effects);
+    };
+    if strings.is_empty() {
+        return EvalResult::with_effects(None, result.effects);
+    }
+
+    let split_values = split_string_set(separator, strings);
+    EvalResult::with_effects(split_values, result.effects)
+}
+
+pub(super) fn eval_nonempty_split(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let result = eval_all_args(args, env, resolver);
+    let mut effects = result.effects;
+    record_string_call_consumers("split", args, env, resolver, &mut effects);
+    EvalResult::with_effects(nonempty_split_map(result.value.as_ref()), effects)
+}
+
+pub(super) fn eval_nonempty_split_pipeline(
+    current: EvalResult,
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
+        "split",
+        args,
+        &current.value,
+        &current.effects,
+        env,
+        resolver,
+    );
+    let value = nonempty_split_map(current.value.as_ref());
+    let mut effects = current.effects;
+    merge_arg_effects(args, env, resolver, &mut effects);
+    record_string_consumer_effects(&string_paths, &mut effects);
+    record_raw_range_key_string_consumer_paths(&raw_range_key_paths, &mut effects);
+    EvalResult::with_effects(value, effects)
+}
+
+pub(super) fn nonempty_split_map(source: Option<&AbstractValue>) -> Option<AbstractValue> {
+    let paths = source.map(AbstractValue::paths).unwrap_or_default();
+    let first = AbstractValue::widened(paths).unwrap_or(AbstractValue::Unknown);
+    Some(AbstractValue::Overlay {
+        entries: BTreeMap::from([("_0".to_string(), first)]),
+        fallback: Box::new(AbstractValue::Unknown),
+    })
+}
+
+pub(super) fn is_nonempty_string_literal(expr: &TemplateExpr) -> bool {
+    matches!(
+        expr.deparen(),
+        TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value))
+            if !value.is_empty()
+    )
+}
+
+pub(super) fn split_string_set(
+    separator: &str,
+    strings: BTreeSet<String>,
+) -> Option<AbstractValue> {
+    if separator.is_empty() {
+        return None;
+    }
+
+    let choices = strings
+        .into_iter()
+        .map(|value| {
+            AbstractValue::List(
+                value
+                    .split(separator)
+                    .map(|part| AbstractValue::StringSet(BTreeSet::from([part.to_string()])))
+                    .collect(),
+            )
+        })
+        .collect();
+    AbstractValue::choice(choices)
+}
+
+pub(super) fn eval_append(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut effects = Effects::default();
+    let mut items = match args
+        .first()
+        .map(|expr| eval_expr_with_helper_calls(expr, env, resolver))
+    {
+        Some(result) => {
+            effects.merge(result.effects);
+            match result.value {
+                Some(AbstractValue::List(items)) => items,
+                Some(value) => vec![value],
+                None => Vec::new(),
+            }
+        }
+        None => Vec::new(),
+    };
+    merge_arg_values(&args[1..], env, resolver, &mut items, &mut effects);
+    EvalResult::with_effects(Some(AbstractValue::List(items)), effects)
+}
+
+pub(super) fn eval_omit(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut base = eval_expr_with_helper_calls(&args[0], env, resolver);
+    let mut keys = BTreeSet::new();
+    for arg in &args[1..] {
+        let key = eval_expr_with_helper_calls(arg, env, resolver);
+        keys.extend(value_strings(&key.value));
+        base.effects.merge(key.effects);
+    }
+    let value = base.value.map(|value| value.omit_keys(&keys));
+    EvalResult::with_effects(value, base.effects)
+}
+
+pub(super) fn eval_merge(
+    args: &[TemplateExpr],
+    piped: EvalResult,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut effects = piped.effects;
+    let mut values = piped.value.into_iter().collect::<Vec<_>>();
+    merge_arg_values(args, env, resolver, &mut values, &mut effects);
+    EvalResult::with_effects(AbstractValue::merge_all(values), effects)
+}

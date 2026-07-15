@@ -4,29 +4,24 @@
 //! cartesian product; inline `{{ if }}…{{ end }}` regions inside scalars
 //! re-parse structurally and become guarded scalar arms.
 
-use helm_schema_ast::{TemplateExpr, parse_action_expressions, parse_expr_text};
-use helm_schema_syntax::{BlockScalar, ScalarPart, ScalarParts, Span, parse_go_template};
+use helm_schema_ast::{TemplateExpr, parse_expr_text};
+use helm_schema_syntax::{BlockScalar, ScalarPart, ScalarParts, Span};
 
+use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
-use crate::bound_value_analysis::{
-    BoundValueContext, parse_get_binding_from_exprs, parse_literal_list_range_expr,
-};
-use crate::eval_effect::{Effects, MemberHostConversion};
-use crate::eval_env::EvalEnv;
+use crate::eval_effect::Effects;
 use crate::expr_eval::literal_helper_call_callee;
 use crate::fragment_assignment::parse_helper_assignment_from_exprs;
-use crate::fragment_expr_eval::{FragmentEvalContext, document_result_from_expr};
+use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::merge_rendered_row_meta;
-use crate::node_eval::{NodeAction, control_header, else_if_pairs, node_action};
-use crate::{Guard, ValueKind};
-use helm_schema_ast::children_with_field;
 use helm_schema_core::Predicate;
 
 use super::domain::{
-    AbstractFragment, AbstractString, Guarded, PathCondition, StringPart, TaintPart,
-    and_conditions, stamp_fragment_sites, stamp_part_sites,
+    AbstractFragment, AbstractString, Guarded, PathCondition, StringPart, and_conditions,
+    stamp_fragment_sites, stamp_part_sites,
 };
 use super::eval::Interpreter;
+use super::hole_effects::RenderedDemotion;
 use super::lower::{
     LowerScope, MAX_SCALAR_ARM_FANOUT, MAX_SCALAR_ARMS, lower_value, lower_value_scalar_arms,
 };
@@ -37,84 +32,9 @@ pub(super) struct HoleEval {
     pub(super) effects: Effects,
 }
 
-/// How a no-render site demotes a called helper's rendered rows.
-enum RenderedDemotion {
-    /// Rendered rows stay tree evidence (ordinary output holes).
-    None,
-    /// Document-lane pathless claims keeping their kinds (document-scope
-    /// assignments capture the rows as local evidence).
-    Document,
-    /// Dependency-lane scalar claims (helper-body captures and
-    /// render-suppressed blobs: the caller sees summary facts, and
-    /// dependency rows are scalar by construction).
-    Dependency,
-}
-
-/// The subject expressions of every `required(message, subject)` call in
-/// an expression, including the piped form (`subject | required "msg"`,
-/// where the piped value arrives as the trailing argument).
-fn required_call_subjects(expr: &TemplateExpr) -> Vec<&TemplateExpr> {
-    let mut subjects = Vec::new();
-    collect_required_subjects(expr, &mut subjects);
-    subjects
-}
-
-/// Whether a `required` subject is Helm-empty by construction: `nil`, an
-/// empty string literal, an empty `dict`/`list`, or an `index`/`get` into
-/// one of those (which yields nil for every key).
-fn subject_is_statically_helm_empty(expr: &TemplateExpr) -> bool {
-    match expr.deparen() {
-        TemplateExpr::Literal(helm_schema_ast::Literal::Nil) => true,
-        TemplateExpr::Literal(
-            helm_schema_ast::Literal::String(text) | helm_schema_ast::Literal::RawString(text),
-        ) => text.is_empty(),
-        TemplateExpr::Call { function, args }
-            if matches!(function.as_str(), "dict" | "list") && args.is_empty() =>
-        {
-            true
-        }
-        TemplateExpr::Call { function, args }
-            if matches!(function.as_str(), "index" | "get") && !args.is_empty() =>
-        {
-            subject_is_statically_helm_empty(&args[0])
-        }
-        _ => false,
-    }
-}
-
-fn collect_required_subjects<'e>(expr: &'e TemplateExpr, out: &mut Vec<&'e TemplateExpr>) {
-    match expr {
-        TemplateExpr::Call { function, args } => {
-            if function == "required" && args.len() == 2 {
-                out.push(&args[1]);
-            }
-            for arg in args {
-                collect_required_subjects(arg, out);
-            }
-        }
-        TemplateExpr::Pipeline(stages) => {
-            for (index, stage) in stages.iter().enumerate() {
-                if let TemplateExpr::Call { function, args } = stage
-                    && function == "required"
-                    && args.len() == 1
-                    && index > 0
-                {
-                    out.push(&stages[index - 1]);
-                }
-                collect_required_subjects(stage, out);
-            }
-        }
-        TemplateExpr::Parenthesized(inner) => collect_required_subjects(inner, out),
-        TemplateExpr::VariableDefinition { value, .. } | TemplateExpr::Assignment { value, .. } => {
-            collect_required_subjects(value, out)
-        }
-        _ => {}
-    }
-}
-
 /// Whether an expression invokes `fail` anywhere: evaluating it terminates
 /// template rendering unconditionally.
-fn expr_contains_fail_call(expr: &TemplateExpr) -> bool {
+pub(super) fn expr_contains_fail_call(expr: &TemplateExpr) -> bool {
     let mut found = false;
     expr.walk(|inner| {
         if let TemplateExpr::Call { function, .. } = inner
@@ -126,123 +46,6 @@ fn expr_contains_fail_call(expr: &TemplateExpr) -> bool {
     found
 }
 
-/// The values path whose TYPE an expression describes: `typeOf <selector>`
-/// or `kindOf <selector>` over a single resolvable values path.
-fn type_descriptor_source(expr: &TemplateExpr, interpreter: &Interpreter<'_>) -> Option<String> {
-    let TemplateExpr::Call { function, args } = expr.deparen() else {
-        return None;
-    };
-    if !matches!(function.as_str(), "typeOf" | "kindOf") || args.len() != 1 {
-        return None;
-    }
-    let subject = args[0].deparen();
-    if !matches!(
-        subject,
-        TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
-    ) {
-        return None;
-    }
-    let paths = interpreter.value_path_context().paths_for_expr(subject);
-    (paths.len() == 1).then(|| paths.into_iter().next().unwrap_or_default())
-}
-
-fn static_value_truthiness(value: Option<&AbstractValue>) -> Option<bool> {
-    match value? {
-        AbstractValue::StringSet(strings) => {
-            let all_empty = strings.iter().all(String::is_empty);
-            let all_nonempty = strings.iter().all(|value| !value.is_empty());
-            match (all_empty, all_nonempty) {
-                (true, false) => Some(false),
-                (false, true) => Some(true),
-                _ => None,
-            }
-        }
-        AbstractValue::Dict(entries) => Some(!entries.is_empty()),
-        AbstractValue::List(items) => Some(!items.is_empty()),
-        AbstractValue::Choice(choices) => {
-            let mut truthiness = choices
-                .iter()
-                .map(|choice| static_value_truthiness(Some(choice)));
-            let first = truthiness.next()??;
-            truthiness
-                .all(|candidate| candidate == Some(first))
-                .then_some(first)
-        }
-        _ => None,
-    }
-}
-
-/// Whether the expression's produced VALUE is derived text (a
-/// stringification or string transform): the binding's runtime truthiness is
-/// then the text's emptiness, which a surviving input value cannot witness.
-fn rhs_produces_derived_text(expr: &TemplateExpr) -> bool {
-    let stage = match expr.deparen() {
-        TemplateExpr::Pipeline(stages) => match stages.last() {
-            Some(stage) => stage.deparen(),
-            None => return false,
-        },
-        stage => stage,
-    };
-    let TemplateExpr::Call { function, .. } = stage else {
-        return false;
-    };
-    helm_schema_ast::is_total_stringification_function(function)
-        || helm_schema_ast::is_string_transform_function(function)
-        || matches!(
-            function.as_str(),
-            "join" | "printf" | "print" | "println" | "cat"
-        )
-}
-
-fn self_preserving_nonempty_accumulation(expr: &TemplateExpr, variable: &str) -> bool {
-    let TemplateExpr::Call { function, args } = expr.deparen() else {
-        return false;
-    };
-    if args.len() < 2 {
-        return false;
-    }
-    let same_variable = matches!(
-        args[0].deparen(),
-        TemplateExpr::Variable(name) if name.trim_start_matches('$') == variable
-    );
-    same_variable
-        && (matches!(
-            function.as_str(),
-            "append" | "mustAppend" | "prepend" | "mustPrepend"
-        ) || function == "print"
-            && args[1..].iter().any(|arg| {
-                matches!(
-                    arg.deparen(),
-                    TemplateExpr::Literal(
-                        helm_schema_ast::Literal::String(text)
-                            | helm_schema_ast::Literal::RawString(text)
-                    ) if !text.is_empty()
-                )
-            }))
-}
-
-fn or_predicates(left: Predicate, right: Predicate) -> Predicate {
-    match (left, right) {
-        (Predicate::True, _) | (_, Predicate::True) => Predicate::True,
-        (Predicate::False, predicate) | (predicate, Predicate::False) => predicate,
-        (left, right) if left == right => left,
-        (Predicate::Or(mut left), Predicate::Or(right)) => {
-            left.extend(right);
-            left.sort();
-            left.dedup();
-            Predicate::Or(left)
-        }
-        (Predicate::Or(mut alternatives), predicate)
-        | (predicate, Predicate::Or(mut alternatives)) => {
-            alternatives.push(predicate);
-            alternatives.sort();
-            alternatives.dedup();
-            Predicate::Or(alternatives)
-        }
-        (left, right) => Predicate::Or(vec![left, right]),
-    }
-}
-
 /// One layout segment of a scalar run: literal text, a template hole, or a
 /// whole inline control region (grouping the region's holes and texts).
 enum Segment {
@@ -251,410 +54,189 @@ enum Segment {
     Region(Span),
 }
 
-impl Interpreter<'_> {
-    /// Evaluate one condition expression through the shared value lattice
-    /// with bound-helper resolution (guard-read derivation for conditions
-    /// over helper calls).
-    pub(super) fn eval_hole_exprs_for_condition(&mut self, expr: &TemplateExpr) -> HoleEval {
-        self.eval_hole_exprs(std::slice::from_ref(expr))
-    }
-
-    /// Absorbs every runtime effect produced while evaluating a control header.
-    ///
-    /// Header values are not rendered, so their ordinary output paths remain owned by the
-    /// control evaluator. Strict call contracts, conversions, and called-helper effects still
-    /// execute before the header decides whether its body runs.
-    pub(super) fn absorb_header_execution_effects(
-        &mut self,
-        expr: &TemplateExpr,
-    ) -> std::collections::BTreeSet<String> {
-        let hole = self.eval_hole_exprs_for_condition(expr);
-        let mut effects = hole.effects;
-        effects.bound_output_paths.clear();
-        let strict_paths: std::collections::BTreeSet<String> = effects
-            .helper_fails
-            .iter()
-            .flat_map(|capture| capture.conjunction.iter())
-            .flat_map(Predicate::value_paths)
-            .collect();
-        // Derived booleans and counts erase output identity, but their operands remain strict.
-        // A header has no output slot to protect, so the hard operand contract wins over that
-        // placement-only erasure. Truly total calls such as `join` have no failure capture.
-        effects
-            .shape_erased_paths
-            .retain(|path| !strict_paths.contains(path));
-
-        for path in &effects.string_contract_paths {
-            let sink = if self.hint_scope_is_unconditional(path) {
-                &mut self.type_hints
-            } else {
-                &mut self.guarded_type_hints
-            };
-            sink.entry(path.clone())
-                .or_default()
-                .insert("string".to_string());
-        }
-
-        let has_helper_claims = !effects.helper_reads.is_empty()
-            || !effects.helper_rendered.is_empty()
-            || !effects.helper_dependency_rendered.is_empty();
-        let mut claims = if has_helper_claims {
-            helper_claim_paths(&effects)
-        } else {
-            std::collections::BTreeSet::new()
-        };
-        if has_helper_claims {
-            claims.extend(effects.type_hints.keys().cloned());
-        }
-        self.absorb_hole_effects(&effects, RenderedDemotion::None);
-
-        claims
-            .iter()
-            .filter(|path| !helm_schema_core::values_path_has_descendant(path, &claims))
+/// Split a hole's evaluation into the value to lower and the extra effect
+/// paths that attribute at the hole beyond the value's own paths (condition
+/// operands of `ternary`/`and`/`or`, shallow local sources, …) — the
+/// current pipeline emits every expression output path at the slot, so the
+/// projection keeps that rule. At scalar sites, ancestor paths with a more
+/// specific path in the same hole are dropped (the pipeline's
+/// most-specific-path retain rule for scalar slots).
+fn prepare_hole_value(
+    value: Option<AbstractValue>,
+    effects: &Effects,
+    scalar_site: bool,
+) -> (Option<AbstractValue>, Vec<String>) {
+    let value_paths = value.as_ref().map(AbstractValue::paths).unwrap_or_default();
+    let effect_paths = effects.output_value_paths();
+    let all: std::collections::BTreeSet<String> = value_paths
+        .iter()
+        .chain(effect_paths.iter())
+        .filter(|path| !path.is_empty())
+        .cloned()
+        .collect();
+    let drop: std::collections::BTreeSet<String> = if scalar_site {
+        all.iter()
+            .filter(|path| helm_schema_core::values_path_has_descendant(path, &all))
             .cloned()
             .collect()
-    }
+    } else {
+        std::collections::BTreeSet::new()
+    };
+    let value = value.and_then(|value| value.remove_fragment_paths(&drop));
+    let extras = effect_paths
+        .into_iter()
+        .filter(|path| !path.is_empty() && !value_paths.contains(path) && !drop.contains(path))
+        .collect();
+    (value, extras)
+}
 
-    /// Record every `required(message, subject)` guardrail in the
-    /// expressions: rendering fails under the ambient predicates whenever a
-    /// subject resolving to exactly one values path is Helm-empty. Member
-    /// bindings resolve here (the value-path context sees them), so ranged
-    /// subjects attach per-member requirements.
-    pub(super) fn record_required_subjects(&mut self, exprs: &[TemplateExpr]) {
-        let mut subject_paths = Vec::new();
-        let mut statically_empty = false;
-        {
-            let context = self.value_path_context();
-            for expr in exprs {
-                for subject in required_call_subjects(expr) {
-                    // `required "msg" nil` (and its `index (dict) …`
-                    // spellings) is a pure validator: whenever control
-                    // reaches it, rendering terminates, so the ambient
-                    // predicates form a terminal clause.
-                    if subject_is_statically_helm_empty(subject) {
-                        statically_empty = true;
-                        continue;
-                    }
-                    let paths = context.paths_for_expr(subject);
-                    if paths.len() == 1 {
-                        subject_paths.extend(paths);
-                    }
+/// The single hole of a scalar run that covers the entire value, or `None`
+/// when literal text makes the hole a partial scalar.
+fn entire_hole_span(segments: &[Segment]) -> Option<Span> {
+    let mut hole = None;
+    let mut prefix = String::new();
+    let mut suffix = String::new();
+    for segment in segments {
+        match segment {
+            Segment::Region(_) => return None,
+            Segment::Hole(span) => {
+                if hole.is_some() {
+                    return None;
                 }
+                hole = Some(*span);
             }
-        }
-        if statically_empty {
-            self.record_fail_condition();
-        }
-        for path in subject_paths {
-            self.record_required_condition(&path);
-        }
-    }
-
-    /// Evaluate the expressions of one output hole through the shared value
-    /// lattice, resolving bound helper calls via the memoized summaries.
-    fn eval_hole_exprs(&mut self, exprs: &[TemplateExpr]) -> HoleEval {
-        let current_dot = self.current_value_dot();
-        let mut env = EvalEnv::from_helper_context(Some(&self.root_bindings), current_dot.as_ref())
-            .without_helper_call_args();
-        // Locals (`$x`) and root bindings (`.x`) are distinct namespaces:
-        // roots stay in `root_fields` so a helper-arg key never shadows a
-        // same-named body local. Range VALUE variables resolve to member
-        // identity (`$arg` in `range $arg := .Values.args` is `args.*`),
-        // the same identity the range dot already carries, so member
-        // consumers (`tpl $arg`) bind their contracts per member;
-        // explicit fragment values shadow them where both exist.
-        env.locals = self.locals.range_member_values.clone();
-        env.locals.extend(
-            self.locals
-                .fragment_values
-                .iter()
-                .map(|(name, value)| (name.clone(), value.clone())),
-        );
-        env.local_default_paths = self.locals.default_paths.clone();
-        env.local_output_meta = self.locals.output_meta.clone();
-        env.member_host_conversions = self.member_host_conversions.clone();
-        env.active_predicates = self.active_predicates.clone();
-        env.root_truthy_predicates = self.root_truthy_predicates.clone();
-        env.bound_values =
-            BoundValueContext::new(&self.locals.range_domains, &self.locals.get_bindings);
-        let context = FragmentEvalContext::new(self.db);
-        let mut seen = self.helper_seen.clone();
-        let mut values = Vec::new();
-        let mut effects = Effects::default();
-        for expr in exprs {
-            let result = document_result_from_expr(
-                expr,
-                &env,
-                &env.locals,
-                Some(&self.root_bindings),
-                current_dot.as_ref(),
-                context,
-                &mut seen,
-            );
-            values.extend(result.value);
-            effects.merge(result.effects);
-        }
-        HoleEval {
-            value: AbstractValue::choice(values).map(|value| value.to_context_value()),
-            effects,
-        }
-    }
-
-    /// Absorb a hole's effect stream into interpreter state and the read
-    /// list: chart-level default mutations (source order), declared type
-    /// hints, bound-value reads, and helper-internal read facts. Rendered
-    /// helper rows become reads only in no-render contexts, per the site's
-    /// [`RenderedDemotion`] flavor.
-    /// Whether a hint on `path` binds unconditionally. Guards about `path`
-    /// itself (self-guards, `typeIs` type switches) partition its own
-    /// domain; `range`/`with` headers and `default` fallbacks bind values
-    /// without expressing configuration branches. Only a document-level
-    /// boolean-style guard on some OTHER path scopes the hint to that
-    /// branch — helper-internal branches are calling-convention dispatch,
-    /// not chart configuration, so they never scope hints.
-    pub(super) fn hint_scope_is_unconditional(&self, path: &str) -> bool {
-        if self.helper_scope {
-            return true;
-        }
-        fn guard_gates(guard: &Guard, path: &str) -> bool {
-            let foreign = |guard_path: &str| {
-                guard_path != path
-                    && !helm_schema_core::values_path_is_descendant(guard_path, path)
-                    && !helm_schema_core::values_path_is_descendant(path, guard_path)
-            };
-            match guard {
-                Guard::Range { .. } | Guard::With { .. } | Guard::Default { .. } => false,
-                Guard::Truthy { path: guard_path }
-                | Guard::Not { path: guard_path }
-                | Guard::Absent { path: guard_path }
-                | Guard::Eq {
-                    path: guard_path, ..
-                }
-                | Guard::NotEq {
-                    path: guard_path, ..
-                } => !guard_path.trim().is_empty() && foreign(guard_path),
-                // A type test PARTITIONS its subject: hints observed under
-                // it hold only for the tested types, even on the hinted
-                // path itself (a self-truthy guard, by contrast, only
-                // states nullability).
-                Guard::TypeIs {
-                    path: guard_path, ..
-                }
-                | Guard::NotTypeIs {
-                    path: guard_path, ..
-                } => !guard_path.trim().is_empty(),
-                Guard::Or { paths } => paths
-                    .iter()
-                    .any(|guard_path| !guard_path.trim().is_empty() && foreign(guard_path)),
-                Guard::AnyOf { alternatives } => alternatives
-                    .iter()
-                    .flatten()
-                    .any(|guard| guard_gates(guard, path)),
-            }
-        }
-        fn predicate_gates(predicate: &Predicate, path: &str) -> bool {
-            match predicate {
-                Predicate::True | Predicate::False => false,
-                Predicate::Approximate { .. } => true,
-                Predicate::Guard(guard) => guard_gates(guard, path),
-                Predicate::Not(inner) => predicate_gates(inner, path),
-                Predicate::And(predicates) | Predicate::Or(predicates) => {
-                    predicates.iter().any(|inner| predicate_gates(inner, path))
-                }
-            }
-        }
-        self.active_predicates
-            .iter()
-            .all(|predicate| !predicate_gates(predicate, path))
-    }
-
-    fn absorb_hole_effects(&mut self, effects: &Effects, demotion: RenderedDemotion) {
-        self.absorb_member_host_conversions(&effects.member_host_conversions);
-        self.apply_root_set_mutations(&effects.root_set_mutations, &effects.root_set_predicates);
-        self.values_default_sources_observed
-            .extend(effects.values_default_sources.iter().cloned());
-        self.chart_defaults_observed
-            .extend(effects.chart_default_paths.iter().cloned());
-        let mut chart_defaults = effects.chart_default_paths.clone();
-        self.locals.append_chart_value_defaults(&mut chart_defaults);
-
-        // Type hints surface from every hole, including assignment
-        // right-hand sides. A hint observed under branch predicates about
-        // OTHER paths holds only where those branches render: it may type
-        // conditional overlays but never the unconditional base. Predicates
-        // about the hinted path itself (self-guards, `typeIs` type
-        // switches) partition its own domain instead, so those hints stay
-        // base evidence.
-        for (path, hints) in &effects.type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            let sink = if self.hint_scope_is_unconditional(path) {
-                &mut self.type_hints
-            } else {
-                &mut self.guarded_type_hints
-            };
-            sink.entry(path.clone())
-                .or_default()
-                .extend(hints.iter().cloned());
-        }
-        for (path, hints) in &effects.guarded_type_hints {
-            if path.trim().is_empty() {
-                continue;
-            }
-            self.guarded_type_hints
-                .entry(path.clone())
-                .or_default()
-                .extend(hints.iter().cloned());
-        }
-        self.parsed_yaml_input_paths
-            .extend(effects.parsed_yaml_input_paths.iter().cloned());
-        self.yaml_serialized_paths
-            .extend(effects.yaml_serialized_paths.iter().cloned());
-        self.shape_erased_paths
-            .extend(effects.shape_erased_paths.iter().cloned());
-        self.direct_range_source_paths
-            .extend(effects.direct_range_source_paths.iter().cloned());
-        self.json_decoded_range_source_paths
-            .extend(effects.json_decoded_range_source_paths.iter().cloned());
-        self.destructured_range_source_paths
-            .extend(effects.destructured_range_source_paths.iter().cloned());
-        // Only an unconditional consumer contributes a path-wide contract.
-        // Conditional consumers travel through their placed rows and fail
-        // captures; promoting them here would reject values in dead arms.
-        if self.active_predicates.is_empty() && self.approximate_condition_paths.is_empty() {
-            self.string_contract_paths
-                .extend(effects.string_contract_paths.iter().cloned());
-        }
-        // Under ambient predicates the row lanes only hint (and hints
-        // about a path under its OWN guard stay row-anchored); the
-        // truthy⇒string capture carries the enforceable conditional arm
-        // through the fail machinery (ambient guards join at absorption).
-        // Predicate-free sites stay row-only: the unconditional row typing
-        // already states the requirement. Only DIRECT consumer subjects
-        // qualify — a called helper's contract flags lost their
-        // body-internal guards (its own fail lane carries the captures).
-        if !self.active_predicates.is_empty() {
-            self.absorb_condition_string_captures(&effects.direct_string_consumer_paths.clone());
-        }
-
-        let bound_reads: Vec<String> = effects.bound_output_paths.iter().cloned().collect();
-        for path in bound_reads {
-            self.push_read(&path, &[]);
-        }
-        // Guard-path reads that are strict ancestors of a predicate path the
-        // helper explicitly severed (index-call narrowing) are dropped, the
-        // same way the summary lane always skipped them. Narrowings observed
-        // in this source accumulate so a helper summary can apply them to
-        // its own condition reads.
-        for meta in effects.local_output_meta.values() {
-            self.suppress_predicate_paths
-                .extend(meta.suppress_predicate_paths.iter().cloned());
-        }
-        self.suppress_predicate_paths
-            .extend(effects.helper_suppressed_paths.iter().cloned());
-        let suppressed: std::collections::BTreeSet<&String> = effects
-            .helper_rendered
-            .iter()
-            .flat_map(|row| row.meta.suppress_predicate_paths.iter())
-            .chain(
-                effects
-                    .helper_dependency_rendered
-                    .iter()
-                    .flat_map(|row| row.meta.suppress_predicate_paths.iter()),
-            )
-            .chain(effects.helper_suppressed_paths.iter())
-            .collect();
-        let claims = helper_claim_paths(effects);
-        self.absorb_helper_reads_with_suppression(&effects.helper_reads, &suppressed, &claims);
-        for row in &effects.helper_dependency_rendered {
-            let kind = if row.encoded {
-                ValueKind::Scalar
-            } else {
-                row.kind
-            };
-            self.push_meta_reads(&row.path, kind, &row.meta, &claims, true);
-        }
-        self.absorb_helper_fails(&effects.helper_fails);
-        match demotion {
-            RenderedDemotion::None => {}
-            RenderedDemotion::Document => {
-                for row in &effects.helper_rendered {
-                    // Encoded renders don't expose the value's shape; other
-                    // demoted rows keep their summary kind (structured helper
-                    // rows captured by assignments stay fragment evidence).
-                    let kind = if row.encoded {
-                        ValueKind::Scalar
-                    } else {
-                        row.kind
-                    };
-                    self.push_meta_reads(&row.path, kind, &row.meta, &claims, false);
-                }
-            }
-            RenderedDemotion::Dependency => {
-                for row in &effects.helper_rendered {
-                    self.push_meta_reads(&row.path, ValueKind::Scalar, &row.meta, &claims, true);
+            Segment::Text(text) => {
+                if hole.is_none() {
+                    prefix.push_str(text);
+                } else {
+                    suffix.push_str(text);
                 }
             }
         }
     }
+    let hole = hole?;
+    (prefix.trim().is_empty() && suffix.trim().is_empty()).then_some(hole)
+}
 
-    fn apply_root_set_mutations(
-        &mut self,
-        mutations: &std::collections::BTreeMap<String, AbstractValue>,
-        predicates: &std::collections::BTreeMap<String, Predicate>,
-    ) {
-        for (key, value) in mutations {
-            self.root_truthy_predicates.remove(key);
-            self.root_set_predicates_observed.remove(key);
-            self.root_bindings.insert(key.clone(), value.clone());
-            self.root_set_mutations_observed
-                .insert(key.clone(), value.clone());
-            if let Some(predicate) = predicates.get(key) {
-                self.root_truthy_predicates
-                    .insert(key.clone(), predicate.clone());
-                self.root_set_predicates_observed
-                    .insert(key.clone(), predicate.clone());
-            }
+/// The static YAML key of a `printf "key: %s" …` hole (the format's leading
+/// mapping key), when the hole is exactly one such printf.
+fn static_printf_yaml_key(exprs: &[TemplateExpr]) -> Option<String> {
+    fn printf_format(expr: &TemplateExpr) -> Option<&str> {
+        match expr {
+            TemplateExpr::Parenthesized(inner) => printf_format(inner),
+            TemplateExpr::Call { function, args } if function == "printf" => match args.first()? {
+                TemplateExpr::Literal(
+                    helm_schema_ast::Literal::String(format)
+                    | helm_schema_ast::Literal::RawString(format),
+                ) => Some(format),
+                _ => None,
+            },
+            TemplateExpr::Pipeline(stages) => stages.first().and_then(printf_format),
+            _ => None,
         }
     }
 
-    /// Pathless reads for every values path the hole's effects attribute
-    /// (used where the current pipeline suppresses rendered placement:
-    /// assignment right-hand sides and render-suppressed fragment holes).
-    /// Ancestor paths with a more specific path in the same hole are dropped
-    /// (the most-specific-path rule for scalar sites), and paths already
-    /// covered by rendered helper rows read through those rows instead.
-    fn push_effects_reads(&mut self, hole: &HoleEval, kind: ValueKind) {
-        let row_sources: std::collections::BTreeSet<&String> = hole
-            .effects
-            .helper_rendered
-            .iter()
-            .map(|row| &row.path)
-            .collect();
-        let defaulted = hole.effects.default_paths_with_local();
-        let all = hole.effects.output_value_paths();
-        for path in &all {
-            if helm_schema_core::values_path_has_descendant(path, &all)
-                || row_sources.contains(path)
-            {
-                continue;
+    let [expr] = exprs else {
+        return None;
+    };
+    let format = printf_format(expr)?;
+    helm_schema_ast::parse_yaml_key(format.trim_start())
+}
+
+/// The literal helper call a hole splices whole: exactly one expression
+/// that is an `include`/`template` call with a literal name, either bare or
+/// piped only through indent shaping (`nindent`/`indent`), which relocates
+/// the fragment without transforming it.
+fn splice_target_helper_call(exprs: &[TemplateExpr]) -> Option<(&str, Option<&TemplateExpr>)> {
+    let [expr] = exprs else {
+        return None;
+    };
+    let call = match expr.deparen() {
+        TemplateExpr::Pipeline(stages) => {
+            let (first, rest) = stages.split_first()?;
+            if !rest.iter().all(|stage| {
+                matches!(
+                    stage.deparen(),
+                    TemplateExpr::Call { function, .. }
+                        if matches!(function.as_str(), "nindent" | "indent")
+                )
+            }) {
+                return None;
             }
-            let mut extra = Vec::new();
-            if defaulted.contains(path) {
-                extra.push(Guard::Default { path: path.clone() });
-            }
-            let (resource, provenance) = match &self.current_site {
-                Some(site) => (
-                    site.resource.clone(),
-                    site.provenance.iter().cloned().collect(),
-                ),
-                None => (None, Vec::new()),
-            };
-            self.push_read_row(path, kind, &extra, resource, provenance, false);
+            first.deparen()
+        }
+        other => other,
+    };
+    let TemplateExpr::Call { function, args } = call else {
+        return None;
+    };
+    let name = literal_helper_call_callee(function, args)?;
+    Some((name, args.get(1)))
+}
+
+/// Whether an action hole is a control-flow fragment (`{{ if … }}`,
+/// `{{ else }}`, `{{ end }}`, …) rather than an output expression. These
+/// appear as bare holes inside block-scalar bodies where the region
+/// structure itself is represented separately.
+fn hole_is_control_fragment(text: &str) -> bool {
+    let mut inner = text.trim();
+    if let Some(rest) = inner.strip_prefix("{{") {
+        inner = rest.trim_start_matches('-').trim_start();
+    }
+    matches!(
+        inner.split_whitespace().next(),
+        Some("if" | "else" | "end" | "range" | "with" | "define" | "block")
+    )
+}
+
+fn combine_scalar_arms(
+    base: Vec<(PathCondition, Vec<StringPart>)>,
+    segment: Vec<(PathCondition, Vec<StringPart>)>,
+) -> Vec<(PathCondition, Vec<StringPart>)> {
+    if segment.is_empty() {
+        return base;
+    }
+    if base.len().saturating_mul(segment.len()) > MAX_SCALAR_ARMS {
+        // Bounded fallback: drop the cross-segment correlation but keep
+        // every contribution under its own conditions (projection reads
+        // per-part attribution, not reconstructed text).
+        let mut arms = base;
+        arms.extend(segment);
+        if arms.len() > MAX_SCALAR_ARM_FANOUT {
+            let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
+            return vec![(Predicate::True, parts)];
+        }
+        return arms;
+    }
+    let mut out = Vec::new();
+    for (base_condition, base_parts) in &base {
+        for (segment_condition, segment_parts) in &segment {
+            let mut parts = base_parts.clone();
+            parts.extend(segment_parts.iter().cloned());
+            out.push((
+                and_conditions(base_condition.clone(), segment_condition.clone()),
+                parts,
+            ));
         }
     }
+    out
+}
 
+fn scalar_arms_to_fragment(
+    arms: Vec<(PathCondition, Vec<StringPart>)>,
+    suppressed: bool,
+) -> Guarded<AbstractFragment> {
+    let mut out = Guarded::empty();
+    for (condition, parts) in arms {
+        out.arms.push((
+            condition,
+            AbstractFragment::Scalar(AbstractString { parts, suppressed }),
+        ));
+    }
+    out
+}
+
+impl Interpreter<'_> {
     /// Evaluate a hole standing as an entire fragment position.
     pub(super) fn eval_entire_hole(&mut self, span: Span) -> Guarded<AbstractFragment> {
         self.eval_output_action(span).0
@@ -724,10 +306,10 @@ impl Interpreter<'_> {
         // represent, so a string contract riding them would narrow states
         // the real branch never reaches.
         let no_contracts = std::collections::BTreeSet::new();
-        let row_string_contract_paths = if self.approximate_condition_paths.is_empty() {
-            &hole.effects.string_contract_paths
-        } else {
+        let row_string_contract_paths = if self.under_approximate_condition() {
             &no_contracts
+        } else {
+            &hole.effects.string_contract_paths
         };
         let scope = LowerScope {
             defaulted_paths: &defaulted,
@@ -848,12 +430,7 @@ impl Interpreter<'_> {
             .extend(summary.yaml_serialized_paths.iter().cloned());
         self.string_contract_paths
             .extend(summary.string_contract_paths.iter().cloned());
-        self.direct_range_source_paths
-            .extend(summary.direct_range_source_paths.iter().cloned());
-        self.json_decoded_range_source_paths
-            .extend(summary.json_decoded_range_source_paths.iter().cloned());
-        self.destructured_range_source_paths
-            .extend(summary.destructured_range_source_paths.iter().cloned());
+        self.range_modes.merge(&summary.range_modes);
         self.chart_defaults_observed
             .extend(summary.chart_defaults.iter().cloned());
         self.apply_root_set_mutations(&summary.root_set_mutations, &summary.root_set_predicates);
@@ -914,10 +491,10 @@ impl Interpreter<'_> {
         // represent, so a string contract riding them would narrow states
         // the real branch never reaches.
         let no_contracts = std::collections::BTreeSet::new();
-        let row_string_contract_paths = if self.approximate_condition_paths.is_empty() {
-            &hole.effects.string_contract_paths
-        } else {
+        let row_string_contract_paths = if self.under_approximate_condition() {
             &no_contracts
+        } else {
+            &hole.effects.string_contract_paths
         };
         let scope = LowerScope {
             defaulted_paths: &defaulted,
@@ -1121,968 +698,4 @@ impl Interpreter<'_> {
         self.push_effects_reads(&hole, ValueKind::Fragment);
         self.restore_site(previous_site);
     }
-
-    /// Evaluate an inline `{{ if }}…{{ end }}` or `{{ range }}…{{ end }}`
-    /// region inside a scalar by re-parsing the region text with the
-    /// Go-template grammar and turning its branches into guarded scalar
-    /// arms. Other inline regions (`with`) and nested regions degrade to
-    /// conservative taint. The whole region evaluates under the region's
-    /// site facts (its holes share the region's line).
-    pub(super) fn eval_inline_region(
-        &mut self,
-        span: Span,
-    ) -> Vec<(PathCondition, Vec<StringPart>)> {
-        let region_site = self.region_site(span);
-        let previous_site = std::mem::replace(&mut self.current_site, region_site);
-        let mut arms = self.eval_inline_region_arms(span);
-        for (_, parts) in &mut arms {
-            stamp_part_sites(parts, &self.current_site);
-        }
-        self.restore_site(previous_site);
-        arms
-    }
-
-    fn eval_inline_region_arms(&mut self, span: Span) -> Vec<(PathCondition, Vec<StringPart>)> {
-        let text = self.text(span);
-        let Some(tree) = parse_go_template(text) else {
-            return self.inline_region_taint(text);
-        };
-        let root = tree.root_node();
-        let mut cursor = root.walk();
-        let Some(action) = root
-            .named_children(&mut cursor)
-            .find(|child| matches!(child.kind(), "if_action" | "range_action"))
-        else {
-            return self.inline_region_taint(text);
-        };
-        self.eval_inline_control_action(action, text)
-    }
-
-    fn eval_inline_control_action(
-        &mut self,
-        action: tree_sitter::Node<'_>,
-        text: &str,
-    ) -> Vec<(PathCondition, Vec<StringPart>)> {
-        if action.kind() == "range_action" {
-            return self.eval_inline_range(action, text);
-        }
-
-        let mut arm_specs = vec![(
-            control_header(text, action),
-            children_with_field(action, "consequence"),
-        )];
-        arm_specs.extend(else_if_pairs(action, text));
-        arm_specs.push((None, children_with_field(action, "alternative")));
-
-        let entry_predicates = self.active_predicates.len();
-        let entry_approximate = self.approximate_condition_paths.len();
-        let mut prior_approximate_paths: Vec<String> = Vec::new();
-        let mut prior: Vec<PathCondition> = Vec::new();
-        let mut arms = Vec::new();
-        for (branch_index, (header, children)) in arm_specs.into_iter().enumerate() {
-            self.active_predicates.truncate(entry_predicates);
-            self.approximate_condition_paths.truncate(entry_approximate);
-            // An arm under the negation of an approximately-lowered prior
-            // is approximate on the same paths.
-            self.approximate_condition_paths
-                .extend(prior_approximate_paths.iter().cloned());
-            let mut arm_condition = Predicate::True;
-            for predicate in &prior {
-                let negated = predicate.negated();
-                self.push_predicate(negated.clone());
-                arm_condition = and_conditions(arm_condition, negated);
-            }
-            let arm_entry_approximate = self.approximate_condition_paths.len();
-            if let Some(own) =
-                self.activate_inline_if(header.as_ref(), action.start_byte(), branch_index)
-            {
-                arm_condition = and_conditions(arm_condition, own.clone());
-                prior.push(own);
-            }
-            prior_approximate_paths.extend(
-                self.approximate_condition_paths[arm_entry_approximate..]
-                    .iter()
-                    .cloned(),
-            );
-            for (sub_condition, parts) in self.inline_body_arms(&children, text) {
-                arms.push((and_conditions(arm_condition.clone(), sub_condition), parts));
-            }
-        }
-        self.active_predicates.truncate(entry_predicates);
-        self.approximate_condition_paths.truncate(entry_approximate);
-        if arms.len() > MAX_SCALAR_ARM_FANOUT {
-            let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
-            return vec![(Predicate::True, parts)];
-        }
-        arms
-    }
-
-    /// Evaluate an inline `{{ range }}…{{ end }}` region inside a scalar
-    /// with the structural range activation: literal-list domains, the
-    /// direct-path item dot, and the header read under `Guard::Range`; body
-    /// contributions carry the range condition. Body-local bindings stay
-    /// region-local (entry locals are restored, the same boundary as a
-    /// structural branch scope).
-    fn eval_inline_range(
-        &mut self,
-        node: tree_sitter::Node<'_>,
-        text: &str,
-    ) -> Vec<(PathCondition, Vec<StringPart>)> {
-        let Some(header) = helm_schema_ast::range_header_from_source(node, text) else {
-            return self.inline_region_taint(text);
-        };
-        let entry_predicates = self.active_predicates.len();
-        let entry_dots = self.dot_stack.len();
-        let entry_ranged = self.active_direct_ranged_paths.len();
-        let entry_locals = self.locals.clone();
-        if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
-            self.locals.insert_range_domain(variable, literals);
-        }
-        self.absorb_header_execution_effects(header.expr());
-        let range_source = match header.expr().deparen() {
-            TemplateExpr::VariableDefinition { value, .. }
-            | TemplateExpr::Assignment { value, .. } => value.as_ref(),
-            expr => expr,
-        };
-        let (source_paths, direct_path, json_decoded_path) = {
-            let context = self.value_path_context();
-            (
-                context
-                    .resolved_values_paths_from_expr(header.expr())
-                    .into_iter()
-                    .collect::<Vec<_>>(),
-                context.single_direct_iterable_range_path_expr(range_source),
-                context.single_direct_json_decoded_range_path_expr(range_source),
-            )
-        };
-        let destructured = helm_schema_ast::range_has_destructured_variable_definition(node);
-        let mut own = Vec::new();
-        for path in &source_paths {
-            let guard = Guard::Range { path: path.clone() };
-            self.push_read(path, std::slice::from_ref(&guard));
-            own.push(Predicate::from(guard.clone()));
-            self.push_predicate(Predicate::from(guard));
-        }
-        let condition = Predicate::all(own);
-        if let Some(path) = &direct_path {
-            self.direct_range_source_paths.insert(path.clone());
-            if destructured {
-                self.destructured_range_source_paths.insert(path.clone());
-            }
-            self.active_direct_ranged_paths.push(path.clone());
-        }
-        if let Some(path) = &json_decoded_path {
-            self.json_decoded_range_source_paths.insert(path.clone());
-        }
-        let dot = direct_path.as_ref().map(|path| {
-            let member_path = helm_schema_core::append_value_path(path, "*");
-            if json_decoded_path.as_ref() == Some(path) {
-                AbstractValue::JsonDecodedPath(member_path)
-            } else {
-                AbstractValue::ValuesPath(member_path)
-            }
-        });
-        let value_variable = if destructured {
-            helm_schema_ast::range_destructured_value_variable(node, text)
-        } else {
-            helm_schema_ast::range_variable_name_expr(header.expr())
-        };
-        if let Some((variable, binding)) = value_variable.zip(dot.clone()) {
-            self.locals.range_member_values.insert(variable, binding);
-        }
-        if destructured
-            && let Some(variable) = helm_schema_ast::range_destructured_key_variable(node, text)
-            && let Some(path) = direct_path
-        {
-            self.locals
-                .range_member_values
-                .insert(variable, AbstractValue::RangeKey(path));
-        }
-        self.dot_stack.push(dot);
-        let mut arms = Vec::new();
-        for (sub_condition, parts) in
-            self.inline_body_arms(&children_with_field(node, "body"), text)
-        {
-            arms.push((and_conditions(condition.clone(), sub_condition), parts));
-        }
-        self.dot_stack.truncate(entry_dots);
-        self.active_predicates.truncate(entry_predicates);
-        self.active_direct_ranged_paths.truncate(entry_ranged);
-        self.locals = entry_locals;
-        // A `{{ range }}…{{ else }}…{{ end }}` alternative renders when the
-        // iterable is empty; like the structural range arms it decodes no
-        // negated condition.
-        for (sub_condition, parts) in
-            self.inline_body_arms(&children_with_field(node, "alternative"), text)
-        {
-            arms.push((sub_condition, parts));
-        }
-        arms
-    }
-
-    /// Fold one inline branch body into guarded part arms. Conditions
-    /// arising inside the body (helper meta branches) stay on their own
-    /// hole's arms — sibling holes of the same body are not correlated, so
-    /// each part keeps exactly its own conditions (a cartesian product here
-    /// would fabricate contradictory cross-hole combinations).
-    fn inline_body_arms(
-        &mut self,
-        children: &[tree_sitter::Node<'_>],
-        text: &str,
-    ) -> Vec<(PathCondition, Vec<StringPart>)> {
-        let mut base: Vec<StringPart> = Vec::new();
-        let mut conditional = Vec::new();
-        for child in children {
-            for (condition, parts) in self.inline_child_arms(*child, text) {
-                if condition == Predicate::True {
-                    base.extend(parts);
-                } else {
-                    conditional.push((condition, parts));
-                }
-            }
-        }
-        let mut arms = Vec::new();
-        if !base.is_empty() || conditional.is_empty() {
-            arms.push((Predicate::True, base));
-        }
-        arms.extend(conditional);
-        arms
-    }
-
-    fn activate_inline_if(
-        &mut self,
-        header: Option<&helm_schema_ast::TemplateHeader>,
-        region_start: usize,
-        branch_index: usize,
-    ) -> Option<PathCondition> {
-        let header = header?;
-        let (mut predicate, faithful) = {
-            let context = self.value_path_context();
-            (
-                context.condition_predicate_expr(header.expr()),
-                context.condition_lowering_is_faithful(header.expr()),
-            )
-        };
-        let helper_paths = self.absorb_header_execution_effects(header.expr());
-        if predicate.is_trivial() && !helper_paths.is_empty() {
-            predicate = Predicate::all(
-                helper_paths
-                    .iter()
-                    .cloned()
-                    .map(Predicate::truthy_path)
-                    .collect(),
-            );
-        }
-        if !faithful {
-            let paths = self
-                .value_path_context()
-                .resolved_values_paths_from_expr(header.expr());
-            if paths.is_empty() {
-                self.approximate_condition_paths.push(String::new());
-            }
-            self.approximate_condition_paths
-                .extend(paths.iter().cloned());
-            predicate = Predicate::approximate(
-                format!("{}:{region_start}:{branch_index}", self.source_offset),
-                paths,
-            );
-        }
-        let guards = predicate.contract_guards();
-        for guard in &guards {
-            for path in guard.value_paths() {
-                self.push_read(path, std::slice::from_ref(guard));
-            }
-            self.push_predicate(Predicate::from(guard.clone()));
-        }
-        if guards.is_empty() {
-            self.push_predicate(predicate.clone());
-        }
-        Some(predicate)
-    }
-
-    /// One inline body child as guarded part arms. An empty vec means "no
-    /// contribution" (the fold skips it); nested inline control degrades to
-    /// conservative taint.
-    fn inline_child_arms(
-        &mut self,
-        node: tree_sitter::Node<'_>,
-        text: &str,
-    ) -> Vec<(PathCondition, Vec<StringPart>)> {
-        match node_action(text, node) {
-            NodeAction::Text => {
-                let content = node.utf8_text(text.as_bytes()).unwrap_or("");
-                if content.is_empty() {
-                    Vec::new()
-                } else {
-                    vec![(
-                        Predicate::True,
-                        vec![StringPart::Text(
-                            [content.to_string()].into_iter().collect(),
-                        )],
-                    )]
-                }
-            }
-            NodeAction::Output(Some(exprs)) => {
-                // A `fail` output terminates rendering: no valid values
-                // document may satisfy the guards active here, and the
-                // action renders nothing.
-                if exprs.iter().any(expr_contains_fail_call) {
-                    self.record_fail_condition();
-                    return Vec::new();
-                }
-                self.record_required_subjects(&exprs);
-                let hole = self.eval_hole_exprs(&exprs);
-                self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
-                let defaulted = hole.effects.default_paths_with_local();
-                let kind = if exprs.iter().any(TemplateExpr::renders_yaml_fragment) {
-                    ValueKind::Fragment
-                } else {
-                    ValueKind::PartialScalar
-                };
-                let mut hole_meta = hole.effects.local_output_meta.clone();
-                merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
-                // As at block-scalar sites, string-contract metadata must
-                // abstain under approximately lowered conditions.
-                let no_contracts = std::collections::BTreeSet::new();
-                let row_string_contract_paths = if self.approximate_condition_paths.is_empty() {
-                    &hole.effects.string_contract_paths
-                } else {
-                    &no_contracts
-                };
-                let scope = LowerScope {
-                    defaulted_paths: &defaulted,
-                    encoded_paths: &hole.effects.encoded_paths,
-                    yaml_serialized_paths: &hole.effects.yaml_serialized_paths,
-                    shape_erased_paths: &hole.effects.shape_erased_paths,
-                    string_contract_paths: row_string_contract_paths,
-                    json_serialized_paths: &hole.effects.json_serialized_paths,
-                    chart_value_defaults: &self.locals.chart_value_defaults,
-                    local_source_paths: &hole.effects.local_source_paths,
-                    local_output_meta: &hole_meta,
-                };
-                match &hole.value {
-                    Some(value) => lower_value_scalar_arms(value, kind, &scope),
-                    None => Vec::new(),
-                }
-            }
-            NodeAction::Assignment(Some(exprs)) => {
-                self.eval_assignment_exprs(&exprs);
-                Vec::new()
-            }
-            NodeAction::Range(_) => self.eval_inline_range(node, text),
-            NodeAction::If(_) => self.eval_inline_control_action(node, text),
-            NodeAction::With(_) => {
-                // Nested inline control: keep the influence, drop the
-                // structure (bounded conservative fallback).
-                let content = node.utf8_text(text.as_bytes()).unwrap_or("");
-                let taint = self.resolved_paths_of_action_text(content);
-                if taint.is_empty() {
-                    Vec::new()
-                } else {
-                    vec![(
-                        Predicate::True,
-                        vec![StringPart::Taint(TaintPart::new(taint))],
-                    )]
-                }
-            }
-            NodeAction::Output(None) | NodeAction::Assignment(None) | NodeAction::Suppressed => {
-                Vec::new()
-            }
-            NodeAction::Descend => {
-                let mut cursor = node.walk();
-                let children: Vec<_> = node.children(&mut cursor).collect();
-                self.inline_body_arms(&children, text)
-            }
-        }
-    }
-
-    fn inline_region_taint(&mut self, text: &str) -> Vec<(PathCondition, Vec<StringPart>)> {
-        let taint = self.resolved_paths_of_action_text(text);
-        if taint.is_empty() {
-            return Vec::new();
-        }
-        vec![(
-            Predicate::True,
-            vec![StringPart::Taint(TaintPart::new(taint))],
-        )]
-    }
-
-    fn resolved_paths_of_action_text(&mut self, text: &str) -> std::collections::BTreeSet<String> {
-        let mut paths = std::collections::BTreeSet::new();
-        for expr in parse_action_expressions(text) {
-            paths.extend(
-                self.value_path_context()
-                    .resolved_values_paths_from_expr(&expr),
-            );
-        }
-        paths
-    }
-
-    /// Assignment actions: bind the local (fragment semantics), refresh its
-    /// default/meta facts, and record the right-hand side's reads — the
-    /// current pipeline walks assignment bodies in a no-render scope, so all
-    /// of its claims are pathless.
-    pub(super) fn eval_assignment_span(&mut self, span: Span) {
-        let exprs = parse_expr_text(self.text(span));
-        if exprs.is_empty() {
-            return;
-        }
-        let previous_site = self.enter_hole_site(span);
-        self.eval_assignment_exprs(&exprs);
-        self.restore_site(previous_site);
-    }
-
-    /// Structural `set` mutations on local dict bindings (`set $ctx "k" v`,
-    /// bare or assigned to `$_`) mutate the target local instead of binding
-    /// output. Helper bodies rely on this for config-normalization chains;
-    /// only the chart-default effects surface (the summary lane never
-    /// claimed set-call operand reads).
-    fn record_dot_member_host_conversions(&mut self, exprs: &[TemplateExpr]) {
-        if !self.approximate_condition_paths.is_empty() {
-            return;
-        }
-        let Some(target_path) = self
-            .current_value_dot()
-            .and_then(|value| value.unique_path())
-        else {
-            return;
-        };
-        if target_path.is_empty() {
-            return;
-        }
-
-        let mut assignments = Vec::new();
-        for expr in exprs {
-            expr.walk(|node| {
-                let TemplateExpr::Call { function, args } = node else {
-                    return;
-                };
-                if function != "set" || args.len() != 3 {
-                    return;
-                }
-                let target_is_dot = match args[0].deparen() {
-                    TemplateExpr::Field(path) => path.is_empty(),
-                    TemplateExpr::Variable(variable) => variable.is_empty(),
-                    _ => false,
-                };
-                if target_is_dot {
-                    assignments.push((args[1].clone(), args[2].clone()));
-                }
-            });
-        }
-
-        for (key_expr, value_expr) in assignments {
-            let (keys, assigns_object) = {
-                let context = self.value_path_context();
-                let keys = context
-                    .with_body_fragment_value_expr(&key_expr)
-                    .map(|value| value.strings())
-                    .unwrap_or_default();
-                let assigns_object = matches!(
-                    context.with_body_fragment_value_expr(&value_expr),
-                    Some(AbstractValue::Dict(_))
-                );
-                (keys, assigns_object)
-            };
-            if !assigns_object {
-                continue;
-            }
-            for key in keys {
-                let path = helm_schema_core::append_value_path(&target_path, &key);
-                for predicate in &self.active_predicates {
-                    let Predicate::Guard(Guard::TypeIs {
-                        path: tested_path,
-                        schema_type,
-                    }) = predicate
-                    else {
-                        continue;
-                    };
-                    if tested_path != &path || schema_type == "object" {
-                        continue;
-                    }
-                    let mut outer_predicates = self
-                        .active_predicates
-                        .iter()
-                        .filter(|outer| *outer != predicate)
-                        .cloned()
-                        .collect::<Vec<_>>();
-                    outer_predicates.sort();
-                    outer_predicates.dedup();
-                    self.member_host_conversions.insert(MemberHostConversion {
-                        path: path.clone(),
-                        input_kind: schema_type.clone(),
-                        outer_predicates,
-                    });
-                }
-            }
-        }
-    }
-
-    fn absorb_member_host_conversions(
-        &mut self,
-        conversions: &std::collections::BTreeSet<MemberHostConversion>,
-    ) {
-        if !self.approximate_condition_paths.is_empty() {
-            return;
-        }
-        for conversion in conversions {
-            let mut outer_predicates = self.active_predicates.clone();
-            outer_predicates.extend(conversion.outer_predicates.iter().cloned());
-            if outer_predicates
-                .iter()
-                .any(Predicate::contains_approximation)
-            {
-                continue;
-            }
-            outer_predicates.sort();
-            outer_predicates.dedup();
-            self.member_host_conversions.insert(MemberHostConversion {
-                path: conversion.path.clone(),
-                input_kind: conversion.input_kind.clone(),
-                outer_predicates,
-            });
-        }
-    }
-
-    pub(super) fn apply_helper_scope_set_mutations(&mut self, exprs: &[TemplateExpr]) -> bool {
-        self.record_dot_member_host_conversions(exprs);
-        if !self.helper_scope {
-            return false;
-        }
-        let current_dot = self.current_dot_fragment();
-        let mut seen = self.helper_seen.clone();
-        if !crate::fragment_assignment::apply_local_set_mutations_from_exprs(
-            exprs,
-            &mut self.locals.fragment_values,
-            current_dot.as_ref(),
-            FragmentEvalContext::new(self.db),
-            &mut seen,
-        ) {
-            return false;
-        }
-        let effects = crate::expr_eval::eval_helper_exprs_direct_effects(
-            exprs,
-            &self.root_bindings,
-            self.current_value_dot().as_ref(),
-        );
-        self.chart_defaults_observed
-            .extend(effects.chart_default_paths.iter().cloned());
-        let mut chart_defaults = effects.chart_default_paths;
-        self.locals.append_chart_value_defaults(&mut chart_defaults);
-        true
-    }
-
-    pub(super) fn eval_assignment_exprs(&mut self, exprs: &[TemplateExpr]) {
-        if self.apply_helper_scope_set_mutations(exprs) {
-            return;
-        }
-        if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
-            let rhs = std::slice::from_ref(&assignment.rhs_expr);
-            self.record_required_subjects(rhs);
-            let rhs_truthy_reduction = {
-                let context = self.value_path_context();
-                context
-                    .condition_lowering_is_faithful(&assignment.rhs_expr)
-                    .then(|| context.condition_predicate_expr(&assignment.rhs_expr))
-            };
-            let output_effects = self.value_path_context().expression_output_effects(rhs);
-            let hole = self.eval_hole_exprs(rhs);
-            // The binding is the hole value without widened members (an
-            // unknown call result is influence, not a values-backed
-            // fragment).
-            let fragment_value = hole.value.clone().and_then(AbstractValue::without_widened);
-            let previous_truthy_reduction = self
-                .locals
-                .truthy_reductions
-                .get(&assignment.variable)
-                .cloned();
-            let truthy_reduction = match assignment.kind {
-                crate::fragment_assignment::AssignmentKind::Declaration => rhs_truthy_reduction
-                    .or_else(|| {
-                        // A text-producing RHS (`$m := join "\n" $list`) keeps
-                        // its INPUT value for attribution, but the binding's
-                        // runtime truthiness is the produced text's emptiness,
-                        // which that value cannot witness: a nonempty list can
-                        // join to "". Abstain instead of reducing.
-                        if rhs_produces_derived_text(&assignment.rhs_expr) {
-                            return None;
-                        }
-                        static_value_truthiness(fragment_value.as_ref()).map(|truthy| {
-                            if truthy {
-                                Predicate::True
-                            } else {
-                                Predicate::False
-                            }
-                        })
-                    }),
-                crate::fragment_assignment::AssignmentKind::Assignment
-                    if self_preserving_nonempty_accumulation(
-                        &assignment.rhs_expr,
-                        &assignment.variable,
-                    ) =>
-                {
-                    previous_truthy_reduction.map(|previous| {
-                        let condition = Predicate::all(self.active_predicates.clone());
-                        let lowerable = self.approximate_condition_paths.is_empty()
-                            && condition.contract_guards_are_exact()
-                            && condition.value_paths().iter().all(|path| {
-                                !path.starts_with('$') && !path.split('.').any(|part| part == "*")
-                            });
-                        if lowerable {
-                            or_predicates(previous, condition)
-                        } else {
-                            previous
-                        }
-                    })
-                }
-                crate::fragment_assignment::AssignmentKind::Assignment => None,
-            };
-            // Helper bodies keep the prior binding when the right-hand side
-            // resolves to nothing (the summary lane's rule): an unresolvable
-            // re-assignment in one branch must not erase the other branches'
-            // value at the join.
-            if fragment_value.is_some() || !self.helper_scope {
-                self.locals.bind_fragment_value(
-                    assignment.kind,
-                    assignment.variable.clone(),
-                    fragment_value.clone(),
-                );
-            }
-            if let Some(predicate) = truthy_reduction {
-                self.locals
-                    .truthy_reductions
-                    .insert(assignment.variable.clone(), predicate);
-            } else {
-                self.locals.truthy_reductions.remove(&assignment.variable);
-            }
-            // `$tp := typeOf .Values.x` binds a TYPE DESCRIPTOR of the path:
-            // later `eq $tp "string"` comparisons are type tests, never value
-            // equalities, so remember the described path. Recorded after the
-            // value binding, whose displacement clears every other domain.
-            if let Some(source) = type_descriptor_source(&assignment.rhs_expr, self) {
-                self.locals
-                    .typeof_sources
-                    .insert(assignment.variable.clone(), source);
-            }
-            let mut output_meta = output_effects.local_output_meta.clone();
-            merge_rendered_row_meta(&mut output_meta, &hole.effects.helper_rendered);
-            // A shape-erasing RHS (`$tag := … | toString`) rides the binding:
-            // wherever the local renders, the splice exposes no input shape.
-            for path in &hole.effects.shape_erased_paths {
-                output_meta.entry(path.clone()).or_default().shape_erased = true;
-            }
-            for path in &hole.effects.yaml_serialized_paths {
-                output_meta.entry(path.clone()).or_default().yaml_serialized = true;
-            }
-            // Likewise a derived-text RHS (`$port := include … .`): a later
-            // consuming transform on the local operates on rendered text and
-            // claims nothing about the underlying paths.
-            for path in &hole.effects.derived_text_paths {
-                output_meta.entry(path.clone()).or_default().derived_text = true;
-            }
-            // A string-contracting RHS (`$name := .Values.x | trunc 63`)
-            // also rides the binding: wherever the local renders, that row
-            // requires a string input.
-            for path in &hole.effects.string_contract_paths {
-                output_meta.entry(path.clone()).or_default().string_contract = true;
-            }
-            for path in &hole.effects.json_serialized_paths {
-                output_meta.entry(path.clone()).or_default().json_serialized = true;
-            }
-            // Eager helper arguments execute, but their rendered values are dependencies rather
-            // than part of the assignment's value. Keep their runtime effects while preventing
-            // their output metadata from riding the assigned local.
-            let fragment_paths = fragment_value
-                .as_ref()
-                .map(AbstractValue::fragment_rendered_paths)
-                .unwrap_or_default();
-            let dependency_only_paths: std::collections::BTreeSet<&String> = hole
-                .effects
-                .helper_dependency_rendered
-                .iter()
-                .map(|row| &row.path)
-                .filter(|path| !fragment_paths.contains(*path))
-                .collect();
-            output_meta.retain(|path, _| !dependency_only_paths.contains(path));
-            // A `=` re-assignment under branch predicates keeps those
-            // predicates on each flowing path's meta: the write-through
-            // survives the branch join in the locals, so the conditions must
-            // ride the meta to the render site. A truthiness condition about
-            // a *different* flowing path describes a sibling's branch and
-            // stays off this path's meta.
-            if assignment.kind == crate::fragment_assignment::AssignmentKind::Assignment
-                && !self.active_predicates.is_empty()
-            {
-                if let Some(binding) = &fragment_value {
-                    for path in binding.fragment_rendered_paths() {
-                        output_meta.entry(path).or_default();
-                    }
-                }
-                let flowing: std::collections::BTreeSet<String> =
-                    output_meta.keys().cloned().collect();
-                for (path, meta) in &mut output_meta {
-                    let site: std::collections::BTreeSet<Predicate> = self
-                        .active_predicates
-                        .iter()
-                        .filter(|predicate| {
-                            predicate_applies_to_flowing_path(predicate, path, &flowing)
-                        })
-                        .cloned()
-                        .collect();
-                    meta.conjoin_branches(&site);
-                }
-            }
-            // Keep the (possibly empty) default and meta entries: the branch
-            // join unions per-variable facts only for variables every outcome
-            // still tracks, and a pre-branch binding without facts must not
-            // erase a branch's recorded ones.
-            self.locals
-                .default_paths
-                .insert(assignment.variable.clone(), output_effects.defaults.clone());
-            self.locals
-                .output_meta
-                .insert(assignment.variable.clone(), output_meta);
-            let demotion = if self.helper_scope {
-                RenderedDemotion::Dependency
-            } else {
-                RenderedDemotion::Document
-            };
-            self.absorb_hole_effects(&hole.effects, demotion);
-            // Inside helper bodies, direct expression paths ride the binding
-            // and surface where the local renders; the summary lane never
-            // claimed them at the assignment itself.
-            if !self.helper_scope {
-                let kind = if rhs.iter().any(TemplateExpr::renders_yaml_fragment) {
-                    ValueKind::Fragment
-                } else {
-                    ValueKind::Scalar
-                };
-                self.push_effects_reads(&hole, kind);
-            }
-        }
-        if let Some(get_binding) = parse_get_binding_from_exprs(exprs) {
-            self.locals.apply_get_binding(get_binding);
-        }
-    }
-}
-
-/// Split a hole's evaluation into the value to lower and the extra effect
-/// paths that attribute at the hole beyond the value's own paths (condition
-/// operands of `ternary`/`and`/`or`, shallow local sources, …) — the
-/// current pipeline emits every expression output path at the slot, so the
-/// projection keeps that rule. At scalar sites, ancestor paths with a more
-/// specific path in the same hole are dropped (the pipeline's
-/// most-specific-path retain rule for scalar slots).
-fn prepare_hole_value(
-    value: Option<AbstractValue>,
-    effects: &Effects,
-    scalar_site: bool,
-) -> (Option<AbstractValue>, Vec<String>) {
-    let value_paths = value.as_ref().map(AbstractValue::paths).unwrap_or_default();
-    let effect_paths = effects.output_value_paths();
-    let all: std::collections::BTreeSet<String> = value_paths
-        .iter()
-        .chain(effect_paths.iter())
-        .filter(|path| !path.is_empty())
-        .cloned()
-        .collect();
-    let drop: std::collections::BTreeSet<String> = if scalar_site {
-        all.iter()
-            .filter(|path| helm_schema_core::values_path_has_descendant(path, &all))
-            .cloned()
-            .collect()
-    } else {
-        std::collections::BTreeSet::new()
-    };
-    let value = value.and_then(|value| value.remove_fragment_paths(&drop));
-    let extras = effect_paths
-        .into_iter()
-        .filter(|path| !path.is_empty() && !value_paths.contains(path) && !drop.contains(path))
-        .collect();
-    (value, extras)
-}
-
-/// The single hole of a scalar run that covers the entire value, or `None`
-/// when literal text makes the hole a partial scalar.
-fn entire_hole_span(segments: &[Segment]) -> Option<Span> {
-    let mut hole = None;
-    let mut prefix = String::new();
-    let mut suffix = String::new();
-    for segment in segments {
-        match segment {
-            Segment::Region(_) => return None,
-            Segment::Hole(span) => {
-                if hole.is_some() {
-                    return None;
-                }
-                hole = Some(*span);
-            }
-            Segment::Text(text) => {
-                if hole.is_none() {
-                    prefix.push_str(text);
-                } else {
-                    suffix.push_str(text);
-                }
-            }
-        }
-    }
-    let hole = hole?;
-    (prefix.trim().is_empty() && suffix.trim().is_empty()).then_some(hole)
-}
-
-/// The claim paths of the helper calls one hole resolved (read and rendered
-/// sources), the sibling set for ambient-condition scoping.
-fn helper_claim_paths(effects: &Effects) -> std::collections::BTreeSet<String> {
-    let mut claims: std::collections::BTreeSet<String> = effects
-        .helper_reads
-        .iter()
-        .map(|read| read.values_path.clone())
-        .collect();
-    claims.extend(effects.helper_rendered.iter().map(|row| row.path.clone()));
-    claims.extend(
-        effects
-            .helper_dependency_rendered
-            .iter()
-            .map(|row| row.path.clone()),
-    );
-    claims
-}
-
-/// Whether an ambient predicate belongs on one flowing path's assignment
-/// meta: truthiness conditions about a different flowing path of the same
-/// assignment describe that sibling's branch (unrelated paths keep the
-/// condition).
-fn predicate_applies_to_flowing_path(
-    predicate: &Predicate,
-    path: &str,
-    flowing: &std::collections::BTreeSet<String>,
-) -> bool {
-    let predicate_path = match predicate {
-        Predicate::Guard(Guard::Truthy { path } | Guard::Not { path }) => path,
-        Predicate::Not(inner) => {
-            return predicate_applies_to_flowing_path(inner, path, flowing);
-        }
-        _ => return true,
-    };
-    predicate_path == path
-        || !flowing.contains(predicate_path)
-        || crate::helper_meta::values_paths_are_related(predicate_path, path)
-}
-
-/// The static YAML key of a `printf "key: %s" …` hole (the format's leading
-/// mapping key), when the hole is exactly one such printf.
-fn static_printf_yaml_key(exprs: &[TemplateExpr]) -> Option<String> {
-    fn printf_format(expr: &TemplateExpr) -> Option<&str> {
-        match expr {
-            TemplateExpr::Parenthesized(inner) => printf_format(inner),
-            TemplateExpr::Call { function, args } if function == "printf" => match args.first()? {
-                TemplateExpr::Literal(
-                    helm_schema_ast::Literal::String(format)
-                    | helm_schema_ast::Literal::RawString(format),
-                ) => Some(format),
-                _ => None,
-            },
-            TemplateExpr::Pipeline(stages) => stages.first().and_then(printf_format),
-            _ => None,
-        }
-    }
-
-    let [expr] = exprs else {
-        return None;
-    };
-    let format = printf_format(expr)?;
-    helm_schema_ast::parse_yaml_key(format.trim_start())
-}
-
-/// The literal helper call a hole splices whole: exactly one expression
-/// that is an `include`/`template` call with a literal name, either bare or
-/// piped only through indent shaping (`nindent`/`indent`), which relocates
-/// the fragment without transforming it.
-fn splice_target_helper_call(exprs: &[TemplateExpr]) -> Option<(&str, Option<&TemplateExpr>)> {
-    let [expr] = exprs else {
-        return None;
-    };
-    let call = match expr.deparen() {
-        TemplateExpr::Pipeline(stages) => {
-            let (first, rest) = stages.split_first()?;
-            if !rest.iter().all(|stage| {
-                matches!(
-                    stage.deparen(),
-                    TemplateExpr::Call { function, .. }
-                        if matches!(function.as_str(), "nindent" | "indent")
-                )
-            }) {
-                return None;
-            }
-            first.deparen()
-        }
-        other => other,
-    };
-    let TemplateExpr::Call { function, args } = call else {
-        return None;
-    };
-    let name = literal_helper_call_callee(function, args)?;
-    Some((name, args.get(1)))
-}
-
-/// Whether an action hole is a control-flow fragment (`{{ if … }}`,
-/// `{{ else }}`, `{{ end }}`, …) rather than an output expression. These
-/// appear as bare holes inside block-scalar bodies where the region
-/// structure itself is represented separately.
-fn hole_is_control_fragment(text: &str) -> bool {
-    let mut inner = text.trim();
-    if let Some(rest) = inner.strip_prefix("{{") {
-        inner = rest.trim_start_matches('-').trim_start();
-    }
-    matches!(
-        inner.split_whitespace().next(),
-        Some("if" | "else" | "end" | "range" | "with" | "define" | "block")
-    )
-}
-
-fn combine_scalar_arms(
-    base: Vec<(PathCondition, Vec<StringPart>)>,
-    segment: Vec<(PathCondition, Vec<StringPart>)>,
-) -> Vec<(PathCondition, Vec<StringPart>)> {
-    if segment.is_empty() {
-        return base;
-    }
-    if base.len().saturating_mul(segment.len()) > MAX_SCALAR_ARMS {
-        // Bounded fallback: drop the cross-segment correlation but keep
-        // every contribution under its own conditions (projection reads
-        // per-part attribution, not reconstructed text).
-        let mut arms = base;
-        arms.extend(segment);
-        if arms.len() > MAX_SCALAR_ARM_FANOUT {
-            let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
-            return vec![(Predicate::True, parts)];
-        }
-        return arms;
-    }
-    let mut out = Vec::new();
-    for (base_condition, base_parts) in &base {
-        for (segment_condition, segment_parts) in &segment {
-            let mut parts = base_parts.clone();
-            parts.extend(segment_parts.iter().cloned());
-            out.push((
-                and_conditions(base_condition.clone(), segment_condition.clone()),
-                parts,
-            ));
-        }
-    }
-    out
-}
-
-fn scalar_arms_to_fragment(
-    arms: Vec<(PathCondition, Vec<StringPart>)>,
-    suppressed: bool,
-) -> Guarded<AbstractFragment> {
-    let mut out = Guarded::empty();
-    for (condition, parts) in arms {
-        out.arms.push((
-            condition,
-            AbstractFragment::Scalar(AbstractString { parts, suppressed }),
-        ));
-    }
-    out
 }
