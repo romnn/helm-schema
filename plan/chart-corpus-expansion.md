@@ -3427,7 +3427,7 @@ Dynamic unresolved names must remain explicit unknowns. Pin literal/finite
 `.Files.Get`, BasePath partials, a nested include, and a non-`tpl` `.Files.Get`
 control whose contents must not be treated as executed.
 
-### F74. Strict parsers contribute only string kind, not lexical domain (OPEN — RECONFIRMED 2026-07-15)
+### F74. Strict parsers contribute only string kind, not lexical domain (PARTIAL 2026-07-15)
 
 Several Sprig/Helm calls first require a string and then parse a language with
 a smaller lexical domain. The current effect catalog stops at Go string kind,
@@ -3457,7 +3457,7 @@ diagnostic when Draft 7 cannot express the language. Pin direct/helper semver,
 duration/URL syntax, invalid/valid strings, dead guards, and an ordinary string
 consumer that must not inherit parser restrictions.
 
-### F75. Shape erasure does not project through collection element selectors (OPEN — RECONFIRMED 2026-07-15)
+### F75. Shape erasure does not project through collection element selectors (PARTIAL 2026-07-15)
 
 F17's total-stringification fact works for direct values and some ranged
 locals, but is lost when collection functions return an element or a derived
@@ -3973,7 +3973,7 @@ an enum unless the chart actually rejects the complement. Pin Deployment,
 StatefulSet, DaemonSet, an unknown kind, shared fields, kind-specific fields,
 and both Redis master/replica resources.
 
-### F86. Strict Boolean operands have no semantic call signature (OPEN — RECONFIRMED 2026-07-15)
+### F86. Strict Boolean operands have no semantic call signature (PARTIAL 2026-07-15)
 
 Go-template `if`, `and`, `or`, `not`, and emptiness tests accept general Helm
 truthiness. Sprig `ternary` does not: its third argument is a real Go `bool`.
@@ -4775,7 +4775,7 @@ Fixture regeneration was audited per class, not bulk-trusted:
   acceptance-neutral open-parent entries; chart-specific semantic suites
   (velero, signoz, kyverno, argo-cd, nats, reaudit 23/23) green.
 
-### F96. Header-condition string contracts drop the `default`-selection and nullable tolerance (PARTIAL 2026-07-15)
+### F96. Header-condition string contracts drop the `default`-selection and nullable tolerance (FIXED 2026-07-15)
 
 Found during the post-F95 fixture audit by diffing explicit-null override
 acceptance against the committed corpus schemas; both pins validate against
@@ -4809,6 +4809,11 @@ so the `default`-selection half is fixed. Kube-state-metrics still rejects
 `namespaceOverride: null` at the property's base `anyOf`, while Helm renders
 the same complete values document. The nullable self-guarded-scalar half
 therefore remains open.
+
+The later bounded runtime-signature round revalidated this survivor on the
+current tree: Kube State Metrics now accepts `namespaceOverride: null`, and a
+focused helper test pins the same null/string fallback alternatives. With the
+Minio half still green, F96 is now fixed.
 
 ### F97. Niladic methods on typed Helm objects are fabricated as Values paths (FIXED 2026-07-15)
 
@@ -5370,3 +5375,57 @@ for the later-chart survivors not explicitly changed above.
   nack `klogLevel`/`readOnly` cases all accept every scalar form on the
   current tree (fresh generation confirmed); the whole-chart fixtures already
   lock the scalar-union widening. No code change required.
+
+## Bounded runtime-signature round (2026-07-15)
+
+This section supersedes the F61/F74/F75/F86/F96 entries in the earlier status
+inventory. The implementations deliberately stop at semantic boundaries the
+current IR cannot represent without collapsing alternatives.
+
+- **F61 — remains PARTIAL.** Direct and pipeline `keys`/`values` calls now
+  require an object operand. Their list result is shape-erased so a downstream
+  string or YAML sink cannot incorrectly type the source map itself. Kyverno's
+  active `imagePullSecrets` array now rejects while the documented map form
+  validates. Other collection-signature survivors remain governed by the
+  existing F61 status.
+- **F74 — PARTIAL.** Direct and pipeline `semverCompare` calls over a syntactic
+  `.Values` selector now require the loose Masterminds-semver lexical language,
+  under the call's real execution guard. Airflow's direct `airflowVersion`
+  calls reject `garbage` and accept `3.2.2`. Parser facts deliberately abstain
+  for locals and helper returns: Traefik assembles candidate versions through
+  ternaries, regex guards, nested helpers, and fallbacks, and propagating one
+  pattern through the flattened return identity incorrectly rejected its
+  shipped inactive `latest` tags and empty `versionOverride`. Exact helper
+  propagation therefore still depends on F78/F90-style disjunctive return
+  alternatives. Duration, URL, base64, and the other parser languages remain
+  open under F74.
+- **F75 — PARTIAL.** `first`/`last` now project a values-backed collection to
+  its item path, while `initial`/`rest`/`compact` preserve the source list for
+  a later range. All five calls also carry their strict array operand
+  signature in direct and pipeline form. Zalando Postgres Operator UI now
+  accepts numeric and structured `envs.teams` elements because every selected
+  item is quoted; a simultaneous guarded `b64enc` use of the same source still
+  requires string items when live. `slice` and less direct helper/local
+  projections remain open.
+- **F86 — PARTIAL.** Direct and pipeline ternary conditions that are
+  syntactically direct `.Values` selectors now require Boolean input. Bitnami
+  Redis and Harbor reject string `enabled` selectors and accept Booleans.
+  Computed Boolean conditions such as `eq .Values.mode "active"` do not
+  back-propagate a Boolean requirement onto the string operand. Local/helper
+  selector identities remain open for the same alternative-preservation
+  reason as F74.
+- **F96 — FIXED.** The previously surviving Kube State Metrics
+  `namespaceOverride: null` case now validates, matching the self-guarded
+  fallback behavior, and a focused helper regression pins the same null/string
+  alternatives. Together with the already-fixed Minio default-selection half,
+  no F96 survivor remains.
+
+Verification for this round: `cargo check --workspace --all-targets`, 1091/1091
+`cargo nextest run --workspace`, `cargo test --doc --workspace`, and
+`task lint` are clean. All 55 corpus schemas accept their shipped defaults and
+match the regenerated fixtures; the closed-object and facet scans are empty,
+dotted keys remain literal or beneath open parents, and the CI-values sweep
+remains at its adjudicated 4/119 rejection baseline. Eighteen whole-chart
+fixtures and the SigNoz Zookeeper statefulset gen fixture changed; the large
+textual diffs are dominated by conditional-definition insertion and stable
+`$defs` renumbering.
