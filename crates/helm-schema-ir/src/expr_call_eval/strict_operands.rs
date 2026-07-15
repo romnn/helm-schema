@@ -5,12 +5,14 @@ use helm_schema_ast::TemplateExpr;
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
+use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_with_helper_calls};
 use helm_schema_core::Predicate;
 
 use super::serialization::record_total_conversion_effects;
 use super::value_facts::{identity_range_key_paths, identity_value_paths};
-use helm_schema_ast::{is_total_stringification_function, string_operand_indices};
+use helm_schema_ast::{
+    is_total_stringification_function, strict_parser_operand_pattern, string_operand_indices,
+};
 
 pub(super) fn record_string_transform_effects(
     function: &str,
@@ -105,6 +107,74 @@ pub(super) fn record_string_call_consumers(
     let (paths, raw_range_key_paths) = string_call_operand_facts(function, args, env, resolver);
     record_string_consumer_effects(&paths, effects);
     record_raw_range_key_string_consumer_paths(&raw_range_key_paths, effects);
+}
+
+pub(super) fn record_strict_parser_call(
+    function: &str,
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+    effects: &mut Effects,
+) {
+    let Some((index, pattern)) = strict_parser_operand_pattern(function, args.len()) else {
+        return;
+    };
+    let Some(arg) = args.get(index) else {
+        return;
+    };
+    // Locals and helper returns can denote several guarded or transformed
+    // alternatives. Until those return alternatives remain disjunctive at
+    // the call site, only a parser-proven direct values selector can safely
+    // inherit the parser's lexical domain.
+    if direct_values_path(arg).is_none() {
+        return;
+    }
+    let operand = eval_expr_with_helper_calls(arg, env, resolver);
+    record_strict_parser_result(&operand, pattern, effects);
+}
+
+pub(super) fn record_strict_parser_pipeline(
+    function: &str,
+    args: &[TemplateExpr],
+    piped: &EvalResult,
+    piped_is_direct_values_path: bool,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+    effects: &mut Effects,
+) {
+    let Some((index, pattern)) = strict_parser_operand_pattern(function, args.len() + 1) else {
+        return;
+    };
+    if index == args.len() {
+        // The pipeline flag is syntax-derived at the first stage; abstract
+        // path identity alone cannot distinguish a raw selector from a local
+        // or helper result assembled from several source paths.
+        if piped_is_direct_values_path {
+            record_strict_parser_result(piped, pattern, effects);
+        }
+    } else if let Some(arg) = args.get(index) {
+        if direct_values_path(arg).is_none() {
+            return;
+        }
+        let operand = eval_expr_with_helper_calls(arg, env, resolver);
+        record_strict_parser_result(&operand, pattern, effects);
+    }
+}
+
+fn record_strict_parser_result(operand: &EvalResult, pattern: &str, effects: &mut Effects) {
+    for path in strict_operand_identity_paths(operand) {
+        for mut conjunction in strict_operand_selection_conjunctions(operand, &path) {
+            conjunction.push(
+                Predicate::from(crate::Guard::MatchesPattern {
+                    path: path.clone(),
+                    pattern: pattern.to_string(),
+                    templated: false,
+                })
+                .negated(),
+            );
+            push_fail_capture(conjunction, effects);
+        }
+    }
 }
 
 /// Record that an expression stage consumes the RAW value of `paths` as a

@@ -53,6 +53,43 @@ fn common_fullname_helper_keeps_fullname_override_nullable() {
     );
 }
 
+/// A helper that substitutes the release namespace when an override is
+/// Helm-empty must keep explicit null valid at every included sink.
+#[test]
+fn helper_truthy_branch_keeps_namespace_override_nullable() {
+    let helpers = indoc! {r#"
+        {{- define "sample.namespace" -}}
+        {{- if .Values.namespaceOverride -}}
+        {{- .Values.namespaceOverride -}}
+        {{- else -}}
+        {{- .Release.Namespace -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: test
+          namespace: {{ include "sample.namespace" . }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("namespaceOverride: \"\"\n"),
+    );
+
+    for instance in [
+        serde_json::json!({ "namespaceOverride": null }),
+        serde_json::json!({ "namespaceOverride": "audit" }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "the fallback handles null while a selected string reaches the sink: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
 #[test]
 fn nested_label_helpers_keep_common_name_override_nullable_string() {
     let helpers = indoc! {r#"

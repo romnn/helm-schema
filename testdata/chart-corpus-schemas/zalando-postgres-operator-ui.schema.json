@@ -197,6 +197,27 @@
   "additionalProperties": false,
   "allOf": [
     {
+      "additionalProperties": {},
+      "properties": {
+        "envs": {
+          "additionalProperties": {},
+          "description": "configure UI ENVs",
+          "properties": {
+            "teams": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -690,9 +711,7 @@
           "description": "Set to \"*\" to allow viewing/creation of clusters in all namespaces"
         },
         "teams": {
-          "items": {
-            "type": "string"
-          },
+          "items": {},
           "type": "array"
         }
       },

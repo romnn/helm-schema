@@ -160,6 +160,70 @@ fn destructured_range_with_len_guard_preserves_shape_erased_members() {
     }
 }
 
+/// Element- and list-preserving collection transforms keep item provenance,
+/// so a total stringification widens source items without erasing a separate
+/// strict item consumer.
+#[test]
+fn collection_selection_projects_item_conversion_to_source_items() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: test
+              image: busybox
+              env:
+                {{- range initial .Values.teams }}
+                - name: TEAM
+                  value: {{ . | quote }}
+                {{- end }}
+                - name: LAST_TEAM
+                  value: {{ .Values.teams | last | quote }}
+                {{- if .Values.strict }}
+                {{- range .Values.teams }}
+                - name: STRICT_TEAM
+                  value: {{ . | b64enc | quote }}
+                {{- end }}
+                {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        teams:
+          - first
+          - last
+        strict: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for teams in [
+        serde_json::json!([]),
+        serde_json::json!([7, 8]),
+        serde_json::json!([{ "name": "first" }, { "name": "last" }]),
+    ] {
+        let instance = serde_json::json!({ "teams": teams, "strict": false });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "initial/range and last/quote observe formatted item text: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "teams": [7], "strict": true })
+        ),
+        "a live independent b64enc consumer still requires string items: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "teams": ["secret"], "strict": true })
+        ),
+        "string items satisfy the independent strict consumer: {schema}"
+    );
+}
+
 /// A scalar-item range that directly renders the sequence items should keep the
 /// provider array metadata on the destination field, not collapse to a bare
 /// `items.type` array inferred only from the item uses.

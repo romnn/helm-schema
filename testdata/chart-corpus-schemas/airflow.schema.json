@@ -5569,6 +5569,16 @@
     {
       "additionalProperties": {},
       "properties": {
+        "airflowVersion": {
+          "description": "Airflow version (Used to make some decisions based on Airflow Version being deployed)\nVersion 3.1.0 and above is supported.",
+          "pattern": "^v?([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
+          "type": "string"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
         "apiServer": {
           "type": "object"
         }
@@ -5912,6 +5922,121 @@
                 "properties": {
                   "containerName": {
                     "$ref": "#/$defs/schema390"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema268"
+              },
+              {
+                "properties": {
+                  "triggerer": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "triggerer"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "dags": {
+                    "properties": {
+                      "gitSync": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "gitSync"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "dags"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "dags": {
+                    "properties": {
+                      "persistence": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "persistence"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "dags"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dags": {
+            "additionalProperties": {},
+            "properties": {
+              "gitSync": {
+                "additionalProperties": {},
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 }
               }
@@ -21403,6 +21528,309 @@
                 "type": "object"
               },
               {
+                "properties": {
+                  "imagePullSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "imagePullSecrets"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema251"
+                      },
+                      {
+                        "properties": {
+                          "databaseCleanup": {
+                            "properties": {
+                              "args": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "args"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "databaseCleanup"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "databaseCleanup": {
+                        "properties": {
+                          "command": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "command"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "databaseCleanup"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "imagePullSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "imagePullSecrets"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema228"
+                  },
+                  {
+                    "properties": {
+                      "migrateDatabaseJob": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "migrateDatabaseJob"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "imagePullSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "imagePullSecrets"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "pgbouncer": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "pgbouncer"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "imagePullSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "imagePullSecrets"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema269"
+                  },
+                  {
+                    "properties": {
+                      "scheduler": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "scheduler"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "imagePullSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "imagePullSecrets"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema284"
+                  },
+                  {
+                    "properties": {
+                      "statsd": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "statsd"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "imagePullSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "imagePullSecrets"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema268"
+                  },
+                  {
+                    "properties": {
+                      "triggerer": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "triggerer"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "imagePullSecrets": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "List of existing Kubernetes secrets containing Base64 encoded credentials to connect to private\nregistries. Items can be either strings or {name: secret} objects."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "databaseCleanup": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "databaseCleanup"
+                ],
+                "type": "object"
+              },
+              {
                 "anyOf": [
                   {
                     "anyOf": [
@@ -25751,6 +26179,51 @@
         "otelCollector": {
           "description": "OpenTelemetry Collector settings",
           "type": "object"
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "data": {
+              "properties": {
+                "metadataSecretName": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "metadataSecretName"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "data"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "pgbouncer": {
+            "additionalProperties": {},
+            "description": "PgBouncer settings",
+            "properties": {
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Enable PgBouncer"
+              }
+            }
+          }
         }
       }
     },
@@ -36213,6 +36686,68 @@
             "properties": {
               "image": {
                 "$ref": "#/$defs/schema19"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema260"
+              },
+              {
+                "properties": {
+                  "postgresql": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "postgresql"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema248"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "additionalProperties": {},
+            "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
+            "properties": {
+              "ldap": {
+                "additionalProperties": {},
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Enable LDAP support"
+                  }
+                }
               }
             }
           }
@@ -51600,6 +52135,165 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema260"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "properties": {
+                          "primary": {
+                            "properties": {
+                              "standby": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "standby"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "primary"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema213"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema248"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "properties": {
+                          "primary": {
+                            "properties": {
+                              "standby": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "standby"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "primary"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema213"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "additionalProperties": {},
+            "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
+            "properties": {
+              "primary": {
+                "additionalProperties": {},
+                "properties": {
+                  "standby": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "enabled": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Whether to enable current cluster's primary as standby server of another cluster or not"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "anyOf": [
               {
                 "$ref": "#/$defs/schema260"
@@ -63556,6 +64250,194 @@
             "additionalProperties": {},
             "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
             "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "description": "TLS configuration",
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Enable TLS traffic support"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema260"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "postgresql": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "postgresql"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "postgresql": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "postgresql"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema248"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "additionalProperties": {},
+            "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "description": "TLS configuration",
+                "properties": {
+                  "preferServerCiphers": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Whether to use the server's TLS cipher preferences rather than the client's"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema260"
+              },
+              {
+                "properties": {
+                  "postgresql": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "postgresql"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema248"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "additionalProperties": {},
+            "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
+            "properties": {
               "volumePermissions": {
                 "additionalProperties": {},
                 "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
@@ -68135,6 +69017,92 @@
                       }
                     ],
                     "description": "Annotations to add to triggerer volumes"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema268"
+              },
+              {
+                "properties": {
+                  "triggerer": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "triggerer"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "triggerer": {
+                "properties": {
+                  "keda": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "keda"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "triggerer"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "triggerer": {
+            "additionalProperties": {},
+            "description": "Airflow Triggerer Config",
+            "properties": {
+              "persistence": {
+                "additionalProperties": {},
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Enable persistent volumes"
                   }
                 }
               }

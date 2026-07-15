@@ -1500,7 +1500,7 @@
         }
       }
     },
-    "schema101": {
+    "schema102": {
       "properties": {
         "containers": {
           "properties": {
@@ -2998,41 +2998,6 @@
         "properties": {
           "datadog": {
             "properties": {
-              "orchestratorExplorer": {
-                "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {}
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "orchestratorExplorer"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "datadog"
-        ],
-        "type": "object"
-      }
-    },
-    "schema42": {
-      "not": {
-        "properties": {
-          "datadog": {
-            "properties": {
               "kubeStateMetricsCore": {
                 "properties": {
                   "rbac": {
@@ -3053,6 +3018,41 @@
             },
             "required": [
               "kubeStateMetricsCore"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "datadog"
+        ],
+        "type": "object"
+      }
+    },
+    "schema42": {
+      "not": {
+        "properties": {
+          "datadog": {
+            "properties": {
+              "orchestratorExplorer": {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {}
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "orchestratorExplorer"
             ],
             "type": "object"
           }
@@ -5280,7 +5280,7 @@
                 "not": {
                   "properties": {
                     "agents": {
-                      "$ref": "#/$defs/schema101"
+                      "$ref": "#/$defs/schema102"
                     }
                   },
                   "required": [
@@ -33109,7 +33109,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema42"
+                    "$ref": "#/$defs/schema41"
                   },
                   {
                     "properties": {
@@ -44724,7 +44724,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
                     "properties": {
@@ -45888,7 +45888,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
                     "properties": {
@@ -52964,7 +52964,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema42"
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -53087,7 +53087,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema42"
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -53230,7 +53230,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema42"
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -53284,6 +53284,116 @@
                 "properties": {
                   "namespaces": {
                     "$ref": "#/$defs/schema5"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema72"
+              },
+              {
+                "properties": {
+                  "datadog": {
+                    "properties": {
+                      "kubeStateMetricsCore": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubeStateMetricsCore"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "datadog"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema41"
+              },
+              {
+                "properties": {
+                  "datadog": {
+                    "properties": {
+                      "kubeStateMetricsCore": {
+                        "properties": {
+                          "rbac": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "rbac"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubeStateMetricsCore"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "datadog"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "datadog": {
+            "additionalProperties": {},
+            "description": "datadog.apiKey -- Your Datadog API key",
+            "properties": {
+              "kubeStateMetricsCore": {
+                "additionalProperties": {},
+                "description": "datadog.kubeStateMetricsCore.enabled -- Enable the kubernetes_state_core check in the Cluster Agent (Requires Cluster Agent 1.12.0+)",
+                "properties": {
+                  "useClusterCheckRunners": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Configuring this field will create a separate deployment which will run Cluster Checks, including Kubernetes State Metrics Core.\nIf clusterChecksRunner.enabled is true, it's recommended to set this flag to true as well to better utilize dedicated workers and reduce load on the Cluster Agent.\nref: https://docs.datadoghq.com/agent/cluster_agent/clusterchecksrunner?tab=helm"
                   }
                 }
               }
@@ -56752,7 +56862,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema41"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "properties": {
@@ -57025,7 +57135,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema41"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "properties": {
@@ -57378,7 +57488,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
                     "properties": {
@@ -75595,6 +75705,26 @@
                     }
                   ],
                   "description": "operator.datadogCRDs.keepCrds -- Set to true to keep the CRDs when the helm chart is uninstalled. This must be set to true if datadog.operator.migration.enabled is set to true."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "operator": {
+          "additionalProperties": {},
+          "properties": {
+            "image": {
+              "additionalProperties": {},
+              "properties": {
+                "tag": {
+                  "description": "operator.image.tag -- Define the Datadog Operator version to use",
+                  "pattern": "^v?([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
+                  "type": "string"
                 }
               }
             }

@@ -1309,6 +1309,58 @@
             "description": "Redis(R) Authentication parameters\nref: https://github.com/bitnami/containers/tree/main/bitnami/redis#setting-the-server-password-on-first-run",
             "properties": {
               "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Enable password authentication"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/schema42"
+          },
+          {
+            "not": {
+              "properties": {
+                "sentinel": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "sentinel"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "auth": {
+            "additionalProperties": {},
+            "description": "Redis(R) Authentication parameters\nref: https://github.com/bitnami/containers/tree/main/bitnami/redis#setting-the-server-password-on-first-run",
+            "properties": {
+              "enabled": {
                 "description": "Enable password authentication",
                 "type": "boolean"
               }
@@ -2452,6 +2504,56 @@
                   }
                 ],
                 "description": "Password key to be retrieved from existing secret\nNOTE: ignored unless `auth.existingSecret` parameter is set"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "sentinel": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "sentinel"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema42"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "auth": {
+            "additionalProperties": {},
+            "description": "Redis(R) Authentication parameters\nref: https://github.com/bitnami/containers/tree/main/bitnami/redis#setting-the-server-password-on-first-run",
+            "properties": {
+              "sentinel": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Enable authentication on sentinels too"
               }
             }
           }
@@ -17318,6 +17420,77 @@
             "description": "TLS configuration",
             "properties": {
               "authClients": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Require clients to authenticate"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "tls": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema42"
+          },
+          {
+            "not": {
+              "properties": {
+                "sentinel": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "sentinel"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tls": {
+            "additionalProperties": {},
+            "description": "TLS configuration",
+            "properties": {
+              "authClients": {
                 "description": "Require clients to authenticate",
                 "type": "boolean"
               }
@@ -17473,6 +17646,58 @@
                   }
                 ],
                 "description": "DEPRECATED. Use existingSecret instead."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/schema42"
+          },
+          {
+            "not": {
+              "properties": {
+                "sentinel": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "sentinel"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tls": {
+            "additionalProperties": {},
+            "description": "TLS configuration",
+            "properties": {
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Enable TLS traffic"
               }
             }
           }
@@ -19187,8 +19412,7 @@
           "type": "string"
         },
         "sentinel": {
-          "description": "Enable authentication on sentinels too",
-          "type": "boolean"
+          "description": "Enable authentication on sentinels too"
         },
         "usePasswordFileFromSecret": {
           "anyOf": [

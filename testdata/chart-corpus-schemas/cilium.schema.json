@@ -53532,6 +53532,323 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema461"
+              },
+              {
+                "properties": {
+                  "agent": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "agent"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema316"
+              },
+              {
+                "properties": {
+                  "hubble": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hubble"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "hubble": {
+                "properties": {
+                  "metrics": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "hubble"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "hubble": {
+                "properties": {
+                  "metrics": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "server": {
+                            "properties": {
+                              "mtls": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "mtls"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "server"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "hubble"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "hubble": {
+                "properties": {
+                  "metrics": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "server": {
+                            "properties": {
+                              "mtls": {
+                                "properties": {
+                                  "name": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "name"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "mtls"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "server"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "metrics"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "hubble"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "preflight": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "preflight"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "hubble": {
+                    "properties": {
+                      "metrics": {
+                        "properties": {
+                          "dynamic": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "dynamic"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "metrics"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hubble"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "hubble": {
+                    "properties": {
+                      "metrics": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "metrics"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hubble"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "hubble": {
+            "additionalProperties": {},
+            "properties": {
+              "metrics": {
+                "additionalProperties": {},
+                "description": "Hubble metrics configuration.\nSee https://docs.cilium.io/en/stable/observability/metrics/#hubble-metrics\nfor more comprehensive documentation about Hubble metrics.\ntype: [null, array]",
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "server": {
+                        "additionalProperties": {},
+                        "description": "Configure hubble metrics server TLS.",
+                        "properties": {
+                          "mtls": {
+                            "additionalProperties": {},
+                            "description": "Configure mTLS for the Hubble metrics server.",
+                            "properties": {
+                              "useSecret": {
+                                "anyOf": [
+                                  {
+                                    "type": "boolean"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -59079,6 +59396,132 @@
             "type": "object"
           },
           {
+            "not": {
+              "properties": {
+                "hubble": {
+                  "properties": {
+                    "relay": {
+                      "properties": {
+                        "servicePort": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "servicePort"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "relay"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "hubble"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "hubble": {
+            "additionalProperties": {},
+            "properties": {
+              "relay": {
+                "additionalProperties": {},
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {},
+                    "description": "TLS configuration for Hubble Relay",
+                    "properties": {
+                      "server": {
+                        "additionalProperties": {},
+                        "description": "The hubble-relay server certificate and private key",
+                        "properties": {
+                          "enabled": {
+                            "anyOf": [
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "When set to true, enable TLS on for Hubble Relay server\n(ie: for clients connecting to the Hubble Relay API)."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema316"
+              },
+              {
+                "properties": {
+                  "hubble": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hubble"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "hubble": {
+                "properties": {
+                  "relay": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "relay"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "hubble"
+            ],
+            "type": "object"
+          },
+          {
             "properties": {
               "hubble": {
                 "properties": {
@@ -60204,6 +60647,202 @@
                       ],
                       "description": "Set the method to auto-generate certificates. Supported values:\n- helm:         This method uses Helm to generate all certificates.\n- cronJob:      This method uses a Kubernetes CronJob the generate any\ncertificates not provided by the user at installation\ntime.\n- certmanager:  This method use cert-manager to generate & rotate certificates."
                     }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema461"
+                  },
+                  {
+                    "properties": {
+                      "agent": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema316"
+                  },
+                  {
+                    "properties": {
+                      "hubble": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "hubble"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "hubble": {
+                      "properties": {
+                        "peerService": {
+                          "properties": {
+                            "servicePort": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "servicePort"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "peerService"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "hubble"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema316"
+                  },
+                  {
+                    "properties": {
+                      "hubble": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "hubble"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "hubble": {
+                    "properties": {
+                      "relay": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "relay"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hubble"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "hubble": {
+                      "properties": {
+                        "peerService": {
+                          "properties": {
+                            "servicePort": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "servicePort"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "peerService"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "hubble"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "hubble": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "description": "TLS configuration for Hubble",
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Enable mutual TLS for listenAddress. Setting this value to false is\nhighly discouraged as the Hubble API provides access to potentially\nsensitive network flow metadata and is exposed on the host network."
                   }
                 }
               }
@@ -69689,56 +70328,9 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema316"
-              },
-              {
-                "properties": {
-                  "hubble": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "hubble"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "preflight": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "preflight"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "anyOf": [
+            "allOf": [
               {
                 "anyOf": [
                   {
@@ -69758,24 +70350,161 @@
                 ]
               },
               {
-                "properties": {
-                  "clustermesh": {
+                "not": {
+                  "properties": {
+                    "preflight": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "preflight"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "sleepAfterInit": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "sleepAfterInit"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema316"
+                  },
+                  {
                     "properties": {
-                      "useAPIServer": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "hubble": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "useAPIServer"
+                      "hubble"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "clustermesh"
-                ],
-                "type": "object"
+                ]
               },
+              {
+                "not": {
+                  "properties": {
+                    "preflight": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "preflight"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema461"
+                      },
+                      {
+                        "properties": {
+                          "agent": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "agent"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "clustermesh": {
+                        "properties": {
+                          "useAPIServer": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "useAPIServer"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clustermesh"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema302"
+                      },
+                      {
+                        "properties": {
+                          "operator": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "operator"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
               {
                 "anyOf": [
                   {
@@ -69791,6 +70520,48 @@
                         },
                         "required": [
                           "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "operator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "operator": {
+                          "properties": {
+                            "hostNetwork": {}
+                          },
+                          "required": [
+                            "hostNetwork"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "operator"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "operator": {
+                        "properties": {
+                          "hostNetwork": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "hostNetwork"
                         ],
                         "type": "object"
                       }
@@ -89753,6 +90524,760 @@
                 "properties": {
                   "name": {
                     "$ref": "#/$defs/schema428"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema461"
+                  },
+                  {
+                    "properties": {
+                      "agent": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "agent"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "caBundle": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "caBundle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "preflight": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "preflight"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema78"
+                  },
+                  {
+                    "properties": {
+                      "clustermesh": {
+                        "properties": {
+                          "apiserver": {
+                            "properties": {
+                              "kvstoremesh": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "kvstoremesh"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "apiserver"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clustermesh"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "clustermesh": {
+                    "properties": {
+                      "useAPIServer": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "useAPIServer"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "clustermesh"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "caBundle": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "caBundle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "clustermesh": {
+                    "properties": {
+                      "useAPIServer": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "useAPIServer"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "clustermesh"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "caBundle": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "caBundle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema316"
+                  },
+                  {
+                    "properties": {
+                      "hubble": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "hubble"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "hubble": {
+                    "properties": {
+                      "relay": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "relay"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hubble"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema221"
+                  },
+                  {
+                    "properties": {
+                      "hubble": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "hubble"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "caBundle": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "caBundle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "hubble": {
+                    "properties": {
+                      "relay": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "server": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "server"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "relay"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hubble"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "hubble": {
+                    "properties": {
+                      "ui": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hubble"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "caBundle": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "caBundle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "hubble": {
+                      "properties": {
+                        "ui": {
+                          "properties": {
+                            "standalone": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "standalone"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "ui"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "hubble"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema316"
+                      },
+                      {
+                        "properties": {
+                          "hubble": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "hubble"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "hubble": {
+                        "properties": {
+                          "ui": {
+                            "properties": {
+                              "standalone": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "standalone"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "ui"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "hubble"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema302"
+                  },
+                  {
+                    "properties": {
+                      "operator": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "operator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "caBundle": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "caBundle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "clustermesh": {
+                        "properties": {
+                          "enableEndpointSliceSynchronization": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enableEndpointSliceSynchronization"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clustermesh"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "clustermesh": {
+                        "properties": {
+                          "enableMCSAPISupport": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enableMCSAPISupport"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clustermesh"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "clustermesh": {
+                        "properties": {
+                          "mcsapi": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "mcsapi"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clustermesh"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "caBundle": {
+                        "properties": {
+                          "content": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "content"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "caBundle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "caBundle": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "caBundle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tls": {
+            "additionalProperties": {},
+            "description": "Configure TLS configuration in the agent.\ntype: [null, string]",
+            "properties": {
+              "caBundle": {
+                "additionalProperties": {},
+                "description": "Configure the CA trust bundle used for the validation of the certificates\nleveraged by hubble and clustermesh. When enabled, it overrides the content of the\n'ca.crt' field of the respective certificates, allowing for CA rotation with no down-time.",
+                "properties": {
+                  "useSecret": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Use a Secret instead of a ConfigMap.\nIf uncommented, creates the ConfigMap and fills it with the specified content.\nOtherwise, the ConfigMap is assumed to be already present in .Release.Namespace.\ncontent: |\n...\n..."
                   }
                 }
               }
@@ -117152,9 +118677,7 @@
                         "name": {
                           "description": "Name of the ConfigMap containing the CA to validate client certificates against.\nIf mTLS is enabled and this is unspecified, it will default to the\nsame CA used for Hubble metrics server certificates."
                         },
-                        "useSecret": {
-                          "type": "boolean"
-                        }
+                        "useSecret": {}
                       }
                     }
                   }

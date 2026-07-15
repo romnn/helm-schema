@@ -10698,6 +10698,161 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "properties": {
+                  "alerting": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "alerting"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "useStatefulSet": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "useStatefulSet"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema124"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "alerting": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "alerting"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "useStatefulSet": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "useStatefulSet"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "persistence": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "persistence"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "persistence": {
+                              "properties": {
+                                "existingClaim": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "existingClaim"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "persistence"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema50"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "alerting": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configure grafana alerting (can be templated)\nref: https://docs.grafana.com/alerting/set-up/provision-alerting-resources/file-provisioning/\npolicies.yaml:\napiVersion: 1\npolicies:\n- orgId: 1\nreceiver: first_uid\nrules.yaml:\napiVersion: 1\ngroups:\n- orgId: 1\nname: '{{ .Chart.Name }}_my_rule_group'\nfolder: my_first_folder\ninterval: 60s\nrules:\n- uid: my_id_1\ntitle: my_first_rule\ncondition: A\ndata:\n- refId: A\ndatasourceUid: '-100'\nmodel:\nconditions:\n- evaluator:\nparams:\n- 3\ntype: gt\noperator:\ntype: and\nquery:\nparams:\n- A\nreducer:\ntype: last\ntype: query\ndatasource:\ntype: __expr__\nuid: '-100'\nexpression: 1==0\nintervalMs: 1000\nmaxDataPoints: 43200\nrefId: A\ntype: math\ndashboardUid: my_dashboard\npanelId: 123\nnoDataState: Alerting\nfor: 60s\nannotations:\nsome_key: some_value\nlabels:\nteam: sre_team_1\ncontactpoints.yaml:\nsecret:\napiVersion: 1\ncontactPoints:\n- orgId: 1\nname: cp_1\nreceivers:\n- uid: first_uid\ntype: pagerduty\nsettings:\nintegrationKey: XXX\nseverity: critical\nclass: ping failure\ncomponent: Grafana\ngroup: app-stack\nsummary: |\n{{ `{{ include \"default.message\" . }}` }}\ntemplates.yaml:\napiVersion: 1\ntemplates:\n- orgId: 1\nname: my_first_template\ntemplate: |\n{{ `\n{{ define \"my_first_template\" }}\nCustom notification message\n{{ end }}\n` }}\nmutetimes.yaml\napiVersion: 1\nmuteTimes:\n- orgId: 1\nname: mti_1\nrefer to https://prometheus.io/docs/alerting/latest/configuration/#time_interval-0\ntime_intervals: {}"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "anyOf": [
               {
                 "$ref": "#/$defs/schema475"
@@ -12030,6 +12185,161 @@
           {
             "allOf": [
               {
+                "properties": {
+                  "dashboardProviders": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "dashboardProviders"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "useStatefulSet": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "useStatefulSet"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema124"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "dashboardProviders": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "dashboardProviders"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "useStatefulSet": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "useStatefulSet"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "persistence": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "persistence"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "persistence": {
+                              "properties": {
+                                "existingClaim": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "existingClaim"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "persistence"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema50"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dashboardProviders": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configure grafana dashboard providers\nref: http://docs.grafana.org/administration/provisioning/#dashboards\n`path` must be /var/lib/grafana/dashboards/<provider_name>\ndashboardproviders.yaml:\napiVersion: 1\nproviders:\n- name: 'default'\norgId: 1\nfolder: ''\ntype: file\ndisableDeletion: false\neditable: true\noptions:\npath: /var/lib/grafana/dashboards/default"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "anyOf": [
                   {
                     "$ref": "#/$defs/schema475"
@@ -12241,6 +12551,161 @@
               {
                 "type": "array"
               },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configure grafana dashboard to import\nNOTE: To use dashboards you must also enable/configure dashboardProviders\nref: https://grafana.com/dashboards\ndashboards per provider, use provider name as key.\ndefault:\nsome-dashboard:\njson: |\n$RAW_JSON\ncustom-dashboard:\nfile: dashboards/custom-dashboard.json\nprometheus-stats:\ngnetId: 2\nrevision: 2\ndatasource: Prometheus\nlocal-dashboard:\nurl: https://example.com/repository/test.json\ncurlOptions: \"-sLf\"\ntoken: ''\nlocal-dashboard-base64:\nurl: https://example.com/repository/test-b64.json\ntoken: ''\nb64content: true\nlocal-dashboard-gitlab:\nurl: https://example.com/repository/test-gitlab.json\ngitlabToken: ''\nlocal-dashboard-bitbucket:\nurl: https://example.com/repository/test-bitbucket.json\nbearerToken: ''\nlocal-dashboard-azure:\nurl: https://example.com/repository/test-azure.json\nbasic: ''\nacceptHeader: '*/*'"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "dashboards": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "dashboards"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "useStatefulSet": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "useStatefulSet"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema124"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "dashboards": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "dashboards"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "useStatefulSet": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "useStatefulSet"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "persistence": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "persistence"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "persistence": {
+                              "properties": {
+                                "existingClaim": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "existingClaim"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "persistence"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema50"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dashboards": {
+            "anyOf": [
               {
                 "type": "object"
               },
@@ -12735,6 +13200,161 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "dashboardsConfigMaps": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "dashboardsConfigMaps"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "useStatefulSet": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "useStatefulSet"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema124"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "dashboardsConfigMaps": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "dashboardsConfigMaps"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "useStatefulSet": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "useStatefulSet"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "persistence": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "persistence"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "persistence": {
+                              "properties": {
+                                "existingClaim": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "existingClaim"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "persistence"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema50"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "dashboardsConfigMaps": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Reference to external ConfigMap per provider. Use provider name as key and ConfigMap name as value.\nA provider dashboards must be defined either by external ConfigMaps or in values.yaml, not in both.\nConfigMap data example:\ndata:\nexample-dashboard.json: |\nRAW_JSON\ndefault: \"\""
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "not": {
@@ -12812,6 +13432,161 @@
             }
           ],
           "description": "Configure grafana datasources\nref: http://docs.grafana.org/administration/provisioning/#datasources\ndatasources.yaml:\napiVersion: 1\ndatasources:\n- name: Prometheus\ntype: prometheus\nurl: http://prometheus-prometheus-server\naccess: proxy\nisDefault: true\n- name: CloudWatch\ntype: cloudwatch\naccess: proxy\nuid: cloudwatch\neditable: false\njsonData:\nauthType: default\ndefaultRegion: us-east-1\ndeleteDatasources: []\n- name: Prometheus"
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "datasources": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "datasources"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "useStatefulSet": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "useStatefulSet"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema124"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "datasources": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "datasources"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "useStatefulSet": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "useStatefulSet"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "persistence": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "persistence"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "persistence": {
+                              "properties": {
+                                "existingClaim": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "existingClaim"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "persistence"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema50"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "datasources": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configure grafana datasources\nref: http://docs.grafana.org/administration/provisioning/#datasources\ndatasources.yaml:\napiVersion: 1\ndatasources:\n- name: Prometheus\ntype: prometheus\nurl: http://prometheus-prometheus-server\naccess: proxy\nisDefault: true\n- name: CloudWatch\ntype: cloudwatch\naccess: proxy\nuid: cloudwatch\neditable: false\njsonData:\nauthType: default\ndefaultRegion: us-east-1\ndeleteDatasources: []\n- name: Prometheus"
+          }
         }
       }
     },
@@ -42437,6 +43212,161 @@
             }
           ],
           "description": "Configure notifiers\nref: http://docs.grafana.org/administration/provisioning/#alert-notification-channels\nnotifiers.yaml:\nnotifiers:\n- name: email-notifier\ntype: email\nuid: email1\neither:\norg_id: 1\nor\norg_name: Main Org.\nis_default: true\nsettings:\naddresses: an_email_address@example.com\ndelete_notifiers:"
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "notifiers": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "notifiers"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "useStatefulSet": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "useStatefulSet"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema124"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "persistence": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "persistence"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "notifiers": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "notifiers"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "useStatefulSet": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "useStatefulSet"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "persistence": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "persistence"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "persistence": {
+                              "properties": {
+                                "existingClaim": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "existingClaim"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "persistence"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema50"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "notifiers": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Configure notifiers\nref: http://docs.grafana.org/administration/provisioning/#alert-notification-channels\nnotifiers.yaml:\nnotifiers:\n- name: email-notifier\ntype: email\nuid: email1\neither:\norg_id: 1\nor\norg_name: Main Org.\nis_default: true\nsettings:\naddresses: an_email_address@example.com\ndelete_notifiers:"
+          }
         }
       }
     },

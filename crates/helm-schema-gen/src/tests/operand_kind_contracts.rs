@@ -314,6 +314,182 @@ fn pipeline_calls_bind_collection_and_comparison_domains() {
     }
 }
 
+/// Sprig's `ternary` accepts arbitrary values for its two result arms, but
+/// its selector is a strict Go `bool` in both direct and pipeline forms.
+#[test]
+fn ternary_selector_binds_boolean_operand_contract() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if .Values.enabled }}
+          direct: {{ ternary "yes" "no" .Values.direct | quote }}
+          pipeline: {{ .Values.pipeline | ternary "yes" "no" | quote }}
+          computed-direct: {{ ternary "yes" "no" (eq .Values.mode "active") | quote }}
+          computed-pipeline: {{ .Values.pipelineMode | eq "active" | ternary "yes" "no" | quote }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        enabled: true
+        direct: true
+        pipeline: false
+        mode: active
+        pipelineMode: inactive
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "enabled": true,
+                "direct": true,
+                "pipeline": false,
+                "mode": "active",
+                "pipelineMode": "inactive"
+            })
+        ),
+        "raw Boolean and computed Boolean selectors render in both call forms: {schema}"
+    );
+    for instance in [
+        serde_json::json!({ "enabled": true, "direct": "true", "pipeline": false }),
+        serde_json::json!({ "enabled": true, "direct": true, "pipeline": 1 }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a live non-Boolean selector aborts ternary: instance={instance}; schema={schema}"
+        );
+    }
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "enabled": true,
+                "direct": true,
+                "pipeline": false,
+                "mode": true,
+                "pipelineMode": "inactive"
+            })
+        ),
+        "the comparison constrains its string operand without retyping it as Boolean: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "enabled": false,
+                "direct": "ignored",
+                "pipeline": { "ignored": true },
+                "mode": { "ignored": true },
+                "pipelineMode": ["ignored"]
+            })
+        ),
+        "the outer guard skips both strict calls: {schema}"
+    );
+}
+
+/// `semverCompare` first parses its version operand, so the accepted string
+/// domain is narrower than an arbitrary Go string under the live call guard.
+#[test]
+fn semver_parser_binds_lexical_operand_contract() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if .Values.enabled }}
+          {{- if semverCompare ">=1.20.0" .Values.kubeVersion }}
+          modern: "true"
+          {{- end }}
+          {{- if .Values.pipelineVersion | semverCompare ">=1.20.0" }}
+          pipeline-modern: "true"
+          {{- end }}
+          {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("enabled: true\nkubeVersion: v1.30.0\npipelineVersion: v1.30.0\n"),
+    );
+
+    for version in ["v1.30.0", "1", "1.2", "01.002.0003-alpha.1+build.7"] {
+        let instance = serde_json::json!({
+            "enabled": true,
+            "kubeVersion": version,
+            "pipelineVersion": version
+        });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "Masterminds semver accepts the loose version spelling: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    for version in ["garbage", "v", "1..2"] {
+        let instance = serde_json::json!({
+            "enabled": true,
+            "kubeVersion": version,
+            "pipelineVersion": version
+        });
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a live lexically invalid version aborts semverCompare: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "enabled": false,
+                "kubeVersion": "garbage",
+                "pipelineVersion": "garbage"
+            })
+        ),
+        "the disabled outer branch never invokes the parser: {schema}"
+    );
+}
+
+/// A local selected from several source paths does not identify which raw
+/// path reaches the parser. Until that value remains branch-partitioned, the
+/// lexical contract must abstain instead of constraining inactive candidates.
+#[test]
+fn semver_parser_abstains_across_unpartitioned_local_choices() {
+    let src = indoc! {r#"
+        {{- $version := ternary .Values.primaryVersion .Values.fallbackVersion .Values.usePrimary }}
+        {{- if semverCompare ">=1.20.0" $version }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("usePrimary: true\nprimaryVersion: v1.30.0\nfallbackVersion: v1.29.0\n"),
+    );
+
+    for instance in [
+        serde_json::json!({
+            "usePrimary": true,
+            "primaryVersion": "v1.30.0",
+            "fallbackVersion": "garbage"
+        }),
+        serde_json::json!({
+            "usePrimary": false,
+            "primaryVersion": "garbage",
+            "fallbackVersion": "v1.30.0"
+        }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "an inactive candidate does not inherit the selected local's parser domain: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// Structural guards, rather than operand truthiness, decide whether a
 /// strict collection call executes. A `with` skips every Helm-empty value,
 /// while a truthy wrong-kind value reaches `merge` and aborts rendering.
@@ -404,8 +580,8 @@ fn fallback_selected_collection_operands_are_truthy_scoped() {
 }
 
 /// Collection helpers with different output shapes still bind their input
-/// domains: `hasKey` and `pick` require objects, while `mustUniq` requires
-/// an array.
+/// domains: `hasKey`, `pick`, `keys`, and `values` require objects, while
+/// `mustUniq` requires an array.
 #[test]
 fn additional_collection_function_catalogs_bind_operand_domains() {
     let src = indoc! {r#"
@@ -419,11 +595,15 @@ fn additional_collection_function_catalogs_bind_operand_domains() {
           {{- end }}
           picked: {{ pick .Values.options "app" | toYaml | quote }}
           unique: {{ mustUniq .Values.items | toYaml | quote }}
+          keys: {{ keys .Values.keyed | join "," | quote }}
+          values: {{ .Values.valued | values | toYaml | quote }}
     "#};
     let values_yaml = indoc! {"
         labels: {}
         options: {}
         items: []
+        keyed: {}
+        valued: {}
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
@@ -433,7 +613,9 @@ fn additional_collection_function_catalogs_bind_operand_domains() {
             &serde_json::json!({
                 "labels": { "app": "test" },
                 "options": { "app": "test" },
-                "items": ["a", "a"]
+                "items": ["a", "a"],
+                "keyed": { "app": "test" },
+                "valued": { "app": "test" }
             })
         ),
         "the catalogued operand domains render: {schema}"
@@ -445,6 +627,8 @@ fn additional_collection_function_catalogs_bind_operand_domains() {
         serde_json::json!({ "options": [] }),
         serde_json::json!({ "items": "" }),
         serde_json::json!({ "items": { "a": 1 } }),
+        serde_json::json!({ "keyed": [] }),
+        serde_json::json!({ "valued": ["test"] }),
     ] {
         assert!(
             !schema_accepts_instance(&schema, &instance),

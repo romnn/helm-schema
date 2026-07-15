@@ -21982,6 +21982,135 @@
                 ]
               },
               {
+                "not": {
+                  "properties": {
+                    "prometheus-node-exporter": {
+                      "properties": {
+                        "image": {
+                          "properties": {
+                            "sha": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "sha"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus-node-exporter"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema137"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "prometheus-node-exporter": {
+                      "properties": {
+                        "image": {
+                          "properties": {
+                            "sha": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "sha"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus-node-exporter"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus-node-exporter": {
+            "additionalProperties": {},
+            "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
+            "properties": {
+              "image": {
+                "additionalProperties": {},
+                "description": "Default values for prometheus-node-exporter.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+                "properties": {
+                  "distroless": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Use the distroless image variant."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema144"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-node-exporter": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-node-exporter"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
                 "anyOf": [
                   {
                     "$ref": "#/$defs/schema48"
@@ -51022,6 +51151,997 @@
             "properties": {
               "webConfiguration": {
                 "$ref": "#/$defs/schema14"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema153"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema70"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "liveness": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "liveness"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema74"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "liveness": {
+                            "properties": {
+                              "probe": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "probe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "liveness"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "prometheus-pushgateway": {
+                    "properties": {
+                      "webConfiguration": {
+                        "properties": {
+                          "basicAuthUsers": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "basicAuthUsers"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webConfiguration"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheus-pushgateway"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "liveness": {
+                            "properties": {
+                              "probe": {
+                                "properties": {
+                                  "httpGet": {
+                                    "properties": {
+                                      "httpHeaders": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "httpHeaders"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "httpGet"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "probe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "liveness"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "webConfiguration": {
+                            "properties": {
+                              "basicAuthUsers": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "basicAuthUsers"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "webConfiguration"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema153"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema66"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "readiness": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "readiness"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema72"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "readiness": {
+                            "properties": {
+                              "probe": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "probe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "readiness"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "prometheus-pushgateway": {
+                    "properties": {
+                      "webConfiguration": {
+                        "properties": {
+                          "basicAuthUsers": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "basicAuthUsers"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webConfiguration"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheus-pushgateway"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "readiness": {
+                            "properties": {
+                              "probe": {
+                                "properties": {
+                                  "httpGet": {
+                                    "properties": {
+                                      "httpHeaders": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "httpHeaders"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "httpGet"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "probe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "readiness"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "webConfiguration": {
+                            "properties": {
+                              "basicAuthUsers": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "basicAuthUsers"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "webConfiguration"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema153"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "prometheus-pushgateway": {
+                    "properties": {
+                      "serviceMonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheus-pushgateway"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "prometheus-pushgateway": {
+                    "properties": {
+                      "webConfiguration": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "webConfiguration"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheus-pushgateway"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "prometheus-pushgateway": {
+                      "properties": {
+                        "serviceMonitor": {
+                          "properties": {
+                            "basicAuth": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "basicAuth"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceMonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus-pushgateway"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema70"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "liveness": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "liveness"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema74"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "liveness": {
+                            "properties": {
+                              "probe": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "probe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "liveness"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "prometheus-pushgateway": {
+                    "properties": {
+                      "webConfiguration": {
+                        "properties": {
+                          "basicAuthUsers": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "basicAuthUsers"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webConfiguration"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheus-pushgateway"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema141"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "liveness": {
+                            "properties": {
+                              "probe": {
+                                "properties": {
+                                  "httpGet": {
+                                    "properties": {
+                                      "httpHeaders": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "httpHeaders"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "httpGet"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "probe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "liveness"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "webConfiguration": {
+                            "properties": {
+                              "basicAuthUsers": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "basicAuthUsers"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "webConfiguration"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema66"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "readiness": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "readiness"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema72"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "readiness": {
+                            "properties": {
+                              "probe": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "probe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "readiness"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "prometheus-pushgateway": {
+                    "properties": {
+                      "webConfiguration": {
+                        "properties": {
+                          "basicAuthUsers": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "basicAuthUsers"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webConfiguration"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheus-pushgateway"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema141"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "readiness": {
+                            "properties": {
+                              "probe": {
+                                "properties": {
+                                  "httpGet": {
+                                    "properties": {
+                                      "httpHeaders": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "httpHeaders"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "httpGet"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "probe"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "readiness"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "properties": {
+                          "webConfiguration": {
+                            "properties": {
+                              "basicAuthUsers": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "basicAuthUsers"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "webConfiguration"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "prometheus-pushgateway": {
+                    "properties": {
+                      "serviceMonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceMonitor"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheus-pushgateway"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "prometheus-pushgateway": {
+                    "properties": {
+                      "webConfiguration": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "webConfiguration"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheus-pushgateway"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema141"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "prometheus-pushgateway": {
+                      "properties": {
+                        "serviceMonitor": {
+                          "properties": {
+                            "basicAuth": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "basicAuth"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceMonitor"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "prometheus-pushgateway"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus-pushgateway": {
+            "additionalProperties": {},
+            "description": "prometheus-pushgateway sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-pushgateway",
+            "properties": {
+              "webConfiguration": {
+                "additionalProperties": {},
+                "description": "Sets web configuration\nTo enable basic authentication, provide basicAuthUsers as a map\nIf serviceMonitor.enabled is set, a secret with these credentials will be created\nand configured in serviceMonitor. serviceMonitor.basicAuth overrides this secret.\nbasicAuthUsers:\nusername: password",
+                "properties": {
+                  "basicAuthUsers": {
+                    "$ref": "#/$defs/schema357"
+                  }
+                }
               }
             }
           }
@@ -83369,8 +84489,7 @@
           "properties": {
             "digest": {},
             "distroless": {
-              "description": "Use the distroless image variant.",
-              "type": "boolean"
+              "description": "Use the distroless image variant."
             },
             "pullPolicy": {
               "type": "string"
@@ -89395,7 +90514,9 @@
             {
               "additionalProperties": {},
               "properties": {
-                "basicAuthUsers": {}
+                "basicAuthUsers": {
+                  "additionalProperties": {}
+                }
               },
               "type": "object"
             },

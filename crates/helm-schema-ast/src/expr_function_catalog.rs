@@ -96,6 +96,28 @@ pub fn string_operand_indices(function: &str, argument_count: usize) -> Vec<usiz
     }
 }
 
+/// Returns the lexical language required by a strict string parser operand.
+///
+/// The pattern is a conservative superset of every string accepted by the
+/// runtime parser, so lowering it may miss some invalid inputs but never
+/// rejects an input solely because the parser accepts a wider spelling.
+pub fn strict_parser_operand_pattern(
+    function: &str,
+    argument_count: usize,
+) -> Option<(usize, &'static str)> {
+    if function != "semverCompare" || argument_count != 2 {
+        return None;
+    }
+
+    // Masterminds semver's coercing parser uses this loose lexical grammar
+    // before numeric and prerelease validation. Keeping that upstream
+    // grammar as a superset avoids inventing a narrower SemVer dialect.
+    Some((
+        argument_count - 1,
+        r"^v?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$",
+    ))
+}
+
 /// Returns whether a function stringifies ANY input. These call Sprig's
 /// `strval` (fallback `fmt.Sprintf("%v")`) or format the interface directly,
 /// so maps, lists, and nil all render as text: the function imposes no

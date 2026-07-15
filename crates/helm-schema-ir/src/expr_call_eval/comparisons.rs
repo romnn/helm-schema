@@ -3,23 +3,39 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
+use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_with_helper_calls};
 use helm_schema_ast::type_is_schema_type;
 
 use super::strict_operands::record_strict_kind_result;
 use super::value_facts::identity_value_paths;
 
-/// `ternary A B COND`: the first two arguments are the branch values, the
-/// trailing (or piped) condition contributes effects only.
+/// `ternary A B COND`: the first two arguments are the branch values, while
+/// the trailing (or piped) condition must be a Go `bool`.
 pub(super) fn eval_ternary(
     args: &[TemplateExpr],
-    mut effects: Effects,
+    piped_condition: Option<(EvalResult, bool)>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
+    let mut effects = Effects::default();
+    let has_piped_condition = piped_condition.is_some();
+    if let Some((condition, is_direct_values_path)) = piped_condition {
+        // A computed Boolean such as `eq .Values.mode "active"` retains its
+        // operands' provenance, but the ternary contract belongs to the
+        // computed result rather than those raw operands.
+        if is_direct_values_path {
+            record_strict_kind_result(&condition, "boolean", &mut effects);
+        }
+        effects.merge(condition.effects);
+    }
     let mut values = Vec::new();
     for (index, arg) in args.iter().enumerate() {
         let result = eval_expr_with_helper_calls(arg, env, resolver);
+        // As with the pipeline form, only syntactic identity proves that the
+        // raw values path itself is the Boolean passed to ternary.
+        if !has_piped_condition && index == 2 && direct_values_path(arg).is_some() {
+            record_strict_kind_result(&result, "boolean", &mut effects);
+        }
         effects.merge(result.effects);
         if index < 2
             && let Some(value) = result.value

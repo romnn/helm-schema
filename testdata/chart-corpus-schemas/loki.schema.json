@@ -15871,6 +15871,28 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "enterprise": {
+          "additionalProperties": {},
+          "description": "Configuration for running Enterprise Loki",
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Enterprise features are disabled by default.\nSet to `true` to deploy Grafana Enterprise Logs (GEL) with a valid license via\n`enterprise.license.contents` or `enterprise.useExternalLicense`/`enterprise.externalLicenseName`."
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "allOf": [
           {
@@ -48200,6 +48222,61 @@
                       }
                     ],
                     "description": "Create a secret with private.key and public.crt files and pass that here. Ref: https://github.com/minio/minio/tree/master/docs/tls/kubernetes#2-create-kubernetes-secret"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "minio": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "minio"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema174"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "minio": {
+            "additionalProperties": {},
+            "description": "Configuration for the minio subchart",
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "description": "TLS Settings for MinIO",
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 }
               }

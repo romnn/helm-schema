@@ -9034,6 +9034,28 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "internalTLS": {
+          "additionalProperties": {},
+          "description": "The internal TLS used for harbor components secure communicating. In order to enable https\nin each component tls cert files need to provided in advance.",
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "If internal TLS enabled"
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "allOf": [
           {
@@ -12225,6 +12247,26 @@
                   }
                 ]
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "metrics": {
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           }
         }
@@ -21608,13 +21650,7 @@
           "description": "core related cert configuration"
         },
         "enabled": {
-          "description": "If internal TLS enabled",
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "description": "If internal TLS enabled"
         },
         "jobservice": {
           "anyOf": [

@@ -208,7 +208,25 @@ pub(super) fn eval_first(
 pub(super) fn eval_first_result(result: EvalResult) -> EvalResult {
     let value = match result.value {
         Some(AbstractValue::List(items)) => items.first().cloned(),
-        other => other,
+        Some(value) => value.fragment_range_item(),
+        None => None,
+    };
+    EvalResult::with_effects(value, result.effects)
+}
+
+pub(super) fn eval_last(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    eval_last_result(eval_expr_with_helper_calls(&args[0], env, resolver))
+}
+
+pub(super) fn eval_last_result(result: EvalResult) -> EvalResult {
+    let value = match result.value {
+        Some(AbstractValue::List(items)) => items.last().cloned(),
+        Some(value) => value.fragment_range_item(),
+        None => None,
     };
     EvalResult::with_effects(value, result.effects)
 }

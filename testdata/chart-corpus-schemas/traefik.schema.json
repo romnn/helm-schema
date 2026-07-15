@@ -16460,6 +16460,70 @@
       "if": {
         "anyOf": [
           {
+            "properties": {
+              "hub": {
+                "properties": {
+                  "token": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "hub"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "versionOverride": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "versionOverride"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "properties": {
+              "azure": {
+                "additionalProperties": {},
+                "description": "Required for Azure Marketplace integration.\nSee https://learn.microsoft.com/en-us/partner-center/marketplace-offers/azure-container-technical-assets-kubernetes?tabs=linux,linux2#update-the-helm-chart",
+                "properties": {
+                  "enabled": {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "anyOf": [
@@ -51551,6 +51615,66 @@
               }
             ],
             "description": "This field overrides the default Release Namespace for Helm.\nIt will not affect optional CRDs such as `ServiceMonitor` and `PrometheusRules`"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "hub": {
+                "properties": {
+                  "token": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "token"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "hub"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "versionOverride": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "versionOverride"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "oci_meta": {
+            "additionalProperties": {},
+            "description": "Required for OCI Marketplace integration.\nSee https://docs.public.content.oci.oraclecloud.com/en-us/iaas/Content/Marketplace/understanding-helm-charts.htm",
+            "properties": {
+              "enabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Enable specific values for Oracle Cloud Infrastructure"
+              }
+            }
           }
         }
       }

@@ -15,7 +15,8 @@ pub use expr_function_catalog::{
     go_type_schema_type, is_coercing_arithmetic_function, is_merge_function,
     is_provenance_preserving_function, is_string_predicate_function, is_string_splitting_function,
     is_string_transform_function, is_total_numeric_cast_function,
-    is_total_stringification_function, string_operand_indices, type_is_schema_type,
+    is_total_stringification_function, strict_parser_operand_pattern, string_operand_indices,
+    type_is_schema_type,
 };
 pub(crate) use helm_schema_syntax::structural_mapping_colon;
 pub use helm_schema_syntax::{parse_yaml_key, unquote_yaml_scalar};

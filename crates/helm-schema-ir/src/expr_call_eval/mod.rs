@@ -3,7 +3,7 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
+use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_with_helper_calls};
 
 use helm_schema_ast::{
     is_coercing_arithmetic_function, is_merge_function, is_provenance_preserving_function,
@@ -20,9 +20,10 @@ mod traversal;
 mod value_facts;
 
 use collections::{
-    eval_append, eval_coalesce, eval_default, eval_dict, eval_first, eval_first_result, eval_list,
-    eval_merge, eval_nonempty_split, eval_nonempty_split_pipeline, eval_omit, eval_pick,
-    eval_reverse, eval_reverse_result, eval_split_list, is_nonempty_string_literal,
+    eval_append, eval_coalesce, eval_default, eval_dict, eval_first, eval_first_result, eval_last,
+    eval_last_result, eval_list, eval_merge, eval_nonempty_split, eval_nonempty_split_pipeline,
+    eval_omit, eval_pick, eval_reverse, eval_reverse_result, eval_split_list,
+    is_nonempty_string_literal,
 };
 use comparisons::{eval_comparison, eval_pipeline_comparison, eval_ternary, eval_type_is};
 use root_mutation::eval_set_call;
@@ -35,8 +36,9 @@ use serialization::{
 use strict_operands::{
     pipeline_string_operand_facts, record_length_bearing_operand, record_length_bearing_result,
     record_raw_range_key_string_consumer_paths, record_strict_kind_operands,
-    record_strict_kind_result, record_string_call_consumers, record_string_consumer_effects,
-    record_string_transform_effects, string_call_operand_facts,
+    record_strict_kind_result, record_strict_parser_call, record_strict_parser_pipeline,
+    record_string_call_consumers, record_string_consumer_effects, record_string_transform_effects,
+    string_call_operand_facts,
 };
 use traversal::{eval_dig, eval_index};
 use value_facts::{concrete_collection_len, concrete_integer, identity_value_paths};
@@ -60,6 +62,16 @@ pub(crate) fn eval_call_with_helper_calls(
         "list" | "tuple" => eval_list(args, env, resolver),
         "first" if args.len() == 1 => {
             let mut result = eval_first(args, env, resolver);
+            record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
+            result
+        }
+        "last" if args.len() == 1 => {
+            let mut result = eval_last(args, env, resolver);
+            record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
+            result
+        }
+        "initial" | "rest" | "compact" if args.len() == 1 => {
+            let mut result = eval_expr_with_helper_calls(&args[0], env, resolver);
             record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
             result
         }
@@ -191,13 +203,23 @@ pub(crate) fn eval_call_with_helper_calls(
             record_strict_kind_operands(&args[..1], "object", env, resolver, &mut result.effects);
             result
         }
+        "keys" | "values" if args.len() == 1 => {
+            let operand = eval_expr_with_helper_calls(&args[0], env, resolver);
+            let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
+            record_strict_kind_result(&operand, "object", &mut result.effects);
+            record_total_conversion_effects(
+                identity_value_paths(&operand.value),
+                &mut result.effects,
+            );
+            result
+        }
         "uniq" | "mustUniq" if args.len() == 1 => {
             let mut result = eval_all_args(args, env, resolver);
             let operand = result.clone();
             record_strict_kind_result(&operand, "array", &mut result.effects);
             result
         }
-        "ternary" => eval_ternary(args, Effects::default(), env, resolver),
+        "ternary" => eval_ternary(args, None, env, resolver),
         "print" => eval_print(args, env, resolver),
         "printf" => eval_printf(args, env, resolver),
         "tpl" if args.len() == 2 => eval_tpl(args, env, resolver),
@@ -250,6 +272,7 @@ pub(crate) fn eval_call_with_helper_calls(
             let result = eval_all_args(args, env, resolver);
             let mut effects = result.effects;
             record_string_call_consumers(function, args, env, resolver, &mut effects);
+            record_strict_parser_call(function, args, env, resolver, &mut effects);
             let widened = AbstractValue::widened(
                 result
                     .value
@@ -275,15 +298,18 @@ pub(crate) fn eval_pipeline_with_helper_calls(
         return EvalResult::none();
     };
     let mut current = eval_expr_with_helper_calls(first_stage, env, resolver);
+    let mut current_is_direct_values_path = direct_values_path(first_stage).is_some();
 
     for stage in &stages[1..] {
         let TemplateExpr::Call { function, args } = stage else {
             current
                 .effects
                 .merge(eval_expr_with_helper_calls(stage, env, resolver).effects);
+            current_is_direct_values_path = false;
             continue;
         };
 
+        let piped_is_direct_values_path = current_is_direct_values_path;
         current = match function.as_str() {
             "default" => eval_default(current, args, env, resolver),
             function if is_merge_function(function) => {
@@ -296,6 +322,18 @@ pub(crate) fn eval_pipeline_with_helper_calls(
             "first" if args.is_empty() => {
                 let operand = current.clone();
                 let mut result = eval_first_result(current);
+                record_strict_kind_result(&operand, "array", &mut result.effects);
+                result
+            }
+            "last" if args.is_empty() => {
+                let operand = current.clone();
+                let mut result = eval_last_result(current);
+                record_strict_kind_result(&operand, "array", &mut result.effects);
+                result
+            }
+            "initial" | "rest" | "compact" if args.is_empty() => {
+                let operand = current.clone();
+                let mut result = current;
                 record_strict_kind_result(&operand, "array", &mut result.effects);
                 result
             }
@@ -318,9 +356,14 @@ pub(crate) fn eval_pipeline_with_helper_calls(
             "eq" | "ne" if !args.is_empty() => {
                 eval_pipeline_comparison(current, args, env, resolver)
             }
-            // The piped ternary operand is the condition: its effects flow,
-            // its value does not.
-            "ternary" => eval_ternary(args, current.effects, env, resolver),
+            // The piped ternary operand is the condition: its strict Boolean
+            // contract and effects flow, but its value is not a result arm.
+            "ternary" => eval_ternary(
+                args,
+                Some((current, piped_is_direct_values_path)),
+                env,
+                resolver,
+            ),
             function if is_string_transform_function(function) => {
                 let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
                     function,
@@ -400,6 +443,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 if is_string_splitting_function(function)
                     || is_string_predicate_function(function) =>
             {
+                let piped = current.clone();
                 let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
                     function,
                     args,
@@ -412,6 +456,15 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 merge_arg_effects(args, env, resolver, &mut effects);
                 record_string_consumer_effects(&string_paths, &mut effects);
                 record_raw_range_key_string_consumer_paths(&raw_range_key_paths, &mut effects);
+                record_strict_parser_pipeline(
+                    function,
+                    args,
+                    &piped,
+                    piped_is_direct_values_path,
+                    env,
+                    resolver,
+                    &mut effects,
+                );
                 let widened = AbstractValue::widened(
                     current
                         .value
@@ -448,6 +501,16 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 );
                 result
             }
+            "keys" | "values" if args.is_empty() => {
+                let operand = current.clone();
+                let mut result = eval_unknown_call(args, current.effects, env, resolver);
+                record_strict_kind_result(&operand, "object", &mut result.effects);
+                record_total_conversion_effects(
+                    identity_value_paths(&operand.value),
+                    &mut result.effects,
+                );
+                result
+            }
             "uniq" | "mustUniq" => {
                 let piped_operand = current.clone();
                 let mut effects = current.effects;
@@ -465,6 +528,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
             // that flowed into the pipeline so far still influences it.
             _ => eval_unknown_call(args, current.effects, env, resolver),
         };
+        current_is_direct_values_path = false;
     }
 
     current
