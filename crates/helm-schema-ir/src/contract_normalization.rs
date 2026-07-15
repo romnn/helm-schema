@@ -257,7 +257,9 @@ fn expand_condition_disjuncts(uses: &mut Vec<ContractUse>) {
             expanded.push(branch);
         }
     }
-    expanded.sort();
+    // Unstable sort: equal rows are fully interchangeable (dedup keeps one
+    // of an identical run), so stability buys nothing here.
+    expanded.sort_unstable();
     expanded.dedup();
     *uses = expanded;
 }
