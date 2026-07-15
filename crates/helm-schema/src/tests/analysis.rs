@@ -101,18 +101,17 @@ fn signoz_root_service_account_helper_type_hint_flows_into_contract_schema_signa
     assert!(
         contract_schema_signals!(collection)
             .evidence_for(path)
-            .is_some_and(|evidence| evidence.fail_implications.iter().any(|implication| {
-                implication
-                    .requirements
-                    .contains(&helm_schema_core::FailValueRequirement::SchemaType(
-                        "string".to_string(),
-                    ))
-                    && implication.outer_guards.contains(
+            .is_some_and(
+                |evidence| evidence.fail_implications.iter().any(|implication| {
+                    implication.requirements.contains(
+                        &helm_schema_core::FailValueRequirement::SchemaType("string".to_string()),
+                    ) && implication.outer_guards.contains(
                         &helm_schema_core::ConditionalGuard::Truthy {
                             path: path.to_string(),
                         },
                     )
-            })),
+                })
+            ),
         "expected a branch-scoped structural string requirement for {path}; evidence={:?}",
         contract_schema_signals!(collection).evidence_for(path),
     );

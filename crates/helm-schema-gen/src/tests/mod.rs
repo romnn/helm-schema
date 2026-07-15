@@ -11651,10 +11651,6 @@ fn member_local_guard_does_not_leak_its_string_contract() {
     }
 }
 
-
-
-
-
 /// F66 inverse direction: interior carriers of conditional arms must hold
 /// vacuously for falsy ancestors that a `with` chain skips at runtime, so
 /// only the truthy states carry the leaf's iterable requirement.
@@ -11681,8 +11677,13 @@ fn nested_with_chain_range_keeps_falsy_ancestors_valid() {
               {{- end }}
               {{- end }}
     "#};
-    let schema = schema_for_values_yaml(parse_ir(src), Some("affinity: {}
-"));
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(
+            "affinity: {}
+",
+        ),
+    );
 
     for instance in [
         serde_json::json!({ "affinity": false }),
@@ -11753,5 +11754,3 @@ fn nested_member_range_keeps_map_lane_in_member_arm() {
         "a scalar item fails the member reads inside the range: {schema}"
     );
 }
-
-
