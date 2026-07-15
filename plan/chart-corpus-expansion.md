@@ -1884,7 +1884,7 @@ the exact value enum. Carry that result through `coalesce` and `with`, then
 combine it with the empty-result failure. This is structural chart evidence,
 not a filename heuristic over unrelated files.
 
-### F34. Literal-key `dig` navigation loses both paths and intermediate shapes (PARTIAL 2026-07-15)
+### F34. Literal-key `dig` navigation loses both paths and intermediate shapes (FIXED 2026-07-15)
 
 `dig` calls whose key arguments and `.Values` base are static are not lowered
 as value reads. This creates both false rejection and false acceptance.
@@ -2331,7 +2331,7 @@ an empty-map or fixed-object default must not pin the type to `object` when a
 serialized or ranged use proves list values render. Overlaps F46 for the
 serialized cases and the F38-F40 iterable-domain work for the ranged cases.
 
-### F49. Int-or-string scalar flag values over-narrowed (FIXED 2026-07-15)
+### F49. Int-or-string scalar flag values over-narrowed (PARTIAL — REOPENED 2026-07-15)
 
 Scalar values spliced into CLI flags or `int-or-string` fields are narrowed
 to a single JSON type, rejecting the other form Helm accepts.
@@ -2537,7 +2537,7 @@ with the helper's own guard stack, bind relative/helper arguments back to the
 call-site values identity, and conjoin the contract at every reachable include.
 Pin direct and enabled/conditional helper uses at full-chart scale.
 
-### F54. Type-dispatch overlays can make an explicitly supported arm impossible (FIXED 2026-07-15)
+### F54. Type-dispatch overlays can make an explicitly supported arm impossible (PARTIAL — REOPENED 2026-07-15)
 
 Some F36/F37/F41 conditional schemas are internally contradictory: the base
 admits the type selected by a live branch, then an `if type=...` overlay requires
@@ -2688,7 +2688,7 @@ semantic operand contract, including Helm's numeric compatibility and nil
 behavior. Propagate relative/helper operand identities, retain ambient guards,
 and do not scope unconditional evidence under a sibling branch.
 
-### F61. Strict collection functions have missing or wrong input signatures (FIXED 2026-07-15)
+### F61. Strict collection functions have missing or wrong input signatures (PARTIAL — REOPENED 2026-07-15)
 
 String consumers gained a semantic catalog, but collection functions still
 lack precise input-domain effects. The result includes both false acceptances
@@ -3315,7 +3315,7 @@ silently claiming the input is valid. Do not require map keys merely because
 make that absence terminating. Pin literal, transformed, loop-indexed,
 guarded, and eagerly evaluated argument cases.
 
-### F71. Dependency activation is not a complete semantic boundary (OPEN — RECONFIRMED 2026-07-15)
+### F71. Dependency activation is not a complete semantic boundary (PARTIAL 2026-07-15)
 
 Chart dependency conditions/tags currently guard some analyzed contract rows,
 but not the dependency's complete values contribution or the availability of
@@ -3749,7 +3749,7 @@ Pin active and shadowed keys, missing keys, nested conflicts, merge versus
 overwrite, removed and retained keys under both guard states, an open custom
 key, and all four chart cases above.
 
-### F81. Numeric arithmetic loses Sprig's coercing conversion boundary (OPEN — RECONFIRMED 2026-07-15)
+### F81. Numeric arithmetic loses Sprig's coercing conversion boundary (FIXED 2026-07-15)
 
 Traefik computes `GOMEMLIMIT` by feeding
 `deployment.goMemLimitPercentage` to `mulf`, then applying
@@ -4968,7 +4968,7 @@ arms) proportionally across phases, with no single remaining hotspot.
 The rustc 1.96 LLVM ICE workaround was removed after the toolchain moved
 to 1.97.0 (release builds clean).
 
-## Plan-wide status reconciliation after the F66-F95 round (2026-07-15)
+## Plan-wide status reconciliation after the F66-F95 round (2026-07-15; superseded below)
 
 This audit used two quiescent builds of the same production semantics:
 `ec8e140...` for the F66-F95 provider lane and `a3a438e...` for the F1-F65
@@ -5149,7 +5149,7 @@ and KPS coreDns Service pins fire only with a resolvable k8s schema source
 (the offline CLI corpus keeps an empty cache, so standard-kind arms appear in
 real runs but not in those fixtures).
 
-### F99 — PARTIAL (literal-decoder folding landed; traversal interpretation open)
+### F99 — FIRST INCREMENT (superseded by the completed traversal below)
 
 `fromYaml`/`fromJson` over a single literal string now constant-fold into
 typed abstract values (dicts, lists, exact string leaves; non-string scalars
@@ -5210,3 +5210,163 @@ storage-class and image-registry conditions into equivalent branch-precise
 disjuncts; twelve whole-chart fixtures gained traversal/pattern arms
 (grafana and its kube-prometheus-stack copy dominate) with all 161 CLI
 tests, including every chart-specific semantic suite, green.
+
+## Post-F99 fixture and runtime re-audit (2026-07-15)
+
+### F100. Post-`tpl` regex requirements are imposed on raw template programs (FIXED 2026-07-15)
+
+F99's pattern lowering is exact when `regexMatch` consumes a Values-backed
+string directly, as in Grafana's sensitive-value table. It is not exact when
+the matched string is the output of `tpl`: the raw accepted input is a Go
+template program, not the post-render text. The current schema copies the
+output pattern straight onto that raw program and rejects documented,
+Helm-valid templated values.
+
+Two independent chart families reproduce this on the current clean target
+`d9b8c98...`:
+
+- Argo CD and OAuth2 Proxy both vendor redis-ha. Its
+  `_helpers.tpl:75-81` computes
+  `$masterGroupName := tpl (.Values.redis.masterGroupName | default "") .`
+  and only then applies `regexMatch "^[\\w-\\.]+$"`. Their values comments
+  explicitly say the field can be templated. With redis-ha active, raw
+  `masterGroupName: "{{ .Release.Name }}"` is rejected by each generated
+  schema at the raw braces/spaces, while `helm template audit ...` evaluates
+  it to `audit` and renders. Direct `mymaster` passes both layers; direct
+  `bad group` is rejected by the schema and terminates Helm, pinning the
+  action-free lane.
+- Datadog's `check-cluster-name` helper (`_helpers.tpl:193-202`) similarly
+  binds `$clusterName := tpl .Values.datadog.clusterName .`, then checks its
+  length and FQDN-like regex. With a valid API key and the default agent
+  branch active, raw `datadog.clusterName: "{{ .Release.Name }}"` is
+  schema-rejected by the post-F99 pattern but Helm renders; direct `audit`
+  validates and renders.
+
+F53 concerns propagating `tpl`'s string input requirement through helpers;
+that requirement is valid here. F99 is also valid for a direct regex subject.
+The new defect is transfer direction across an arbitrary program-evaluation
+boundary: a constraint on `tpl(input, context)` is not generally a constraint
+on `input`'s source text.
+
+**Fix direction.** Preserve `tpl` as a typed transformation barrier. Its
+program argument is string-only, but downstream pattern, length, enum, and
+provider facts apply to the evaluated output and must not be copied directly
+to the raw Values path. A parser-backed refinement may enforce the output
+pattern on action-free literal programs while admitting syntactically
+templated programs (`direct-pattern OR parsed-template-program`); if exact
+evaluation against all runtime contexts is unavailable, abstain beyond the
+string kind. Pin direct valid/invalid strings, a valid `.Release` template,
+dependency-active/dormant callers, helper propagation, and a template whose
+rendered output is invalid so no blanket claim of output validity is made.
+
+### Existing-root extension: F31 constructed-list cardinality
+
+Falco's `falco.removedConfigGuard` (`templates/_helpers.tpl:307-329`) ranges
+literal removed-key lists, appends each present invalid key to `$found`, then
+fails when `gt (len $found) 0`. F99 now discovers the literal keys and adds
+`driver.ebpf`, `driver.gvisor`, `falco.grpc`, and `falco.grpc_output` as open
+schema properties, but it does not preserve the append-derived cardinality
+that makes their presence invalid. Consequently `driver.ebpf: {}` and
+`falco.grpc: false` both pass the schema even though `hasKey` is true for
+those falsy values and Helm always terminates. `driver.kind: ebpf` is already
+schema-rejected and Helm-failing, proving that direct literal membership is
+handled; the missing step is the loop-carried append/length state. Extend
+F31's cardinality model to finite constructed collections, or lower this
+bounded pattern directly to forbidden-key implications. Pin empty/falsy
+present values as well as absent keys so truthiness cannot substitute for
+presence.
+
+## Post-F99 plan-wide status reconciliation (2026-07-15)
+
+This is the current authoritative status inventory. It supersedes the earlier
+reconciliation table above. The audit compared every F1-F99 claim against the
+current generated schema, the vendored chart template or helper that owns the
+behavior, and Helm/provider behavior where the claim depends on rendering or a
+Kubernetes sink. The current baseline corpus remains green (`78/78` across
+`chart_corpus` and `chart_reaudit`), but the targeted counterexamples below
+show that passing the baseline does not mean all findings are fixed.
+
+- **Fixed (52):** F1, F2, F4-F11, F13, F15, F16, F18, F19, F21, F22,
+  F24-F29, F32-F37, F39-F43, F45-F48, F50, F52, F55, F57, F60, F63,
+  F66-F69, F91, and F97-F99.
+- **Partial (24):** F3, F20, F23, F30, F31, F38, F49, F51, F53, F54,
+  F56, F58, F59, F61, F62, F64, F65, F71, F77, F78, F81, F92, F93,
+  and F96.
+- **Open (22):** F17, F44, F70, F72-F76, F79, F80, F82-F90, F94,
+  F95, and new F100.
+- **Adjudicated rather than implemented:** F12 remains intentionally
+  unconstrained after review of the chart semantics.
+- **Historical exact downstream unavailable:** F14's original vendored chart
+  revision is no longer present, while its structural regression coverage
+  remains fixed. It is not counted as a current open implementation bug.
+
+The material status changes found in this round are:
+
+- **F34 is fixed.** Both of its previously pinned survivors now behave
+  correctly: Trivy's `serviceMonitor.interval: dig ...` path and Loki's
+  bucket-derived requirements no longer reproduce. The remaining Loki
+  authentication defect is independently tracked by F82.
+- **F49 is reopened as partial.** NFS Subdir External Provisioner's active
+  `podDisruptionBudget.maxUnavailable: "50%"` is still rejected as
+  integer-only by the generated schema, although Helm renders it and the
+  isolated PodDisruptionBudget is valid against the provider schema.
+- **F54 is reopened as partial.** Cluster Autoscaler's active priority
+  expander accepts `expanderPriorities` as a configuration string and renders
+  it, but the schema still requires an object.
+- **F61 is reopened as partial.** Kyverno's schema accepts a non-empty array
+  for `imagePullSecrets`; every active controller template applies `keys` to
+  the value and Helm fails because the runtime contract is a map. The map
+  sibling renders successfully.
+- **F71 is partial, not wholly open.** The disabled OAuth2 Proxy redis child is
+  now correctly pruned. The independent `tags.bitnami-common: false` case
+  remains schema-valid even though Helm loses the live common helper.
+- **F81 is partial, not wholly open.** ReLoader's live raw-map branch is now
+  modeled correctly. Its non-HA `min`-coerced map branch is still falsely
+  rejected even though Helm renders and the provider accepts it.
+- **F97-F99 are fixed.** Root typed-method handling, branch-scoped required
+  provider fields, and the finite literal-table traversal/pattern interpreter
+  all pass their intended current pins. Their completion does not repair the
+  distinct post-`tpl` transfer bug recorded as F100.
+
+All other partial/open classifications retain at least one freshly reproduced
+counterexample from their detailed finding. In particular, the surviving
+early/mid-chart cases include F17's Vault/Prometheus union losses, F20/F23's
+valid object forms, F30's complete Cluster Autoscaler config-map entry, F31's
+remaining semantic validators, F38's int64 loss, F44's Trivy map input, F51's
+Airflow sentinels, F53's numeric remote-write URL, F56's provider and Airflow
+security-context gaps, F58/F59's Jenkins helper inputs, F62's OAuth2 Proxy
+annotation/environment forms, F64's Airflow live `base_url` map, and F65's
+inactive Vault HA config. The F70-F96 detailed sections remain authoritative
+for the later-chart survivors not explicitly changed above.
+
+## Post-reconciliation fix round (2026-07-15)
+
+- **F81 — FIXED.** Catalogued Sprig's coercing arithmetic (`add`/`add1`/`sub`/
+  `mul`/`max`/`min`/`floor`/`ceil`/`round` and their `f` variants) in
+  `is_coercing_arithmetic_function`. Both the call and pipeline dispatch now
+  shape-erase every values-backed operand (each passes through
+  `cast.ToInt64`/`ToFloat64`, so a numeric string or junk coercing to zero all
+  render), while the derived numeric result carries no operand-kind contract.
+  Division and modulo are deliberately excluded (a zero denominator is a real
+  precondition). Traefik's `goMemLimitPercentage`, cilium's
+  `certValidityDuration`, reloader's `min`-fed replicas, and bitnami-redis
+  probe timeouts now accept any scalar. Reproducers: IR
+  `coercing_arithmetic_erases_raw_operand_shape` /
+  `division_operand_is_not_arithmetic_erased`. Fixtures re-pinned: signoz
+  zookeeper IR (`add $e $minServerId` PartialScalar→Serialized) and four
+  whole-chart schemas.
+- **F100 — FIXED.** `tpl` now marks its rendered output as derived text, and
+  `regexMatch`/`mustRegexMatch` carries a `templated` flag on
+  `Guard::MatchesPattern`/`FailValueRequirement::MatchesPattern` when its
+  subject reached the match through `tpl`. The pattern then lowers as
+  `anyOf: [{pattern}, {contains a `{{` action}]`, so a raw template program
+  (redis-ha `masterGroupName: "{{ .Release.Name }}"`, datadog `clusterName`)
+  is admitted while an action-free non-matching literal (`bad group`) still
+  terminates and a matching literal (`mymaster`) validates. Reproducer:
+  `post_tpl_regex_admits_template_programs`. Five whole-chart schemas
+  re-pinned (the derived-text marking also correctly refines `ne (tpl x) ""`
+  truthiness in cluster-autoscaler and aws-lb).
+- **F49 — verified fixed.** The reopened `maxUnavailable: "50%"` and the
+  nack `klogLevel`/`readOnly` cases all accept every scalar form on the
+  current tree (fresh generation confirmed); the whole-chart fixtures already
+  lock the scalar-union widening. No code change required.
