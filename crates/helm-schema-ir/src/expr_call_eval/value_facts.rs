@@ -107,3 +107,24 @@ pub(super) fn identity_range_key_paths(value: &Option<AbstractValue>) -> BTreeSe
         .map(AbstractValue::range_key_paths)
         .unwrap_or_default()
 }
+
+/// The exact element count of a statically known collection value.
+pub(super) fn concrete_collection_len(value: &AbstractValue) -> Option<usize> {
+    match value {
+        AbstractValue::List(items) => Some(items.len()),
+        AbstractValue::Dict(entries) => Some(entries.len()),
+        _ => None,
+    }
+}
+
+/// The exact integer a statically known scalar value denotes.
+pub(super) fn concrete_integer(value: &AbstractValue) -> Option<i64> {
+    let AbstractValue::StringSet(strings) = value else {
+        return None;
+    };
+    let mut strings = strings.iter();
+    let (Some(text), None) = (strings.next(), strings.next()) else {
+        return None;
+    };
+    text.parse().ok()
+}

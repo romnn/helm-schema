@@ -6863,8 +6863,38 @@
       "condition": [
         [
           {
+            "path": "global",
+            "type": "truthy"
+          },
+          {
             "path": "global.imageRegistry",
             "type": "truthy"
+          }
+        ],
+        [
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "volumePermissions.enabled",
+            "type": "truthy"
+          },
+          {
+            "paths": [
+              "global.imageRegistry",
+              "volumePermissions.image.registry"
+            ],
+            "type": "or"
+          }
+        ],
+        [
+          {
+            "paths": [
+              "global.imageRegistry",
+              "image.registry"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -6927,8 +6957,11 @@
             "type": "truthy"
           },
           {
-            "path": "image.registry",
-            "type": "truthy"
+            "paths": [
+              "global.imageRegistry",
+              "image.registry"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -7006,13 +7039,17 @@
             "type": "truthy"
           },
           {
-            "path": "image.registry",
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "volumePermissions.enabled",
             "type": "truthy"
           },
           {
             "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
+              "global.imageRegistry",
+              "volumePermissions.image.registry"
             ],
             "type": "or"
           }
@@ -7027,16 +7064,18 @@
             "type": "truthy"
           },
           {
-            "path": "persistence.enabled",
-            "type": "truthy"
+            "paths": [
+              "global.imageRegistry",
+              "image.registry"
+            ],
+            "type": "or"
           },
           {
-            "path": "volumePermissions.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "volumePermissions.image.registry",
-            "type": "truthy"
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -7151,6 +7190,10 @@
             "type": "truthy"
           },
           {
+            "path": "global",
+            "type": "truthy"
+          },
+          {
             "path": "global.storageClass",
             "type": "truthy"
           },
@@ -7165,6 +7208,31 @@
         ],
         [
           {
+            "path": "dataLogDir",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.dataLogDir.existingClaim",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "global.storageClass",
+              "persistence.storageClass"
+            ],
+            "type": "or"
+          }
+        ],
+        [
+          {
+            "path": "global",
+            "type": "truthy"
+          },
+          {
             "path": "global.storageClass",
             "type": "truthy"
           },
@@ -7175,6 +7243,23 @@
           {
             "path": "persistence.existingClaim",
             "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.existingClaim",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "global.storageClass",
+              "persistence.storageClass"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -7235,12 +7320,15 @@
             "type": "truthy"
           },
           {
-            "path": "persistence.storageClass",
-            "type": "truthy"
-          },
-          {
             "path": "persistence.dataLogDir.existingClaim",
             "type": "not"
+          },
+          {
+            "paths": [
+              "global.storageClass",
+              "persistence.storageClass"
+            ],
+            "type": "or"
           }
         ],
         [
@@ -7257,12 +7345,15 @@
             "type": "truthy"
           },
           {
-            "path": "persistence.storageClass",
-            "type": "truthy"
-          },
-          {
             "path": "persistence.existingClaim",
             "type": "not"
+          },
+          {
+            "paths": [
+              "global.storageClass",
+              "persistence.storageClass"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -7683,20 +7774,6 @@
       "condition": [
         [
           {
-            "path": "global.imageRegistry",
-            "type": "truthy"
-          },
-          {
-            "path": "image.digest",
-            "type": "truthy"
-          },
-          {
-            "path": "image.registry",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
             "path": "image.digest",
             "type": "truthy"
           }
@@ -7776,27 +7853,6 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "global.imageRegistry",
-            "type": "truthy"
-          },
-          {
-            "path": "image.digest",
-            "type": "truthy"
-          },
-          {
-            "path": "image.registry",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
-            ],
-            "type": "or"
-          }
-        ],
         [
           {
             "path": "image.digest",
@@ -8236,8 +8292,11 @@
       "condition": [
         [
           {
-            "path": "image.registry",
-            "type": "truthy"
+            "paths": [
+              "global.imageRegistry",
+              "image.registry"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -8272,12 +8331,11 @@
       "condition": [
         [
           {
-            "path": "global.imageRegistry",
-            "type": "truthy"
-          },
-          {
-            "path": "image.registry",
-            "type": "truthy"
+            "paths": [
+              "global.imageRegistry",
+              "image.registry"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -8347,12 +8405,11 @@
       "condition": [
         [
           {
-            "path": "global.imageRegistry",
-            "type": "truthy"
-          },
-          {
-            "path": "image.registry",
-            "type": "truthy"
+            "paths": [
+              "global.imageRegistry",
+              "image.registry"
+            ],
+            "type": "or"
           },
           {
             "paths": [
@@ -8427,16 +8484,6 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "global.imageRegistry",
-            "type": "truthy"
-          },
-          {
-            "path": "image.registry",
-            "type": "truthy"
-          }
-        ],
         []
       ],
       "kind": "Serialized",
@@ -8515,23 +8562,6 @@
       "condition": [
         [
           {
-            "path": "global.imageRegistry",
-            "type": "truthy"
-          },
-          {
-            "path": "image.registry",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
-            ],
-            "type": "or"
-          }
-        ],
-        [
-          {
             "paths": [
               "tls.client.enabled",
               "tls.quorum.enabled"
@@ -8614,16 +8644,6 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "global.imageRegistry",
-            "type": "truthy"
-          },
-          {
-            "path": "image.registry",
-            "type": "truthy"
-          }
-        ],
         []
       ],
       "kind": "Serialized",
@@ -8700,23 +8720,6 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "global.imageRegistry",
-            "type": "truthy"
-          },
-          {
-            "path": "image.registry",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "tls.client.enabled",
-              "tls.quorum.enabled"
-            ],
-            "type": "or"
-          }
-        ],
         [
           {
             "paths": [
@@ -14212,12 +14215,15 @@
             "type": "truthy"
           },
           {
-            "path": "persistence.storageClass",
-            "type": "truthy"
-          },
-          {
             "path": "persistence.dataLogDir.existingClaim",
             "type": "not"
+          },
+          {
+            "paths": [
+              "global.storageClass",
+              "persistence.storageClass"
+            ],
+            "type": "or"
           }
         ],
         [
@@ -14226,12 +14232,15 @@
             "type": "truthy"
           },
           {
-            "path": "persistence.storageClass",
-            "type": "truthy"
-          },
-          {
             "path": "persistence.existingClaim",
             "type": "not"
+          },
+          {
+            "paths": [
+              "global.storageClass",
+              "persistence.storageClass"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -14270,38 +14279,36 @@
             "type": "truthy"
           },
           {
-            "path": "global.storageClass",
-            "type": "truthy"
-          },
-          {
             "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.storageClass",
             "type": "truthy"
           },
           {
             "path": "persistence.dataLogDir.existingClaim",
             "type": "not"
+          },
+          {
+            "paths": [
+              "global.storageClass",
+              "persistence.storageClass"
+            ],
+            "type": "or"
           }
         ],
         [
-          {
-            "path": "global.storageClass",
-            "type": "truthy"
-          },
           {
             "path": "persistence.enabled",
             "type": "truthy"
           },
           {
-            "path": "persistence.storageClass",
-            "type": "truthy"
-          },
-          {
             "path": "persistence.existingClaim",
             "type": "not"
+          },
+          {
+            "paths": [
+              "global.storageClass",
+              "persistence.storageClass"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -20326,28 +20333,6 @@
       "condition": [
         [
           {
-            "path": "global.imageRegistry",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "volumePermissions.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "volumePermissions.image.digest",
-            "type": "truthy"
-          },
-          {
-            "path": "volumePermissions.image.registry",
-            "type": "truthy"
-          }
-        ],
-        [
-          {
             "path": "persistence.enabled",
             "type": "truthy"
           },
@@ -20653,8 +20638,11 @@
             "type": "truthy"
           },
           {
-            "path": "volumePermissions.image.registry",
-            "type": "truthy"
+            "paths": [
+              "global.imageRegistry",
+              "volumePermissions.image.registry"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -20689,10 +20677,6 @@
       "condition": [
         [
           {
-            "path": "global.imageRegistry",
-            "type": "truthy"
-          },
-          {
             "path": "persistence.enabled",
             "type": "truthy"
           },
@@ -20701,8 +20685,11 @@
             "type": "truthy"
           },
           {
-            "path": "volumePermissions.image.registry",
-            "type": "truthy"
+            "paths": [
+              "global.imageRegistry",
+              "volumePermissions.image.registry"
+            ],
+            "type": "or"
           }
         ]
       ],
@@ -20770,24 +20757,6 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "global.imageRegistry",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "volumePermissions.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "volumePermissions.image.registry",
-            "type": "truthy"
-          }
-        ],
         [
           {
             "path": "persistence.enabled",
@@ -20873,24 +20842,6 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "global.imageRegistry",
-            "type": "truthy"
-          },
-          {
-            "path": "persistence.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "volumePermissions.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "volumePermissions.image.registry",
-            "type": "truthy"
-          }
-        ],
         [
           {
             "path": "persistence.enabled",

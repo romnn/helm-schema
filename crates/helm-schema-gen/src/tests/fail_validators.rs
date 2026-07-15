@@ -1,5 +1,99 @@
 use super::*;
 
+/// The grafana `assertNoLeakedSecrets` traversal: a folded literal table
+/// of sensitive paths is ranged with per-item bindings, an indexed inner
+/// range advances a traversal local under `hasKey` guards, and the last
+/// segment applies a `regexMatch`-guarded `fail`. The traversal must
+/// interpret to exact values paths: non-strings and plain strings at a
+/// sensitive path reject while variable-expansion syntax and disabled
+/// assertion render.
+#[test]
+fn literal_table_traversal_binds_pattern_validators() {
+    let helpers = indoc! {r#"
+        {{- define "repro.assertNoLeakedSecrets" -}}
+          {{- $sensitiveKeysYaml := `
+        sensitiveKeys:
+        - path: ["database", "password"]
+        - path: ["auth.basic", "password"]
+        ` | fromYaml -}}
+          {{- if .Values.assertNoLeakedSecrets -}}
+            {{- $ini := index .Values "app.ini" -}}
+            {{- range $_, $secret := $sensitiveKeysYaml.sensitiveKeys -}}
+              {{- $currentMap := $ini -}}
+              {{- $shouldContinue := true -}}
+              {{- range $index, $elem := $secret.path -}}
+                {{- if and $shouldContinue (hasKey $currentMap $elem) -}}
+                  {{- if eq (len $secret.path) (add1 $index) -}}
+                    {{- if not (regexMatch "\$(?:__(?:env|file|vault))?{[^}]+}" (index $currentMap $elem)) -}}
+                      {{- fail (printf "Sensitive key '%s' should use variable expansion" (join "." $secret.path)) -}}
+                    {{- end -}}
+                  {{- else -}}
+                    {{- $currentMap = index $currentMap $elem -}}
+                  {{- end -}}
+                {{- else -}}
+                    {{- $shouldContinue = false -}}
+                {{- end -}}
+              {{- end -}}
+            {{- end -}}
+          {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- include "repro.assertNoLeakedSecrets" . }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+    "#};
+    let values_yaml = indoc! {"
+        assertNoLeakedSecrets: true
+        app.ini: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "defaults render"),
+        (
+            serde_json::json!({ "app.ini": { "database": { "password": 7 } } }),
+            false,
+            "regexMatch rejects a non-string sensitive value",
+        ),
+        (
+            serde_json::json!({ "app.ini": { "database": { "password": "hunter2" } } }),
+            false,
+            "a plaintext sensitive value hits the fail",
+        ),
+        (
+            serde_json::json!({ "app.ini": { "database": { "password": "$__env{PW}" } } }),
+            true,
+            "variable expansion renders",
+        ),
+        (
+            serde_json::json!({ "app.ini": { "auth.basic": { "password": "leak" } } }),
+            false,
+            "dotted path segments stay atomic",
+        ),
+        (
+            serde_json::json!({ "app.ini": { "database": { "host": "ok" } } }),
+            true,
+            "non-sensitive members render",
+        ),
+        (
+            serde_json::json!({
+                "assertNoLeakedSecrets": false,
+                "app.ini": { "database": { "password": "hunter2" } },
+            }),
+            true,
+            "the outer flag gates the whole validator",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// A literal YAML table decoded with `fromYaml` constant-folds into a
 /// typed abstract dict (the F99 literal-data foundation): membership
 /// probes over it decode to exact live/dead branches, so a `fail` behind

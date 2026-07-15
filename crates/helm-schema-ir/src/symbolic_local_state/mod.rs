@@ -33,6 +33,13 @@ pub(crate) struct SymbolicLocalState {
     /// Conditions and assignments resolve through these; hole rendering
     /// does not, so member reads do not manufacture placed rows.
     pub(crate) range_member_values: HashMap<String, AbstractValue>,
+    /// Locals whose CURRENT value came from a guarded self-advance
+    /// (`$x = index $x $k` under a `hasKey $x $k` presence conjunct): one
+    /// traversal step into a member. The branch join keeps the advanced
+    /// (deepest) value instead of widening to a choice — facts derived
+    /// from the advanced identity carry its presence guard, which only
+    /// holds at runtime when the advance really happened.
+    pub(crate) traversal_advances: BTreeSet<String>,
     local_scopes: Vec<LocalScopeFrame>,
 }
 
@@ -46,6 +53,7 @@ struct VariableLocalState {
     range_domain: Option<Vec<String>>,
     get_binding: Option<GetBinding>,
     fragment_value: Option<AbstractValue>,
+    traversal_advanced: bool,
     default_paths: Option<BTreeSet<String>>,
     output_meta: Option<BTreeMap<String, HelperOutputMeta>>,
     truthy_reduction: Option<Predicate>,
@@ -84,6 +92,10 @@ impl SymbolicLocalState {
     ) {
         self.record_binding_shadow(kind, &variable);
         self.set_fragment_value(variable, binding);
+    }
+
+    pub(crate) fn mark_traversal_advance(&mut self, variable: &str) {
+        self.traversal_advances.insert(variable.to_string());
     }
 
     pub(crate) fn insert_range_domain(&mut self, variable: String, literals: Vec<String>) {
@@ -128,6 +140,7 @@ impl SymbolicLocalState {
             range_domain: self.range_domains.get(variable).cloned(),
             get_binding: self.get_bindings.get(variable).cloned(),
             fragment_value: self.fragment_values.get(variable).cloned(),
+            traversal_advanced: self.traversal_advances.contains(variable),
             default_paths: self.default_paths.get(variable).cloned(),
             output_meta: self.output_meta.get(variable).cloned(),
             truthy_reduction: self.truthy_reductions.get(variable).cloned(),
@@ -156,6 +169,11 @@ impl SymbolicLocalState {
         restore_map_entry(&mut self.range_domains, variable, previous.range_domain);
         restore_map_entry(&mut self.get_bindings, variable, previous.get_binding);
         restore_map_entry(&mut self.fragment_values, variable, previous.fragment_value);
+        if previous.traversal_advanced {
+            self.traversal_advances.insert(variable.to_string());
+        } else {
+            self.traversal_advances.remove(variable);
+        }
         restore_map_entry(&mut self.default_paths, variable, previous.default_paths);
         restore_map_entry(&mut self.output_meta, variable, previous.output_meta);
         restore_map_entry(
@@ -184,6 +202,7 @@ impl SymbolicLocalState {
         self.range_domains.remove(variable);
         self.get_bindings.remove(variable);
         self.fragment_values.remove(variable);
+        self.traversal_advances.remove(variable);
         self.default_paths.remove(variable);
         self.output_meta.remove(variable);
         self.truthy_reductions.remove(variable);

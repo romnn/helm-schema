@@ -3,6 +3,7 @@ use std::collections::BTreeSet;
 use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
+use crate::expr_eval::eval_expr;
 use crate::{Guard, GuardValue};
 use helm_schema_ast::type_is_schema_type;
 use helm_schema_core::Predicate;
@@ -116,6 +117,7 @@ impl ValuePathContext<'_> {
                 "coalesce" => self.coalesce_truthy_predicate(args).is_some(),
                 "default" => self.default_truthy_predicate(args).is_some(),
                 "dig" => self.dig_truthy_predicate(args).is_some(),
+                "regexMatch" | "mustRegexMatch" => self.regex_match_predicate(args).is_some(),
                 function if is_files_get_function(function) => {
                     self.files_get_printf_predicate(args).is_some()
                 }
@@ -198,6 +200,7 @@ impl ValuePathContext<'_> {
             "dig" => self
                 .dig_truthy_predicate(args)
                 .or_else(|| self.truthy_predicate(expr)),
+            "regexMatch" | "mustRegexMatch" => self.regex_match_predicate(args),
             function if is_files_get_function(function) => self
                 .files_get_printf_predicate(args)
                 .or_else(|| self.truthy_predicate(expr)),
@@ -379,11 +382,18 @@ impl ValuePathContext<'_> {
     }
 
     fn and_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
-        let predicates = args
+        let mut predicates = args
             .iter()
             .filter_map(|arg| self.condition_predicate(arg))
             .collect::<Vec<_>>();
-        (!predicates.is_empty()).then(|| Predicate::all(predicates))
+        if predicates.is_empty() {
+            return None;
+        }
+        // Statically true conjuncts (`and $shouldContinue …` where the
+        // local's reduction is `True`) carry nothing: dropping them keeps
+        // the remaining conjunct in its exact single-predicate shape.
+        predicates.retain(|predicate| !matches!(predicate, Predicate::True));
+        Some(Predicate::all(predicates))
     }
 
     fn not_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
@@ -414,6 +424,11 @@ impl ValuePathContext<'_> {
             }
             TemplateExpr::Call { function, args } if function == "hasKey" => {
                 self.has_key_predicate(args).map(|p| p.negated())
+            }
+            TemplateExpr::Call { function, args }
+                if function == "regexMatch" || function == "mustRegexMatch" =>
+            {
+                self.regex_match_predicate(args).map(|p| p.negated())
             }
             TemplateExpr::Call { function, args } if function == "has" => self
                 .helper_literal_membership_predicate(args)
@@ -464,12 +479,48 @@ impl ValuePathContext<'_> {
         let [map, key] = args else {
             return None;
         };
-        let TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) = key.deparen()
-        else {
-            return None;
+        // A literal key, or a variable statically bound to one string (an
+        // unrolled traversal's `$elem`).
+        let key = match key.deparen() {
+            TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) => key.clone(),
+            key => self.constant_scalar(key)?,
         };
         self.with_body_fragment_value_expr(map)
-            .and_then(|value| value_has_key(&value, key))
+            .and_then(|value| value_has_key(&value, &key))
+    }
+
+    /// `regexMatch pattern subject` over a literal pattern and one
+    /// values-backed subject is a pattern test on the path. `regexMatch`
+    /// type-asserts a string subject, so the guard holding also implies
+    /// string-ness; its NEGATION stays a raw predicate for fail lowering.
+    fn regex_match_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let [pattern, subject] = args else {
+            return None;
+        };
+        let pattern = literal_string(pattern)?;
+        let path = match self.with_body_fragment_value_expr(subject)? {
+            AbstractValue::ValuesPath(path) if !path.is_empty() => path,
+            _ => return None,
+        };
+        Some(Predicate::from(Guard::MatchesPattern {
+            path,
+            pattern: pattern.to_string(),
+        }))
+    }
+
+    /// The single string a statically known scalar expression denotes:
+    /// folded literal members, unrolled iteration bindings, and constant
+    /// `len`/`add1` results. Values-backed reads never qualify.
+    fn constant_scalar(&self, expr: &TemplateExpr) -> Option<String> {
+        let value = eval_expr(expr, &self.expression_eval_env()).value?;
+        let AbstractValue::StringSet(strings) = value else {
+            return None;
+        };
+        let mut strings = strings.iter();
+        match (strings.next(), strings.next()) {
+            (Some(text), None) => Some(text.clone()),
+            _ => None,
+        }
     }
 
     fn or_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
@@ -829,7 +880,17 @@ impl ValuePathContext<'_> {
         let (value, paths) = match (guard_value_literal(left), guard_value_literal(right)) {
             (Some(value), None) if direct_selector(right) => (value, self.paths_for_expr(right)),
             (None, Some(value)) if direct_selector(left) => (value, self.paths_for_expr(left)),
-            _ => return self.helper_literal_dispatch_predicate(left, right, negated),
+            _ => {
+                // Two statically known scalars compare as a constant:
+                // `eq (len $secret.path) (add1 $index)` selects the last
+                // element of an exactly unrolled iteration.
+                if let (Some(left_value), Some(right_value)) =
+                    (self.constant_scalar(left), self.constant_scalar(right))
+                {
+                    return Some(bool_predicate((left_value == right_value) != negated));
+                }
+                return self.helper_literal_dispatch_predicate(left, right, negated);
+            }
         };
         let predicates = paths
             .iter()

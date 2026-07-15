@@ -38,7 +38,7 @@ use strict_operands::{
     record_string_transform_effects, string_call_operand_facts,
 };
 use traversal::{eval_dig, eval_index};
-use value_facts::identity_value_paths;
+use value_facts::{concrete_collection_len, concrete_integer, identity_value_paths};
 
 pub(crate) fn eval_call_with_helper_calls(
     function: &str,
@@ -120,6 +120,29 @@ pub(crate) fn eval_call_with_helper_calls(
                 identity_value_paths(&subject.value),
                 &mut result.effects,
             );
+            // A statically known collection has a constant length, which
+            // unrolled traversals compare against iteration ordinals.
+            if let Some(length) = subject.value.as_ref().and_then(concrete_collection_len) {
+                result.value = Some(AbstractValue::StringSet(
+                    [length.to_string()].into_iter().collect(),
+                ));
+            }
+            result
+        }
+        // Constant integer arithmetic over statically known operands
+        // (`add1 $index` on an unrolled iteration ordinal).
+        "add1" if args.len() == 1 => {
+            let mut result = eval_all_args(args, env, resolver);
+            let incremented = eval_expr_with_helper_calls(&args[0], env, resolver)
+                .value
+                .as_ref()
+                .and_then(concrete_integer)
+                .map(|value| value + 1);
+            if let Some(value) = incremented {
+                result.value = Some(AbstractValue::StringSet(
+                    [value.to_string()].into_iter().collect(),
+                ));
+            }
             result
         }
         "has" if args.len() == 2 => {

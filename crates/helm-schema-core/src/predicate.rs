@@ -131,6 +131,10 @@ impl Predicate {
                 Self::from(Guard::With { path: path.clone() }),
                 Self::from(Guard::Eq { path, value }),
             ],
+            Self::Guard(Guard::MatchesPattern { path, pattern }) => vec![
+                Self::from(Guard::With { path: path.clone() }),
+                Self::from(Guard::MatchesPattern { path, pattern }),
+            ],
             Self::Guard(Guard::NotEq { path, value }) => vec![
                 Self::from(Guard::With { path: path.clone() }),
                 Self::from(Guard::NotEq { path, value }),
@@ -238,6 +242,7 @@ impl Predicate {
             | Self::Guard(
                 Guard::Truthy { .. }
                 | Guard::Eq { .. }
+                | Guard::MatchesPattern { .. }
                 | Guard::Range { .. }
                 | Guard::With { .. }
                 | Guard::Default { .. }

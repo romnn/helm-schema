@@ -936,6 +936,16 @@ fn requirements_from_holding(
         Predicate::Guard(Guard::TypeIs { path, schema_type }) if path == scope => {
             Some(vec![FailValueRequirement::SchemaType(schema_type.clone())])
         }
+        // `regexMatch` type-asserts a string subject, so the negated fail
+        // test (`if not (regexMatch …) fail`) requires a matching string.
+        Predicate::Guard(Guard::MatchesPattern { path, pattern }) if path == scope => {
+            Some(vec![FailValueRequirement::MatchesPattern(pattern.clone())])
+        }
+        // The tested value's own PRESENCE holding (the `hasKey` conjunct of
+        // the fail path, `¬Absent(scope)` in the conjunction): an arm
+        // encoded at the value's position is vacuous when the value is
+        // absent, so presence needs no spelled requirement.
+        Predicate::Guard(Guard::Absent { path }) if path == scope => Some(Vec::new()),
         // The tested value's own truthiness (`and $v (kindIs "string" $v)`):
         // the type requirement carries the substance; truthiness (rejecting
         // "" or 0) stays unmodeled as a bounded approximation.
@@ -1643,6 +1653,9 @@ fn guard_to_conditional_guard(
         Guard::Absent { path: value_path } => Some(ConditionalGuard::Absent {
             path: path(value_path)?,
         }),
+        // Pattern guards have no if/then spelling in the overlay
+        // vocabulary; implications guarded by one abstain.
+        Guard::MatchesPattern { .. } => None,
         Guard::TypeIs {
             path: value_path,
             schema_type,

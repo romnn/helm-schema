@@ -47251,6 +47251,231 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema177"
+                  },
+                  {
+                    "properties": {
+                      "agents": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "agents"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "datadog": {
+                    "properties": {
+                      "clusterName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "datadog"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "datadog": {
+                        "properties": {
+                          "apiKey": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "apiKey"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "datadog"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "datadog": {
+                        "properties": {
+                          "apiKeyExistingSecret": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "apiKeyExistingSecret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "datadog"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema159"
+                  },
+                  {
+                    "properties": {
+                      "clusterAgent": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "clusterAgent"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "datadog": {
+                    "properties": {
+                      "clusterName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "datadog"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "existingClusterAgent": {
+                      "properties": {
+                        "join": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "join"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "existingClusterAgent"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "datadog": {
+                    "properties": {
+                      "clusterName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "datadog"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "otelAgentGateway": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "otelAgentGateway"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "datadog": {
+            "additionalProperties": {},
+            "description": "datadog.apiKey -- Your Datadog API key",
+            "properties": {
+              "clusterName": {
+                "description": "The name must be unique and must be dot-separated tokens with the following restrictions:\n* Lowercase letters, numbers, and hyphens only.\n* Must start with a letter.\n* Must end with a number or a letter.\n* Overall length should not be higher than 80 characters.\nCompared to the rules of GKE, dots are allowed whereas they are not allowed on GKE:\nhttps://cloud.google.com/kubernetes-engine/docs/reference/rest/v1beta1/projects.locations.clusters#Cluster.FIELDS.name\n<CLUSTER_NAME>",
+                "pattern": "^([a-z0-9]([a-z0-9\\-_]*[a-z0-9])?\\.)*([a-z0-9]([a-z0-9\\-_]*[a-z0-9])?)$",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [

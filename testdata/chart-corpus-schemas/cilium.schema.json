@@ -23828,6 +23828,21 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "cluster": {
+          "additionalProperties": {},
+          "properties": {
+            "name": {
+              "description": "Name of the cluster. Only required for Cluster Mesh and mutual authentication with SPIRE.\nIt must respect the following constraints:\n* It must contain at most 32 characters;\n* It must begin and end with a lower case alphanumeric character;\n* It may contain lower case alphanumeric characters and dashes between.\nThe \"default\" name cannot be used if the Cluster ID is different from 0.",
+              "pattern": "^([a-z0-9][-a-z0-9]*)?[a-z0-9]$",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -69808,155 +69823,6 @@
                   }
                 ],
                 "description": "Enable IPv4 support."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema461"
-                  },
-                  {
-                    "properties": {
-                      "agent": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "agent"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "properties": {
-                    "preflight": {
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "preflight"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "sleepAfterInit": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "sleepAfterInit"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema302"
-                  },
-                  {
-                    "properties": {
-                      "operator": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "operator"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "operator": {
-                          "properties": {
-                            "hostNetwork": {}
-                          },
-                          "required": [
-                            "hostNetwork"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "operator"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "operator": {
-                        "properties": {
-                          "hostNetwork": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "hostNetwork"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "operator"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ipv4": {
-            "additionalProperties": {},
-            "description": "iptablesLockTimeout defines the iptables \"--wait\" option when invoked from Cilium.\niptablesLockTimeout: \"5s\"",
-            "properties": {
-              "enabled": {
-                "description": "Enable IPv4 support.",
-                "type": "boolean"
               }
             }
           }
@@ -119120,8 +118986,17 @@
       "type": "boolean"
     },
     "keepDeprecatedProbes": {
-      "description": "Keep the deprecated probes when deploying Cilium DaemonSet",
-      "type": "boolean"
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "Keep the deprecated probes when deploying Cilium DaemonSet"
     },
     "kubeConfigPath": {
       "description": "(string) Kubernetes config path"

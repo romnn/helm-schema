@@ -357,8 +357,29 @@ impl Interpreter<'_> {
                         }
                     })
                 }
-                crate::fragment_assignment::AssignmentKind::Assignment => None,
+                // A plain reassignment's static truthiness is branch-local
+                // state; the branch join unions it with the other arms'
+                // reductions (`$shouldContinue = false` in a traversal's
+                // kill-switch arm).
+                crate::fragment_assignment::AssignmentKind::Assignment => rhs_truthy_reduction
+                    .or_else(|| {
+                        if rhs_produces_derived_text(&assignment.rhs_expr) {
+                            return None;
+                        }
+                        static_value_truthiness(fragment_value.as_ref()).map(|truthy| {
+                            if truthy {
+                                Predicate::True
+                            } else {
+                                Predicate::False
+                            }
+                        })
+                    }),
             };
+            let previous_fragment_value = self
+                .locals
+                .fragment_values
+                .get(&assignment.variable)
+                .cloned();
             // Helper bodies keep the prior binding when the right-hand side
             // resolves to nothing (the summary lane's rule): an unresolvable
             // re-assignment in one branch must not erase the other branches'
@@ -369,6 +390,30 @@ impl Interpreter<'_> {
                     assignment.variable.clone(),
                     fragment_value.clone(),
                 );
+            }
+            // A guarded self-advance (`$x = index $x $k` reassigning `$x`
+            // one member deeper while this step's `hasKey` presence guard
+            // is active) marks the local so the branch join keeps the
+            // advanced value: consumers stay a finite exact path, and
+            // their facts carry the member's presence guard.
+            if assignment.kind == crate::fragment_assignment::AssignmentKind::Assignment
+                && let (
+                    Some(AbstractValue::ValuesPath(parent)),
+                    Some(AbstractValue::ValuesPath(child)),
+                ) = (&previous_fragment_value, &fragment_value)
+                && helm_schema_core::values_path_is_descendant(child, parent)
+            {
+                let presence = Predicate::from(crate::Guard::Absent {
+                    path: child.clone(),
+                })
+                .negated();
+                let guarded = self.active_predicates.iter().any(|active| match active {
+                    Predicate::And(items) => items.contains(&presence),
+                    other => other == &presence,
+                });
+                if guarded {
+                    self.locals.mark_traversal_advance(&assignment.variable);
+                }
             }
             if let Some(predicate) = truthy_reduction {
                 self.locals

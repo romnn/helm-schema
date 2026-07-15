@@ -42,7 +42,7 @@ impl ValuePathContext<'_> {
         eval_exprs_effects(exprs, &env)
     }
 
-    fn expression_eval_env(&self) -> EvalEnv {
+    pub(super) fn expression_eval_env(&self) -> EvalEnv {
         let current_dot = self
             .current_dot_fragment
             .as_ref()

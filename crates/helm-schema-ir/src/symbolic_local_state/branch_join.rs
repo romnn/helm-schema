@@ -14,10 +14,12 @@ pub(super) fn joined_branch_outcomes(
         return entry.clone();
     }
 
+    let (fragment_values, traversal_advances) = join_fragment_values(&outcomes);
     SymbolicLocalState {
         range_domains: join_map(&outcomes, |state| &state.range_domains, join_literal_union),
         get_bindings: join_map(&outcomes, |state| &state.get_bindings, join_if_equal),
-        fragment_values: join_map(&outcomes, |state| &state.fragment_values, join_value_choice),
+        fragment_values,
+        traversal_advances,
         default_paths: join_map(&outcomes, |state| &state.default_paths, join_path_union),
         output_meta: join_map(&outcomes, |state| &state.output_meta, join_meta_by_path),
         truthy_reductions: join_map(
@@ -34,6 +36,69 @@ pub(super) fn joined_branch_outcomes(
         chart_value_defaults: intersect_chart_defaults(&outcomes),
         local_scopes: entry.local_scopes.clone(),
     }
+}
+
+/// Join fragment values, keeping a guarded traversal's ADVANCED value when
+/// one branch stepped a local into a member (`$x = index $x $k` under a
+/// presence conjunct on the member) and every other branch left it at an
+/// ancestor: consumers of the advanced identity are presence-guarded on
+/// it, so the join stays a finite exact path instead of a choice.
+fn join_fragment_values(
+    outcomes: &[SymbolicLocalState],
+) -> (HashMap<String, AbstractValue>, BTreeSet<String>) {
+    let variables: BTreeSet<&String> = outcomes
+        .iter()
+        .flat_map(|state| state.fragment_values.keys())
+        .collect();
+    let mut joined = HashMap::new();
+    let mut advances = BTreeSet::new();
+    for variable in variables {
+        let Some(values) = outcomes
+            .iter()
+            .map(|state| state.fragment_values.get(variable))
+            .collect::<Option<Vec<_>>>()
+        else {
+            continue;
+        };
+        if let Some(advanced) = advanced_traversal_value(outcomes, variable, &values) {
+            joined.insert(variable.clone(), advanced);
+            advances.insert(variable.clone());
+            continue;
+        }
+        if let Some(value) = join_value_choice(values) {
+            joined.insert(variable.clone(), value);
+        }
+    }
+    (joined, advances)
+}
+
+fn advanced_traversal_value(
+    outcomes: &[SymbolicLocalState],
+    variable: &str,
+    values: &[&AbstractValue],
+) -> Option<AbstractValue> {
+    let paths = values
+        .iter()
+        .map(|value| match value {
+            AbstractValue::ValuesPath(path) => Some(path.as_str()),
+            _ => None,
+        })
+        .collect::<Option<Vec<_>>>()?;
+    let deepest = paths
+        .iter()
+        .copied()
+        .max_by_key(|path| helm_schema_core::split_value_path(path).len())?;
+    if !paths
+        .iter()
+        .all(|path| *path == deepest || helm_schema_core::values_path_is_descendant(deepest, path))
+    {
+        return None;
+    }
+    let marked = outcomes
+        .iter()
+        .zip(&paths)
+        .any(|(state, path)| *path == deepest && state.traversal_advances.contains(variable));
+    marked.then(|| AbstractValue::ValuesPath(deepest.to_string()))
 }
 
 /// Join one per-variable local-state map across branch outcomes.

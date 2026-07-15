@@ -102,6 +102,10 @@ pub enum Guard {
     /// Path absence check, used for structural rules where missing values are
     /// semantically distinct from false values.
     Absent { path: String },
+    /// The path's string value matches a literal regular expression:
+    /// `if regexMatch "…" .Values.X`. `regexMatch` type-asserts a string
+    /// subject, so the guard holding implies string-ness as well.
+    MatchesPattern { path: String, pattern: String },
     /// Disjunction: `if or .Values.A .Values.B`
     Or { paths: Vec<String> },
     /// Disjunction whose arms may each contain a conjunction of typed guards.
@@ -170,6 +174,7 @@ impl Guard {
             | Self::Eq { .. }
             | Self::NotEq { .. }
             | Self::Absent { .. }
+            | Self::MatchesPattern { .. }
             | Self::Range { .. }
             | Self::With { .. }
             | Self::Default { .. }
@@ -187,6 +192,7 @@ impl Guard {
             | Guard::Eq { path, .. }
             | Guard::NotEq { path, .. }
             | Guard::Absent { path }
+            | Guard::MatchesPattern { path, .. }
             | Guard::Range { path }
             | Guard::With { path }
             | Guard::Default { path }
@@ -220,6 +226,10 @@ impl Guard {
                 value,
             },
             Guard::Absent { path } => Guard::Absent { path: map(&path) },
+            Guard::MatchesPattern { path, pattern } => Guard::MatchesPattern {
+                path: map(&path),
+                pattern,
+            },
             Guard::Or { paths } => Guard::Or {
                 paths: paths.into_iter().map(|path| map(&path)).collect(),
             },

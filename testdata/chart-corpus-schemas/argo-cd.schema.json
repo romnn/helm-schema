@@ -53919,6 +53919,56 @@
             "type": "object"
           },
           {
+            "$ref": "#/$defs/schema188"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis-ha": {
+            "additionalProperties": {},
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+            "properties": {
+              "redis": {
+                "additionalProperties": {},
+                "description": "Redis specific configuration options",
+                "properties": {
+                  "masterGroupName": {
+                    "description": "Redis convention for naming the cluster group: must match `^[\\\\w-\\\\.]+$` and can be templated",
+                    "pattern": "^[\\w\\-\\.]+$",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "redis-ha": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "redis-ha"
+            ],
+            "type": "object"
+          },
+          {
             "allOf": [
               {
                 "properties": {
@@ -102172,11 +102222,7 @@
               }
             },
             "masterGroupName": {
-              "description": "Redis convention for naming the cluster group: must match `^[\\\\w-\\\\.]+$` and can be templated",
-              "type": [
-                "string",
-                "null"
-              ]
+              "description": "Redis convention for naming the cluster group: must match `^[\\\\w-\\\\.]+$` and can be templated"
             },
             "minReadySeconds": {
               "description": "Configure the 'minReadySeconds' parameter to StatefulSet\nref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#minreadyseconds"

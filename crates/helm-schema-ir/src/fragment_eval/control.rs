@@ -30,6 +30,11 @@ pub(super) struct RangeIterations {
 pub(super) struct RangeIterationBinding {
     pub(super) dot: AbstractValue,
     pub(super) variable: Option<(String, AbstractValue)>,
+    /// The KEY variable of a destructured header (`$i` in
+    /// `range $i, $v := …`), bound to the iteration ordinal for lists so
+    /// last-element arithmetic (`eq (len …) (add1 $i)`) decodes per
+    /// unrolled iteration.
+    pub(super) key: Option<(String, AbstractValue)>,
 }
 
 impl Interpreter<'_> {
@@ -113,6 +118,11 @@ impl Interpreter<'_> {
                                 self.locals
                                     .fragment_values
                                     .insert(variable.clone(), binding.clone());
+                            }
+                            if let Some((variable, ordinal)) = &item.key {
+                                self.locals
+                                    .fragment_values
+                                    .insert(variable.clone(), ordinal.clone());
                             }
                             self.dot_stack.push(Some(item.dot.clone()));
                             all.extend(self.eval_node_list(nodes));
@@ -627,7 +637,7 @@ impl Interpreter<'_> {
         // Helper bodies iterate statically known list iterables exactly
         // (per-item dots and item-variable bindings); other iterables run
         // the one symbolic iteration with the resolved item dot.
-        let iterations = self.exact_range_iterations(header);
+        let iterations = self.exact_range_iterations(header, value_variable, key_variable);
         if let Some(iterations) = iterations {
             return (Some(Predicate::all(own)), extra, Some(iterations));
         }
@@ -704,7 +714,12 @@ impl Interpreter<'_> {
         )
     }
 
-    fn exact_range_iterations(&mut self, header: &TemplateHeader) -> Option<RangeIterations> {
+    fn exact_range_iterations(
+        &mut self,
+        header: &TemplateHeader,
+        value_variable: Option<&str>,
+        key_variable: Option<&str>,
+    ) -> Option<RangeIterations> {
         let iterable = self.range_iterable_fragment_value(header)?;
         if !self.helper_scope {
             return None;
@@ -723,15 +738,28 @@ impl Interpreter<'_> {
             }
             _ => return None,
         };
-        let variable = range_variable_name_expr(header.expr());
+        // A destructured header binds its declared value variable; a plain
+        // `range $x := …` binds `$x` to the successive elements.
+        let variable = value_variable
+            .map(str::to_string)
+            .or_else(|| range_variable_name_expr(header.expr()));
         let alternatives = alternatives
             .into_iter()
             .map(|items| {
                 items
                     .into_iter()
-                    .map(|item| RangeIterationBinding {
+                    .enumerate()
+                    .map(|(ordinal, item)| RangeIterationBinding {
                         dot: item.clone(),
                         variable: variable.as_ref().map(|variable| (variable.clone(), item)),
+                        key: key_variable.map(|key| {
+                            (
+                                key.to_string(),
+                                AbstractValue::StringSet(
+                                    [ordinal.to_string()].into_iter().collect(),
+                                ),
+                            )
+                        }),
                     })
                     .collect()
             })

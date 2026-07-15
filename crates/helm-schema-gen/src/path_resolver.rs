@@ -376,6 +376,88 @@ pub(crate) fn fail_requirement_schema<'a>(
     merge_schema_list(parts)
 }
 
+/// Translate a Go/RE2 pattern into an ECMA 262 equivalent for the JSON
+/// Schema `pattern` keyword: bare `{`/`}` braces that do not form a
+/// quantifier are literal in RE2 but invalid in strict ECMA parsers, so
+/// they get escaped. Constructs with no ECMA spelling (inline flags,
+/// `\A`/`\z` anchors, POSIX classes) abstain.
+fn ecma_compatible_pattern(pattern: &str) -> Option<String> {
+    if pattern.contains("(?i") && !pattern.contains("(?i:")
+        || pattern.contains("(?m")
+        || pattern.contains("(?s")
+        || pattern.contains("(?U")
+        || pattern.contains("(?P<")
+        || pattern.contains("\\A")
+        || pattern.contains("\\z")
+        || pattern.contains("[[:")
+    {
+        return None;
+    }
+    let characters: Vec<char> = pattern.chars().collect();
+    let mut out = String::with_capacity(pattern.len());
+    let mut in_class = false;
+    let mut previous_was_class_escape = false;
+    let is_class_escape = |index: usize| {
+        characters.get(index) == Some(&'\\')
+            && matches!(
+                characters.get(index + 1),
+                Some('w' | 'W' | 'd' | 'D' | 's' | 'S')
+            )
+    };
+    let mut index = 0;
+    while index < characters.len() {
+        let character = characters[index];
+        if character != '\\' && character != '-' {
+            previous_was_class_escape = false;
+        }
+        match character {
+            '\\' => {
+                previous_was_class_escape = in_class && is_class_escape(index);
+                out.push(character);
+                if index + 1 < characters.len() {
+                    out.push(characters[index + 1]);
+                    index += 1;
+                }
+            }
+            // In-class `-` adjacent to a class escape (`[\w-\.]`) is a
+            // literal in RE2 but an invalid range in strict ECMA parsers.
+            '-' if in_class && (previous_was_class_escape || is_class_escape(index + 1)) => {
+                out.push_str("\\-");
+            }
+            '[' if !in_class => {
+                in_class = true;
+                out.push(character);
+            }
+            ']' if in_class => {
+                in_class = false;
+                out.push(character);
+            }
+            '{' if !in_class => {
+                // A valid quantifier ({n}, {n,}, {n,m}) passes through.
+                let mut end = index + 1;
+                while end < characters.len()
+                    && (characters[end].is_ascii_digit() || characters[end] == ',')
+                {
+                    end += 1;
+                }
+                let quantifier = end > index + 1
+                    && characters.get(end) == Some(&'}')
+                    && characters[index + 1].is_ascii_digit();
+                if quantifier {
+                    out.extend(&characters[index..=end]);
+                    index = end;
+                } else {
+                    out.push_str("\\{");
+                }
+            }
+            '}' if !in_class => out.push_str("\\}"),
+            _ => out.push(character),
+        }
+        index += 1;
+    }
+    Some(out)
+}
+
 fn requirements_allow_runtime_kind(
     requirements: &[helm_schema_core::FailValueRequirement],
     schema_type: &str,
@@ -385,6 +467,7 @@ fn requirements_allow_runtime_kind(
     requirements.iter().all(|requirement| match requirement {
         FailValueRequirement::SchemaType(required) => required == schema_type,
         FailValueRequirement::NotSchemaType(rejected) => rejected != schema_type,
+        FailValueRequirement::MatchesPattern(_) => schema_type == "string",
         FailValueRequirement::Iterable { allow_integer } => {
             matches!(schema_type, "array" | "object" | "null")
                 || schema_type == "integer" && *allow_integer
@@ -420,6 +503,14 @@ fn fail_value_requirement_schema(
             }
             FailValueRequirement::HasMember(member) => {
                 required_members.push(member);
+            }
+            FailValueRequirement::MatchesPattern(pattern) => {
+                // JSON Schema patterns are ECMA 262; abstaining on an
+                // untranslatable Go/RE2 pattern only widens the arm back
+                // to its other requirements.
+                if let Some(pattern) = ecma_compatible_pattern(pattern) {
+                    parts.push(serde_json::json!({ "type": "string", "pattern": pattern }));
+                }
             }
             FailValueRequirement::MemberHost { handled_kinds } => {
                 let mut arms = vec![type_schema("object")];

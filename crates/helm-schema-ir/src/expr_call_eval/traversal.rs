@@ -211,19 +211,15 @@ pub(super) fn path_segment_options(
             if strings.is_empty() {
                 None
             } else {
+                // An evaluated key selects exactly ONE member: `index`/`get`
+                // treat the string atomically, so a dotted key stays a
+                // single (escaped) segment.
                 let mut options = Vec::new();
                 for value in strings {
                     options.push(PathSegmentOption {
                         segments: vec![value.clone()],
                         integer_index: false,
                     });
-                    let structural_segments = helm_schema_core::split_value_path(&value);
-                    if structural_segments.len() > 1 {
-                        options.push(PathSegmentOption {
-                            segments: structural_segments,
-                            integer_index: false,
-                        });
-                    }
                 }
                 options.sort_by(|left, right| left.segments.cmp(&right.segments));
                 options.dedup();

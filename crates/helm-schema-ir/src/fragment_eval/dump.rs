@@ -155,6 +155,7 @@ fn fmt_guard(guard: &Guard) -> String {
         Guard::Eq { path, value } => format!("eq({path} == {value})"),
         Guard::NotEq { path, value } => format!("ne({path} != {value})"),
         Guard::Absent { path } => format!("absent({path})"),
+        Guard::MatchesPattern { path, pattern } => format!("matches({path} ~ {pattern})"),
         Guard::Or { paths } => format!("or({})", paths.join(", ")),
         Guard::AnyOf { alternatives } => {
             let rendered: Vec<String> = alternatives
