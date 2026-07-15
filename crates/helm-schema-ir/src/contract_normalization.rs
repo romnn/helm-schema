@@ -75,7 +75,7 @@ pub(crate) fn canonicalize_contract_uses(uses: &mut Vec<ContractUse>) {
         if let Some(existing) = merged_sites.last_mut()
             && contract_use_render_site_cmp(existing, &contract_use).is_eq()
         {
-            existing.condition.union(contract_use.condition);
+            existing.condition.union_absorbing(contract_use.condition);
             merge_contract_use_provenance(existing, contract_use.provenance);
             continue;
         }

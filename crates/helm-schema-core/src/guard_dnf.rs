@@ -178,8 +178,10 @@ impl GuardDnf {
         self.0.extend(other.0);
     }
 
-    /// Union conditions after their evidence payloads are known to be equal.
-    pub fn union(&mut self, other: Self) {
+    /// Union conditions after their evidence payloads are known to be
+    /// equal, re-normalizing so duplicate and subsumed disjuncts are
+    /// absorbed (unlike [`Self::union_preserving_disjuncts`]).
+    pub fn union_absorbing(&mut self, other: Self) {
         *self = Self::from_disjunction(std::mem::take(&mut self.0).into_iter().chain(other.0));
     }
 

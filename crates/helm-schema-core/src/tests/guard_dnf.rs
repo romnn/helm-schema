@@ -136,7 +136,7 @@ fn equal_evidence_across_opaque_branch_complements_is_unconditional() {
         Predicate::approximate("condition-1", ["version".to_string()].into_iter().collect());
     let mut condition = GuardDnf::from_conjunction([approximate.clone()]);
 
-    condition.union(GuardDnf::from_conjunction([approximate.negated()]));
+    condition.union_absorbing(GuardDnf::from_conjunction([approximate.negated()]));
 
     sim_assert_eq!(have: condition, want: GuardDnf::unconditional());
 }
