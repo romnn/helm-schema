@@ -40,11 +40,22 @@ fn schema_node_for_values_path<'schema>(
 ) -> Option<&'schema Value> {
     let mut current = schema;
     for segment in path.split('.').filter(|segment| !segment.is_empty()) {
+        current = resolve_local_ref(schema, current);
         current = if segment == "*" {
             current.get("items")?
         } else {
             current.get("properties")?.get(segment)?
         };
     }
-    Some(current)
+    Some(resolve_local_ref(schema, current))
+}
+
+/// Interned subtrees live in root-level `$defs`; follow local refs so
+/// values-path lookups see through the output interning.
+fn resolve_local_ref<'schema>(root: &'schema Value, node: &'schema Value) -> &'schema Value {
+    node.get("$ref")
+        .and_then(Value::as_str)
+        .and_then(|reference| reference.strip_prefix("#/$defs/"))
+        .and_then(|name| root.pointer(&format!("/$defs/{name}")))
+        .unwrap_or(node)
 }

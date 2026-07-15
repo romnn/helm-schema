@@ -24,6 +24,152 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "additionalProperties": {},
+      "properties": {
+        "args": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Add custom arguments to the RBAC Manager pod."
+        }
+      }
+    },
+    "schema10": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema11": {
+      "not": {
+        "properties": {
+          "deploy": {}
+        },
+        "required": [
+          "deploy"
+        ],
+        "type": "object"
+      }
+    },
+    "schema12": {
+      "items": {
+        "type": [
+          "boolean",
+          "integer",
+          "number",
+          "string"
+        ]
+      },
+      "type": "array"
+    },
+    "schema13": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "schema15": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema16": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema18": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "schema2": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema3": {
+      "not": {
+        "properties": {
+          "rbacManager": {
+            "properties": {
+              "deploy": {}
+            },
+            "required": [
+              "deploy"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbacManager"
+        ],
+        "type": "object"
+      }
+    },
+    "schema5": {
+      "not": {
+        "properties": {
+          "webhooks": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "webhooks"
+        ],
+        "type": "object"
+      }
+    },
+    "schema9": {
+      "additionalProperties": {
+        "type": [
+          "boolean",
+          "integer",
+          "number",
+          "string"
+        ]
+      },
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -35,23 +181,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbacManager": {
-                      "properties": {
-                        "deploy": {}
-                      },
-                      "required": [
-                        "deploy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbacManager"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema3"
               },
               {
                 "properties": {
@@ -77,23 +207,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema2"
               },
               {
                 "properties": {
@@ -119,23 +233,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhooks": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhooks"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -166,10 +264,7 @@
           "customLabels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               },
               {
                 "not": {
@@ -226,23 +321,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbacManager": {
-                  "properties": {
-                    "deploy": {}
-                  },
-                  "required": [
-                    "deploy"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbacManager"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema3"
           },
           {
             "properties": {
@@ -289,23 +368,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbacManager": {
-                  "properties": {
-                    "deploy": {}
-                  },
-                  "required": [
-                    "deploy"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbacManager"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema3"
           },
           {
             "properties": {
@@ -357,23 +420,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "rbacManager": {
-                          "properties": {
-                            "deploy": {}
-                          },
-                          "required": [
-                            "deploy"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbacManager"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema3"
                   },
                   {
                     "properties": {
@@ -414,23 +461,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema2"
                   },
                   {
                     "properties": {
@@ -494,23 +525,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbacManager": {
-                      "properties": {
-                        "deploy": {}
-                      },
-                      "required": [
-                        "deploy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbacManager"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema3"
               },
               {
                 "properties": {
@@ -536,23 +551,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema2"
               },
               {
                 "properties": {
@@ -578,23 +577,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhooks": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhooks"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -669,23 +652,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbacManager": {
-                  "properties": {
-                    "deploy": {}
-                  },
-                  "required": [
-                    "deploy"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbacManager"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema3"
           },
           {
             "properties": {
@@ -712,26 +679,7 @@
         "additionalProperties": {},
         "properties": {
           "rbacManager": {
-            "additionalProperties": {},
-            "properties": {
-              "args": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Add custom arguments to the RBAC Manager pod."
-              }
-            }
+            "$ref": "#/$defs/schema1"
           }
         }
       }
@@ -740,23 +688,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "webhooks": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "webhooks"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema5"
           },
           {
             "properties": {
@@ -788,10 +720,7 @@
               "customAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema16"
                   },
                   {
                     "not": {
@@ -812,23 +741,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhooks": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhooks"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -919,8 +832,7 @@
           "type": "null"
         },
         {
-          "additionalProperties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema18"
         }
       ],
       "description": "Add custom arguments to the Crossplane pod."
@@ -931,26 +843,10 @@
         "packages": {
           "anyOf": [
             {
-              "items": {
-                "type": [
-                  "boolean",
-                  "integer",
-                  "number",
-                  "string"
-                ]
-              },
-              "type": "array"
+              "$ref": "#/$defs/schema12"
             },
             {
-              "items": {
-                "type": [
-                  "boolean",
-                  "integer",
-                  "number",
-                  "string"
-                ]
-              },
-              "type": "array"
+              "$ref": "#/$defs/schema12"
             },
             {
               "type": "integer"
@@ -959,15 +855,7 @@
               "type": "null"
             },
             {
-              "additionalProperties": {
-                "type": [
-                  "boolean",
-                  "integer",
-                  "number",
-                  "string"
-                ]
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema9"
             }
           ],
           "description": "A list of Configuration packages to install."
@@ -978,16 +866,10 @@
     "customAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema10"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema16"
         },
         {
           "not": {
@@ -1000,16 +882,10 @@
     "customLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema10"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema16"
         },
         {
           "not": {
@@ -1039,8 +915,7 @@
     "extraEnvVarsCrossplane": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema18"
         },
         {
           "items": {},
@@ -1050,8 +925,7 @@
           "type": "null"
         },
         {
-          "additionalProperties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema18"
         }
       ],
       "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
@@ -1059,8 +933,7 @@
     "extraEnvVarsCrossplaneInit": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema18"
         },
         {
           "items": {},
@@ -1070,8 +943,7 @@
           "type": "null"
         },
         {
-          "additionalProperties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema18"
         }
       ],
       "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
@@ -1112,26 +984,10 @@
         "packages": {
           "anyOf": [
             {
-              "items": {
-                "type": [
-                  "boolean",
-                  "integer",
-                  "number",
-                  "string"
-                ]
-              },
-              "type": "array"
+              "$ref": "#/$defs/schema12"
             },
             {
-              "items": {
-                "type": [
-                  "boolean",
-                  "integer",
-                  "number",
-                  "string"
-                ]
-              },
-              "type": "array"
+              "$ref": "#/$defs/schema12"
             },
             {
               "type": "integer"
@@ -1140,15 +996,7 @@
               "type": "null"
             },
             {
-              "additionalProperties": {
-                "type": [
-                  "boolean",
-                  "integer",
-                  "number",
-                  "string"
-                ]
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema9"
             }
           ],
           "description": "A list of Function packages to install"
@@ -1608,26 +1456,10 @@
         "defaultActivations": {
           "anyOf": [
             {
-              "items": {
-                "type": [
-                  "boolean",
-                  "integer",
-                  "number",
-                  "string"
-                ]
-              },
-              "type": "array"
+              "$ref": "#/$defs/schema12"
             },
             {
-              "items": {
-                "type": [
-                  "boolean",
-                  "integer",
-                  "number",
-                  "string"
-                ]
-              },
-              "type": "array"
+              "$ref": "#/$defs/schema12"
             },
             {
               "type": "integer"
@@ -1636,15 +1468,7 @@
               "type": "null"
             },
             {
-              "additionalProperties": {
-                "type": [
-                  "boolean",
-                  "integer",
-                  "number",
-                  "string"
-                ]
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema9"
             }
           ],
           "description": "Define entries for the default managed resource activation policy. If defined, a default MRAP will contain these activations."
@@ -1652,26 +1476,10 @@
         "packages": {
           "anyOf": [
             {
-              "items": {
-                "type": [
-                  "boolean",
-                  "integer",
-                  "number",
-                  "string"
-                ]
-              },
-              "type": "array"
+              "$ref": "#/$defs/schema12"
             },
             {
-              "items": {
-                "type": [
-                  "boolean",
-                  "integer",
-                  "number",
-                  "string"
-                ]
-              },
-              "type": "array"
+              "$ref": "#/$defs/schema12"
             },
             {
               "type": "integer"
@@ -1680,15 +1488,7 @@
               "type": "null"
             },
             {
-              "additionalProperties": {
-                "type": [
-                  "boolean",
-                  "integer",
-                  "number",
-                  "string"
-                ]
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema9"
             }
           ],
           "description": "A list of Provider packages to install."
@@ -1703,15 +1503,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deploy": {}
-                  },
-                  "required": [
-                    "deploy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -1727,41 +1519,14 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "args": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Add custom arguments to the RBAC Manager pod."
-              }
-            }
+            "$ref": "#/$defs/schema1"
           }
         },
         {
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deploy": {}
-                  },
-                  "required": [
-                    "deploy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -1803,15 +1568,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deploy": {}
-                  },
-                  "required": [
-                    "deploy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -2013,16 +1770,10 @@
         "customAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema10"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema16"
             },
             {
               "not": {
@@ -2084,13 +1835,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema15"
                 }
               },
               {
@@ -2112,10 +1857,7 @@
               "customAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema16"
                   },
                   {
                     "not": {
@@ -2134,13 +1876,7 @@
               "anyOf": [
                 {
                   "not": {
-                    "properties": {
-                      "create": {}
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema15"
                   }
                 },
                 {
@@ -2236,13 +1972,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema13"
                 }
               },
               {

@@ -24,6 +24,495 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "not": {
+        "properties": {
+          "service": {
+            "properties": {
+              "ports": {
+                "properties": {
+                  "websocket": {
+                    "properties": {
+                      "enabled": {}
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "websocket"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ports"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "service"
+        ],
+        "type": "object"
+      }
+    },
+    "schema10": {
+      "additionalProperties": {},
+      "description": "merge or patch the container\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#container-v1-core",
+      "type": "object"
+    },
+    "schema11": {
+      "additionalProperties": {},
+      "description": "merge or patch the pod template\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#pod-v1-core",
+      "type": "object"
+    },
+    "schema12": {
+      "not": {
+        "properties": {
+          "podDisruptionBudget": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "podDisruptionBudget"
+        ],
+        "type": "object"
+      }
+    },
+    "schema13": {
+      "not": {
+        "properties": {
+          "promExporter": {
+            "properties": {
+              "podMonitor": {}
+            },
+            "required": [
+              "podMonitor"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "promExporter"
+        ],
+        "type": "object"
+      }
+    },
+    "schema15": {
+      "not": {
+        "properties": {
+          "natsBox": {
+            "properties": {
+              "serviceAccount": {}
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "natsBox"
+        ],
+        "type": "object"
+      }
+    },
+    "schema16": {
+      "not": {
+        "properties": {
+          "natsBox": {
+            "properties": {
+              "contextsSecret": {}
+            },
+            "required": [
+              "contextsSecret"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "natsBox"
+        ],
+        "type": "object"
+      }
+    },
+    "schema2": {
+      "additionalProperties": {},
+      "description": "service account",
+      "properties": {
+        "merge": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "merge or patch the service account\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#serviceaccount-v1-core"
+        }
+      }
+    },
+    "schema20": {
+      "not": {
+        "properties": {
+          "natsBox": {
+            "properties": {
+              "deployment": {}
+            },
+            "required": [
+              "deployment"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "natsBox"
+        ],
+        "type": "object"
+      }
+    },
+    "schema21": {
+      "description": "merge or patch the service account\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#serviceaccount-v1-core"
+    },
+    "schema22": {
+      "additionalProperties": {},
+      "properties": {
+        "digest": {},
+        "fullImageName": {},
+        "pullPolicy": {},
+        "registry": {},
+        "repository": {},
+        "tag": {}
+      },
+      "type": "object"
+    },
+    "schema23": {
+      "not": {
+        "properties": {
+          "natsBox": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "natsBox"
+        ],
+        "type": "object"
+      }
+    },
+    "schema24": {
+      "not": {
+        "properties": {
+          "service": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "service"
+        ],
+        "type": "object"
+      }
+    },
+    "schema3": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "tls": {
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "secretName": {
+              "description": "set secretName in order to mount an existing secret to dir"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "schema30": {
+      "properties": {
+        "pvc": {
+          "properties": {
+            "enabled": {}
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "pvc"
+      ],
+      "type": "object"
+    },
+    "schema31": {
+      "not": {
+        "properties": {
+          "podDisruptionBudget": {}
+        },
+        "required": [
+          "podDisruptionBudget"
+        ],
+        "type": "object"
+      }
+    },
+    "schema32": {
+      "additionalProperties": {},
+      "description": "env var map, see nats.env for an example",
+      "type": "object"
+    },
+    "schema34": {
+      "not": {
+        "properties": {
+          "headlessService": {}
+        },
+        "required": [
+          "headlessService"
+        ],
+        "type": "object"
+      }
+    },
+    "schema35": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "NATS contexts"
+    },
+    "schema36": {
+      "not": {
+        "properties": {
+          "serviceAccount": {}
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema37": {
+      "not": {
+        "properties": {
+          "contextsSecret": {}
+        },
+        "required": [
+          "contextsSecret"
+        ],
+        "type": "object"
+      }
+    },
+    "schema38": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "schema39": {
+      "not": {
+        "properties": {
+          "promExporter": {}
+        },
+        "required": [
+          "promExporter"
+        ],
+        "type": "object"
+      }
+    },
+    "schema40": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema41": {
+      "not": {
+        "properties": {
+          "statefulSet": {}
+        },
+        "required": [
+          "statefulSet"
+        ],
+        "type": "object"
+      }
+    },
+    "schema42": {
+      "not": {
+        "properties": {
+          "podTemplate": {}
+        },
+        "required": [
+          "podTemplate"
+        ],
+        "type": "object"
+      }
+    },
+    "schema46": {
+      "not": {
+        "properties": {
+          "configMap": {}
+        },
+        "required": [
+          "configMap"
+        ],
+        "type": "object"
+      }
+    },
+    "schema48": {
+      "description": "set secretName in order to mount an existing secret to dir"
+    },
+    "schema5": {
+      "not": {
+        "properties": {
+          "config": {
+            "properties": {
+              "websocket": {
+                "properties": {
+                  "ingress": {}
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "websocket"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      }
+    },
+    "schema50": {
+      "not": {
+        "properties": {
+          "enabled": {}
+        },
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
+      }
+    },
+    "schema51": {
+      "not": {
+        "properties": {
+          "natsBox": {}
+        },
+        "required": [
+          "natsBox"
+        ],
+        "type": "object"
+      }
+    },
+    "schema52": {
+      "not": {
+        "properties": {
+          "service": {}
+        },
+        "required": [
+          "service"
+        ],
+        "type": "object"
+      }
+    },
+    "schema54": {
+      "properties": {
+        "deployment": {}
+      },
+      "required": [
+        "deployment"
+      ],
+      "type": "object"
+    },
+    "schema55": {
+      "properties": {
+        "podMonitor": {}
+      },
+      "required": [
+        "podMonitor"
+      ],
+      "type": "object"
+    },
+    "schema57": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "schema61": {
+      "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+    },
+    "schema62": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "schema9": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "secretName": {
+          "description": "set secretName in order to mount an existing secret to dir"
+        }
+      },
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -62,15 +551,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "statefulSet": {}
-                  },
-                  "required": [
-                    "statefulSet"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -155,13 +636,7 @@
                         "jetstream": {
                           "properties": {
                             "fileStore": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
+                              "$ref": "#/$defs/schema57"
                             }
                           },
                           "required": [
@@ -229,21 +704,7 @@
                         "jetstream": {
                           "properties": {
                             "fileStore": {
-                              "properties": {
-                                "pvc": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "pvc"
-                              ],
-                              "type": "object"
+                              "$ref": "#/$defs/schema30"
                             }
                           },
                           "required": [
@@ -442,15 +903,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "statefulSet": {}
-                  },
-                  "required": [
-                    "statefulSet"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -620,15 +1073,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "podTemplate": {}
-                  },
-                  "required": [
-                    "podTemplate"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema42"
               },
               {
                 "properties": {
@@ -653,15 +1098,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "promExporter": {}
-                  },
-                  "required": [
-                    "promExporter"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -686,15 +1123,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "statefulSet": {}
-                  },
-                  "required": [
-                    "statefulSet"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -729,20 +1158,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "port": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema40"
                   }
                 }
               }
@@ -789,21 +1205,7 @@
                     "config": {
                       "properties": {
                         "resolver": {
-                          "properties": {
-                            "pvc": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "pvc"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/schema30"
                         }
                       },
                       "required": [
@@ -972,15 +1374,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "statefulSet": {}
-                  },
-                  "required": [
-                    "statefulSet"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -1178,23 +1572,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -1220,39 +1598,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "ports": {
-                          "properties": {
-                            "websocket": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "websocket"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "ports"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema1"
               },
               {
                 "properties": {
@@ -1294,31 +1640,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "websocket": {
-                          "properties": {
-                            "ingress": {}
-                          },
-                          "required": [
-                            "ingress"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "websocket"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -1495,23 +1817,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -1537,39 +1843,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "ports": {
-                          "properties": {
-                            "websocket": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "websocket"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "ports"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema1"
               },
               {
                 "properties": {
@@ -1611,31 +1885,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "websocket": {
-                          "properties": {
-                            "ingress": {}
-                          },
-                          "required": [
-                            "ingress"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "websocket"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -1814,23 +2064,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -1856,39 +2090,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "ports": {
-                          "properties": {
-                            "websocket": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "websocket"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "ports"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema1"
               },
               {
                 "properties": {
@@ -1930,31 +2132,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "websocket": {
-                          "properties": {
-                            "ingress": {}
-                          },
-                          "required": [
-                            "ingress"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "websocket"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -2026,31 +2204,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "config": {
-                  "properties": {
-                    "websocket": {
-                      "properties": {
-                        "ingress": {}
-                      },
-                      "required": [
-                        "ingress"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "websocket"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "config"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema5"
           },
           {
             "properties": {
@@ -2117,31 +2271,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "config": {
-                  "properties": {
-                    "websocket": {
-                      "properties": {
-                        "ingress": {}
-                      },
-                      "required": [
-                        "ingress"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "websocket"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "config"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema5"
           },
           {
             "properties": {
@@ -2279,15 +2409,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "configMap": {}
-                  },
-                  "required": [
-                    "configMap"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema46"
               },
               {
                 "properties": {
@@ -2338,15 +2460,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "configMap": {}
-              },
-              "required": [
-                "configMap"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema46"
           },
           {
             "properties": {
@@ -2519,23 +2633,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "service": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "service"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "properties": {
@@ -2561,39 +2659,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "service": {
-                          "properties": {
-                            "ports": {
-                              "properties": {
-                                "websocket": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "websocket"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "ports"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "service"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema1"
                   },
                   {
                     "properties": {
@@ -2635,31 +2701,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "websocket": {
-                              "properties": {
-                                "ingress": {}
-                              },
-                              "required": [
-                                "ingress"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "websocket"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema5"
                   },
                   {
                     "properties": {
@@ -2704,23 +2746,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "natsBox": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "natsBox"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -2773,23 +2799,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "natsBox": {
-                          "properties": {
-                            "serviceAccount": {}
-                          },
-                          "required": [
-                            "serviceAccount"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "natsBox"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -2826,23 +2836,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "natsBox": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "natsBox"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -2868,15 +2862,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "natsBox": {}
-                      },
-                      "required": [
-                        "natsBox"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema51"
                   },
                   {
                     "properties": {
@@ -2901,23 +2887,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "natsBox": {
-                          "properties": {
-                            "contextsSecret": {}
-                          },
-                          "required": [
-                            "contextsSecret"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "natsBox"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema16"
                   },
                   {
                     "properties": {
@@ -2954,23 +2924,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "natsBox": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "natsBox"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -2996,15 +2950,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "natsBox": {}
-                      },
-                      "required": [
-                        "natsBox"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema51"
                   },
                   {
                     "properties": {
@@ -3029,23 +2975,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "natsBox": {
-                          "properties": {
-                            "deployment": {}
-                          },
-                          "required": [
-                            "deployment"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "natsBox"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "properties": {
@@ -3082,23 +3012,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "podDisruptionBudget": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "podDisruptionBudget"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema12"
                   },
                   {
                     "properties": {
@@ -3124,15 +3038,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "podDisruptionBudget": {}
-                      },
-                      "required": [
-                        "podDisruptionBudget"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema31"
                   },
                   {
                     "properties": {
@@ -3207,15 +3113,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "promExporter": {}
-                      },
-                      "required": [
-                        "promExporter"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema39"
                   },
                   {
                     "properties": {
@@ -3240,23 +3138,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "promExporter": {
-                          "properties": {
-                            "podMonitor": {}
-                          },
-                          "required": [
-                            "podMonitor"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "promExporter"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema13"
                   },
                   {
                     "properties": {
@@ -3293,23 +3175,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "service": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "service"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "properties": {
@@ -3335,15 +3201,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "service": {}
-                      },
-                      "required": [
-                        "service"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema52"
                   },
                   {
                     "properties": {
@@ -3391,15 +3249,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {}
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema36"
                   },
                   {
                     "properties": {
@@ -3426,15 +3276,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "configMap": {}
-                  },
-                  "required": [
-                    "configMap"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema46"
               },
               {
                 "properties": {
@@ -3459,15 +3301,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "headlessService": {}
-                  },
-                  "required": [
-                    "headlessService"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema34"
               },
               {
                 "properties": {
@@ -3492,15 +3326,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "statefulSet": {}
-                  },
-                  "required": [
-                    "statefulSet"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -3577,15 +3403,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "headlessService": {}
-                  },
-                  "required": [
-                    "headlessService"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema34"
               },
               {
                 "properties": {
@@ -3636,15 +3454,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "headlessService": {}
-              },
-              "required": [
-                "headlessService"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema34"
           },
           {
             "properties": {
@@ -3766,23 +3576,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -3808,23 +3602,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "contextsSecret": {}
-                      },
-                      "required": [
-                        "contextsSecret"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -3864,18 +3642,7 @@
             "description": "natsBox\nNATS Box Deployment and associated resources",
             "properties": {
               "contexts": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "NATS contexts"
+                "$ref": "#/$defs/schema35"
               }
             }
           }
@@ -3915,23 +3682,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -3957,15 +3708,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {}
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -3990,23 +3733,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "contextsSecret": {}
-                      },
-                      "required": [
-                        "contextsSecret"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -4073,23 +3800,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -4115,15 +3826,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {}
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -4148,23 +3851,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "contextsSecret": {}
-                      },
-                      "required": [
-                        "contextsSecret"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -4252,23 +3939,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -4294,15 +3965,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {}
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -4327,23 +3990,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "deployment": {}
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema20"
               },
               {
                 "properties": {
@@ -4410,23 +4057,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -4452,15 +4083,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {}
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -4485,23 +4108,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "deployment": {}
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema20"
               },
               {
                 "properties": {
@@ -4562,23 +4169,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -4658,23 +4249,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "serviceAccount": {}
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -4714,21 +4289,7 @@
             "description": "natsBox\nNATS Box Deployment and associated resources",
             "properties": {
               "serviceAccount": {
-                "additionalProperties": {},
-                "description": "service account",
-                "properties": {
-                  "merge": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "merge or patch the service account\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#serviceaccount-v1-core"
-                  }
-                }
+                "$ref": "#/$defs/schema2"
               }
             }
           }
@@ -4741,23 +4302,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -4810,23 +4355,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "serviceAccount": {}
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -4887,23 +4416,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -4929,23 +4442,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "serviceAccount": {}
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -5003,23 +4500,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -5045,23 +4526,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "natsBox": {
-                      "properties": {
-                        "serviceAccount": {}
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "natsBox"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -5109,23 +4574,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "podDisruptionBudget": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podDisruptionBudget"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema12"
               },
               {
                 "properties": {
@@ -5170,15 +4619,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "podDisruptionBudget": {}
-                  },
-                  "required": [
-                    "podDisruptionBudget"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -5231,23 +4672,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "podDisruptionBudget": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podDisruptionBudget"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema12"
               },
               {
                 "properties": {
@@ -5273,15 +4698,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "podDisruptionBudget": {}
-                  },
-                  "required": [
-                    "podDisruptionBudget"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -5326,15 +4743,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "podDisruptionBudget": {}
-              },
-              "required": [
-                "podDisruptionBudget"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema31"
           },
           {
             "properties": {
@@ -5395,15 +4804,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "podTemplate": {}
-                  },
-                  "required": [
-                    "podTemplate"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema42"
               },
               {
                 "properties": {
@@ -5428,15 +4829,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "promExporter": {}
-                  },
-                  "required": [
-                    "promExporter"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -5461,15 +4854,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "statefulSet": {}
-                  },
-                  "required": [
-                    "statefulSet"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -5601,15 +4986,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "promExporter": {}
-                  },
-                  "required": [
-                    "promExporter"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -5634,23 +5011,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "promExporter": {
-                      "properties": {
-                        "podMonitor": {}
-                      },
-                      "required": [
-                        "podMonitor"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "promExporter"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -5763,15 +5124,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "promExporter": {}
-                  },
-                  "required": [
-                    "promExporter"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -5796,23 +5149,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "promExporter": {
-                      "properties": {
-                        "podMonitor": {}
-                      },
-                      "required": [
-                        "podMonitor"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "promExporter"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -5871,15 +5208,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "promExporter": {}
-              },
-              "required": [
-                "promExporter"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema39"
           },
           {
             "properties": {
@@ -5946,15 +5275,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "podTemplate": {}
-                  },
-                  "required": [
-                    "podTemplate"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema42"
               },
               {
                 "properties": {
@@ -5979,15 +5300,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "promExporter": {}
-                  },
-                  "required": [
-                    "promExporter"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -6012,15 +5325,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "statefulSet": {}
-                  },
-                  "required": [
-                    "statefulSet"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -6052,20 +5357,7 @@
             "description": "stateful set -> pod template -> prom-exporter container\nconfig.monitor must be enabled",
             "properties": {
               "port": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema40"
               }
             }
           }
@@ -6078,15 +5370,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "promExporter": {}
-                  },
-                  "required": [
-                    "promExporter"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -6113,15 +5397,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "promExporter": {}
-                      },
-                      "required": [
-                        "promExporter"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema39"
                   },
                   {
                     "properties": {
@@ -6211,15 +5487,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "promExporter": {}
-              },
-              "required": [
-                "promExporter"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema39"
           },
           {
             "properties": {
@@ -6257,23 +5525,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -6318,15 +5570,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "service": {}
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema52"
               },
               {
                 "properties": {
@@ -6377,31 +5621,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "config": {
-                  "properties": {
-                    "websocket": {
-                      "properties": {
-                        "ingress": {}
-                      },
-                      "required": [
-                        "ingress"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "websocket"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "config"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema5"
           },
           {
             "properties": {
@@ -6468,31 +5688,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "config": {
-                  "properties": {
-                    "websocket": {
-                      "properties": {
-                        "ingress": {}
-                      },
-                      "required": [
-                        "ingress"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "websocket"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "config"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema5"
           },
           {
             "properties": {
@@ -6552,23 +5748,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "service": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -6594,15 +5774,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "service": {}
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema52"
               },
               {
                 "properties": {
@@ -6649,31 +5821,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "websocket": {
-                          "properties": {
-                            "ingress": {}
-                          },
-                          "required": [
-                            "ingress"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "websocket"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -6714,15 +5862,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "service": {}
-                  },
-                  "required": [
-                    "service"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema52"
               },
               {
                 "properties": {
@@ -6764,31 +5904,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "config": {
-                  "properties": {
-                    "websocket": {
-                      "properties": {
-                        "ingress": {}
-                      },
-                      "required": [
-                        "ingress"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "websocket"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "config"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema5"
           },
           {
             "properties": {
@@ -6880,15 +5996,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {}
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema36"
               },
               {
                 "properties": {
@@ -6916,21 +6024,7 @@
         "additionalProperties": {},
         "properties": {
           "serviceAccount": {
-            "additionalProperties": {},
-            "description": "service account",
-            "properties": {
-              "merge": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "merge or patch the service account\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#serviceaccount-v1-core"
-              }
-            }
+            "$ref": "#/$defs/schema2"
           }
         }
       }
@@ -6960,15 +6054,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {}
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema36"
               },
               {
                 "properties": {
@@ -7013,15 +6099,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "serviceAccount": {}
-              },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema36"
           },
           {
             "properties": {
@@ -7082,15 +6160,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "statefulSet": {}
-                  },
-                  "required": [
-                    "statefulSet"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -7141,15 +6211,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "statefulSet": {}
-              },
-              "required": [
-                "statefulSet"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema41"
           },
           {
             "properties": {
@@ -7213,40 +6275,13 @@
               "description": "must be 2 or higher when jetstream is enabled"
             },
             "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                },
-                "secretName": {
-                  "description": "set secretName in order to mount an existing secret to dir"
-                }
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema9"
             }
           },
           "type": "object"
         },
         "gateway": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                },
-                "secretName": {
-                  "description": "set secretName in order to mount an existing secret to dir"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema3"
         },
         "jetstream": {
           "anyOf": [
@@ -7364,25 +6399,7 @@
           ]
         },
         "leafnodes": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                },
-                "secretName": {
-                  "description": "set secretName in order to mount an existing secret to dir"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema3"
         },
         "merge": {
           "description": "merge or patch the nats config\nhttps://docs.nats.io/running-a-nats-service/configuration\nfollowing special rules apply\n1. strings that start with << and end with >> will be unquoted\nuse this for variables and numbers with units\n2. keys ending in $include will be switched to include directives\nkeys are sorted alphabetically, use prefix before $includes to control includes ordering\npaths should be relative to /etc/nats-config/nats.conf\nexample:\nmerge:\n$include: ./my-config.conf\nzzz$include: ./my-config-last.conf\nserver_name: nats\nauthorization:\ntoken: << $TOKEN >>\njetstream:\nmax_memory_store: << 1GB >>\nwill yield the config:\n{\ninclude ./my-config.conf;\n\"authorization\": {\n\"token\": $TOKEN\n},\n\"jetstream\": {\n\"max_memory_store\": 1GB\n},\n\"server_name\": \"nats\",\ninclude ./my-config-last.conf;\n}"
@@ -7408,52 +6425,19 @@
           "type": "object"
         },
         "mqtt": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                },
-                "secretName": {
-                  "description": "set secretName in order to mount an existing secret to dir"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema3"
         },
         "nats": {
           "additionalProperties": {},
           "properties": {
             "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                },
-                "secretName": {
-                  "description": "set secretName in order to mount an existing secret to dir"
-                }
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema9"
             }
           },
           "type": "object"
         },
         "profiling": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema38"
         },
         "resolver": {
           "anyOf": [
@@ -7601,16 +6585,7 @@
               "description": "ingress\nservice must be enabled also"
             },
             "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                },
-                "secretName": {
-                  "description": "set secretName in order to mount an existing secret to dir"
-                }
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema9"
             }
           },
           "type": "object"
@@ -7705,9 +6680,7 @@
           "type": "object"
         },
         "merge": {
-          "additionalProperties": {},
-          "description": "merge or patch the container\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#container-v1-core",
-          "type": "object"
+          "$ref": "#/$defs/schema10"
         },
         "patch": {
           "items": {},
@@ -7718,36 +6691,28 @@
           "description": "container port options\nmust be enabled in the config section also\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#containerport-v1-core",
           "properties": {
             "cluster": {
-              "additionalProperties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema62"
             },
             "gateway": {
-              "additionalProperties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema62"
             },
             "leafnodes": {
-              "additionalProperties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema62"
             },
             "monitor": {
-              "additionalProperties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema62"
             },
             "mqtt": {
-              "additionalProperties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema62"
             },
             "nats": {
-              "additionalProperties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema62"
             },
             "profiling": {
-              "additionalProperties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema62"
             },
             "websocket": {
-              "additionalProperties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema62"
             }
           },
           "type": "object"
@@ -7774,8 +6739,7 @@
           "type": "null"
         },
         {
-          "additionalProperties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema62"
         }
       ],
       "description": "Extra user-defined resources\nadd arbitrary user-generated resources\nexample:\nconfig:\nwebsocket:\nenabled: true\nextraResources:\n- apiVersion: networking.istio.io/v1beta1\nkind: VirtualService\nmetadata:\nname:\n$tplYaml: >\n{{ include \"nats.fullname\" $ | quote }}\nlabels:\n$tplYaml: |\n{{ include \"nats.labels\" $ }}\nspec:\nhosts:\n- demo.nats.io\ngateways:\n- my-gateway\nhttp:\n- name: default\nmatch:\n- name: root\nuri:\nexact: /\nroute:\n- destination:\nhost:\n$tplYaml: >\n{{ .Values.service.name | quote }}\nport:\nnumber:\n$tplYaml: >\n{{ .Values.config.websocket.port }}"
@@ -7872,15 +6836,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema50"
                   },
                   {
                     "properties": {
@@ -7908,15 +6864,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "contextsSecret": {}
-                      },
-                      "required": [
-                        "contextsSecret"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema37"
                   },
                   {
                     "properties": {
@@ -7963,7 +6911,7 @@
                             "type": "string"
                           },
                           "secretName": {
-                            "description": "set secretName in order to mount an existing secret to dir"
+                            "$ref": "#/$defs/schema48"
                           }
                         },
                         "type": "object"
@@ -7986,7 +6934,7 @@
                             "type": "string"
                           },
                           "secretName": {
-                            "description": "set secretName in order to mount an existing secret to dir"
+                            "$ref": "#/$defs/schema48"
                           }
                         },
                         "type": "object"
@@ -8009,7 +6957,7 @@
                             "type": "string"
                           },
                           "secretName": {
-                            "description": "set secretName in order to mount an existing secret to dir"
+                            "$ref": "#/$defs/schema48"
                           }
                         },
                         "type": "object"
@@ -8029,15 +6977,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema50"
                   },
                   {
                     "properties": {
@@ -8055,15 +6995,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "contextsSecret": {}
-                      },
-                      "required": [
-                        "contextsSecret"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema37"
                   },
                   {
                     "properties": {
@@ -8091,18 +7023,7 @@
             "additionalProperties": {},
             "properties": {
               "contexts": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "NATS contexts"
+                "$ref": "#/$defs/schema35"
               }
             }
           }
@@ -8113,15 +7034,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema50"
                   },
                   {
                     "properties": {
@@ -8149,15 +7062,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "contextsSecret": {}
-                      },
-                      "required": [
-                        "contextsSecret"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema37"
                   },
                   {
                     "properties": {
@@ -8212,15 +7117,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema50"
                   },
                   {
                     "properties": {
@@ -8249,13 +7146,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "properties": {
-                        "deployment": {}
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema54"
                     }
                   },
                   {
@@ -8311,15 +7202,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema50"
                   },
                   {
                     "properties": {
@@ -8356,15 +7239,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {}
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema36"
                   },
                   {
                     "properties": {
@@ -8424,9 +7299,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "env": {
-                      "additionalProperties": {},
-                      "description": "env var map, see nats.env for an example",
-                      "type": "object"
+                      "$ref": "#/$defs/schema32"
                     },
                     "image": {
                       "additionalProperties": {},
@@ -8437,17 +7310,14 @@
                         "registry": {},
                         "repository": {},
                         "resources": {
-                          "additionalProperties": {},
-                          "type": "object"
+                          "$ref": "#/$defs/schema62"
                         },
                         "tag": {}
                       },
                       "type": "object"
                     },
                     "merge": {
-                      "additionalProperties": {},
-                      "description": "merge or patch the container\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#container-v1-core",
-                      "type": "object"
+                      "$ref": "#/$defs/schema10"
                     },
                     "patch": {
                       "items": {},
@@ -8560,9 +7430,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "merge": {
-                      "additionalProperties": {},
-                      "description": "merge or patch the pod template\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#pod-v1-core",
-                      "type": "object"
+                      "$ref": "#/$defs/schema11"
                     },
                     "patch": {
                       "items": {},
@@ -8597,7 +7465,7 @@
                       ]
                     },
                     "merge": {
-                      "description": "merge or patch the service account\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#serviceaccount-v1-core"
+                      "$ref": "#/$defs/schema21"
                     },
                     "name": {
                       "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box\""
@@ -8637,15 +7505,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema50"
                   },
                   {
                     "properties": {
@@ -8712,7 +7572,7 @@
               "description": "merge or patch the pod disruption budget\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#poddisruptionbudget-v1-policy"
             },
             "name": {
-              "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+              "$ref": "#/$defs/schema61"
             },
             "patch": {
               "items": {},
@@ -8739,9 +7599,7 @@
               "type": "boolean"
             },
             "merge": {
-              "additionalProperties": {},
-              "description": "merge or patch the pod template\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#pod-v1-core",
-              "type": "object"
+              "$ref": "#/$defs/schema11"
             },
             "patch": {
               "items": {},
@@ -8812,13 +7670,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "properties": {
-                        "podMonitor": {}
-                      },
-                      "required": [
-                        "podMonitor"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema55"
                     }
                   },
                   {
@@ -8886,26 +7738,13 @@
               ]
             },
             "env": {
-              "additionalProperties": {},
-              "description": "env var map, see nats.env for an example",
-              "type": "object"
+              "$ref": "#/$defs/schema32"
             },
             "image": {
-              "additionalProperties": {},
-              "properties": {
-                "digest": {},
-                "fullImageName": {},
-                "pullPolicy": {},
-                "registry": {},
-                "repository": {},
-                "tag": {}
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema22"
             },
             "merge": {
-              "additionalProperties": {},
-              "description": "merge or patch the container\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#container-v1-core",
-              "type": "object"
+              "$ref": "#/$defs/schema10"
             },
             "monitorDomain": {
               "description": "if config.monitor.tls.enabled is set to true, monitorDomain must be set to the common name\nor a SAN used in the tls certificate"
@@ -8935,7 +7774,7 @@
                       "description": "merge or patch the pod monitor\nhttps://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor"
                     },
                     "name": {
-                      "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+                      "$ref": "#/$defs/schema61"
                     },
                     "patch": {
                       "items": {},
@@ -8982,26 +7821,13 @@
               ]
             },
             "env": {
-              "additionalProperties": {},
-              "description": "env var map, see nats.env for an example",
-              "type": "object"
+              "$ref": "#/$defs/schema32"
             },
             "image": {
-              "additionalProperties": {},
-              "properties": {
-                "digest": {},
-                "fullImageName": {},
-                "pullPolicy": {},
-                "registry": {},
-                "repository": {},
-                "tag": {}
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema22"
             },
             "merge": {
-              "additionalProperties": {},
-              "description": "merge or patch the container\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#container-v1-core",
-              "type": "object"
+              "$ref": "#/$defs/schema10"
             },
             "natsVolumeMountPrefixes": {
               "anyOf": [
@@ -9056,7 +7882,7 @@
               "description": "merge or patch the service\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#service-v1-core"
             },
             "name": {
-              "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+              "$ref": "#/$defs/schema61"
             },
             "patch": {
               "items": {},
@@ -9067,67 +7893,25 @@
               "description": "service port options\nadditional boolean field enable to control whether port is exposed in the service\nmust be enabled in the config section also\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#serviceport-v1-core",
               "properties": {
                 "cluster": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema38"
                 },
                 "gateway": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema38"
                 },
                 "leafnodes": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema38"
                 },
                 "monitor": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema38"
                 },
                 "mqtt": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema38"
                 },
                 "nats": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema38"
                 },
                 "profiling": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "type": "boolean"
-                    }
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema38"
                 },
                 "websocket": {
                   "additionalProperties": {},
@@ -9225,10 +8009,10 @@
               ]
             },
             "merge": {
-              "description": "merge or patch the service account\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#serviceaccount-v1-core"
+              "$ref": "#/$defs/schema21"
             },
             "name": {
-              "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+              "$ref": "#/$defs/schema61"
             },
             "patch": {
               "items": {},
@@ -9286,7 +8070,7 @@
               "description": "merge or patch the stateful set\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#statefulset-v1-apps"
             },
             "name": {
-              "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+              "$ref": "#/$defs/schema61"
             },
             "patch": {
               "items": {},

@@ -24,6 +24,286 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "additionalProperties": {},
+      "properties": {
+        "failureThreshold": {
+          "type": "integer"
+        },
+        "httpGet": {
+          "additionalProperties": {},
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "port": {
+              "type": "string"
+            },
+            "scheme": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "initialDelaySeconds": {
+          "type": "integer"
+        },
+        "periodSeconds": {
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "schema10": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "type": {
+              "enum": [
+                "cert-manager"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "schema12": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "type": {
+              "enum": [
+                "helm"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "schema14": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema16": {
+      "properties": {
+        "type": {
+          "not": {
+            "enum": [
+              "metrics-server"
+            ]
+          }
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "schema17": {
+      "properties": {
+        "type": {
+          "enum": [
+            "existingSecret"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "schema18": {
+      "properties": {
+        "type": {
+          "enum": [
+            "cert-manager"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "schema19": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema2": {
+      "not": {
+        "properties": {
+          "tls": {
+            "properties": {
+              "existingSecret": {
+                "properties": {
+                  "lookup": {}
+                },
+                "required": [
+                  "lookup"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "existingSecret"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tls"
+        ],
+        "type": "object"
+      }
+    },
+    "schema20": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema22": {
+      "not": {
+        "properties": {
+          "create": {}
+        },
+        "required": [
+          "create"
+        ],
+        "type": "object"
+      }
+    },
+    "schema24": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema4": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema5": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "type": {
+              "not": {
+                "enum": [
+                  "metrics-server"
+                ]
+              }
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "schema6": {
+      "not": {
+        "properties": {
+          "apiService": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "apiService"
+        ],
+        "type": "object"
+      }
+    },
+    "schema9": {
+      "properties": {
+        "tls": {
+          "properties": {
+            "type": {
+              "enum": [
+                "existingSecret"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -33,25 +313,7 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "cert-manager"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema10"
           },
           {
             "not": {
@@ -96,10 +358,7 @@
         "additionalProperties": {},
         "properties": {
           "additionalAnnotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
+            "$ref": "#/$defs/schema24"
           }
         }
       }
@@ -215,23 +474,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "apiService": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "apiService"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -317,25 +560,7 @@
                     ]
                   },
                   {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "cert-manager"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema10"
                   }
                 ]
               },
@@ -371,10 +596,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "not": {
@@ -414,23 +636,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "apiService": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "apiService"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -517,23 +723,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema14"
               },
               {
                 "properties": {
@@ -559,23 +749,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema4"
               },
               {
                 "properties": {
@@ -599,25 +773,7 @@
             ]
           },
           {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "helm"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           }
         ]
       },
@@ -627,10 +783,7 @@
           "commonLabels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema24"
               },
               {
                 "not": {
@@ -667,23 +820,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "apiService": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "apiService"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -770,23 +907,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema14"
               },
               {
                 "properties": {
@@ -812,23 +933,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema4"
               },
               {
                 "properties": {
@@ -852,71 +957,15 @@
             ]
           },
           {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "cert-manager"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema10"
           },
           {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "helm"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "allOf": [
               {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "type": {
-                        "not": {
-                          "enum": [
-                            "metrics-server"
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema5"
               },
               {
                 "not": {
@@ -949,25 +998,7 @@
                       "type": "object"
                     },
                     {
-                      "properties": {
-                        "tls": {
-                          "properties": {
-                            "type": {
-                              "enum": [
-                                "existingSecret"
-                              ]
-                            }
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "tls"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema9"
                     }
                   ]
                 }
@@ -1075,23 +1106,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "apiService": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "apiService"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1178,23 +1193,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema4"
               },
               {
                 "properties": {
@@ -1218,25 +1217,7 @@
             ]
           },
           {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "helm"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           }
         ]
       },
@@ -1253,23 +1234,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "apiService": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "apiService"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema6"
           },
           {
             "properties": {
@@ -1310,23 +1275,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema14"
           },
           {
             "properties": {
@@ -1425,10 +1374,7 @@
               "additionalLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "not": {
@@ -1597,48 +1543,12 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "cert-manager"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema10"
               }
             ]
           },
           {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "cert-manager"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema10"
           }
         ]
       },
@@ -1671,23 +1581,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "apiService": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "apiService"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1748,48 +1642,12 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "cert-manager"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema10"
               }
             ]
           },
           {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "cert-manager"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema10"
           }
         ]
       },
@@ -1852,48 +1710,12 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "cert-manager"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema10"
               }
             ]
           },
           {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "cert-manager"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema10"
           }
         ]
       },
@@ -1926,25 +1748,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "cert-manager"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema10"
           }
         ]
       },
@@ -1982,23 +1786,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "apiService": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "apiService"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -2026,23 +1814,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "apiService": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "apiService"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema6"
                   },
                   {
                     "properties": {
@@ -2068,31 +1840,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "tls": {
-                          "properties": {
-                            "existingSecret": {
-                              "properties": {
-                                "lookup": {}
-                              },
-                              "required": [
-                                "lookup"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "existingSecret"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "tls"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema2"
                   },
                   {
                     "properties": {
@@ -2124,25 +1872,7 @@
                 ]
               },
               {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "existingSecret"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema9"
               }
             ]
           },
@@ -2176,73 +1906,15 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "existingSecret"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema9"
               },
               {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "type": {
-                        "not": {
-                          "enum": [
-                            "metrics-server"
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema5"
               }
             ]
           },
           {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "type": {
-                    "not": {
-                      "enum": [
-                        "metrics-server"
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema5"
           }
         ]
       },
@@ -2272,23 +1944,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "apiService": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "apiService"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema6"
                   },
                   {
                     "properties": {
@@ -2312,48 +1968,12 @@
                 ]
               },
               {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "helm"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema12"
               }
             ]
           },
           {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "helm"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           }
         ]
       },
@@ -2404,23 +2024,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "apiService": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "apiService"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema6"
                   },
                   {
                     "properties": {
@@ -2448,23 +2052,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "apiService": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "apiService"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema6"
                       },
                       {
                         "properties": {
@@ -2490,31 +2078,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "tls": {
-                              "properties": {
-                                "existingSecret": {
-                                  "properties": {
-                                    "lookup": {}
-                                  },
-                                  "required": [
-                                    "lookup"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "existingSecret"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema2"
                       },
                       {
                         "properties": {
@@ -2546,25 +2110,7 @@
                     ]
                   },
                   {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "existingSecret"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema9"
                   }
                 ]
               },
@@ -2598,73 +2144,15 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "existingSecret"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema9"
                   },
                   {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "type": {
-                            "not": {
-                              "enum": [
-                                "metrics-server"
-                              ]
-                            }
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema5"
                   }
                 ]
               },
               {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "type": {
-                        "not": {
-                          "enum": [
-                            "metrics-server"
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema5"
               }
             ]
           },
@@ -2673,23 +2161,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "apiService": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "apiService"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema6"
                   },
                   {
                     "properties": {
@@ -2750,48 +2222,12 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "cert-manager"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema10"
                   }
                 ]
               },
               {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "cert-manager"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema10"
               }
             ]
           },
@@ -2802,23 +2238,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "apiService": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "apiService"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema6"
                       },
                       {
                         "properties": {
@@ -2842,48 +2262,12 @@
                     ]
                   },
                   {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "helm"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema12"
                   }
                 ]
               },
               {
-                "properties": {
-                  "tls": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "helm"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "tls"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema12"
               }
             ]
           }
@@ -2923,20 +2307,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "minClusterSize": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema19"
                   }
                 }
               }
@@ -2962,20 +2333,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "pollPeriod": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema19"
                   }
                 }
               }
@@ -3001,20 +2359,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "threshold": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema19"
                   }
                 }
               }
@@ -3095,15 +2440,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema22"
               },
               {
                 "properties": {
@@ -3181,16 +2518,10 @@
     "commonLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema20"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema24"
         },
         {
           "not": {
@@ -3221,26 +2552,17 @@
           "type": "null"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema24"
         }
       ]
     },
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema20"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema24"
         },
         {
           "not": {
@@ -3338,34 +2660,7 @@
     "livenessProbe": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "properties": {
-            "failureThreshold": {
-              "type": "integer"
-            },
-            "httpGet": {
-              "additionalProperties": {},
-              "properties": {
-                "path": {
-                  "type": "string"
-                },
-                "port": {
-                  "type": "string"
-                },
-                "scheme": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "initialDelaySeconds": {
-              "type": "integer"
-            },
-            "periodSeconds": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema1"
         },
         {
           "not": {
@@ -3397,16 +2692,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema20"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema24"
         },
         {
           "not": {
@@ -3440,16 +2729,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema20"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema24"
         },
         {
           "not": {
@@ -3495,34 +2778,7 @@
     "readinessProbe": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "properties": {
-            "failureThreshold": {
-              "type": "integer"
-            },
-            "httpGet": {
-              "additionalProperties": {},
-              "properties": {
-                "path": {
-                  "type": "string"
-                },
-                "port": {
-                  "type": "string"
-                },
-                "scheme": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "initialDelaySeconds": {
-              "type": "integer"
-            },
-            "periodSeconds": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema1"
         },
         {
           "not": {
@@ -3630,16 +2886,10 @@
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema20"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema24"
             },
             {
               "not": {
@@ -3651,16 +2901,10 @@
         "labels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema20"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema24"
             },
             {
               "not": {
@@ -3686,15 +2930,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema22"
               },
               {
                 "properties": {
@@ -3715,10 +2951,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "not": {
@@ -3735,15 +2968,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema22"
               },
               {
                 "properties": {
@@ -3842,17 +3067,7 @@
       "allOf": [
         {
           "if": {
-            "properties": {
-              "type": {
-                "enum": [
-                  "cert-manager"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema18"
           },
           "then": {
             "additionalProperties": {},
@@ -3900,17 +3115,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "cert-manager"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema18"
               }
             ]
           },
@@ -3965,17 +3170,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "cert-manager"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema18"
               }
             ]
           },
@@ -4001,17 +3196,7 @@
         },
         {
           "if": {
-            "properties": {
-              "type": {
-                "enum": [
-                  "cert-manager"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema18"
           },
           "then": {
             "additionalProperties": {},
@@ -4032,32 +3217,10 @@
           "if": {
             "allOf": [
               {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "existingSecret"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema17"
               },
               {
-                "properties": {
-                  "type": {
-                    "not": {
-                      "enum": [
-                        "metrics-server"
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               }
             ]
           },

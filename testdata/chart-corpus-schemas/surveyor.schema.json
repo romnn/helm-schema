@@ -24,6 +24,330 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "additionalProperties": {
+            "additionalProperties": {},
+            "properties": {
+              "paths": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
+          "items": {
+            "additionalProperties": {},
+            "properties": {
+              "paths": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "schema10": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ]
+        },
+        "secretName": {}
+      },
+      "type": "object"
+    },
+    "schema11": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema12": {
+      "additionalProperties": {},
+      "properties": {
+        "secret": {
+          "additionalProperties": {},
+          "properties": {
+            "name": {
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "schema13": {
+      "additionalProperties": {},
+      "properties": {
+        "secret": {
+          "additionalProperties": {},
+          "properties": {
+            "key": {
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "schema2": {
+      "additionalProperties": {},
+      "properties": {
+        "tls": {
+          "additionalProperties": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
+          "items": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "schema20": {
+      "additionalProperties": {},
+      "properties": {
+        "key": {
+          "type": [
+            "boolean",
+            "integer",
+            "number",
+            "string"
+          ]
+        }
+      }
+    },
+    "schema22": {
+      "additionalProperties": {},
+      "properties": {
+        "secret": {
+          "anyOf": [
+            {
+              "type": "object"
+            }
+          ]
+        }
+      }
+    },
+    "schema23": {
+      "not": {
+        "properties": {
+          "config": {}
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      }
+    },
+    "schema24": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {}
+      },
+      "type": "object"
+    },
+    "schema26": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema27": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema28": {
+      "type": [
+        "boolean",
+        "integer",
+        "number",
+        "string"
+      ]
+    },
+    "schema5": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {},
+        "tls": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "ca": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "cert": {},
+                "key": {},
+                "secret": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "name": {
+                      "type": [
+                        "boolean",
+                        "integer",
+                        "number",
+                        "string"
+                      ]
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "schema8": {
+      "additionalProperties": {},
+      "properties": {
+        "tls": {
+          "additionalProperties": {},
+          "properties": {
+            "secret": {
+              "additionalProperties": {},
+              "properties": {
+                "name": {
+                  "type": [
+                    "boolean",
+                    "integer",
+                    "number",
+                    "string"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schema9": {
+      "additionalProperties": {},
+      "properties": {
+        "secret": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "key": {}
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "name": {}
+              },
+              "type": "object"
+            }
+          ]
+        }
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -37,15 +361,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -116,16 +432,7 @@
             "additionalProperties": {},
             "properties": {
               "credentials": {
-                "additionalProperties": {},
-                "properties": {
-                  "secret": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema22"
               }
             }
           }
@@ -140,15 +447,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -238,15 +537,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -368,85 +659,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "name": {},
-                            "tls": {
-                              "anyOf": [
-                                {
-                                  "additionalProperties": {},
-                                  "properties": {
-                                    "ca": {}
-                                  }
-                                },
-                                {
-                                  "additionalProperties": {},
-                                  "properties": {
-                                    "cert": {},
-                                    "key": {},
-                                    "secret": {
-                                      "additionalProperties": {},
-                                      "properties": {
-                                        "name": {
-                                          "type": [
-                                            "boolean",
-                                            "integer",
-                                            "number",
-                                            "string"
-                                          ]
-                                        }
-                                      },
-                                      "type": "object"
-                                    }
-                                  },
-                                  "type": "object"
-                                }
-                              ]
-                            }
-                          },
-                          "type": "object"
+                          "$ref": "#/$defs/schema5"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "name": {},
-                            "tls": {
-                              "anyOf": [
-                                {
-                                  "additionalProperties": {},
-                                  "properties": {
-                                    "ca": {}
-                                  }
-                                },
-                                {
-                                  "additionalProperties": {},
-                                  "properties": {
-                                    "cert": {},
-                                    "key": {},
-                                    "secret": {
-                                      "additionalProperties": {},
-                                      "properties": {
-                                        "name": {
-                                          "type": [
-                                            "boolean",
-                                            "integer",
-                                            "number",
-                                            "string"
-                                          ]
-                                        }
-                                      },
-                                      "type": "object"
-                                    }
-                                  },
-                                  "type": "object"
-                                }
-                              ]
-                            }
-                          },
-                          "type": "object"
+                          "$ref": "#/$defs/schema5"
                         },
                         "type": "object"
                       },
@@ -491,15 +710,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -570,16 +781,7 @@
             "additionalProperties": {},
             "properties": {
               "nkey": {
-                "additionalProperties": {},
-                "properties": {
-                  "secret": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema22"
               }
             }
           }
@@ -594,15 +796,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -692,15 +886,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -808,16 +994,7 @@
             "additionalProperties": {},
             "properties": {
               "password": {
-                "additionalProperties": {},
-                "properties": {
-                  "secret": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema22"
               }
             }
           }
@@ -926,16 +1103,7 @@
             "additionalProperties": {},
             "properties": {
               "tls": {
-                "additionalProperties": {},
-                "properties": {
-                  "secret": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema22"
               }
             }
           }
@@ -950,15 +1118,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -1006,15 +1166,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -1168,15 +1320,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -1224,15 +1368,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -1553,15 +1689,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -1645,15 +1773,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -1769,15 +1889,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -1825,15 +1937,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -1944,15 +2048,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -2000,15 +2096,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {}
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -2422,23 +2510,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -2491,10 +2563,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "not": {
@@ -2533,54 +2602,7 @@
         "additionalProperties": {},
         "properties": {
           "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema1"
           }
         }
       }
@@ -2698,54 +2720,7 @@
         "additionalProperties": {},
         "properties": {
           "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema2"
           }
         }
       }
@@ -2803,45 +2778,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "secretName": {}
-                      },
-                      "type": "object"
+                      "$ref": "#/$defs/schema10"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "secretName": {}
-                      },
-                      "type": "object"
+                      "$ref": "#/$defs/schema10"
                     },
                     "type": "object"
                   },
@@ -2959,23 +2902,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -3195,22 +3122,7 @@
             "additionalProperties": {},
             "properties": {
               "credentials": {
-                "additionalProperties": {},
-                "properties": {
-                  "secret": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "key": {
-                        "type": [
-                          "boolean",
-                          "integer",
-                          "number",
-                          "string"
-                        ]
-                      }
-                    }
-                  }
-                }
+                "$ref": "#/$defs/schema13"
               }
             }
           }
@@ -3323,22 +3235,7 @@
             "additionalProperties": {},
             "properties": {
               "nkey": {
-                "additionalProperties": {},
-                "properties": {
-                  "secret": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "key": {
-                        "type": [
-                          "boolean",
-                          "integer",
-                          "number",
-                          "string"
-                        ]
-                      }
-                    }
-                  }
-                }
+                "$ref": "#/$defs/schema13"
               }
             }
           }
@@ -3512,12 +3409,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "cert": {
-                    "type": [
-                      "boolean",
-                      "integer",
-                      "number",
-                      "string"
-                    ]
+                    "$ref": "#/$defs/schema28"
                   }
                 }
               }
@@ -3554,17 +3446,7 @@
             "additionalProperties": {},
             "properties": {
               "tls": {
-                "additionalProperties": {},
-                "properties": {
-                  "key": {
-                    "type": [
-                      "boolean",
-                      "integer",
-                      "number",
-                      "string"
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema20"
               }
             }
           }
@@ -3621,12 +3503,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "filename": {
-                    "type": [
-                      "boolean",
-                      "integer",
-                      "number",
-                      "string"
-                    ]
+                    "$ref": "#/$defs/schema28"
                   }
                 }
               }
@@ -3685,12 +3562,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "mountPath": {
-                    "type": [
-                      "boolean",
-                      "integer",
-                      "number",
-                      "string"
-                    ]
+                    "$ref": "#/$defs/schema28"
                   }
                 }
               }
@@ -3761,50 +3633,10 @@
                     "properties": {
                       "accounts": {
                         "additionalProperties": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "tls": {
-                              "additionalProperties": {},
-                              "properties": {
-                                "secret": {
-                                  "additionalProperties": {},
-                                  "properties": {
-                                    "name": {
-                                      "type": [
-                                        "boolean",
-                                        "integer",
-                                        "number",
-                                        "string"
-                                      ]
-                                    }
-                                  }
-                                }
-                              }
-                            }
-                          }
+                          "$ref": "#/$defs/schema8"
                         },
                         "items": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "tls": {
-                              "additionalProperties": {},
-                              "properties": {
-                                "secret": {
-                                  "additionalProperties": {},
-                                  "properties": {
-                                    "name": {
-                                      "type": [
-                                        "boolean",
-                                        "integer",
-                                        "number",
-                                        "string"
-                                      ]
-                                    }
-                                  }
-                                }
-                              }
-                            }
-                          }
+                          "$ref": "#/$defs/schema8"
                         }
                       }
                     }
@@ -3824,22 +3656,7 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "secret": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "name": {
-                            "type": [
-                              "boolean",
-                              "integer",
-                              "number",
-                              "string"
-                            ]
-                          }
-                        }
-                      }
-                    }
+                    "$ref": "#/$defs/schema12"
                   }
                 }
               ]
@@ -3906,26 +3723,7 @@
               "type": "boolean"
             },
             "credentials": {
-              "additionalProperties": {},
-              "properties": {
-                "secret": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "properties": {
-                        "key": {}
-                      }
-                    },
-                    {
-                      "additionalProperties": {},
-                      "properties": {
-                        "name": {}
-                      },
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
+              "$ref": "#/$defs/schema9"
             },
             "expectedServers": {
               "description": "Expected number of servers"
@@ -3958,48 +3756,10 @@
               "type": "boolean"
             },
             "nkey": {
-              "additionalProperties": {},
-              "properties": {
-                "secret": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "properties": {
-                        "key": {}
-                      }
-                    },
-                    {
-                      "additionalProperties": {},
-                      "properties": {
-                        "name": {}
-                      },
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
+              "$ref": "#/$defs/schema9"
             },
             "password": {
-              "additionalProperties": {},
-              "properties": {
-                "secret": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {},
-                      "properties": {
-                        "key": {}
-                      }
-                    },
-                    {
-                      "additionalProperties": {},
-                      "properties": {
-                        "name": {}
-                      },
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
+              "$ref": "#/$defs/schema9"
             },
             "servers": {
               "description": "Required."
@@ -4021,11 +3781,7 @@
                     "cert": {},
                     "key": {},
                     "secret": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "name": {}
-                      },
-                      "type": "object"
+                      "$ref": "#/$defs/schema24"
                     }
                   },
                   "type": "object"
@@ -4100,10 +3856,7 @@
               "type": "object"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema27"
             },
             {
               "not": {
@@ -4166,10 +3919,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "not": {
@@ -4194,54 +3944,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema1"
           }
         },
         {
@@ -4284,54 +3987,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema2"
           }
         },
         {
@@ -4407,10 +4063,7 @@
           "type": "object"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema27"
         },
         {
           "not": {
@@ -4449,13 +4102,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema26"
                 }
               },
               {
@@ -4477,10 +4124,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "not": {
@@ -4498,13 +4142,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema26"
                 }
               },
               {
@@ -4594,10 +4232,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "not": {
@@ -4627,10 +4262,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "not": {

@@ -24,6 +24,86 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema3": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema5": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema6": {
+      "not": {
+        "properties": {
+          "create": {}
+        },
+        "required": [
+          "create"
+        ],
+        "type": "object"
+      }
+    },
+    "schema7": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema8": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -92,23 +172,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema3"
               },
               {
                 "properties": {
@@ -134,23 +198,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema1"
               },
               {
                 "properties": {
@@ -305,23 +353,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema3"
               },
               {
                 "properties": {
@@ -347,23 +379,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema1"
               },
               {
                 "properties": {
@@ -392,13 +408,7 @@
                 "not": {
                   "properties": {
                     "storageClass": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema7"
                     }
                   },
                   "required": [
@@ -436,10 +446,7 @@
           "labels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema8"
               },
               {
                 "not": {
@@ -528,20 +535,7 @@
             "additionalProperties": {},
             "properties": {
               "mountOptions": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema5"
               }
             }
           }
@@ -605,23 +599,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema3"
           },
           {
             "properties": {
@@ -770,10 +748,7 @@
           "type": "object"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema8"
         },
         {
           "not": {
@@ -859,20 +834,7 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema5"
                   }
                 }
               ]
@@ -905,10 +867,7 @@
           "type": "object"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema8"
         },
         {
           "not": {
@@ -1024,15 +983,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1053,10 +1004,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "not": {
@@ -1073,15 +1021,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1159,15 +1099,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1196,15 +1128,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1225,10 +1149,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "not": {
@@ -1245,15 +1166,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1295,15 +1208,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1332,15 +1237,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1387,15 +1284,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1442,15 +1331,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1487,15 +1368,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1524,15 +1397,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {

@@ -569,7 +569,7 @@ fn assert_schema_description(schema: &Value, pointer: &str, expected: &str) {
         .filter(|segment| !segment.is_empty())
         .collect::<Vec<_>>();
     let mut matches = Vec::new();
-    schema_values_at_pointer(schema, &segments, &mut matches);
+    schema_values_at_pointer(schema, schema, &segments, &mut matches);
     let descriptions = matches
         .into_iter()
         .filter_map(Value::as_str)
@@ -582,6 +582,7 @@ fn assert_schema_description(schema: &Value, pointer: &str, expected: &str) {
 }
 
 fn schema_values_at_pointer<'schema>(
+    root: &'schema Value,
     schema: &'schema Value,
     segments: &[&str],
     matches: &mut Vec<&'schema Value>,
@@ -593,21 +594,29 @@ fn schema_values_at_pointer<'schema>(
     let Some(object) = schema.as_object() else {
         return;
     };
+    // Interned subtrees live in root-level `$defs`; follow local refs so
+    // pointer-based assertions see through the output interning.
+    if let Some(reference) = object.get("$ref").and_then(Value::as_str)
+        && let Some(name) = reference.strip_prefix("#/$defs/")
+        && let Some(target) = root.pointer(&format!("/$defs/{name}"))
+    {
+        schema_values_at_pointer(root, target, segments, matches);
+    }
 
     // A values path can live in a union arm or conditional overlay without a direct node.
     for key in ["anyOf", "oneOf", "allOf"] {
         if let Some(branches) = object.get(key).and_then(Value::as_array) {
             for branch in branches {
-                schema_values_at_pointer(branch, segments, matches);
+                schema_values_at_pointer(root, branch, segments, matches);
             }
         }
     }
     for key in ["then", "else"] {
         if let Some(branch) = object.get(key) {
-            schema_values_at_pointer(branch, segments, matches);
+            schema_values_at_pointer(root, branch, segments, matches);
         }
     }
     if let Some(child) = object.get(segments[0]) {
-        schema_values_at_pointer(child, &segments[1..], matches);
+        schema_values_at_pointer(root, child, &segments[1..], matches);
     }
 }

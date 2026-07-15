@@ -24,6 +24,22 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -437,20 +453,7 @@
             "additionalProperties": {},
             "properties": {
               "additionalArguments": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema1"
               }
             }
           }
@@ -754,20 +757,7 @@
                     ]
                   },
                   "then": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema1"
                   }
                 }
               ]

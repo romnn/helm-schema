@@ -24,6 +24,427 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "additionalProperties": {},
+      "properties": {
+        "hostPort": {},
+        "nodePort": {},
+        "plugins": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "configBlock": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "parameters": {}
+                    },
+                    "type": "object"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "configBlock": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "parameters": {}
+                    },
+                    "type": "object"
+                  }
+                ]
+              },
+              "type": "array"
+            }
+          ]
+        },
+        "port": {},
+        "zones": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "scheme": {}
+                    }
+                  },
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "use_tcp": {
+                        "type": "boolean"
+                      },
+                      "zone": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "scheme": {}
+                    }
+                  },
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "use_tcp": {
+                        "type": "boolean"
+                      },
+                      "zone": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "type": "object"
+                  }
+                ]
+              },
+              "type": "array"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "schema15": {
+      "not": {
+        "properties": {
+          "readinessProbe": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "readinessProbe"
+        ],
+        "type": "object"
+      }
+    },
+    "schema16": {
+      "not": {
+        "properties": {
+          "livenessProbe": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "livenessProbe"
+        ],
+        "type": "object"
+      }
+    },
+    "schema17": {
+      "not": {
+        "properties": {
+          "deployment": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "deployment"
+        ],
+        "type": "object"
+      }
+    },
+    "schema21": {
+      "additionalProperties": {},
+      "properties": {
+        "repository": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "schema23": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema24": {
+      "additionalProperties": {},
+      "properties": {
+        "plugins": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema27": {
+      "additionalProperties": {},
+      "properties": {
+        "plugins": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema28": {
+      "additionalProperties": {},
+      "properties": {
+        "zones": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema29": {
+      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
+    },
+    "schema31": {
+      "additionalProperties": {},
+      "properties": {
+        "defaultMode": {},
+        "mountPath": {},
+        "name": {}
+      },
+      "type": "object"
+    },
+    "schema33": {
+      "not": {
+        "properties": {
+          "isClusterService": {}
+        },
+        "required": [
+          "isClusterService"
+        ],
+        "type": "object"
+      }
+    },
+    "schema35": {
+      "additionalProperties": {},
+      "properties": {
+        "contents": {},
+        "filename": {}
+      },
+      "type": "object"
+    },
+    "schema36": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema37": {
+      "not": {
+        "properties": {
+          "clusterRole": {}
+        },
+        "required": [
+          "clusterRole"
+        ],
+        "type": "object"
+      }
+    },
+    "schema39": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "schema4": {
+      "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName"
+    },
+    "schema42": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema8": {
+      "not": {
+        "properties": {
+          "autoscaler": {
+            "properties": {
+              "livenessProbe": {
+                "properties": {
+                  "enabled": {}
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "livenessProbe"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "autoscaler"
+        ],
+        "type": "object"
+      }
+    },
+    "schema9": {
+      "not": {
+        "properties": {
+          "prometheus": {
+            "properties": {
+              "service": {
+                "properties": {
+                  "annotations": {}
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "prometheus"
+        ],
+        "type": "object"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -33,23 +454,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -168,10 +573,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema42"
                       },
                       {
                         "not": {
@@ -507,25 +909,7 @@
             "description": "Configue a cluster-proportional-autoscaler for coredns\nSee https://github.com/kubernetes-incubator/cluster-proportional-autoscaler",
             "properties": {
               "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "repository": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema21"
               }
             }
           }
@@ -588,20 +972,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "tag": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema36"
                   }
                 }
               }
@@ -664,23 +1035,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -800,23 +1155,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -931,31 +1270,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "autoscaler": {
-                      "properties": {
-                        "livenessProbe": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "livenessProbe"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "autoscaler"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1055,31 +1370,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "autoscaler": {
-                      "properties": {
-                        "livenessProbe": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "livenessProbe"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "autoscaler"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1179,31 +1470,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "autoscaler": {
-                      "properties": {
-                        "livenessProbe": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "livenessProbe"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "autoscaler"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1303,31 +1570,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "autoscaler": {
-                      "properties": {
-                        "livenessProbe": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "livenessProbe"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "autoscaler"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1427,31 +1670,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "autoscaler": {
-                      "properties": {
-                        "livenessProbe": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "livenessProbe"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "autoscaler"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1553,31 +1772,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "autoscaler": {
-                          "properties": {
-                            "livenessProbe": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "livenessProbe"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "autoscaler"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -1752,10 +1947,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
                     "not": {
@@ -2006,23 +2198,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "rbac": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "rbac"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema23"
                       },
                       {
                         "properties": {
@@ -2142,23 +2318,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "rbac": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "rbac"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema23"
                       },
                       {
                         "properties": {
@@ -2255,31 +2415,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "autoscaler": {
-                              "properties": {
-                                "livenessProbe": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "livenessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "autoscaler"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema8"
                       },
                       {
                         "properties": {
@@ -2397,15 +2533,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "clusterRole": {}
-                  },
-                  "required": [
-                    "clusterRole"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema37"
               },
               {
                 "properties": {
@@ -2430,23 +2558,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -2472,23 +2584,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -2545,15 +2641,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "clusterRole": {}
-                      },
-                      "required": [
-                        "clusterRole"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema37"
                   },
                   {
                     "properties": {
@@ -2597,23 +2685,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -2639,23 +2711,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -2685,23 +2741,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -2727,23 +2767,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -2810,23 +2834,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -2965,23 +2973,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -3022,23 +3014,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -3095,23 +3071,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -3177,31 +3137,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "prometheus": {
-                              "properties": {
-                                "service": {
-                                  "properties": {
-                                    "annotations": {}
-                                  },
-                                  "required": [
-                                    "annotations"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "service"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "prometheus"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema9"
                       },
                       {
                         "properties": {
@@ -3267,23 +3203,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -3309,23 +3229,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -3355,23 +3259,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -3454,23 +3342,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -3521,23 +3393,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -3601,23 +3457,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -3728,10 +3568,7 @@
           "customAnnotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -3769,23 +3606,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -3860,10 +3681,7 @@
           "customLabels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -3901,15 +3719,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "isClusterService": {}
-                  },
-                  "required": [
-                    "isClusterService"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema33"
               },
               {
                 "properties": {
@@ -3970,23 +3780,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -4054,10 +3848,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
                     "not": {
@@ -4076,23 +3867,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -4279,23 +4054,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -4358,23 +4117,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -4458,23 +4201,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -4544,23 +4271,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -4590,25 +4301,13 @@
             "anyOf": [
               {
                 "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "defaultMode": {},
-                    "mountPath": {},
-                    "name": {}
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema31"
                 },
                 "type": "array"
               },
               {
                 "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "defaultMode": {},
-                    "mountPath": {},
-                    "name": {}
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema31"
                 },
                 "type": "object"
               },
@@ -4629,23 +4328,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -4704,23 +4387,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -4849,23 +4516,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -5096,23 +4747,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -5155,23 +4790,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -5219,25 +4838,7 @@
         "additionalProperties": {},
         "properties": {
           "image": {
-            "additionalProperties": {},
-            "properties": {
-              "repository": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema21"
           }
         }
       }
@@ -5248,23 +4849,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -5355,15 +4940,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "isClusterService": {}
-                  },
-                  "required": [
-                    "isClusterService"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema33"
               },
               {
                 "properties": {
@@ -5434,15 +5011,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "isClusterService": {}
-                      },
-                      "required": [
-                        "isClusterService"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema33"
                   },
                   {
                     "properties": {
@@ -5475,23 +5044,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -5517,15 +5070,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "isClusterService": {}
-                      },
-                      "required": [
-                        "isClusterService"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema33"
                   },
                   {
                     "properties": {
@@ -5577,15 +5122,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "isClusterService": {}
-                      },
-                      "required": [
-                        "isClusterService"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema33"
                   },
                   {
                     "properties": {
@@ -5658,23 +5195,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -5700,23 +5221,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "livenessProbe": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "livenessProbe"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -5762,23 +5267,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -5804,23 +5293,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "livenessProbe": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "livenessProbe"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -5866,23 +5339,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -5908,23 +5365,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "livenessProbe": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "livenessProbe"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -5970,23 +5411,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -6012,23 +5437,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "livenessProbe": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "livenessProbe"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -6074,23 +5483,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -6116,23 +5509,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "livenessProbe": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "livenessProbe"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -6261,23 +5638,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -6390,23 +5751,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -6435,10 +5780,7 @@
           "podAnnotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -6457,23 +5799,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -6527,23 +5853,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -6572,10 +5882,7 @@
           "podLabels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -6593,23 +5900,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -6673,10 +5964,7 @@
                   "additionalLabels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema42"
                       },
                       {
                         "not": {
@@ -6698,23 +5986,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -6791,23 +6063,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -6884,23 +6140,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -6986,23 +6226,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -7079,23 +6303,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -7172,23 +6380,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -7254,31 +6446,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "service": {
-                              "properties": {
-                                "annotations": {}
-                              },
-                              "required": [
-                                "annotations"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "service"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "prometheus"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema9"
                   },
                   {
                     "properties": {
@@ -7351,10 +6519,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema42"
                       },
                       {
                         "not": {
@@ -7384,23 +6549,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -7426,23 +6575,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "readinessProbe": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "readinessProbe"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -7488,23 +6621,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -7530,23 +6647,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "readinessProbe": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "readinessProbe"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -7592,23 +6693,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -7634,23 +6719,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "readinessProbe": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "readinessProbe"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -7696,23 +6765,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -7738,23 +6791,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "readinessProbe": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "readinessProbe"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -7800,23 +6837,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -7842,23 +6863,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "readinessProbe": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "readinessProbe"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -7904,23 +6909,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -8000,23 +6989,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -8057,23 +7030,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -8116,23 +7073,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -8183,47 +7124,11 @@
         "properties": {
           "servers": {
             "additionalProperties": {
-              "additionalProperties": {},
-              "properties": {
-                "plugins": {
-                  "anyOf": [
-                    {
-                      "type": "array"
-                    },
-                    {
-                      "type": "object"
-                    },
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              }
+              "$ref": "#/$defs/schema24"
             },
             "description": "Default zone is what Kubernetes recommends:\nhttps://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#coredns-configmap-options",
             "items": {
-              "additionalProperties": {},
-              "properties": {
-                "plugins": {
-                  "anyOf": [
-                    {
-                      "type": "array"
-                    },
-                    {
-                      "type": "object"
-                    },
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              }
+              "$ref": "#/$defs/schema24"
             }
           }
         }
@@ -8235,23 +7140,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -8302,41 +7191,11 @@
         "properties": {
           "servers": {
             "additionalProperties": {
-              "additionalProperties": {},
-              "properties": {
-                "plugins": {
-                  "anyOf": [
-                    {
-                      "type": "array"
-                    },
-                    {
-                      "type": "object"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              }
+              "$ref": "#/$defs/schema27"
             },
             "description": "Default zone is what Kubernetes recommends:\nhttps://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#coredns-configmap-options",
             "items": {
-              "additionalProperties": {},
-              "properties": {
-                "plugins": {
-                  "anyOf": [
-                    {
-                      "type": "array"
-                    },
-                    {
-                      "type": "object"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              }
+              "$ref": "#/$defs/schema27"
             }
           }
         }
@@ -8346,23 +7205,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -8390,41 +7233,11 @@
         "properties": {
           "servers": {
             "additionalProperties": {
-              "additionalProperties": {},
-              "properties": {
-                "zones": {
-                  "anyOf": [
-                    {
-                      "type": "array"
-                    },
-                    {
-                      "type": "object"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              }
+              "$ref": "#/$defs/schema28"
             },
             "description": "Default zone is what Kubernetes recommends:\nhttps://kubernetes.io/docs/tasks/administer-cluster/dns-custom-nameservers/#coredns-configmap-options",
             "items": {
-              "additionalProperties": {},
-              "properties": {
-                "zones": {
-                  "anyOf": [
-                    {
-                      "type": "array"
-                    },
-                    {
-                      "type": "object"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ]
-                }
-              }
+              "$ref": "#/$defs/schema28"
             }
           }
         }
@@ -8434,23 +7247,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -8480,281 +7277,13 @@
             "anyOf": [
               {
                 "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hostPort": {},
-                    "nodePort": {},
-                    "plugins": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "configBlock": {
-                                    "anyOf": [
-                                      {
-                                        "type": "null"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  }
-                                }
-                              },
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "name": {
-                                    "type": "string"
-                                  },
-                                  "parameters": {}
-                                },
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "items": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "configBlock": {
-                                    "anyOf": [
-                                      {
-                                        "type": "null"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  }
-                                }
-                              },
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "name": {
-                                    "type": "string"
-                                  },
-                                  "parameters": {}
-                                },
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          "type": "array"
-                        }
-                      ]
-                    },
-                    "port": {},
-                    "zones": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "scheme": {}
-                                }
-                              },
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "use_tcp": {
-                                    "type": "boolean"
-                                  },
-                                  "zone": {
-                                    "type": [
-                                      "string",
-                                      "null"
-                                    ]
-                                  }
-                                },
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "items": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "scheme": {}
-                                }
-                              },
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "use_tcp": {
-                                    "type": "boolean"
-                                  },
-                                  "zone": {
-                                    "type": [
-                                      "string",
-                                      "null"
-                                    ]
-                                  }
-                                },
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          "type": "array"
-                        }
-                      ]
-                    }
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema1"
                 },
                 "type": "array"
               },
               {
                 "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hostPort": {},
-                    "nodePort": {},
-                    "plugins": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "configBlock": {
-                                    "anyOf": [
-                                      {
-                                        "type": "null"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  }
-                                }
-                              },
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "name": {
-                                    "type": "string"
-                                  },
-                                  "parameters": {}
-                                },
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "items": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "configBlock": {
-                                    "anyOf": [
-                                      {
-                                        "type": "null"
-                                      },
-                                      {
-                                        "type": "string"
-                                      }
-                                    ]
-                                  }
-                                }
-                              },
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "name": {
-                                    "type": "string"
-                                  },
-                                  "parameters": {}
-                                },
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          "type": "array"
-                        }
-                      ]
-                    },
-                    "port": {},
-                    "zones": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "scheme": {}
-                                }
-                              },
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "use_tcp": {
-                                    "type": "boolean"
-                                  },
-                                  "zone": {
-                                    "type": [
-                                      "string",
-                                      "null"
-                                    ]
-                                  }
-                                },
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "items": {
-                            "anyOf": [
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "scheme": {}
-                                }
-                              },
-                              {
-                                "additionalProperties": {},
-                                "properties": {
-                                  "use_tcp": {
-                                    "type": "boolean"
-                                  },
-                                  "zone": {
-                                    "type": [
-                                      "string",
-                                      "null"
-                                    ]
-                                  }
-                                },
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          "type": "array"
-                        }
-                      ]
-                    }
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema1"
                 },
                 "type": "object"
               },
@@ -8775,23 +7304,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -8837,23 +7350,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -8919,31 +7416,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "prometheus": {
-                              "properties": {
-                                "service": {
-                                  "properties": {
-                                    "annotations": {}
-                                  },
-                                  "required": [
-                                    "annotations"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "service"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "prometheus"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema9"
                       },
                       {
                         "properties": {
@@ -9009,23 +7482,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "deployment": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "deployment"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -9095,10 +7552,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
                     "not": {
@@ -9116,23 +7570,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -9185,23 +7623,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "deployment": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deployment"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -9288,10 +7710,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
                     "not": {
@@ -9309,23 +7728,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -9376,23 +7779,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -9466,15 +7853,7 @@
             "not": {
               "anyOf": [
                 {
-                  "not": {
-                    "properties": {
-                      "isClusterService": {}
-                    },
-                    "required": [
-                      "isClusterService"
-                    ],
-                    "type": "object"
-                  }
+                  "$ref": "#/$defs/schema33"
                 },
                 {
                   "properties": {
@@ -9512,23 +7891,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -9564,23 +7927,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -9610,23 +7957,13 @@
             "anyOf": [
               {
                 "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "contents": {},
-                    "filename": {}
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema35"
                 },
                 "type": "array"
               },
               {
                 "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "contents": {},
-                    "filename": {}
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema35"
                 },
                 "type": "object"
               },
@@ -9647,23 +7984,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "deployment": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "deployment"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -9751,7 +8072,7 @@
               "additionalProperties": {},
               "properties": {
                 "pullSecrets": {
-                  "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName"
+                  "$ref": "#/$defs/schema4"
                 },
                 "repository": {},
                 "tag": {}
@@ -9804,7 +8125,7 @@
           "description": "Min size of replicaCount"
         },
         "nodeSelector": {
-          "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
+          "$ref": "#/$defs/schema29"
         },
         "nodesPerReplica": {
           "description": "Number of nodes in the cluster per coredns replica"
@@ -9864,13 +8185,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema39"
                 }
               },
               {
@@ -9911,13 +8226,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema39"
                     }
                   },
                   {
@@ -10051,7 +8360,7 @@
       "properties": {
         "pullPolicy": {},
         "pullSecrets": {
-          "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- name: myRegistryKeySecretName"
+          "$ref": "#/$defs/schema4"
         },
         "repository": {},
         "tag": {
@@ -10103,7 +8412,7 @@
     },
     "nameOverride": {},
     "nodeSelector": {
-      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
+      "$ref": "#/$defs/schema29"
     },
     "podAnnotations": {
       "description": "cluster-autoscaler.kubernetes.io/safe-to-evict: \"false\""

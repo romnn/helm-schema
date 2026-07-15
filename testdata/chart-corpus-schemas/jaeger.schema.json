@@ -24,6 +24,710 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "additionalProperties": {},
+      "properties": {
+        "extraConfigmapMounts": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": {},
+                "properties": {
+                  "configMap": {},
+                  "mountPath": {},
+                  "name": {},
+                  "readOnly": {},
+                  "subPath": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "additionalProperties": {},
+                "properties": {
+                  "configMap": {},
+                  "mountPath": {},
+                  "name": {},
+                  "readOnly": {},
+                  "subPath": {}
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "maximum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema11": {
+      "not": {
+        "properties": {
+          "storage": {
+            "properties": {
+              "cassandra": {
+                "properties": {
+                  "keyspace": {}
+                },
+                "required": [
+                  "keyspace"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "cassandra"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "storage"
+        ],
+        "type": "object"
+      }
+    },
+    "schema13": {
+      "additionalProperties": {},
+      "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
+      "properties": {
+        "annotations": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema14": {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "pullSecrets": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "schema15": {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "digest": {}
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "pullPolicy": {},
+            "pullSecrets": {},
+            "registry": {},
+            "repository": {}
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "schema16": {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "pullSecrets": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "schema19": {
+      "not": {
+        "properties": {
+          "storage": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "cassandra"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "storage"
+        ],
+        "type": "object"
+      }
+    },
+    "schema2": {
+      "additionalProperties": {},
+      "properties": {
+        "extraSecretMounts": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": {},
+                "properties": {
+                  "mountPath": {},
+                  "name": {},
+                  "readOnly": {},
+                  "secretName": {},
+                  "subPath": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "additionalProperties": {},
+                "properties": {
+                  "mountPath": {},
+                  "name": {},
+                  "readOnly": {},
+                  "secretName": {},
+                  "subPath": {}
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "maximum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema20": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema25": {
+      "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120"
+    },
+    "schema26": {
+      "properties": {
+        "storage": {
+          "properties": {
+            "type": {
+              "enum": [
+                "cassandra"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "storage"
+      ],
+      "type": "object"
+    },
+    "schema27": {
+      "properties": {
+        "serviceAccount": {
+          "properties": {
+            "create": {}
+          },
+          "required": [
+            "create"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "schema28": {
+      "not": {
+        "properties": {
+          "jaeger": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "jaeger"
+        ],
+        "type": "object"
+      }
+    },
+    "schema3": {
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": {},
+            "properties": {
+              "mountPath": {},
+              "name": {},
+              "readOnly": {},
+              "secretName": {},
+              "subPath": {}
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "additionalProperties": {},
+            "properties": {
+              "mountPath": {},
+              "name": {},
+              "readOnly": {},
+              "secretName": {},
+              "subPath": {}
+            },
+            "type": "object"
+          },
+          "type": "object"
+        },
+        {
+          "maximum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema30": {
+      "additionalProperties": {},
+      "properties": {
+        "pullSecrets": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema36": {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "pullPolicy": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "schema37": {
+      "additionalProperties": {},
+      "properties": {
+        "cmdlineParams": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema4": {
+      "anyOf": [
+        {
+          "items": {
+            "additionalProperties": {},
+            "properties": {
+              "configMap": {},
+              "mountPath": {},
+              "name": {},
+              "readOnly": {},
+              "subPath": {}
+            },
+            "type": "object"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "additionalProperties": {},
+            "properties": {
+              "configMap": {},
+              "mountPath": {},
+              "name": {},
+              "readOnly": {},
+              "subPath": {}
+            },
+            "type": "object"
+          },
+          "type": "object"
+        },
+        {
+          "maximum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema40": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {},
+        "port": {},
+        "protocol": {},
+        "targetPort": {}
+      },
+      "type": "object"
+    },
+    "schema41": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema42": {
+      "description": "Explicitly mounts the API credentials for the Service Account",
+      "type": "boolean"
+    },
+    "schema43": {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema44": {
+      "additionalProperties": {},
+      "properties": {
+        "extraConfigmapMounts": {
+          "items": {},
+          "type": "array"
+        }
+      }
+    },
+    "schema45": {
+      "additionalProperties": {},
+      "properties": {
+        "successfulJobsHistoryLimit": {
+          "type": "integer"
+        }
+      }
+    },
+    "schema46": {
+      "additionalProperties": {},
+      "properties": {
+        "extraSecretMounts": {
+          "items": {},
+          "type": "array"
+        }
+      }
+    },
+    "schema48": {
+      "additionalProperties": {},
+      "properties": {
+        "failedJobsHistoryLimit": {
+          "type": "integer"
+        }
+      }
+    },
+    "schema49": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema5": {
+      "additionalProperties": {},
+      "properties": {
+        "serviceAccount": {
+          "additionalProperties": {},
+          "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
+          "properties": {
+            "automountServiceAccountToken": {
+              "description": "Explicitly mounts the API credentials for the Service Account",
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "schema51": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema52": {
+      "additionalProperties": {},
+      "properties": {
+        "concurrencyPolicy": {
+          "type": "string"
+        }
+      }
+    },
+    "schema53": {
+      "description": "Explicitly mounts the API credentials for the Service Account"
+    },
+    "schema54": {
+      "not": {
+        "properties": {
+          "enabled": {}
+        },
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
+      }
+    },
+    "schema59": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema6": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "storage": {
+                "properties": {
+                  "type": {}
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "storage"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "storage": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "elasticsearch"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "storage"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema61": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema62": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema8": {
+      "additionalProperties": {},
+      "properties": {
+        "serviceAccount": {
+          "additionalProperties": {},
+          "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
+          "properties": {
+            "annotations": {
+              "anyOf": [
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "schema9": {
+      "not": {
+        "properties": {
+          "storage": {
+            "properties": {
+              "elasticsearch": {
+                "properties": {
+                  "tls": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "elasticsearch"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "storage"
+        ],
+        "type": "object"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -121,23 +825,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "jaeger": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "jaeger"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema28"
               },
               {
                 "properties": {
@@ -209,10 +897,7 @@
           "commonLabels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema61"
               },
               {
                 "not": {
@@ -272,19 +957,7 @@
         "additionalProperties": {},
         "properties": {
           "esIndexCleaner": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema41"
           }
         }
       }
@@ -313,22 +986,7 @@
         "additionalProperties": {},
         "properties": {
           "esIndexCleaner": {
-            "additionalProperties": {},
-            "properties": {
-              "cmdlineParams": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema37"
           }
         }
       }
@@ -357,48 +1015,7 @@
         "additionalProperties": {},
         "properties": {
           "esIndexCleaner": {
-            "additionalProperties": {},
-            "properties": {
-              "extraConfigmapMounts": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "configMap": {},
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "configMap": {},
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema1"
           }
         }
       }
@@ -427,48 +1044,7 @@
         "additionalProperties": {},
         "properties": {
           "esIndexCleaner": {
-            "additionalProperties": {},
-            "properties": {
-              "extraSecretMounts": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "secretName": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "secretName": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema2"
           }
         }
       }
@@ -497,30 +1073,7 @@
         "additionalProperties": {},
         "properties": {
           "esIndexCleaner": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullSecrets": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema14"
           }
         }
       }
@@ -549,19 +1102,7 @@
         "additionalProperties": {},
         "properties": {
           "esIndexCleaner": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema43"
           }
         }
       }
@@ -621,21 +1162,7 @@
                 "not": {
                   "properties": {
                     "esIndexCleaner": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema27"
                     }
                   },
                   "required": [
@@ -682,19 +1209,7 @@
             "additionalProperties": {},
             "properties": {
               "serviceAccount": {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -756,19 +1271,7 @@
         "additionalProperties": {},
         "properties": {
           "esLookback": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema41"
           }
         }
       }
@@ -797,22 +1300,7 @@
         "additionalProperties": {},
         "properties": {
           "esLookback": {
-            "additionalProperties": {},
-            "properties": {
-              "cmdlineParams": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema37"
           }
         }
       }
@@ -841,48 +1329,7 @@
         "additionalProperties": {},
         "properties": {
           "esLookback": {
-            "additionalProperties": {},
-            "properties": {
-              "extraConfigmapMounts": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "configMap": {},
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "configMap": {},
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema1"
           }
         }
       }
@@ -911,48 +1358,7 @@
         "additionalProperties": {},
         "properties": {
           "esLookback": {
-            "additionalProperties": {},
-            "properties": {
-              "extraSecretMounts": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "secretName": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "secretName": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema2"
           }
         }
       }
@@ -981,30 +1387,7 @@
         "additionalProperties": {},
         "properties": {
           "esLookback": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullSecrets": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema14"
           }
         }
       }
@@ -1033,19 +1416,7 @@
         "additionalProperties": {},
         "properties": {
           "esLookback": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema43"
           }
         }
       }
@@ -1105,21 +1476,7 @@
                 "not": {
                   "properties": {
                     "esLookback": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema27"
                     }
                   },
                   "required": [
@@ -1163,25 +1520,7 @@
         "additionalProperties": {},
         "properties": {
           "esLookback": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "additionalProperties": {},
-                "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema8"
           }
         }
       }
@@ -1241,19 +1580,7 @@
         "additionalProperties": {},
         "properties": {
           "esRollover": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema41"
           }
         }
       }
@@ -1282,22 +1609,7 @@
         "additionalProperties": {},
         "properties": {
           "esRollover": {
-            "additionalProperties": {},
-            "properties": {
-              "cmdlineParams": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema37"
           }
         }
       }
@@ -1326,48 +1638,7 @@
         "additionalProperties": {},
         "properties": {
           "esRollover": {
-            "additionalProperties": {},
-            "properties": {
-              "extraConfigmapMounts": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "configMap": {},
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "configMap": {},
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema1"
           }
         }
       }
@@ -1396,48 +1667,7 @@
         "additionalProperties": {},
         "properties": {
           "esRollover": {
-            "additionalProperties": {},
-            "properties": {
-              "extraSecretMounts": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "secretName": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "secretName": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema2"
           }
         }
       }
@@ -1466,30 +1696,7 @@
         "additionalProperties": {},
         "properties": {
           "esRollover": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullSecrets": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema14"
           }
         }
       }
@@ -1518,19 +1725,7 @@
         "additionalProperties": {},
         "properties": {
           "esRollover": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema43"
           }
         }
       }
@@ -1812,21 +2007,7 @@
                 "not": {
                   "properties": {
                     "esRollover": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema27"
                     }
                   },
                   "required": [
@@ -1870,25 +2051,7 @@
         "additionalProperties": {},
         "properties": {
           "esRollover": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "additionalProperties": {},
-                "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema8"
           }
         }
       }
@@ -1933,23 +2096,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "jaeger": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "jaeger"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema28"
           },
           {
             "properties": {
@@ -1983,39 +2130,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "anyOf": [
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
+                      "$ref": "#/$defs/schema49"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
+                      "$ref": "#/$defs/schema49"
                     },
                     "type": "object"
                   },
@@ -2040,23 +2161,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "jaeger": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "jaeger"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema28"
               },
               {
                 "properties": {
@@ -2143,19 +2248,7 @@
             "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
             "properties": {
               "httproute": {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -2166,23 +2259,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "jaeger": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "jaeger"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema28"
           },
           {
             "properties": {
@@ -2213,25 +2290,7 @@
             "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
             "properties": {
               "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullSecrets": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema30"
               }
             }
           }
@@ -2242,23 +2301,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "jaeger": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "jaeger"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema28"
           },
           {
             "properties": {
@@ -2289,14 +2332,7 @@
             "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
             "properties": {
               "image": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema62"
               }
             }
           }
@@ -2309,23 +2345,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "jaeger": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "jaeger"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema28"
               },
               {
                 "properties": {
@@ -2473,20 +2493,7 @@
                 "description": "- name: name\nport:\ntargetPort:\nprotocol: (optional)",
                 "properties": {
                   "hosts": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema51"
                   }
                 }
               }
@@ -2531,19 +2538,7 @@
             "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
             "properties": {
               "service": {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -2592,27 +2587,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "name": {},
-                            "port": {},
-                            "protocol": {},
-                            "targetPort": {}
-                          },
-                          "type": "object"
+                          "$ref": "#/$defs/schema40"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "name": {},
-                            "port": {},
-                            "protocol": {},
-                            "targetPort": {}
-                          },
-                          "type": "object"
+                          "$ref": "#/$defs/schema40"
                         },
                         "type": "object"
                       },
@@ -2638,23 +2619,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "jaeger": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "jaeger"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema28"
               },
               {
                 "properties": {
@@ -2714,19 +2679,7 @@
             "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
             "properties": {
               "serviceAccount": {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -2737,23 +2690,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "jaeger": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "jaeger"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema28"
           },
           {
             "properties": {
@@ -2799,23 +2736,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "jaeger": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "jaeger"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema28"
           },
           {
             "properties": {
@@ -2943,14 +2864,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "annotations": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema62"
               }
             }
           }
@@ -3008,17 +2922,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "cmdlineParams": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema59"
               }
             }
           }
@@ -3099,43 +3003,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "extraConfigmapMounts": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "configMap": {},
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "configMap": {},
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema4"
               }
             }
           }
@@ -3216,20 +3084,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "extraConfigmapMounts": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema51"
               }
             }
           }
@@ -3310,43 +3165,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "extraSecretMounts": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "secretName": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "mountPath": {},
-                        "name": {},
-                        "readOnly": {},
-                        "secretName": {},
-                        "subPath": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema3"
               }
             }
           }
@@ -3427,20 +3246,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "extraSecretMounts": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema51"
               }
             }
           }
@@ -3475,25 +3281,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullSecrets": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema30"
               }
             }
           }
@@ -3555,21 +3343,7 @@
                 "not": {
                   "properties": {
                     "spark": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema27"
                     }
                   },
                   "required": [
@@ -3617,20 +3391,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "serviceAccount": {
-                "additionalProperties": {},
-                "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema13"
               }
             }
           }
@@ -3669,25 +3430,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "storage": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "cassandra"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storage"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema26"
           }
         ]
       },
@@ -3703,17 +3446,7 @@
                 "description": "Cassandra connection settings (for external Cassandra or customizing provisioned)",
                 "properties": {
                   "env": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema59"
                   }
                 }
               }
@@ -3745,25 +3478,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "storage": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "cassandra"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storage"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema26"
           }
         ]
       },
@@ -3829,25 +3544,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "storage": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "cassandra"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storage"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema26"
           }
         ]
       },
@@ -3930,25 +3627,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "storage": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "cassandra"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storage"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema26"
           }
         ]
       },
@@ -4038,25 +3717,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "storage": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "cassandra"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "storage"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema26"
               }
             ]
           },
@@ -4082,25 +3743,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "storage": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "cassandra"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "storage"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema26"
               }
             ]
           }
@@ -4154,25 +3797,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "storage": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "cassandra"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storage"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema26"
           }
         ]
       },
@@ -4249,25 +3874,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "storage": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "cassandra"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "storage"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema26"
               }
             ]
           },
@@ -4320,25 +3927,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "storage": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "cassandra"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "storage"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema26"
               }
             ]
           },
@@ -4366,31 +3955,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "storage": {
-                          "properties": {
-                            "cassandra": {
-                              "properties": {
-                                "keyspace": {}
-                              },
-                              "required": [
-                                "keyspace"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "cassandra"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "storage"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema11"
                   },
                   {
                     "properties": {
@@ -4422,25 +3987,7 @@
                 ]
               },
               {
-                "properties": {
-                  "storage": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "cassandra"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "storage"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema26"
               }
             ]
           },
@@ -4501,25 +4048,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "storage": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "cassandra"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "storage"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema26"
               }
             ]
           },
@@ -4545,25 +4074,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "storage": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "cassandra"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "storage"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema26"
               }
             ]
           }
@@ -4649,25 +4160,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "storage": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "cassandra"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "storage"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema26"
               }
             ]
           },
@@ -4693,25 +4186,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "storage": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "cassandra"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "storage"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema26"
               }
             ]
           }
@@ -5013,79 +4488,10 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "storage": {
-                          "properties": {
-                            "type": {}
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "storage"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "elasticsearch"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema6"
               },
               {
-                "not": {
-                  "properties": {
-                    "storage": {
-                      "properties": {
-                        "elasticsearch": {
-                          "properties": {
-                            "tls": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "elasticsearch"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "storage"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema9"
               }
             ]
           },
@@ -5111,79 +4517,10 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "storage": {
-                          "properties": {
-                            "type": {}
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "storage"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "elasticsearch"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema6"
               },
               {
-                "not": {
-                  "properties": {
-                    "storage": {
-                      "properties": {
-                        "elasticsearch": {
-                          "properties": {
-                            "tls": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "elasticsearch"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "storage"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema9"
               }
             ]
           },
@@ -5286,79 +4623,10 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "storage": {
-                          "properties": {
-                            "type": {}
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "storage"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "elasticsearch"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema6"
               },
               {
-                "not": {
-                  "properties": {
-                    "storage": {
-                      "properties": {
-                        "elasticsearch": {
-                          "properties": {
-                            "tls": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "elasticsearch"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "storage"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema9"
               }
             ]
           },
@@ -5384,102 +4652,13 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "storage": {
-                          "properties": {
-                            "type": {}
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "storage"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "elasticsearch"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema6"
               },
               {
-                "not": {
-                  "properties": {
-                    "storage": {
-                      "properties": {
-                        "type": {
-                          "enum": [
-                            "cassandra"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "storage"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema19"
               },
               {
-                "not": {
-                  "properties": {
-                    "storage": {
-                      "properties": {
-                        "elasticsearch": {
-                          "properties": {
-                            "tls": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "elasticsearch"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "storage"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema9"
               }
             ]
           }
@@ -5535,48 +4714,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "storage": {
-                          "properties": {
-                            "type": {}
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "storage"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "elasticsearch"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema6"
               }
             ]
           },
@@ -5602,48 +4740,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "storage": {
-                          "properties": {
-                            "type": {}
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "storage"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "elasticsearch"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema6"
               }
             ]
           },
@@ -5669,48 +4766,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "storage": {
-                          "properties": {
-                            "type": {}
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "storage"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "elasticsearch"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema6"
               }
             ]
           },
@@ -5736,71 +4792,10 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "storage": {
-                          "properties": {
-                            "type": {}
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "storage"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "elasticsearch"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema6"
               },
               {
-                "not": {
-                  "properties": {
-                    "storage": {
-                      "properties": {
-                        "type": {
-                          "enum": [
-                            "cassandra"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "storage"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema19"
               }
             ]
           }
@@ -5946,79 +4941,10 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "storage": {
-                          "properties": {
-                            "type": {}
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "storage"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "elasticsearch"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema6"
               },
               {
-                "not": {
-                  "properties": {
-                    "storage": {
-                      "properties": {
-                        "elasticsearch": {
-                          "properties": {
-                            "tls": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "elasticsearch"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "storage"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema9"
               }
             ]
           },
@@ -6044,79 +4970,10 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "storage": {
-                          "properties": {
-                            "type": {}
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "storage"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "elasticsearch"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema6"
               },
               {
-                "not": {
-                  "properties": {
-                    "storage": {
-                      "properties": {
-                        "elasticsearch": {
-                          "properties": {
-                            "tls": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "elasticsearch"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "storage"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema9"
               }
             ]
           },
@@ -6219,79 +5076,10 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "storage": {
-                          "properties": {
-                            "type": {}
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "storage"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "elasticsearch"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema6"
               },
               {
-                "not": {
-                  "properties": {
-                    "storage": {
-                      "properties": {
-                        "elasticsearch": {
-                          "properties": {
-                            "tls": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "elasticsearch"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "storage"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema9"
               }
             ]
           },
@@ -6317,102 +5105,13 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "storage": {
-                          "properties": {
-                            "type": {}
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "storage"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "elasticsearch"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema6"
               },
               {
-                "not": {
-                  "properties": {
-                    "storage": {
-                      "properties": {
-                        "type": {
-                          "enum": [
-                            "cassandra"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "storage"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema19"
               },
               {
-                "not": {
-                  "properties": {
-                    "storage": {
-                      "properties": {
-                        "elasticsearch": {
-                          "properties": {
-                            "tls": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "elasticsearch"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "storage"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema9"
               }
             ]
           }
@@ -6711,25 +5410,7 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "cassandra"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema26"
                   }
                 ]
               },
@@ -6782,25 +5463,7 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "cassandra"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema26"
                   }
                 ]
               },
@@ -6828,31 +5491,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "storage": {
-                              "properties": {
-                                "cassandra": {
-                                  "properties": {
-                                    "keyspace": {}
-                                  },
-                                  "required": [
-                                    "keyspace"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "cassandra"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "storage"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema11"
                       },
                       {
                         "properties": {
@@ -6884,25 +5523,7 @@
                     ]
                   },
                   {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "cassandra"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema26"
                   }
                 ]
               },
@@ -6963,25 +5584,7 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "cassandra"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema26"
                   }
                 ]
               },
@@ -7007,25 +5610,7 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "storage": {
-                        "properties": {
-                          "type": {
-                            "enum": [
-                              "cassandra"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "storage"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema26"
                   }
                 ]
               }
@@ -7074,10 +5659,7 @@
           "type": "object"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema61"
         },
         {
           "not": {
@@ -7165,22 +5747,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "cmdlineParams": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema37"
           }
         },
         {
@@ -7196,12 +5763,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "concurrencyPolicy": {
-                "type": "string"
-              }
-            }
+            "$ref": "#/$defs/schema52"
           }
         },
         {
@@ -7217,13 +5779,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "extraConfigmapMounts": {
-                "items": {},
-                "type": "array"
-              }
-            }
+            "$ref": "#/$defs/schema44"
           }
         },
         {
@@ -7239,13 +5795,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "extraSecretMounts": {
-                "items": {},
-                "type": "array"
-              }
-            }
+            "$ref": "#/$defs/schema46"
           }
         },
         {
@@ -7261,12 +5811,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "failedJobsHistoryLimit": {
-                "type": "integer"
-              }
-            }
+            "$ref": "#/$defs/schema48"
           }
         },
         {
@@ -7282,17 +5827,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullPolicy": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema36"
           }
         },
         {
@@ -7308,27 +5843,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullSecrets": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema16"
           }
         },
         {
@@ -7349,10 +5864,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema61"
                   },
                   {
                     "not": {
@@ -7382,10 +5894,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema61"
                   },
                   {
                     "not": {
@@ -7415,23 +5924,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "properties": {
@@ -7463,8 +5956,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "automountServiceAccountToken": {
-                    "description": "Explicitly mounts the API credentials for the Service Account",
-                    "type": "boolean"
+                    "$ref": "#/$defs/schema42"
                   }
                 }
               }
@@ -7519,12 +6011,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "successfulJobsHistoryLimit": {
-                "type": "integer"
-              }
-            }
+            "$ref": "#/$defs/schema45"
           }
         }
       ],
@@ -7553,24 +6040,7 @@
         "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "digest": {}
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "pullPolicy": {},
-                "pullSecrets": {},
-                "registry": {},
-                "repository": {}
-              },
-              "type": "object"
-            }
-          ]
+          "$ref": "#/$defs/schema15"
         },
         "nodeSelector": {},
         "numberOfDays": {
@@ -7578,7 +6048,7 @@
         },
         "podAnnotations": {},
         "podLabels": {
-          "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120"
+          "$ref": "#/$defs/schema25"
         },
         "podSecurityContext": {},
         "resources": {},
@@ -7591,7 +6061,7 @@
           "properties": {
             "annotations": {},
             "automountServiceAccountToken": {
-              "description": "Explicitly mounts the API credentials for the Service Account"
+              "$ref": "#/$defs/schema53"
             },
             "create": {
               "anyOf": [
@@ -7693,22 +6163,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "cmdlineParams": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema37"
           }
         },
         {
@@ -7724,12 +6179,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "concurrencyPolicy": {
-                "type": "string"
-              }
-            }
+            "$ref": "#/$defs/schema52"
           }
         },
         {
@@ -7745,13 +6195,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "extraConfigmapMounts": {
-                "items": {},
-                "type": "array"
-              }
-            }
+            "$ref": "#/$defs/schema44"
           }
         },
         {
@@ -7767,13 +6211,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "extraSecretMounts": {
-                "items": {},
-                "type": "array"
-              }
-            }
+            "$ref": "#/$defs/schema46"
           }
         },
         {
@@ -7789,12 +6227,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "failedJobsHistoryLimit": {
-                "type": "integer"
-              }
-            }
+            "$ref": "#/$defs/schema48"
           }
         },
         {
@@ -7810,17 +6243,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullPolicy": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema36"
           }
         },
         {
@@ -7836,27 +6259,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullSecrets": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema16"
           }
         },
         {
@@ -7877,10 +6280,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema61"
                   },
                   {
                     "not": {
@@ -7910,10 +6310,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema61"
                   },
                   {
                     "not": {
@@ -7943,23 +6340,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "properties": {
@@ -7985,19 +6366,7 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "additionalProperties": {},
-                "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
-                "properties": {
-                  "automountServiceAccountToken": {
-                    "description": "Explicitly mounts the API credentials for the Service Account",
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema5"
           }
         },
         {
@@ -8049,12 +6418,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "successfulJobsHistoryLimit": {
-                "type": "integer"
-              }
-            }
+            "$ref": "#/$defs/schema45"
           }
         }
       ],
@@ -8081,24 +6445,7 @@
         "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "digest": {}
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "pullPolicy": {},
-                "pullSecrets": {},
-                "registry": {},
-                "repository": {}
-              },
-              "type": "object"
-            }
-          ]
+          "$ref": "#/$defs/schema15"
         },
         "nodeSelector": {},
         "podAnnotations": {},
@@ -8115,7 +6462,7 @@
           "properties": {
             "annotations": {},
             "automountServiceAccountToken": {
-              "description": "Explicitly mounts the API credentials for the Service Account"
+              "$ref": "#/$defs/schema53"
             },
             "create": {
               "anyOf": [
@@ -8217,22 +6564,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "cmdlineParams": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema37"
           }
         },
         {
@@ -8248,12 +6580,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "concurrencyPolicy": {
-                "type": "string"
-              }
-            }
+            "$ref": "#/$defs/schema52"
           }
         },
         {
@@ -8269,13 +6596,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "extraConfigmapMounts": {
-                "items": {},
-                "type": "array"
-              }
-            }
+            "$ref": "#/$defs/schema44"
           }
         },
         {
@@ -8291,13 +6612,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "extraSecretMounts": {
-                "items": {},
-                "type": "array"
-              }
-            }
+            "$ref": "#/$defs/schema46"
           }
         },
         {
@@ -8313,12 +6628,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "failedJobsHistoryLimit": {
-                "type": "integer"
-              }
-            }
+            "$ref": "#/$defs/schema48"
           }
         },
         {
@@ -8334,17 +6644,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullPolicy": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema36"
           }
         },
         {
@@ -8360,27 +6660,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullSecrets": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema16"
           }
         },
         {
@@ -8405,10 +6685,7 @@
                   "podAnnotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema61"
                       },
                       {
                         "not": {
@@ -8444,10 +6721,7 @@
                   "podLabels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema61"
                       },
                       {
                         "not": {
@@ -8506,10 +6780,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema61"
                   },
                   {
                     "not": {
@@ -8539,10 +6810,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema61"
                   },
                   {
                     "not": {
@@ -8572,23 +6840,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "properties": {
@@ -8614,19 +6866,7 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "additionalProperties": {},
-                "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
-                "properties": {
-                  "automountServiceAccountToken": {
-                    "description": "Explicitly mounts the API credentials for the Service Account",
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema5"
           }
         },
         {
@@ -8678,12 +6918,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "successfulJobsHistoryLimit": {
-                "type": "integer"
-              }
-            }
+            "$ref": "#/$defs/schema45"
           }
         }
       ],
@@ -8711,24 +6946,7 @@
         "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "digest": {}
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "pullPolicy": {},
-                "pullSecrets": {},
-                "registry": {},
-                "repository": {}
-              },
-              "type": "object"
-            }
-          ]
+          "$ref": "#/$defs/schema15"
         },
         "initHook": {
           "anyOf": [
@@ -8769,7 +6987,7 @@
           "properties": {
             "annotations": {},
             "automountServiceAccountToken": {
-              "description": "Explicitly mounts the API credentials for the Service Account"
+              "$ref": "#/$defs/schema53"
             },
             "create": {
               "anyOf": [
@@ -8853,15 +7071,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema54"
               },
               {
                 "properties": {
@@ -8895,15 +7105,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema54"
               },
               {
                 "properties": {
@@ -8935,15 +7137,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema54"
                   },
                   {
                     "properties": {
@@ -9007,15 +7201,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema54"
               },
               {
                 "properties": {
@@ -9031,32 +7217,14 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullPolicy": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema36"
           }
         },
         {
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema54"
               },
               {
                 "properties": {
@@ -9072,42 +7240,14 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullSecrets": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema16"
           }
         },
         {
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema54"
               },
               {
                 "properties": {
@@ -9128,10 +7268,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema61"
                   },
                   {
                     "not": {
@@ -9149,15 +7286,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema54"
                   },
                   {
                     "properties": {
@@ -9202,15 +7331,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema54"
               },
               {
                 "properties": {
@@ -9245,15 +7366,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema54"
                   },
                   {
                     "properties": {
@@ -9439,20 +7552,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "hosts": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema51"
                   }
                 }
               }
@@ -9518,10 +7618,7 @@
                   "type": "object"
                 },
                 {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema61"
                 },
                 {
                   "not": {
@@ -9698,22 +7795,7 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "cmdlineParams": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema37"
           }
         },
         {
@@ -9729,12 +7811,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "concurrencyPolicy": {
-                "type": "string"
-              }
-            }
+            "$ref": "#/$defs/schema52"
           }
         },
         {
@@ -9783,17 +7860,7 @@
             "additionalProperties": {},
             "properties": {
               "extraConfigmapMounts": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema59"
               }
             }
           }
@@ -9844,17 +7911,7 @@
             "additionalProperties": {},
             "properties": {
               "extraSecretMounts": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema59"
               }
             }
           }
@@ -9872,12 +7929,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "failedJobsHistoryLimit": {
-                "type": "integer"
-              }
-            }
+            "$ref": "#/$defs/schema48"
           }
         },
         {
@@ -9893,17 +7945,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullPolicy": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema36"
           }
         },
         {
@@ -9919,27 +7961,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "pullSecrets": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema16"
           }
         },
         {
@@ -9960,10 +7982,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema61"
                   },
                   {
                     "not": {
@@ -9993,10 +8012,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema61"
                   },
                   {
                     "not": {
@@ -10026,23 +8042,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "properties": {
@@ -10068,19 +8068,7 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "additionalProperties": {},
-                "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
-                "properties": {
-                  "automountServiceAccountToken": {
-                    "description": "Explicitly mounts the API credentials for the Service Account",
-                    "type": "boolean"
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema5"
           }
         },
         {
@@ -10132,12 +8120,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "successfulJobsHistoryLimit": {
-                "type": "integer"
-              }
-            }
+            "$ref": "#/$defs/schema45"
           }
         }
       ],
@@ -10181,7 +8164,7 @@
         "nodeSelector": {},
         "podAnnotations": {},
         "podLabels": {
-          "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120"
+          "$ref": "#/$defs/schema25"
         },
         "podSecurityContext": {},
         "resources": {},
@@ -10195,7 +8178,7 @@
           "properties": {
             "annotations": {},
             "automountServiceAccountToken": {
-              "description": "Explicitly mounts the API credentials for the Service Account"
+              "$ref": "#/$defs/schema53"
             },
             "create": {
               "anyOf": [

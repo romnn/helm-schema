@@ -65,7 +65,9 @@ pub fn generate_chart_schema_for_path(
 
     AnalysisSession::new(opts)
         .generated_schema()
-        .map(|generated| generated.schema)
+        // Mirror the CLI's default output policy: repeated schema subtrees
+        // are interned into root-level `$defs` before anything ships.
+        .map(|generated| json_schema_minify::minimize_schema(generated.schema))
         .map_err(Report::from)
         .wrap_err("generate schema")
 }

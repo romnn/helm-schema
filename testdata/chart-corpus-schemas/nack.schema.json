@@ -24,6 +24,36 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "additionalProperties": {},
+      "properties": {
+        "secret": {
+          "additionalProperties": {},
+          "properties": {
+            "key": {
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "schema3": {
+      "additionalProperties": {},
+      "properties": {
+        "secret": {
+          "anyOf": [
+            {
+              "type": "object"
+            }
+          ]
+        }
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -109,16 +139,7 @@
                 "description": "NATS URL",
                 "properties": {
                   "credentials": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "secret": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    }
+                    "$ref": "#/$defs/schema3"
                   }
                 }
               }
@@ -269,16 +290,7 @@
                 "description": "NATS URL",
                 "properties": {
                   "nkey": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "secret": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    }
+                    "$ref": "#/$defs/schema3"
                   }
                 }
               }
@@ -750,22 +762,7 @@
                         "$ref": "#/$defs/helm-truthy"
                       },
                       "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "secret": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "key": {
-                                "type": [
-                                  "boolean",
-                                  "integer",
-                                  "number",
-                                  "string"
-                                ]
-                              }
-                            }
-                          }
-                        }
+                        "$ref": "#/$defs/schema1"
                       }
                     }
                   ]
@@ -788,22 +785,7 @@
                         "$ref": "#/$defs/helm-truthy"
                       },
                       "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "secret": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "key": {
-                                "type": [
-                                  "boolean",
-                                  "integer",
-                                  "number",
-                                  "string"
-                                ]
-                              }
-                            }
-                          }
-                        }
+                        "$ref": "#/$defs/schema1"
                       }
                     }
                   ]

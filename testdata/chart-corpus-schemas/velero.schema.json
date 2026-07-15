@@ -24,6 +24,586 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Repository-specific configurations\nRepository keys are formed as: \"{namespace}-{storageLocation}-{repositoryType}\"\nFor example: \"default-default-kopia\" or \"prod-s3-backup-kopia\"\nNote: priorityClassName is NOT supported in repository-specific configurations\nrepositories:\n\"kibishii-default-kopia\":\npodResources:\ncpuRequest: \"200m\"\ncpuLimit: \"400m\"\nmemoryRequest: \"200Mi\"\nmemoryLimit: \"400Mi\"\nkeepLatestMaintenanceJobs: 2"
+    },
+    "schema11": {
+      "additionalProperties": {},
+      "properties": {
+        "automountServiceAccountToken": {
+          "description": "- registrySecretName\nConfigure if API credential for Service Account is automounted.",
+          "type": "boolean"
+        }
+      }
+    },
+    "schema12": {
+      "description": "Digest value example: sha256:73266e6bd7e2fe3f65fb20677d36c4a8df76d417d9ba76bd9932e0d983a776ec.\nIf used, it will take precedence over the image.tag.\ndigest:",
+      "type": "string"
+    },
+    "schema19": {
+      "description": "ValidationFrequency defines how frequently to validate the corresponding object storage. A value of 0 disables validation.",
+      "nullable": true,
+      "type": "string"
+    },
+    "schema2": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "configuration": {
+                "properties": {
+                  "volumeSnapshotLocation": {}
+                },
+                "required": [
+                  "volumeSnapshotLocation"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "configuration"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "configuration": {
+              "properties": {
+                "volumeSnapshotLocation": {
+                  "type": "array"
+                }
+              },
+              "required": [
+                "volumeSnapshotLocation"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "configuration"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema20": {
+      "description": "CACert defines a CA bundle to use when verifying TLS connections to the provider.\nDeprecated: Use CACertRef instead.",
+      "format": "byte",
+      "type": "string"
+    },
+    "schema21": {
+      "description": "BackupSyncPeriod defines how frequently to sync backup API objects from object storage. A value of 0 disables sync.",
+      "nullable": true,
+      "type": "string"
+    },
+    "schema23": {
+      "not": {
+        "properties": {
+          "credentials": {
+            "properties": {
+              "useSecret": {}
+            },
+            "required": [
+              "useSecret"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "credentials"
+        ],
+        "type": "object"
+      }
+    },
+    "schema25": {
+      "additionalProperties": {},
+      "properties": {
+        "imagePullSecrets": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema26": {
+      "not": {
+        "properties": {
+          "metrics": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "metrics"
+        ],
+        "type": "object"
+      }
+    },
+    "schema27": {
+      "additionalProperties": {},
+      "properties": {
+        "provider": {
+          "description": "Provider is the provider of the backup storage.",
+          "type": "string"
+        }
+      }
+    },
+    "schema28": {
+      "additionalProperties": {},
+      "properties": {
+        "provider": {
+          "description": "Provider is the provider of the volume storage.",
+          "type": "string"
+        }
+      }
+    },
+    "schema3": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "configuration": {
+                "properties": {
+                  "backupStorageLocation": {}
+                },
+                "required": [
+                  "backupStorageLocation"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "configuration"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "configuration": {
+              "properties": {
+                "backupStorageLocation": {
+                  "type": "array"
+                }
+              },
+              "required": [
+                "backupStorageLocation"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "configuration"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema30": {
+      "description": "AccessMode defines the permissions for the backup storage location.",
+      "enum": [
+        "ReadOnly",
+        "ReadWrite"
+      ],
+      "type": "string"
+    },
+    "schema31": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "type": "object"
+    },
+    "schema32": {
+      "description": "- registrySecretName\nConfigure if API credential for Service Account is automounted.",
+      "type": "boolean"
+    },
+    "schema34": {
+      "description": "The number of seconds to allow for graceful termination of the pod. Optional.",
+      "type": "integer"
+    },
+    "schema36": {
+      "items": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "schema37": {
+      "not": {
+        "properties": {
+          "repositoryMaintenanceJob": {}
+        },
+        "required": [
+          "repositoryMaintenanceJob"
+        ],
+        "type": "object"
+      }
+    },
+    "schema38": {
+      "additionalProperties": {},
+      "properties": {
+        "securityContext": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema39": {
+      "description": "Default indicates this location is the default backup storage location.",
+      "type": "boolean"
+    },
+    "schema4": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ]
+        },
+        "config": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ]
+        },
+        "credential": {
+          "additionalProperties": {},
+          "properties": {
+            "key": {},
+            "name": {}
+          },
+          "type": "object"
+        },
+        "name": {},
+        "provider": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "schema43": {
+      "not": {
+        "properties": {
+          "snapshotsEnabled": {}
+        },
+        "required": [
+          "snapshotsEnabled"
+        ],
+        "type": "object"
+      }
+    },
+    "schema44": {
+      "not": {
+        "properties": {
+          "backupsEnabled": {}
+        },
+        "required": [
+          "backupsEnabled"
+        ],
+        "type": "object"
+      }
+    },
+    "schema46": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema47": {
+      "not": {
+        "properties": {
+          "upgradeCRDs": {}
+        },
+        "required": [
+          "upgradeCRDs"
+        ],
+        "type": "object"
+      }
+    },
+    "schema48": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        }
+      ]
+    },
+    "schema5": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "cloud: |\n[default]\naws_access_key_id=<REDACTED>\naws_secret_access_key=<REDACTED>\nadditional key/value pairs to be used as environment variables such as \"DIGITALOCEAN_TOKEN: <your-key>\". Values will be stored in the secret."
+    },
+    "schema50": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema51": {
+      "not": {
+        "properties": {
+          "namespace": {}
+        },
+        "required": [
+          "namespace"
+        ],
+        "type": "object"
+      }
+    },
+    "schema52": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema53": {
+      "additionalProperties": {},
+      "properties": {
+        "key": {},
+        "name": {}
+      },
+      "type": "object"
+    },
+    "schema55": {
+      "not": {
+        "properties": {
+          "enabled": {}
+        },
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
+      }
+    },
+    "schema56": {
+      "not": {
+        "properties": {
+          "create": {}
+        },
+        "required": [
+          "create"
+        ],
+        "type": "object"
+      }
+    },
+    "schema58": {
+      "properties": {
+        "useSecret": {}
+      },
+      "required": [
+        "useSecret"
+      ],
+      "type": "object"
+    },
+    "schema6": {
+      "properties": {
+        "repositoryMaintenanceJob": {
+          "properties": {
+            "repositoryConfigData": {
+              "properties": {
+                "global": {}
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "repositoryConfigData"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "repositoryMaintenanceJob"
+      ],
+      "type": "object"
+    },
+    "schema60": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema61": {
+      "properties": {
+        "global": {}
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "schema62": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema63": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "schema7": {
+      "additionalProperties": {
+        "additionalProperties": {},
+        "properties": {
+          "annotations": {},
+          "disabled": {},
+          "labels": {},
+          "paused": {},
+          "schedule": {},
+          "skipImmediately": {},
+          "template": {},
+          "useOwnerReferencesInBackup": {}
+        },
+        "type": "object"
+      },
+      "type": "object"
+    },
+    "schema8": {
+      "items": {
+        "additionalProperties": {},
+        "properties": {
+          "annotations": {},
+          "disabled": {},
+          "labels": {},
+          "paused": {},
+          "schedule": {},
+          "skipImmediately": {},
+          "template": {},
+          "useOwnerReferencesInBackup": {}
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "schema9": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {},
+        "disabled": {},
+        "labels": {},
+        "paused": {},
+        "schedule": {},
+        "skipImmediately": {},
+        "template": {},
+        "useOwnerReferencesInBackup": {}
+      },
+      "required": [
+        "disabled"
+      ],
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -47,10 +627,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema62"
                       },
                       {
                         "not": {
@@ -77,10 +654,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema62"
                       },
                       {
                         "not": {
@@ -156,15 +730,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "backupsEnabled": {}
-                  },
-                  "required": [
-                    "backupsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -180,46 +746,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "backupStorageLocation": {}
-                      },
-                      "required": [
-                        "backupStorageLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "backupStorageLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "backupStorageLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -237,12 +764,7 @@
                     "accessMode": {
                       "anyOf": [
                         {
-                          "description": "AccessMode defines the permissions for the backup storage location.",
-                          "enum": [
-                            "ReadOnly",
-                            "ReadWrite"
-                          ],
-                          "type": "string"
+                          "$ref": "#/$defs/schema30"
                         },
                         {
                           "not": {
@@ -260,12 +782,7 @@
                     "accessMode": {
                       "anyOf": [
                         {
-                          "description": "AccessMode defines the permissions for the backup storage location.",
-                          "enum": [
-                            "ReadOnly",
-                            "ReadWrite"
-                          ],
-                          "type": "string"
+                          "$ref": "#/$defs/schema30"
                         },
                         {
                           "not": {
@@ -288,15 +805,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "backupsEnabled": {}
-                  },
-                  "required": [
-                    "backupsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -312,46 +821,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "backupStorageLocation": {}
-                      },
-                      "required": [
-                        "backupStorageLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "backupStorageLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "backupStorageLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -369,10 +839,7 @@
                     "annotations": {
                       "anyOf": [
                         {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "type": "object"
+                          "$ref": "#/$defs/schema62"
                         },
                         {
                           "not": {
@@ -390,10 +857,7 @@
                     "annotations": {
                       "anyOf": [
                         {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "type": "object"
+                          "$ref": "#/$defs/schema62"
                         },
                         {
                           "not": {
@@ -416,15 +880,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "backupsEnabled": {}
-                  },
-                  "required": [
-                    "backupsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -440,46 +896,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "backupStorageLocation": {}
-                      },
-                      "required": [
-                        "backupStorageLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "backupStorageLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "backupStorageLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -497,9 +914,7 @@
                     "backupSyncPeriod": {
                       "anyOf": [
                         {
-                          "description": "BackupSyncPeriod defines how frequently to sync backup API objects from object storage. A value of 0 disables sync.",
-                          "nullable": true,
-                          "type": "string"
+                          "$ref": "#/$defs/schema21"
                         },
                         {
                           "not": {
@@ -517,9 +932,7 @@
                     "backupSyncPeriod": {
                       "anyOf": [
                         {
-                          "description": "BackupSyncPeriod defines how frequently to sync backup API objects from object storage. A value of 0 disables sync.",
-                          "nullable": true,
-                          "type": "string"
+                          "$ref": "#/$defs/schema21"
                         },
                         {
                           "not": {
@@ -542,15 +955,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "backupsEnabled": {}
-                  },
-                  "required": [
-                    "backupsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -566,46 +971,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "backupStorageLocation": {}
-                      },
-                      "required": [
-                        "backupStorageLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "backupStorageLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "backupStorageLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -623,9 +989,7 @@
                     "caCert": {
                       "anyOf": [
                         {
-                          "description": "CACert defines a CA bundle to use when verifying TLS connections to the provider.\nDeprecated: Use CACertRef instead.",
-                          "format": "byte",
-                          "type": "string"
+                          "$ref": "#/$defs/schema20"
                         },
                         {
                           "not": {
@@ -643,9 +1007,7 @@
                     "caCert": {
                       "anyOf": [
                         {
-                          "description": "CACert defines a CA bundle to use when verifying TLS connections to the provider.\nDeprecated: Use CACertRef instead.",
-                          "format": "byte",
-                          "type": "string"
+                          "$ref": "#/$defs/schema20"
                         },
                         {
                           "not": {
@@ -668,15 +1030,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "backupsEnabled": {}
-                  },
-                  "required": [
-                    "backupsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -692,46 +1046,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "backupStorageLocation": {}
-                      },
-                      "required": [
-                        "backupStorageLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "backupStorageLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "backupStorageLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -749,8 +1064,7 @@
                     "default": {
                       "anyOf": [
                         {
-                          "description": "Default indicates this location is the default backup storage location.",
-                          "type": "boolean"
+                          "$ref": "#/$defs/schema39"
                         },
                         {
                           "not": {
@@ -768,8 +1082,7 @@
                     "default": {
                       "anyOf": [
                         {
-                          "description": "Default indicates this location is the default backup storage location.",
-                          "type": "boolean"
+                          "$ref": "#/$defs/schema39"
                         },
                         {
                           "not": {
@@ -792,15 +1105,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "backupsEnabled": {}
-                  },
-                  "required": [
-                    "backupsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -816,46 +1121,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "backupStorageLocation": {}
-                      },
-                      "required": [
-                        "backupStorageLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "backupStorageLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "backupStorageLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -914,15 +1180,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "backupsEnabled": {}
-                  },
-                  "required": [
-                    "backupsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -938,46 +1196,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "backupStorageLocation": {}
-                      },
-                      "required": [
-                        "backupStorageLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "backupStorageLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "backupStorageLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -990,23 +1209,11 @@
             "properties": {
               "backupStorageLocation": {
                 "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "provider": {
-                      "description": "Provider is the provider of the backup storage.",
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/$defs/schema27"
                 },
                 "description": "Parameters for the BackupStorageLocation(s). Configure multiple by adding other element(s) to the backupStorageLocation slice.\nSee https://velero.io/docs/v1.6/api-types/backupstoragelocation/",
                 "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "provider": {
-                      "description": "Provider is the provider of the backup storage.",
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/$defs/schema27"
                 }
               }
             }
@@ -1020,15 +1227,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "backupsEnabled": {}
-                  },
-                  "required": [
-                    "backupsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -1044,46 +1243,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "backupStorageLocation": {}
-                      },
-                      "required": [
-                        "backupStorageLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "backupStorageLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "backupStorageLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -1101,9 +1261,7 @@
                     "validationFrequency": {
                       "anyOf": [
                         {
-                          "description": "ValidationFrequency defines how frequently to validate the corresponding object storage. A value of 0 disables validation.",
-                          "nullable": true,
-                          "type": "string"
+                          "$ref": "#/$defs/schema19"
                         },
                         {
                           "not": {
@@ -1121,9 +1279,7 @@
                     "validationFrequency": {
                       "anyOf": [
                         {
-                          "description": "ValidationFrequency defines how frequently to validate the corresponding object storage. A value of 0 disables validation.",
-                          "nullable": true,
-                          "type": "string"
+                          "$ref": "#/$defs/schema19"
                         },
                         {
                           "not": {
@@ -1146,15 +1302,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "backupsEnabled": {}
-                  },
-                  "required": [
-                    "backupsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -1170,46 +1318,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "backupStorageLocation": {}
-                      },
-                      "required": [
-                        "backupStorageLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "backupStorageLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "backupStorageLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -1239,39 +1348,16 @@
                           ]
                         },
                         "annotations": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
+                          "$ref": "#/$defs/schema48"
                         },
                         "backupSyncPeriod": {},
                         "bucket": {},
                         "caCert": {},
                         "config": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
+                          "$ref": "#/$defs/schema48"
                         },
                         "credential": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "key": {},
-                            "name": {}
-                          },
-                          "type": "object"
+                          "$ref": "#/$defs/schema53"
                         },
                         "default": {
                           "anyOf": [
@@ -1313,39 +1399,16 @@
                           ]
                         },
                         "annotations": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
+                          "$ref": "#/$defs/schema48"
                         },
                         "backupSyncPeriod": {},
                         "bucket": {},
                         "caCert": {},
                         "config": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
+                          "$ref": "#/$defs/schema48"
                         },
                         "credential": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "key": {},
-                            "name": {}
-                          },
-                          "type": "object"
+                          "$ref": "#/$defs/schema53"
                         },
                         "default": {
                           "anyOf": [
@@ -1391,15 +1454,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "backupsEnabled": {}
-                  },
-                  "required": [
-                    "backupsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -1415,46 +1470,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "backupStorageLocation": {}
-                      },
-                      "required": [
-                        "backupStorageLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "backupStorageLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "backupStorageLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -1566,29 +1582,7 @@
                 "not": {
                   "properties": {
                     "configuration": {
-                      "properties": {
-                        "repositoryMaintenanceJob": {
-                          "properties": {
-                            "repositoryConfigData": {
-                              "properties": {
-                                "global": {}
-                              },
-                              "required": [
-                                "global"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "repositoryConfigData"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "repositoryMaintenanceJob"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema6"
                     }
                   },
                   "required": [
@@ -1694,18 +1688,7 @@
                     "description": "Per-repository resource settings ConfigMap\nThis ConfigMap allows specifying different settings for different repositories\nSee: https://velero.io/docs/main/repository-maintenance/",
                     "properties": {
                       "repositories": {
-                        "anyOf": [
-                          {
-                            "type": "array"
-                          },
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Repository-specific configurations\nRepository keys are formed as: \"{namespace}-{storageLocation}-{repositoryType}\"\nFor example: \"default-default-kopia\" or \"prod-s3-backup-kopia\"\nNote: priorityClassName is NOT supported in repository-specific configurations\nrepositories:\n\"kibishii-default-kopia\":\npodResources:\ncpuRequest: \"200m\"\ncpuLimit: \"400m\"\nmemoryRequest: \"200Mi\"\nmemoryLimit: \"400Mi\"\nkeepLatestMaintenanceJobs: 2"
+                        "$ref": "#/$defs/schema1"
                       }
                     }
                   }
@@ -1825,15 +1808,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "snapshotsEnabled": {}
-                  },
-                  "required": [
-                    "snapshotsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -1849,46 +1824,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "volumeSnapshotLocation": {}
-                      },
-                      "required": [
-                        "volumeSnapshotLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "volumeSnapshotLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "volumeSnapshotLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -1906,10 +1842,7 @@
                     "annotations": {
                       "anyOf": [
                         {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "type": "object"
+                          "$ref": "#/$defs/schema62"
                         },
                         {
                           "not": {
@@ -1927,10 +1860,7 @@
                     "annotations": {
                       "anyOf": [
                         {
-                          "additionalProperties": {
-                            "type": "string"
-                          },
-                          "type": "object"
+                          "$ref": "#/$defs/schema62"
                         },
                         {
                           "not": {
@@ -1953,15 +1883,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "snapshotsEnabled": {}
-                  },
-                  "required": [
-                    "snapshotsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -1977,46 +1899,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "volumeSnapshotLocation": {}
-                      },
-                      "required": [
-                        "volumeSnapshotLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "volumeSnapshotLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "volumeSnapshotLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -2075,15 +1958,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "snapshotsEnabled": {}
-                  },
-                  "required": [
-                    "snapshotsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -2099,46 +1974,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "volumeSnapshotLocation": {}
-                      },
-                      "required": [
-                        "volumeSnapshotLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "volumeSnapshotLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "volumeSnapshotLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -2151,23 +1987,11 @@
             "properties": {
               "volumeSnapshotLocation": {
                 "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "provider": {
-                      "description": "Provider is the provider of the volume storage.",
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/$defs/schema28"
                 },
                 "description": "Parameters for the VolumeSnapshotLocation(s). Configure multiple by adding other element(s) to the volumeSnapshotLocation slice.\nSee https://velero.io/docs/v1.6/api-types/volumesnapshotlocation/",
                 "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "provider": {
-                      "description": "Provider is the provider of the volume storage.",
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/$defs/schema28"
                 }
               }
             }
@@ -2181,15 +2005,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "snapshotsEnabled": {}
-                  },
-                  "required": [
-                    "snapshotsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -2205,46 +2021,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "volumeSnapshotLocation": {}
-                      },
-                      "required": [
-                        "volumeSnapshotLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "volumeSnapshotLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "volumeSnapshotLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -2259,91 +2036,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "annotations": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "config": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "credential": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "key": {},
-                            "name": {}
-                          },
-                          "type": "object"
-                        },
-                        "name": {},
-                        "provider": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
+                      "$ref": "#/$defs/schema4"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "annotations": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "config": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "credential": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "key": {},
-                            "name": {}
-                          },
-                          "type": "object"
-                        },
-                        "name": {},
-                        "provider": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
+                      "$ref": "#/$defs/schema4"
                     },
                     "type": "object"
                   },
@@ -2368,15 +2067,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "snapshotsEnabled": {}
-                  },
-                  "required": [
-                    "snapshotsEnabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -2392,46 +2083,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configuration": {
-                      "properties": {
-                        "volumeSnapshotLocation": {}
-                      },
-                      "required": [
-                        "volumeSnapshotLocation"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "configuration"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configuration": {
-                    "properties": {
-                      "volumeSnapshotLocation": {
-                        "type": "array"
-                      }
-                    },
-                    "required": [
-                      "volumeSnapshotLocation"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "configuration"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -2482,23 +2134,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "credentials": {
-                      "properties": {
-                        "useSecret": {}
-                      },
-                      "required": [
-                        "useSecret"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "credentials"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -2554,42 +2190,10 @@
               "extraEnvVars": {
                 "anyOf": [
                   {
-                    "items": {
-                      "anyOf": [
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "type": "array"
+                    "$ref": "#/$defs/schema36"
                   },
                   {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema31"
                   },
                   {
                     "type": "null"
@@ -2712,18 +2316,7 @@
             "description": "Info about the secret to be used by the Velero deployment, which\nshould contain credentials for the cloud provider IAM account you've\nset up for Velero.",
             "properties": {
               "extraEnvVars": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "cloud: |\n[default]\naws_access_key_id=<REDACTED>\naws_secret_access_key=<REDACTED>\nadditional key/value pairs to be used as environment variables such as \"DIGITALOCEAN_TOKEN: <your-key>\". Values will be stored in the secret."
+                "$ref": "#/$defs/schema5"
               }
             }
           }
@@ -2764,23 +2357,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "credentials": {
-                      "properties": {
-                        "useSecret": {}
-                      },
-                      "required": [
-                        "useSecret"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "credentials"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -2831,23 +2408,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "credentials": {
-                              "properties": {
-                                "useSecret": {}
-                              },
-                              "required": [
-                                "useSecret"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "credentials"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema23"
                       },
                       {
                         "properties": {
@@ -2898,23 +2459,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "metrics": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "metrics"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema26"
                       },
                       {
                         "properties": {
@@ -2977,23 +2522,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "credentials": {
-                      "properties": {
-                        "useSecret": {}
-                      },
-                      "required": [
-                        "useSecret"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "credentials"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -3049,42 +2578,10 @@
               "secretContents": {
                 "anyOf": [
                   {
-                    "items": {
-                      "anyOf": [
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "type": "array"
+                    "$ref": "#/$defs/schema36"
                   },
                   {
-                    "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema31"
                   },
                   {
                     "type": "null"
@@ -3142,15 +2639,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "upgradeCRDs": {}
-                  },
-                  "required": [
-                    "upgradeCRDs"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -3277,15 +2766,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "upgradeCRDs": {}
-                  },
-                  "required": [
-                    "upgradeCRDs"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -3310,8 +2791,7 @@
             "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
             "properties": {
               "pullPolicy": {
-                "description": "Digest value example: sha256:73266e6bd7e2fe3f65fb20677d36c4a8df76d417d9ba76bd9932e0d983a776ec.\nIf used, it will take precedence over the image.tag.\ndigest:",
-                "type": "string"
+                "$ref": "#/$defs/schema12"
               }
             }
           }
@@ -3335,15 +2815,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "upgradeCRDs": {}
-                  },
-                  "required": [
-                    "upgradeCRDs"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -3368,20 +2840,7 @@
             "description": "Details of the container image to use in the Velero deployment & daemonset (if\nenabling node-agent). Required.",
             "properties": {
               "repository": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema46"
               }
             }
           }
@@ -3405,15 +2864,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "upgradeCRDs": {}
-                  },
-                  "required": [
-                    "upgradeCRDs"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -3439,10 +2890,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema62"
                   },
                   {
                     "not": {
@@ -3476,15 +2924,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "namespace": {}
-                      },
-                      "required": [
-                        "namespace"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema51"
                   },
                   {
                     "properties": {
@@ -3585,15 +3025,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "namespace": {}
-                      },
-                      "required": [
-                        "namespace"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema51"
                   },
                   {
                     "properties": {
@@ -3648,20 +3080,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "repository": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema46"
                   }
                 }
               }
@@ -3722,15 +3141,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "namespace": {}
-                      },
-                      "required": [
-                        "namespace"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema51"
                   },
                   {
                     "properties": {
@@ -3858,15 +3269,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "upgradeCRDs": {}
-                  },
-                  "required": [
-                    "upgradeCRDs"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -3892,10 +3295,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema62"
                   },
                   {
                     "not": {
@@ -3929,23 +3329,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "metrics": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "metrics"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -4004,23 +3388,7 @@
                       {
                         "anyOf": [
                           {
-                            "not": {
-                              "properties": {
-                                "credentials": {
-                                  "properties": {
-                                    "useSecret": {}
-                                  },
-                                  "required": [
-                                    "useSecret"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "credentials"
-                              ],
-                              "type": "object"
-                            }
+                            "$ref": "#/$defs/schema23"
                           },
                           {
                             "properties": {
@@ -4071,23 +3439,7 @@
                       {
                         "anyOf": [
                           {
-                            "not": {
-                              "properties": {
-                                "metrics": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "metrics"
-                              ],
-                              "type": "object"
-                            }
+                            "$ref": "#/$defs/schema26"
                           },
                           {
                             "properties": {
@@ -4132,23 +3484,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "metrics": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "metrics"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -4207,23 +3543,7 @@
                       {
                         "anyOf": [
                           {
-                            "not": {
-                              "properties": {
-                                "credentials": {
-                                  "properties": {
-                                    "useSecret": {}
-                                  },
-                                  "required": [
-                                    "useSecret"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "credentials"
-                              ],
-                              "type": "object"
-                            }
+                            "$ref": "#/$defs/schema23"
                           },
                           {
                             "properties": {
@@ -4274,23 +3594,7 @@
                       {
                         "anyOf": [
                           {
-                            "not": {
-                              "properties": {
-                                "metrics": {
-                                  "properties": {
-                                    "enabled": {}
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "metrics"
-                              ],
-                              "type": "object"
-                            }
+                            "$ref": "#/$defs/schema26"
                           },
                           {
                             "properties": {
@@ -4342,10 +3646,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema62"
                   },
                   {
                     "not": {
@@ -4364,23 +3665,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "metrics": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "metrics"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema26"
           },
           {
             "properties": {
@@ -4437,23 +3722,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "metrics": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "metrics"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema26"
               },
               {
                 "properties": {
@@ -4481,23 +3750,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "metrics": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "metrics"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -4554,23 +3807,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "metrics": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "metrics"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -4627,23 +3864,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "metrics": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "metrics"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -4700,23 +3921,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "metrics": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "metrics"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -4773,23 +3978,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "metrics": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "metrics"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -4979,15 +4168,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "namespace": {}
-              },
-              "required": [
-                "namespace"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema51"
           },
           {
             "properties": {
@@ -5031,15 +4212,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "namespace": {}
-              },
-              "required": [
-                "namespace"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema51"
           },
           {
             "properties": {
@@ -5083,15 +4256,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "namespace": {}
-              },
-              "required": [
-                "namespace"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema51"
           },
           {
             "properties": {
@@ -5137,15 +4302,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "namespace": {}
-                  },
-                  "required": [
-                    "namespace"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -5172,15 +4329,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "namespace": {}
-                      },
-                      "required": [
-                        "namespace"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema51"
                   },
                   {
                     "properties": {
@@ -5260,10 +4409,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema62"
                   },
                   {
                     "not": {
@@ -5383,10 +4529,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema62"
                   },
                   {
                     "not": {
@@ -5482,10 +4625,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema62"
                   },
                   {
                     "not": {
@@ -5644,19 +4784,7 @@
         "additionalProperties": {},
         "properties": {
           "nodeAgent": {
-            "additionalProperties": {},
-            "properties": {
-              "securityContext": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema38"
           }
         }
       }
@@ -5669,23 +4797,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "credentials": {
-                          "properties": {
-                            "useSecret": {}
-                          },
-                          "required": [
-                            "useSecret"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "credentials"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "properties": {
@@ -5736,23 +4848,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "metrics": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "metrics"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -5796,10 +4892,7 @@
           "podAnnotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema62"
               },
               {
                 "not": {
@@ -5939,41 +5032,13 @@
             "anyOf": [
               {
                 "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "annotations": {},
-                    "disabled": {},
-                    "labels": {},
-                    "paused": {},
-                    "schedule": {},
-                    "skipImmediately": {},
-                    "template": {},
-                    "useOwnerReferencesInBackup": {}
-                  },
-                  "required": [
-                    "disabled"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema9"
                 },
                 "type": "array"
               },
               {
                 "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "annotations": {},
-                    "disabled": {},
-                    "labels": {},
-                    "paused": {},
-                    "schedule": {},
-                    "skipImmediately": {},
-                    "template": {},
-                    "useOwnerReferencesInBackup": {}
-                  },
-                  "required": [
-                    "disabled"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema9"
                 },
                 "type": "object"
               },
@@ -5992,38 +5057,10 @@
         "schedules": {
           "anyOf": [
             {
-              "items": {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {},
-                  "disabled": {},
-                  "labels": {},
-                  "paused": {},
-                  "schedule": {},
-                  "skipImmediately": {},
-                  "template": {},
-                  "useOwnerReferencesInBackup": {}
-                },
-                "type": "object"
-              },
-              "type": "array"
+              "$ref": "#/$defs/schema8"
             },
             {
-              "additionalProperties": {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {},
-                  "disabled": {},
-                  "labels": {},
-                  "paused": {},
-                  "schedule": {},
-                  "skipImmediately": {},
-                  "template": {},
-                  "useOwnerReferencesInBackup": {}
-                },
-                "type": "object"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema7"
             },
             {
               "type": "null"
@@ -6039,23 +5076,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "credentials": {
-                      "properties": {
-                        "useSecret": {}
-                      },
-                      "required": [
-                        "useSecret"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "credentials"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -6107,10 +5128,7 @@
           "secretAnnotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema62"
               },
               {
                 "not": {
@@ -6136,34 +5154,14 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "securityContext": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
+        "$ref": "#/$defs/schema38"
       }
     },
     {
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "upgradeCRDs": {}
-              },
-              "required": [
-                "upgradeCRDs"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema47"
           },
           {
             "properties": {
@@ -6191,10 +5189,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema62"
                       },
                       {
                         "not": {
@@ -6229,15 +5224,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "namespace": {}
-                      },
-                      "required": [
-                        "namespace"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema51"
                   },
                   {
                     "properties": {
@@ -6290,13 +5277,7 @@
             "description": "Information about the Kubernetes service account Velero uses.",
             "properties": {
               "server": {
-                "additionalProperties": {},
-                "properties": {
-                  "automountServiceAccountToken": {
-                    "description": "- registrySecretName\nConfigure if API credential for Service Account is automounted.",
-                    "type": "boolean"
-                  }
-                }
+                "$ref": "#/$defs/schema11"
               }
             }
           }
@@ -6316,13 +5297,7 @@
                         "serviceAccount": {
                           "properties": {
                             "server": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
+                              "$ref": "#/$defs/schema60"
                             }
                           },
                           "required": [
@@ -6427,15 +5402,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "upgradeCRDs": {}
-                      },
-                      "required": [
-                        "upgradeCRDs"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema47"
                   },
                   {
                     "properties": {
@@ -6462,25 +5429,7 @@
             "description": "Information about the Kubernetes service account Velero uses.",
             "properties": {
               "server": {
-                "additionalProperties": {},
-                "properties": {
-                  "imagePullSecrets": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema25"
               }
             }
           }
@@ -6491,15 +5440,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "upgradeCRDs": {}
-              },
-              "required": [
-                "upgradeCRDs"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema47"
           },
           {
             "properties": {
@@ -6527,10 +5468,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema62"
                       },
                       {
                         "not": {
@@ -6576,15 +5514,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "namespace": {}
-                      },
-                      "required": [
-                        "namespace"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema51"
                   },
                   {
                     "properties": {
@@ -6633,13 +5563,7 @@
                 "not": {
                   "properties": {
                     "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema60"
                     }
                   },
                   "required": [
@@ -6672,15 +5596,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "upgradeCRDs": {}
-                  },
-                  "required": [
-                    "upgradeCRDs"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -6742,8 +5658,7 @@
         "additionalProperties": {},
         "properties": {
           "terminationGracePeriodSeconds": {
-            "description": "The number of seconds to allow for graceful termination of the pod. Optional.",
-            "type": "integer"
+            "$ref": "#/$defs/schema34"
           }
         }
       }
@@ -6752,15 +5667,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "upgradeCRDs": {}
-              },
-              "required": [
-                "upgradeCRDs"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema47"
           },
           {
             "properties": {
@@ -6809,16 +5716,10 @@
     "annotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema52"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema62"
         },
         {
           "not": {
@@ -7739,15 +6640,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "repositoryMaintenanceJob": {}
-                          },
-                          "required": [
-                            "repositoryMaintenanceJob"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema37"
                       },
                       {
                         "properties": {
@@ -7824,29 +6717,7 @@
                         "anyOf": [
                           {
                             "not": {
-                              "properties": {
-                                "repositoryMaintenanceJob": {
-                                  "properties": {
-                                    "repositoryConfigData": {
-                                      "properties": {
-                                        "global": {}
-                                      },
-                                      "required": [
-                                        "global"
-                                      ],
-                                      "type": "object"
-                                    }
-                                  },
-                                  "required": [
-                                    "repositoryConfigData"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "repositoryMaintenanceJob"
-                              ],
-                              "type": "object"
+                              "$ref": "#/$defs/schema6"
                             }
                           },
                           {
@@ -7931,15 +6802,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "repositoryMaintenanceJob": {}
-                          },
-                          "required": [
-                            "repositoryMaintenanceJob"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema37"
                       },
                       {
                         "properties": {
@@ -8129,13 +6992,7 @@
                             "anyOf": [
                               {
                                 "not": {
-                                  "properties": {
-                                    "global": {}
-                                  },
-                                  "required": [
-                                    "global"
-                                  ],
-                                  "type": "object"
+                                  "$ref": "#/$defs/schema61"
                                 }
                               },
                               {
@@ -8175,18 +7032,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "repositories": {
-                            "anyOf": [
-                              {
-                                "type": "array"
-                              },
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ],
-                            "description": "Repository-specific configurations\nRepository keys are formed as: \"{namespace}-{storageLocation}-{repositoryType}\"\nFor example: \"default-default-kopia\" or \"prod-s3-backup-kopia\"\nNote: priorityClassName is NOT supported in repository-specific configurations\nrepositories:\n\"kibishii-default-kopia\":\npodResources:\ncpuRequest: \"200m\"\ncpuLimit: \"400m\"\nmemoryRequest: \"200Mi\"\nmemoryLimit: \"400Mi\"\nkeepLatestMaintenanceJobs: 2"
+                            "$ref": "#/$defs/schema1"
                           }
                         }
                       }
@@ -8464,13 +7310,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "properties": {
-                        "useSecret": {}
-                      },
-                      "required": [
-                        "useSecret"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema58"
                     }
                   },
                   {
@@ -8547,18 +7387,7 @@
             "additionalProperties": {},
             "properties": {
               "extraEnvVars": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "cloud: |\n[default]\naws_access_key_id=<REDACTED>\naws_secret_access_key=<REDACTED>\nadditional key/value pairs to be used as environment variables such as \"DIGITALOCEAN_TOKEN: <your-key>\". Values will be stored in the secret."
+                "$ref": "#/$defs/schema5"
               }
             }
           }
@@ -8570,13 +7399,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "properties": {
-                        "useSecret": {}
-                      },
-                      "required": [
-                        "useSecret"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema58"
                     }
                   },
                   {
@@ -8783,20 +7606,7 @@
             "additionalProperties": {},
             "properties": {
               "tag": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema46"
               }
             }
           }
@@ -8811,20 +7621,7 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema50"
                   }
                 }
               ],
@@ -8860,8 +7657,7 @@
           "description": "One or more secrets to be used when pulling images\n- registrySecretName"
         },
         "pullPolicy": {
-          "description": "Digest value example: sha256:73266e6bd7e2fe3f65fb20677d36c4a8df76d417d9ba76bd9932e0d983a776ec.\nIf used, it will take precedence over the image.tag.\ndigest:",
-          "type": "string"
+          "$ref": "#/$defs/schema12"
         },
         "repository": {
           "type": [
@@ -8931,16 +7727,10 @@
     "labels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema52"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema62"
         },
         {
           "not": {
@@ -8963,15 +7753,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -8996,10 +7778,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema62"
                       },
                       {
                         "not": {
@@ -9017,15 +7796,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -9060,15 +7831,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -9102,15 +7865,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -9145,15 +7900,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -9178,10 +7925,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema62"
                       },
                       {
                         "not": {
@@ -9220,8 +7964,7 @@
               "type": "object"
             },
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema63"
             },
             "autodetect": {
               "type": "boolean"
@@ -9306,12 +8049,10 @@
           "additionalProperties": {},
           "properties": {
             "additionalLabels": {
-              "additionalProperties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema63"
             },
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema63"
             },
             "autodetect": {
               "type": "boolean"
@@ -9573,10 +8314,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema62"
                   },
                   {
                     "not": {
@@ -9607,10 +8345,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema62"
                   },
                   {
                     "not": {
@@ -9695,16 +8430,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema52"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema62"
         },
         {
           "not": {
@@ -9765,15 +8494,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema56"
                   },
                   {
                     "properties": {
@@ -9900,10 +8621,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "type": "object"
+                            "$ref": "#/$defs/schema62"
                           },
                           {
                             "not": {
@@ -9944,10 +8662,7 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "type": "object"
+                            "$ref": "#/$defs/schema62"
                           },
                           {
                             "not": {
@@ -10093,47 +8808,16 @@
       ],
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema52"
         },
         {
-          "items": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {},
-              "disabled": {},
-              "labels": {},
-              "paused": {},
-              "schedule": {},
-              "skipImmediately": {},
-              "template": {},
-              "useOwnerReferencesInBackup": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
+          "$ref": "#/$defs/schema8"
         },
         {
           "type": "null"
         },
         {
-          "additionalProperties": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {},
-              "disabled": {},
-              "labels": {},
-              "paused": {},
-              "schedule": {},
-              "skipImmediately": {},
-              "template": {},
-              "useOwnerReferencesInBackup": {}
-            },
-            "type": "object"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema7"
         }
       ],
       "description": "Backup schedules to create.\nEg:\nschedules:\nmybackup:\ndisabled: false\nlabels:\nmyenv: foo\nannotations:\nmyenv: foo\nschedule: \"0 0 * * *\"\nuseOwnerReferencesInBackup: false\npaused: false\nskipImmediately: false\ntemplate:\nttl: \"240h\"\nstorageLocation: default\nincludedNamespaces:\n- foo\nSee: https://velero.io/docs/v1.14/resource-filtering/#excludes\nexcludedNamespaceScopedResources:\n- persistentVolumeClaims\nexcludedClusterScopedResources:\n- persistentVolumes"
@@ -10154,15 +8838,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema56"
                       },
                       {
                         "properties": {
@@ -10183,10 +8859,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "type": "object"
+                            "$ref": "#/$defs/schema62"
                           },
                           {
                             "not": {
@@ -10211,15 +8884,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema56"
                       },
                       {
                         "properties": {
@@ -10235,13 +8900,7 @@
                     ]
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "automountServiceAccountToken": {
-                        "description": "- registrySecretName\nConfigure if API credential for Service Account is automounted.",
-                        "type": "boolean"
-                      }
-                    }
+                    "$ref": "#/$defs/schema11"
                   }
                 }
               ]
@@ -10259,15 +8918,7 @@
                       {
                         "anyOf": [
                           {
-                            "not": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
+                            "$ref": "#/$defs/schema56"
                           },
                           {
                             "properties": {
@@ -10296,25 +8947,7 @@
                     ]
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "imagePullSecrets": {
-                        "anyOf": [
-                          {
-                            "type": "array"
-                          },
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "type": "integer"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
-                      }
-                    }
+                    "$ref": "#/$defs/schema25"
                   }
                 }
               ]
@@ -10330,15 +8963,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema56"
                       },
                       {
                         "properties": {
@@ -10359,10 +8984,7 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "type": "object"
+                            "$ref": "#/$defs/schema62"
                           },
                           {
                             "not": {
@@ -10387,15 +9009,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema56"
                       },
                       {
                         "properties": {
@@ -10440,8 +9054,7 @@
           "properties": {
             "annotations": {},
             "automountServiceAccountToken": {
-              "description": "- registrySecretName\nConfigure if API credential for Service Account is automounted.",
-              "type": "boolean"
+              "$ref": "#/$defs/schema32"
             },
             "create": {
               "anyOf": [
@@ -10492,8 +9105,7 @@
       "description": "Whether to create volumesnapshotlocation crd, if false => disable snapshot feature"
     },
     "terminationGracePeriodSeconds": {
-      "description": "The number of seconds to allow for graceful termination of the pod. Optional.",
-      "type": "integer"
+      "$ref": "#/$defs/schema34"
     },
     "tolerations": {
       "anyOf": [

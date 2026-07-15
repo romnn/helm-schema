@@ -24,6 +24,253 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "hosts": {
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "additionalProperties": {},
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "tls": {
+              "anyOf": [
+                {
+                  "items": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "hosts": {
+                        "anyOf": [
+                          {
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
+                            "additionalProperties": {},
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "type": "array"
+                },
+                {
+                  "additionalProperties": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "hosts": {
+                        "anyOf": [
+                          {
+                            "items": {},
+                            "type": "array"
+                          },
+                          {
+                            "additionalProperties": {},
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "schema10": {
+      "not": {
+        "properties": {
+          "config": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      }
+    },
+    "schema13": {
+      "not": {
+        "properties": {
+          "config": {
+            "properties": {
+              "file": {}
+            },
+            "required": [
+              "file"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      }
+    },
+    "schema14": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema19": {
+      "not": {
+        "properties": {
+          "serviceMonitor": {}
+        },
+        "required": [
+          "serviceMonitor"
+        ],
+        "type": "object"
+      }
+    },
+    "schema20": {
+      "not": {
+        "properties": {
+          "autoscaling": {}
+        },
+        "required": [
+          "autoscaling"
+        ],
+        "type": "object"
+      }
+    },
+    "schema22": {
+      "additionalProperties": {},
+      "properties": {
+        "rule": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "schema25": {
+      "not": {
+        "properties": {
+          "create": {}
+        },
+        "required": [
+          "create"
+        ],
+        "type": "object"
+      }
+    },
+    "schema29": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema30": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "schema4": {
+      "additionalProperties": {},
+      "properties": {
+        "ingress": {
+          "additionalProperties": {},
+          "properties": {
+            "hosts": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "schema7": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema8": {
+      "not": {
+        "properties": {
+          "daemonset": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "daemonset"
+        ],
+        "type": "object"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -35,23 +282,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "daemonset": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "daemonset"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -101,10 +332,7 @@
           "annotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema29"
               },
               {
                 "not": {
@@ -123,23 +351,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "daemonset": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "daemonset"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -201,23 +413,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema10"
                   },
                   {
                     "properties": {
@@ -243,23 +439,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "file": {}
-                          },
-                          "required": [
-                            "file"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema13"
                   },
                   {
                     "properties": {
@@ -308,23 +488,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "file": {}
-                          },
-                          "required": [
-                            "file"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema13"
                   },
                   {
                     "properties": {
@@ -350,23 +514,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -425,23 +573,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "file": {}
-                          },
-                          "required": [
-                            "file"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema13"
                   },
                   {
                     "properties": {
@@ -519,23 +651,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "file": {}
-                          },
-                          "required": [
-                            "file"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema13"
                   },
                   {
                     "properties": {
@@ -614,23 +730,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -762,23 +862,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -917,23 +1001,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "daemonset": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "daemonset"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1059,23 +1127,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -1184,57 +1236,11 @@
         "properties": {
           "extraPorts": {
             "additionalProperties": {
-              "additionalProperties": {},
-              "properties": {
-                "ingress": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
+              "$ref": "#/$defs/schema4"
             },
             "description": "Configure additional ports and services. For each configured port, a corresponding service is created.\nSee values.yaml for details\nsyslog:\nname: tcp-syslog\nannotations: {}\nlabels: {}\ncontainerPort: 1514\nprotocol: TCP\nservice:\ntype: ClusterIP\nclusterIP: null\nport: 1514\nexternalIPs: []\nnodePort: null\nloadBalancerIP: null\nloadBalancerSourceRanges: []\nexternalTrafficPolicy: null\ningress:\nFor Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated\nannotations: {}\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\npaths: \"/\"\nhosts:\n- chart-example.local\ntls: []\n- secretName: chart-example-tls\nhosts:\n- chart-example.local",
             "items": {
-              "additionalProperties": {},
-              "properties": {
-                "ingress": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
+              "$ref": "#/$defs/schema4"
             }
           }
         }
@@ -1246,23 +1252,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "daemonset": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "daemonset"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1413,23 +1403,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "daemonset": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "daemonset"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema8"
           },
           {
             "properties": {
@@ -1559,10 +1533,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema29"
                       },
                       {
                         "not": {
@@ -1573,86 +1544,12 @@
                   },
                   "containerPort": {},
                   "ingress": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "hosts": {
-                            "anyOf": [
-                              {
-                                "items": {},
-                                "type": "array"
-                              },
-                              {
-                                "additionalProperties": {},
-                                "type": "object"
-                              }
-                            ]
-                          }
-                        }
-                      },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "path": {
-                            "type": "string"
-                          },
-                          "tls": {
-                            "anyOf": [
-                              {
-                                "items": {
-                                  "additionalProperties": {},
-                                  "properties": {
-                                    "hosts": {
-                                      "anyOf": [
-                                        {
-                                          "items": {},
-                                          "type": "array"
-                                        },
-                                        {
-                                          "additionalProperties": {},
-                                          "type": "object"
-                                        }
-                                      ]
-                                    }
-                                  }
-                                },
-                                "type": "array"
-                              },
-                              {
-                                "additionalProperties": {
-                                  "additionalProperties": {},
-                                  "properties": {
-                                    "hosts": {
-                                      "anyOf": [
-                                        {
-                                          "items": {},
-                                          "type": "array"
-                                        },
-                                        {
-                                          "additionalProperties": {},
-                                          "type": "object"
-                                        }
-                                      ]
-                                    }
-                                  }
-                                },
-                                "type": "object"
-                              }
-                            ]
-                          }
-                        },
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema1"
                   },
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema29"
                       },
                       {
                         "not": {
@@ -1709,10 +1606,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema29"
                       },
                       {
                         "not": {
@@ -1723,86 +1617,12 @@
                   },
                   "containerPort": {},
                   "ingress": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "hosts": {
-                            "anyOf": [
-                              {
-                                "items": {},
-                                "type": "array"
-                              },
-                              {
-                                "additionalProperties": {},
-                                "type": "object"
-                              }
-                            ]
-                          }
-                        }
-                      },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "path": {
-                            "type": "string"
-                          },
-                          "tls": {
-                            "anyOf": [
-                              {
-                                "items": {
-                                  "additionalProperties": {},
-                                  "properties": {
-                                    "hosts": {
-                                      "anyOf": [
-                                        {
-                                          "items": {},
-                                          "type": "array"
-                                        },
-                                        {
-                                          "additionalProperties": {},
-                                          "type": "object"
-                                        }
-                                      ]
-                                    }
-                                  }
-                                },
-                                "type": "array"
-                              },
-                              {
-                                "additionalProperties": {
-                                  "additionalProperties": {},
-                                  "properties": {
-                                    "hosts": {
-                                      "anyOf": [
-                                        {
-                                          "items": {},
-                                          "type": "array"
-                                        },
-                                        {
-                                          "additionalProperties": {},
-                                          "type": "object"
-                                        }
-                                      ]
-                                    }
-                                  }
-                                },
-                                "type": "object"
-                              }
-                            ]
-                          }
-                        },
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema1"
                   },
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema29"
                       },
                       {
                         "not": {
@@ -1920,23 +1740,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema10"
                   },
                   {
                     "properties": {
@@ -1996,23 +1800,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -2098,23 +1886,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema14"
                   },
                   {
                     "properties": {
@@ -2155,23 +1927,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema7"
                   },
                   {
                     "properties": {
@@ -2292,15 +2048,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceMonitor": {}
-                      },
-                      "required": [
-                        "serviceMonitor"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema19"
                   },
                   {
                     "properties": {
@@ -2444,23 +2192,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -2587,23 +2319,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "daemonset": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "daemonset"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -2670,23 +2386,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -2852,23 +2552,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -2992,23 +2676,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema10"
                   },
                   {
                     "properties": {
@@ -3076,23 +2744,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -3244,23 +2896,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema14"
                   },
                   {
                     "properties": {
@@ -3309,23 +2945,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema7"
                   },
                   {
                     "properties": {
@@ -3462,15 +3082,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceMonitor": {}
-                      },
-                      "required": [
-                        "serviceMonitor"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema19"
                   },
                   {
                     "properties": {
@@ -3635,23 +3247,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema10"
                   },
                   {
                     "properties": {
@@ -3711,23 +3307,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -3847,23 +3427,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema14"
                   },
                   {
                     "properties": {
@@ -3904,23 +3468,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema7"
                   },
                   {
                     "properties": {
@@ -4041,15 +3589,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceMonitor": {}
-                      },
-                      "required": [
-                        "serviceMonitor"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema19"
                   },
                   {
                     "properties": {
@@ -4548,23 +4088,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "daemonset": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "daemonset"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -4614,10 +4138,7 @@
           "podAnnotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema29"
               },
               {
                 "not": {
@@ -4636,23 +4157,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "daemonset": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "daemonset"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -4702,10 +4207,7 @@
           "podLabels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema29"
               },
               {
                 "not": {
@@ -4749,10 +4251,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema29"
                   },
                   {
                     "not": {
@@ -4798,10 +4297,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema29"
                   },
                   {
                     "not": {
@@ -4868,10 +4364,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema29"
                   },
                   {
                     "not": {
@@ -4938,10 +4431,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema29"
                   },
                   {
                     "not": {
@@ -4962,23 +4452,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "daemonset": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "daemonset"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -5023,23 +4497,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema14"
               },
               {
                 "properties": {
@@ -5124,23 +4582,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -5291,23 +4733,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -5443,23 +4869,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -5604,23 +5014,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -5757,23 +5151,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -5923,23 +5301,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -6089,23 +5451,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -6255,23 +5601,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -6404,15 +5734,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceMonitor": {}
-                  },
-                  "required": [
-                    "serviceMonitor"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema19"
               },
               {
                 "properties": {
@@ -6484,23 +5806,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "daemonset": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "daemonset"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -6528,23 +5834,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -6670,15 +5960,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceMonitor": {}
-                      },
-                      "required": [
-                        "serviceMonitor"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema19"
                   },
                   {
                     "properties": {
@@ -6749,15 +6031,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceMonitor": {}
-                      },
-                      "required": [
-                        "serviceMonitor"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema19"
                   },
                   {
                     "properties": {
@@ -6807,23 +6081,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "daemonset": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "daemonset"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema8"
                       },
                       {
                         "properties": {
@@ -6949,23 +6207,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "daemonset": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "daemonset"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -6993,23 +6235,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "daemonset": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "daemonset"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -7135,15 +6361,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceMonitor": {}
-                      },
-                      "required": [
-                        "serviceMonitor"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema19"
                   },
                   {
                     "properties": {
@@ -7326,8 +6544,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "cri": {
-                    "additionalProperties": {},
-                    "type": "object"
+                    "$ref": "#/$defs/schema30"
                   }
                 },
                 "type": "object"
@@ -7454,15 +6671,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "autoscaling": {}
-                      },
-                      "required": [
-                        "autoscaling"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "properties": {
@@ -7536,15 +6745,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "autoscaling": {}
-                      },
-                      "required": [
-                        "autoscaling"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "properties": {
@@ -7618,15 +6819,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "autoscaling": {}
-                      },
-                      "required": [
-                        "autoscaling"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "properties": {
@@ -8040,13 +7233,7 @@
           "type": "boolean"
         },
         "fsGroup": {
-          "additionalProperties": {},
-          "properties": {
-            "rule": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema22"
         },
         "hostIPC": {
           "type": "boolean"
@@ -8070,31 +7257,13 @@
           "type": "array"
         },
         "runAsUser": {
-          "additionalProperties": {},
-          "properties": {
-            "rule": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema22"
         },
         "seLinux": {
-          "additionalProperties": {},
-          "properties": {
-            "rule": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema22"
         },
         "supplementalGroups": {
-          "additionalProperties": {},
-          "properties": {
-            "rule": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema22"
         },
         "volumes": {
           "items": {
@@ -8181,15 +7350,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -8210,10 +7371,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema29"
                   },
                   {
                     "not": {
@@ -8230,15 +7388,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -8267,15 +7417,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -8373,10 +7515,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema29"
                   },
                   {
                     "not": {
@@ -8421,10 +7560,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema29"
                   },
                   {
                     "not": {
@@ -8527,10 +7663,7 @@
                   "additionalLabels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema29"
                       },
                       {
                         "not": {

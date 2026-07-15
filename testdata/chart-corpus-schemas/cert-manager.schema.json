@@ -24,6 +24,543 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "additionalProperties": {},
+      "properties": {
+        "nodeSelector": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The nodeSelector on Pods tells Kubernetes to schedule Pods on the nodes with\nmatching labels.\nFor more information, see [Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/).\nThis default ensures that Pods are only scheduled to Linux nodes.\nIt prevents Pods being scheduled to Windows nodes in a mixed OS cluster.\n+docs:property"
+        }
+      }
+    },
+    "schema10": {
+      "additionalProperties": {},
+      "properties": {
+        "allowPrivilegeEscalation": {
+          "type": "boolean"
+        },
+        "capabilities": {
+          "additionalProperties": {},
+          "properties": {
+            "drop": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "readOnlyRootFilesystem": {
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    },
+    "schema14": {
+      "not": {
+        "properties": {
+          "cainjector": {
+            "properties": {
+              "serviceAccount": {
+                "properties": {
+                  "create": {}
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "cainjector"
+        ],
+        "type": "object"
+      }
+    },
+    "schema17": {
+      "not": {
+        "properties": {
+          "webhook": {
+            "properties": {
+              "serviceAccount": {
+                "properties": {
+                  "create": {}
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "webhook"
+        ],
+        "type": "object"
+      }
+    },
+    "schema2": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "cainjector": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "metricsTLSConfig": {}
+                      },
+                      "required": [
+                        "metricsTLSConfig"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "cainjector"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "cainjector": {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "metricsTLSConfig": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "metricsTLSConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "cainjector"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "schema21": {
+      "not": {
+        "properties": {
+          "global": {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {}
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      }
+    },
+    "schema22": {
+      "description": "enableServiceLinks indicates whether information about services should be\ninjected into the pod's environment variables, matching the syntax of Docker\nlinks.",
+      "type": "boolean"
+    },
+    "schema23": {
+      "additionalProperties": {},
+      "properties": {
+        "runAsNonRoot": {
+          "type": "boolean"
+        },
+        "seccompProfile": {
+          "additionalProperties": {},
+          "properties": {
+            "type": {
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "schema26": {
+      "not": {
+        "properties": {
+          "startupapicheck": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "startupapicheck"
+        ],
+        "type": "object"
+      }
+    },
+    "schema27": {
+      "additionalProperties": {},
+      "properties": {
+        "automountServiceAccountToken": {
+          "description": "Automount API credentials for a Service Account.",
+          "type": "boolean"
+        }
+      }
+    },
+    "schema28": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema31": {
+      "not": {
+        "properties": {
+          "prometheus": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "prometheus"
+        ],
+        "type": "object"
+      }
+    },
+    "schema32": {
+      "not": {
+        "properties": {
+          "cainjector": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "cainjector"
+        ],
+        "type": "object"
+      }
+    },
+    "schema34": {
+      "not": {
+        "properties": {
+          "acmesolver": {
+            "properties": {
+              "image": {}
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "acmesolver"
+        ],
+        "type": "object"
+      }
+    },
+    "schema38": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema4": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "metricsTLSConfig": {}
+                      },
+                      "required": [
+                        "metricsTLSConfig"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "metricsTLSConfig": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "metricsTLSConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "schema40": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema41": {
+      "additionalProperties": {},
+      "properties": {
+        "podDisruptionBudget": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema44": {
+      "description": "Keep labels from scraped data, overriding server-side labels.",
+      "type": "boolean"
+    },
+    "schema45": {
+      "additionalProperties": {},
+      "properties": {
+        "kubernetes.io/os": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "schema46": {
+      "description": "Additional volume mounts to add to the cert-manager controller container."
+    },
+    "schema47": {
+      "not": {
+        "properties": {
+          "livenessProbe": {}
+        },
+        "required": [
+          "livenessProbe"
+        ],
+        "type": "object"
+      }
+    },
+    "schema50": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema51": {
+      "description": "Additional volumes to add to the cert-manager controller pod."
+    },
+    "schema52": {
+      "properties": {
+        "nodeSelector": {}
+      },
+      "required": [
+        "nodeSelector"
+      ],
+      "type": "object"
+    },
+    "schema53": {
+      "not": {
+        "properties": {
+          "enabled": {}
+        },
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
+      }
+    },
+    "schema54": {
+      "description": "Kubernetes imagePullPolicy on Deployment.",
+      "type": "string"
+    },
+    "schema55": {
+      "not": {
+        "properties": {
+          "create": {}
+        },
+        "required": [
+          "create"
+        ],
+        "type": "object"
+      }
+    },
+    "schema56": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "schema58": {
+      "description": "Automount API credentials for a Service Account."
+    },
+    "schema60": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema61": {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema62": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "schema7": {
+      "description": "A Kubernetes Affinity, if required. For more information, see [Affinity v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#affinity-v1-core).\nFor example:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: foo.bar.com/role\noperator: In\nvalues:\n- master"
+    },
+    "schema8": {
+      "description": "A list of Kubernetes Tolerations, if required. For more information, see [Toleration v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#toleration-v1-core).\nFor example:\ntolerations:\n- key: foo.bar.com/role\noperator: Equal\nvalue: master\neffect: NoSchedule"
+    },
+    "schema9": {
+      "description": "Resources to provide to the cert-manager controller pod.\nFor example:\nrequests:\ncpu: 10m\nmemory: 32Mi\nFor more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)."
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -35,23 +572,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "acmesolver": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "acmesolver"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema34"
               },
               {
                 "properties": {
@@ -86,23 +607,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "acmesolver": {
-                          "properties": {
-                            "image": {}
-                          },
-                          "required": [
-                            "image"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "acmesolver"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema34"
                   },
                   {
                     "properties": {
@@ -166,23 +671,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "acmesolver": {
-                          "properties": {
-                            "image": {}
-                          },
-                          "required": [
-                            "image"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "acmesolver"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema34"
                   },
                   {
                     "properties": {
@@ -246,23 +735,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "acmesolver": {
-                          "properties": {
-                            "image": {}
-                          },
-                          "required": [
-                            "image"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "acmesolver"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema34"
                   },
                   {
                     "properties": {
@@ -350,23 +823,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "acmesolver": {
-                      "properties": {
-                        "image": {}
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "acmesolver"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema34"
               },
               {
                 "properties": {
@@ -401,23 +858,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "acmesolver": {
-                          "properties": {
-                            "image": {}
-                          },
-                          "required": [
-                            "image"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "acmesolver"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema34"
                   },
                   {
                     "properties": {
@@ -481,23 +922,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "acmesolver": {
-                          "properties": {
-                            "image": {}
-                          },
-                          "required": [
-                            "image"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "acmesolver"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema34"
                   },
                   {
                     "properties": {
@@ -561,23 +986,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "acmesolver": {
-                          "properties": {
-                            "image": {}
-                          },
-                          "required": [
-                            "image"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "acmesolver"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema34"
                   },
                   {
                     "properties": {
@@ -655,31 +1064,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -780,31 +1165,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -965,66 +1326,7 @@
             "type": "object"
           },
           {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "cainjector": {
-                        "properties": {
-                          "config": {
-                            "properties": {
-                              "metricsTLSConfig": {}
-                            },
-                            "required": [
-                              "metricsTLSConfig"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "config"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "cainjector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "cainjector": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "metricsTLSConfig": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          },
-                          "required": [
-                            "metricsTLSConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "cainjector"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -1150,66 +1452,7 @@
             "type": "object"
           },
           {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "cainjector": {
-                        "properties": {
-                          "config": {
-                            "properties": {
-                              "metricsTLSConfig": {}
-                            },
-                            "required": [
-                              "metricsTLSConfig"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "config"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "cainjector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "cainjector": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "metricsTLSConfig": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          },
-                          "required": [
-                            "metricsTLSConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "cainjector"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -1235,23 +1478,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "cainjector": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "cainjector"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema32"
           },
           {
             "properties": {
@@ -1299,23 +1526,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "cainjector": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "cainjector"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -1344,13 +1555,7 @@
                 "not": {
                   "properties": {
                     "cainjector": {
-                      "properties": {
-                        "nodeSelector": {}
-                      },
-                      "required": [
-                        "nodeSelector"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema52"
                     }
                   },
                   "required": [
@@ -1393,20 +1598,7 @@
         "additionalProperties": {},
         "properties": {
           "cainjector": {
-            "additionalProperties": {},
-            "properties": {
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "The nodeSelector on Pods tells Kubernetes to schedule Pods on the nodes with\nmatching labels.\nFor more information, see [Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/).\nThis default ensures that Pods are only scheduled to Linux nodes.\nIt prevents Pods being scheduled to Windows nodes in a mixed OS cluster.\n+docs:property"
-              }
-            }
+            "$ref": "#/$defs/schema1"
           }
         }
       }
@@ -1443,19 +1635,7 @@
         "additionalProperties": {},
         "properties": {
           "cainjector": {
-            "additionalProperties": {},
-            "properties": {
-              "podDisruptionBudget": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema41"
           }
         }
       }
@@ -1468,23 +1648,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "cainjector": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "cainjector"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -1541,23 +1705,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "cainjector": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "cainjector"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -1583,31 +1731,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "rbac": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "rbac"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "properties": {
@@ -1676,23 +1800,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "cainjector": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "cainjector"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -1718,23 +1826,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -1797,10 +1889,7 @@
               "serviceAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -1820,23 +1909,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "cainjector": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "cainjector"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -1862,23 +1935,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -1941,10 +1998,7 @@
               "serviceLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -1963,23 +2017,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "cainjector": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "cainjector"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema32"
           },
           {
             "properties": {
@@ -2006,14 +2044,7 @@
         "additionalProperties": {},
         "properties": {
           "cainjector": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/$defs/schema61"
           }
         }
       }
@@ -2074,16 +2105,10 @@
         "extraObjects": {
           "anyOf": [
             {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
+              "$ref": "#/$defs/schema62"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema60"
             },
             {
               "maximum": 0,
@@ -2141,31 +2166,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -2220,23 +2221,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "prometheus"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema31"
                   },
                   {
                     "properties": {
@@ -2292,23 +2277,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "prometheus": {
-                                "properties": {
-                                  "enabled": {}
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "prometheus"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema31"
                         },
                         {
                           "properties": {
@@ -2399,23 +2368,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "prometheus"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema31"
                   },
                   {
                     "properties": {
@@ -2471,23 +2424,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "prometheus": {
-                                "properties": {
-                                  "enabled": {}
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "prometheus"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema31"
                         },
                         {
                           "properties": {
@@ -2578,23 +2515,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "prometheus"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema31"
                   },
                   {
                     "properties": {
@@ -2651,23 +2572,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema28"
               },
               {
                 "properties": {
@@ -2765,23 +2670,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "cainjector": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "cainjector"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -2807,31 +2696,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "cainjector": {
-                          "properties": {
-                            "serviceAccount": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "serviceAccount"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "cainjector"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema14"
                   },
                   {
                     "properties": {
@@ -2926,23 +2791,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "prometheus"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema31"
                   },
                   {
                     "properties": {
@@ -2998,23 +2847,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "prometheus": {
-                                "properties": {
-                                  "enabled": {}
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "prometheus"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema31"
                         },
                         {
                           "properties": {
@@ -3105,23 +2938,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "prometheus"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema31"
                   },
                   {
                     "properties": {
@@ -3177,23 +2994,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "prometheus": {
-                                "properties": {
-                                  "enabled": {}
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "prometheus"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema31"
                         },
                         {
                           "properties": {
@@ -3282,23 +3083,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema28"
               },
               {
                 "properties": {
@@ -3324,23 +3109,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "startupapicheck": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "startupapicheck"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema26"
               },
               {
                 "properties": {
@@ -3412,31 +3181,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -3513,10 +3258,7 @@
               "commonLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -3737,15 +3479,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "livenessProbe": {}
-                  },
-                  "required": [
-                    "livenessProbe"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -3772,15 +3506,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "livenessProbe": {}
-                      },
-                      "required": [
-                        "livenessProbe"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema47"
                   },
                   {
                     "properties": {
@@ -3808,13 +3534,7 @@
                     "not": {
                       "properties": {
                         "livenessProbe": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/schema56"
                         }
                       },
                       "required": [
@@ -3979,23 +3699,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "cainjector": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "cainjector"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -4021,31 +3725,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "cainjector": {
-                          "properties": {
-                            "serviceAccount": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "serviceAccount"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "cainjector"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema14"
                   },
                   {
                     "properties": {
@@ -4119,31 +3799,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -4198,23 +3854,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "prometheus"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema31"
                   },
                   {
                     "properties": {
@@ -4299,23 +3939,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "prometheus": {
-                                "properties": {
-                                  "enabled": {}
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "prometheus"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema31"
                         },
                         {
                           "properties": {
@@ -4406,23 +4030,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "prometheus"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema31"
                   },
                   {
                     "properties": {
@@ -4507,23 +4115,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "prometheus": {
-                                "properties": {
-                                  "enabled": {}
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "prometheus"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema31"
                         },
                         {
                           "properties": {
@@ -4612,23 +4204,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema28"
               },
               {
                 "properties": {
@@ -4654,23 +4230,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "startupapicheck": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "startupapicheck"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema26"
               },
               {
                 "properties": {
@@ -4769,31 +4329,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -4880,23 +4416,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "prometheus"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema31"
                   },
                   {
                     "properties": {
@@ -4979,23 +4499,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "prometheus": {
-                                "properties": {
-                                  "enabled": {}
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "prometheus"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema31"
                         },
                         {
                           "properties": {
@@ -5086,23 +4590,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "prometheus": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "prometheus"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema31"
                   },
                   {
                     "properties": {
@@ -5185,23 +4673,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "prometheus": {
-                                "properties": {
-                                  "enabled": {}
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "prometheus"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema31"
                         },
                         {
                           "properties": {
@@ -5333,13 +4805,7 @@
         "anyOf": [
           {
             "not": {
-              "properties": {
-                "nodeSelector": {}
-              },
-              "required": [
-                "nodeSelector"
-              ],
-              "type": "object"
+              "$ref": "#/$defs/schema52"
             }
           },
           {
@@ -5363,20 +4829,7 @@
         ]
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nodeSelector": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "The nodeSelector on Pods tells Kubernetes to schedule Pods on the nodes with\nmatching labels.\nFor more information, see [Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/).\nThis default ensures that Pods are only scheduled to Linux nodes.\nIt prevents Pods being scheduled to Windows nodes in a mixed OS cluster.\n+docs:property"
-          }
-        }
+        "$ref": "#/$defs/schema1"
       }
     },
     {
@@ -5400,19 +4853,7 @@
         "type": "object"
       },
       "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podDisruptionBudget": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
+        "$ref": "#/$defs/schema41"
       }
     },
     {
@@ -5429,23 +4870,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema28"
               },
               {
                 "properties": {
@@ -5493,22 +4918,7 @@
         "additionalProperties": {},
         "properties": {
           "serviceAccount": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema40"
           }
         }
       }
@@ -5519,23 +4929,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema28"
               },
               {
                 "properties": {
@@ -5637,31 +5031,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -5723,23 +5093,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -5799,10 +5153,7 @@
           "serviceAnnotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema60"
               },
               {
                 "not": {
@@ -5820,23 +5171,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -5896,10 +5231,7 @@
           "serviceLabels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema60"
               },
               {
                 "not": {
@@ -5915,23 +5247,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "startupapicheck": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "startupapicheck"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema26"
           },
           {
             "properties": {
@@ -5979,23 +5295,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "startupapicheck": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "startupapicheck"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema26"
               },
               {
                 "properties": {
@@ -6024,13 +5324,7 @@
                 "not": {
                   "properties": {
                     "startupapicheck": {
-                      "properties": {
-                        "nodeSelector": {}
-                      },
-                      "required": [
-                        "nodeSelector"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema52"
                     }
                   },
                   "required": [
@@ -6073,20 +5367,7 @@
         "additionalProperties": {},
         "properties": {
           "startupapicheck": {
-            "additionalProperties": {},
-            "properties": {
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "The nodeSelector on Pods tells Kubernetes to schedule Pods on the nodes with\nmatching labels.\nFor more information, see [Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/).\nThis default ensures that Pods are only scheduled to Linux nodes.\nIt prevents Pods being scheduled to Windows nodes in a mixed OS cluster.\n+docs:property"
-              }
-            }
+            "$ref": "#/$defs/schema1"
           }
         }
       }
@@ -6126,23 +5407,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "startupapicheck": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "startupapicheck"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -6172,31 +5437,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "rbac": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "rbac"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "properties": {
@@ -6230,23 +5471,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "startupapicheck": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "startupapicheck"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -6285,10 +5510,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema60"
                       },
                       {
                         "not": {
@@ -6340,23 +5562,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "startupapicheck": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "startupapicheck"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -6386,31 +5592,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "rbac": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "rbac"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "properties": {
@@ -6444,23 +5626,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "startupapicheck": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "startupapicheck"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -6540,23 +5706,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "startupapicheck": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "startupapicheck"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -6586,31 +5736,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "global": {
-                          "properties": {
-                            "rbac": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "rbac"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "global"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "properties": {
@@ -6644,23 +5770,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "startupapicheck": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "startupapicheck"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "properties": {
@@ -6719,23 +5829,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "startupapicheck": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "startupapicheck"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema26"
           },
           {
             "properties": {
@@ -6762,14 +5856,7 @@
         "additionalProperties": {},
         "properties": {
           "startupapicheck": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/$defs/schema61"
           }
         }
       }
@@ -6780,23 +5867,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "startupapicheck": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "startupapicheck"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema26"
               },
               {
                 "properties": {
@@ -6853,23 +5924,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "startupapicheck": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "startupapicheck"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema26"
                       },
                       {
                         "properties": {
@@ -6899,31 +5954,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "global": {
-                              "properties": {
-                                "rbac": {
-                                  "properties": {
-                                    "create": {}
-                                  },
-                                  "required": [
-                                    "create"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "rbac"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "global"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema21"
                       },
                       {
                         "properties": {
@@ -6957,23 +5988,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "startupapicheck": {
-                              "properties": {
-                                "enabled": {}
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "startupapicheck"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema26"
                       },
                       {
                         "properties": {
@@ -7017,31 +6032,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -7144,31 +6135,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -7200,66 +6167,7 @@
             ]
           },
           {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "config": {
-                            "properties": {
-                              "metricsTLSConfig": {}
-                            },
-                            "required": [
-                              "metricsTLSConfig"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "config"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "metricsTLSConfig": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          },
-                          "required": [
-                            "metricsTLSConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
+            "$ref": "#/$defs/schema4"
           }
         ]
       },
@@ -7293,31 +6201,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -7414,31 +6298,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -7515,31 +6375,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -7571,66 +6407,7 @@
             ]
           },
           {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "webhook": {
-                        "properties": {
-                          "config": {
-                            "properties": {
-                              "metricsTLSConfig": {}
-                            },
-                            "required": [
-                              "metricsTLSConfig"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "config"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "webhook"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "metricsTLSConfig": {
-                              "enum": [
-                                null
-                              ]
-                            }
-                          },
-                          "required": [
-                            "metricsTLSConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
+            "$ref": "#/$defs/schema4"
           }
         ]
       },
@@ -7702,13 +6479,7 @@
             "not": {
               "properties": {
                 "webhook": {
-                  "properties": {
-                    "nodeSelector": {}
-                  },
-                  "required": [
-                    "nodeSelector"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema52"
                 }
               },
               "required": [
@@ -7749,20 +6520,7 @@
         "additionalProperties": {},
         "properties": {
           "webhook": {
-            "additionalProperties": {},
-            "properties": {
-              "nodeSelector": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "The nodeSelector on Pods tells Kubernetes to schedule Pods on the nodes with\nmatching labels.\nFor more information, see [Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/).\nThis default ensures that Pods are only scheduled to Linux nodes.\nIt prevents Pods being scheduled to Windows nodes in a mixed OS cluster.\n+docs:property"
-              }
-            }
+            "$ref": "#/$defs/schema1"
           }
         }
       }
@@ -7799,19 +6557,7 @@
         "additionalProperties": {},
         "properties": {
           "webhook": {
-            "additionalProperties": {},
-            "properties": {
-              "podDisruptionBudget": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema41"
           }
         }
       }
@@ -7915,31 +6661,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -8004,14 +6726,7 @@
       "additionalProperties": {},
       "properties": {
         "webhook": {
-          "anyOf": [
-            {
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/$defs/schema61"
         }
       }
     },
@@ -8024,14 +6739,7 @@
       }
     },
     {
-      "anyOf": [
-        {
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ]
+      "$ref": "#/$defs/schema61"
     }
   ],
   "properties": {
@@ -8252,8 +6960,7 @@
               "properties": {
                 "digest": {},
                 "pullPolicy": {
-                  "description": "Kubernetes imagePullPolicy on Deployment.",
-                  "type": "string"
+                  "$ref": "#/$defs/schema54"
                 },
                 "registry": {},
                 "repository": {
@@ -8275,7 +6982,7 @@
       "type": "object"
     },
     "affinity": {
-      "description": "A Kubernetes Affinity, if required. For more information, see [Affinity v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#affinity-v1-core).\nFor example:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: foo.bar.com/role\noperator: In\nvalues:\n- master"
+      "$ref": "#/$defs/schema7"
     },
     "approveSignerNames": {
       "description": "List of signer names that cert-manager will approve by default. CertificateRequests\nreferencing these signer names will be auto-approved by cert-manager. Defaults to just\napproving the cert-manager.io Issuer and ClusterIssuer issuers. When set to an empty\narray, ALL issuers will be auto-approved by cert-manager. To disable the auto-approval,\nbecause, e.g., you are using approver-policy, you can enable 'disableAutoApproval'.\nref: https://cert-manager.io/docs/concepts/certificaterequest/#approval\n+docs:property"
@@ -8288,15 +6995,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -8317,10 +7016,7 @@
               "deploymentAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -8336,15 +7032,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -8363,8 +7051,7 @@
             "additionalProperties": {},
             "properties": {
               "enableServiceLinks": {
-                "description": "enableServiceLinks indicates whether information about services should be\ninjected into the pod's environment variables, matching the syntax of Docker\nlinks.",
-                "type": "boolean"
+                "$ref": "#/$defs/schema22"
               }
             }
           }
@@ -8373,15 +7060,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -8428,15 +7107,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -8459,8 +7130,7 @@
                 "description": "The container registry to pull the cainjector image from.\n+docs:property\nregistry: quay.io",
                 "properties": {
                   "pullPolicy": {
-                    "description": "Kubernetes imagePullPolicy on Deployment.",
-                    "type": "string"
+                    "$ref": "#/$defs/schema54"
                   }
                 }
               }
@@ -8471,15 +7141,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -8500,10 +7162,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -8519,15 +7178,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -8548,10 +7199,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -8568,15 +7216,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -8607,15 +7247,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -8633,23 +7265,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema28"
                   },
                   {
                     "properties": {
@@ -8683,10 +7299,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema60"
                       },
                       {
                         "not": {
@@ -8706,15 +7319,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -8732,23 +7337,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema28"
                   },
                   {
                     "properties": {
@@ -8777,13 +7366,7 @@
             "additionalProperties": {},
             "properties": {
               "serviceAccount": {
-                "additionalProperties": {},
-                "properties": {
-                  "automountServiceAccountToken": {
-                    "description": "Automount API credentials for a Service Account.",
-                    "type": "boolean"
-                  }
-                }
+                "$ref": "#/$defs/schema27"
               }
             }
           }
@@ -8794,15 +7377,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -8820,23 +7395,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema28"
                   },
                   {
                     "properties": {
@@ -8870,10 +7429,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema60"
                       },
                       {
                         "not": {
@@ -8891,15 +7447,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -8940,7 +7488,7 @@
       ],
       "properties": {
         "affinity": {
-          "description": "A Kubernetes Affinity, if required. For more information, see [Affinity v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#affinity-v1-core).\nFor example:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: foo.bar.com/role\noperator: In\nvalues:\n- master"
+          "$ref": "#/$defs/schema7"
         },
         "automountServiceAccountToken": {},
         "config": {
@@ -9021,13 +7569,7 @@
         "nodeSelector": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "properties": {
-                "kubernetes.io/os": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema45"
             },
             {
               "not": {
@@ -9076,7 +7618,7 @@
           "properties": {
             "annotations": {},
             "automountServiceAccountToken": {
-              "description": "Automount API credentials for a Service Account."
+              "$ref": "#/$defs/schema58"
             },
             "create": {
               "anyOf": [
@@ -9104,16 +7646,16 @@
           "description": "Deployment update strategy for the cert-manager cainjector deployment.\nFor more information, see the [Kubernetes documentation](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#strategy).\nFor example:\nstrategy:\ntype: RollingUpdate\nrollingUpdate:\nmaxSurge: 0\nmaxUnavailable: 1"
         },
         "tolerations": {
-          "description": "A list of Kubernetes Tolerations, if required. For more information, see [Toleration v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#toleration-v1-core).\nFor example:\ntolerations:\n- key: foo.bar.com/role\noperator: Equal\nvalue: master\neffect: NoSchedule"
+          "$ref": "#/$defs/schema8"
         },
         "topologySpreadConstraints": {
           "description": "A list of Kubernetes TopologySpreadConstraints, if required. For more information, see [Topology spread constraint v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#topologyspreadconstraint-v1-core).\nFor example:\ntopologySpreadConstraints:\n- maxSkew: 2\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: ScheduleAnyway\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: cert-manager\napp.kubernetes.io/component: controller"
         },
         "volumeMounts": {
-          "description": "Additional volume mounts to add to the cert-manager controller container."
+          "$ref": "#/$defs/schema46"
         },
         "volumes": {
-          "description": "Additional volumes to add to the cert-manager controller pod."
+          "$ref": "#/$defs/schema51"
         }
       }
     },
@@ -9160,28 +7702,7 @@
     "containerSecurityContext": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "properties": {
-            "allowPrivilegeEscalation": {
-              "type": "boolean"
-            },
-            "capabilities": {
-              "additionalProperties": {},
-              "properties": {
-                "drop": {
-                  "items": {
-                    "type": "string"
-                  },
-                  "type": "array"
-                }
-              },
-              "type": "object"
-            },
-            "readOnlyRootFilesystem": {
-              "type": "boolean"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema10"
         },
         {
           "not": {
@@ -9220,10 +7741,7 @@
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema60"
         },
         {
           "not": {
@@ -9276,8 +7794,7 @@
       "type": "boolean"
     },
     "enableServiceLinks": {
-      "description": "enableServiceLinks indicates whether information about services should be\ninjected into the pod's environment variables, matching the syntax of Docker\nlinks.",
-      "type": "boolean"
+      "$ref": "#/$defs/schema22"
     },
     "enabled": {
       "description": "Field that can be used as a condition when cert-manager is a dependency.\nThis definition is only here as a placeholder such that it is included in\nthe json schema.\nSee https://helm.sh/docs/chart_best_practices/dependencies/#conditions-and-tags\nfor more info.\n+docs:hidden",
@@ -9320,16 +7837,10 @@
     "extraObjects": {
       "anyOf": [
         {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "$ref": "#/$defs/schema62"
         },
         {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "$ref": "#/$defs/schema62"
         },
         {
           "type": "integer"
@@ -9338,10 +7849,7 @@
           "type": "null"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema60"
         }
       ],
       "description": "Create dynamic manifests via values.\nFor example:\nextraObjects:\n- |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: '{{ template \"cert-manager.fullname\" . }}-extra-configmap'"
@@ -9408,23 +7916,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema38"
                   },
                   {
                     "properties": {
@@ -9455,10 +7947,7 @@
               "commonLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -9475,23 +7964,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema38"
               },
               {
                 "properties": {
@@ -9535,16 +8008,10 @@
         "commonLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema50"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema60"
             },
             {
               "not": {
@@ -9812,8 +8279,7 @@
       "properties": {
         "digest": {},
         "pullPolicy": {
-          "description": "Kubernetes imagePullPolicy on Deployment.",
-          "type": "string"
+          "$ref": "#/$defs/schema54"
         },
         "registry": {},
         "repository": {
@@ -9921,10 +8387,7 @@
       ],
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema50"
         },
         {
           "additionalProperties": {},
@@ -9964,15 +8427,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -10014,15 +8469,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -10064,15 +8511,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -10114,15 +8553,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -10164,15 +8595,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -10281,13 +8704,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "properties": {
-            "kubernetes.io/os": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema45"
         },
         {
           "not": {
@@ -10300,10 +8717,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema60"
         },
         {
           "not": {
@@ -10338,16 +8752,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema50"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema60"
         },
         {
           "not": {
@@ -10366,15 +8774,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -10414,15 +8814,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -10494,10 +8886,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema60"
                       },
                       {
                         "not": {
@@ -10518,15 +8907,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -10566,15 +8947,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -10644,8 +9017,7 @@
                 "description": "Note that you cannot enable both PodMonitor and ServiceMonitor as they are mutually exclusive. Enabling both will result in an error.",
                 "properties": {
                   "honorLabels": {
-                    "description": "Keep labels from scraped data, overriding server-side labels.",
-                    "type": "boolean"
+                    "$ref": "#/$defs/schema44"
                   }
                 }
               }
@@ -10658,15 +9030,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -10706,15 +9070,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -10798,15 +9154,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -10846,15 +9194,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -10926,10 +9266,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema60"
                       },
                       {
                         "not": {
@@ -10950,15 +9287,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -10998,15 +9327,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -11098,15 +9419,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -11146,15 +9459,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -11238,15 +9543,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -11286,15 +9583,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -11378,15 +9667,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -11426,15 +9707,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -11518,15 +9791,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -11566,15 +9831,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -11645,10 +9902,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema60"
                       },
                       {
                         "not": {
@@ -11669,15 +9923,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -11717,15 +9963,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -11794,8 +10032,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "honorLabels": {
-                    "description": "Keep labels from scraped data, overriding server-side labels.",
-                    "type": "boolean"
+                    "$ref": "#/$defs/schema44"
                   }
                 }
               }
@@ -11808,15 +10045,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -11856,15 +10085,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -11947,15 +10168,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -11995,15 +10208,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -12074,10 +10279,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema60"
                       },
                       {
                         "not": {
@@ -12098,15 +10300,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -12146,15 +10340,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -12245,15 +10431,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -12293,15 +10471,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -12384,15 +10554,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -12432,15 +10594,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -12523,15 +10677,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -12571,15 +10717,7 @@
                     {
                       "anyOf": [
                         {
-                          "not": {
-                            "properties": {
-                              "enabled": {}
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
+                          "$ref": "#/$defs/schema53"
                         },
                         {
                           "properties": {
@@ -12664,15 +10802,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema53"
                       },
                       {
                         "properties": {
@@ -12712,15 +10842,7 @@
                         {
                           "anyOf": [
                             {
-                              "not": {
-                                "properties": {
-                                  "enabled": {}
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
+                              "$ref": "#/$defs/schema53"
                             },
                             {
                               "properties": {
@@ -12787,15 +10909,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema53"
                       },
                       {
                         "properties": {
@@ -12856,15 +10970,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -13036,27 +11142,12 @@
       "type": "integer"
     },
     "resources": {
-      "description": "Resources to provide to the cert-manager controller pod.\nFor example:\nrequests:\ncpu: 10m\nmemory: 32Mi\nFor more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)."
+      "$ref": "#/$defs/schema9"
     },
     "securityContext": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "properties": {
-            "runAsNonRoot": {
-              "type": "boolean"
-            },
-            "seccompProfile": {
-              "additionalProperties": {},
-              "properties": {
-                "type": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema23"
         },
         {
           "not": {
@@ -13075,15 +11166,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -13112,37 +11195,14 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema40"
           }
         },
         {
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -13158,28 +11218,14 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "automountServiceAccountToken": {
-                "description": "Automount API credentials for a Service Account.",
-                "type": "boolean"
-              }
-            }
+            "$ref": "#/$defs/schema27"
           }
         },
         {
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -13200,10 +11246,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -13219,15 +11262,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -13264,7 +11299,7 @@
       "properties": {
         "annotations": {},
         "automountServiceAccountToken": {
-          "description": "Automount API credentials for a Service Account."
+          "$ref": "#/$defs/schema58"
         },
         "create": {
           "anyOf": [
@@ -13306,15 +11341,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -13343,15 +11370,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -13380,15 +11399,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -13411,8 +11422,7 @@
                 "description": "The container registry to pull the startupapicheck image from.\n+docs:property\nregistry: quay.io",
                 "properties": {
                   "pullPolicy": {
-                    "description": "Kubernetes imagePullPolicy on Deployment.",
-                    "type": "string"
+                    "$ref": "#/$defs/schema54"
                   }
                 }
               }
@@ -13423,15 +11433,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -13452,10 +11454,7 @@
               "jobAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -13472,15 +11471,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -13501,10 +11492,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -13520,15 +11508,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -13549,10 +11529,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -13571,15 +11548,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -13597,23 +11566,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema28"
                   },
                   {
                     "properties": {
@@ -13647,10 +11600,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema60"
                       },
                       {
                         "not": {
@@ -13671,15 +11621,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -13697,23 +11639,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema28"
                   },
                   {
                     "properties": {
@@ -13759,15 +11685,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema53"
                   },
                   {
                     "properties": {
@@ -13785,23 +11703,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema28"
                   },
                   {
                     "properties": {
@@ -13835,10 +11737,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema60"
                       },
                       {
                         "not": {
@@ -13856,15 +11755,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -13906,15 +11797,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -13955,7 +11838,7 @@
       ],
       "properties": {
         "affinity": {
-          "description": "A Kubernetes Affinity, if required. For more information, see [Affinity v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#affinity-v1-core).\nFor example:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: foo.bar.com/role\noperator: In\nvalues:\n- master"
+          "$ref": "#/$defs/schema7"
         },
         "automountServiceAccountToken": {},
         "backoffLimit": {
@@ -14007,13 +11890,7 @@
         "nodeSelector": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "properties": {
-                "kubernetes.io/os": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema45"
             },
             {
               "not": {
@@ -14036,7 +11913,7 @@
           }
         },
         "resources": {
-          "description": "Resources to provide to the cert-manager controller pod.\nFor example:\nrequests:\ncpu: 10m\nmemory: 32Mi\nFor more information, see [Resource Management for Pods and Containers](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/)."
+          "$ref": "#/$defs/schema9"
         },
         "securityContext": {
           "description": "Pod Security Context to be set on the startupapicheck component Pod.\nFor more information, see [Configure a Security Context for a Pod or Container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).\n+docs:property"
@@ -14072,13 +11949,13 @@
           "description": "Timeout for 'kubectl check api' command."
         },
         "tolerations": {
-          "description": "A list of Kubernetes Tolerations, if required. For more information, see [Toleration v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#toleration-v1-core).\nFor example:\ntolerations:\n- key: foo.bar.com/role\noperator: Equal\nvalue: master\neffect: NoSchedule"
+          "$ref": "#/$defs/schema8"
         },
         "volumeMounts": {
-          "description": "Additional volume mounts to add to the cert-manager controller container."
+          "$ref": "#/$defs/schema46"
         },
         "volumes": {
-          "description": "Additional volumes to add to the cert-manager controller pod."
+          "$ref": "#/$defs/schema51"
         }
       }
     },
@@ -14120,10 +11997,10 @@
       "description": "A list of Kubernetes TopologySpreadConstraints, if required. For more information, see [Topology spread constraint v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#topologyspreadconstraint-v1-core\nFor example:\ntopologySpreadConstraints:\n- maxSkew: 2\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: ScheduleAnyway\nlabelSelector:\nmatchLabels:\napp.kubernetes.io/instance: cert-manager\napp.kubernetes.io/component: controller"
     },
     "volumeMounts": {
-      "description": "Additional volume mounts to add to the cert-manager controller container."
+      "$ref": "#/$defs/schema46"
     },
     "volumes": {
-      "description": "Additional volumes to add to the cert-manager controller pod."
+      "$ref": "#/$defs/schema51"
     },
     "webhook": {
       "additionalProperties": {},
@@ -14303,15 +12180,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema55"
                       },
                       {
                         "properties": {
@@ -14332,10 +12201,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "type": "object"
+                            "$ref": "#/$defs/schema60"
                           },
                           {
                             "not": {
@@ -14360,15 +12226,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema55"
                       },
                       {
                         "properties": {
@@ -14384,13 +12242,7 @@
                     ]
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "automountServiceAccountToken": {
-                        "description": "Automount API credentials for a Service Account.",
-                        "type": "boolean"
-                      }
-                    }
+                    "$ref": "#/$defs/schema27"
                   }
                 }
               ]
@@ -14406,15 +12258,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema55"
                       },
                       {
                         "properties": {
@@ -14435,10 +12279,7 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "type": "object"
+                            "$ref": "#/$defs/schema60"
                           },
                           {
                             "not": {
@@ -14463,15 +12304,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema55"
                       },
                       {
                         "properties": {
@@ -14511,7 +12344,7 @@
       ],
       "properties": {
         "affinity": {
-          "description": "A Kubernetes Affinity, if required. For more information, see [Affinity v1 core](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.27/#affinity-v1-core).\nFor example:\naffinity:\nnodeAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\nnodeSelectorTerms:\n- matchExpressions:\n- key: foo.bar.com/role\noperator: In\nvalues:\n- master"
+          "$ref": "#/$defs/schema7"
         },
         "apiserverClientCertSubjects": {
           "anyOf": [
@@ -14613,28 +12446,7 @@
         "containerSecurityContext": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "properties": {
-                "allowPrivilegeEscalation": {
-                  "type": "boolean"
-                },
-                "capabilities": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "drop": {
-                      "items": {
-                        "type": "string"
-                      },
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                },
-                "readOnlyRootFilesystem": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema10"
             },
             {
               "not": {
@@ -14647,10 +12459,7 @@
         "deploymentAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema60"
             },
             {
               "not": {
@@ -14682,8 +12491,7 @@
           "description": "enableClientVerification turns on client verification of requests\nmade to the webhook server"
         },
         "enableServiceLinks": {
-          "description": "enableServiceLinks indicates whether information about services should be\ninjected into the pod's environment variables, matching the syntax of Docker\nlinks.",
-          "type": "boolean"
+          "$ref": "#/$defs/schema22"
         },
         "extraArgs": {
           "anyOf": [
@@ -14750,8 +12558,7 @@
           "properties": {
             "digest": {},
             "pullPolicy": {
-              "description": "Kubernetes imagePullPolicy on Deployment.",
-              "type": "string"
+              "$ref": "#/$defs/schema54"
             },
             "registry": {},
             "repository": {
@@ -14796,10 +12603,7 @@
         "mutatingWebhookConfigurationAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema60"
             },
             {
               "not": {
@@ -14837,13 +12641,7 @@
         "nodeSelector": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "properties": {
-                "kubernetes.io/os": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema45"
             },
             {
               "not": {
@@ -14856,10 +12654,7 @@
         "podAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema60"
             },
             {
               "not": {
@@ -14902,16 +12697,10 @@
         "podLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema50"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema60"
             },
             {
               "not": {
@@ -14956,22 +12745,7 @@
         "securityContext": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "properties": {
-                "runAsNonRoot": {
-                  "type": "boolean"
-                },
-                "seccompProfile": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "type": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema23"
             },
             {
               "not": {
@@ -14986,7 +12760,7 @@
           "properties": {
             "annotations": {},
             "automountServiceAccountToken": {
-              "description": "Automount API credentials for a Service Account."
+              "$ref": "#/$defs/schema58"
             },
             "create": {
               "anyOf": [
@@ -15020,10 +12794,7 @@
         "serviceAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema60"
             },
             {
               "not": {
@@ -15065,16 +12836,10 @@
         "serviceLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema50"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema60"
             },
             {
               "not": {
@@ -15176,10 +12941,7 @@
                             "type": "string"
                           },
                           "values": {
-                            "items": {
-                              "type": "string"
-                            },
-                            "type": "array"
+                            "$ref": "#/$defs/schema62"
                           }
                         },
                         "type": "object"
@@ -15203,10 +12965,7 @@
         "validatingWebhookConfigurationAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema60"
             },
             {
               "not": {
@@ -15216,10 +12975,10 @@
           ]
         },
         "volumeMounts": {
-          "description": "Additional volume mounts to add to the cert-manager controller container."
+          "$ref": "#/$defs/schema46"
         },
         "volumes": {
-          "description": "Additional volumes to add to the cert-manager controller pod."
+          "$ref": "#/$defs/schema51"
         }
       },
       "type": "object"

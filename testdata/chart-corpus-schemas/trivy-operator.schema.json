@@ -24,6 +24,366 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "trivyOperator": {
+                "properties": {
+                  "vulnerabilityReportsPlugin": {}
+                },
+                "required": [
+                  "vulnerabilityReportsPlugin"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "trivyOperator"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "trivyOperator": {
+              "properties": {
+                "vulnerabilityReportsPlugin": {
+                  "enum": [
+                    "Trivy"
+                  ]
+                }
+              },
+              "required": [
+                "vulnerabilityReportsPlugin"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "trivyOperator"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema10": {
+      "not": {
+        "properties": {
+          "trivy": {
+            "properties": {
+              "storageClassEnabled": {}
+            },
+            "required": [
+              "storageClassEnabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "trivy"
+        ],
+        "type": "object"
+      }
+    },
+    "schema11": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema13": {
+      "not": {
+        "properties": {
+          "global": {
+            "properties": {
+              "image": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      }
+    },
+    "schema15": {
+      "not": {
+        "properties": {
+          "trivy": {
+            "properties": {
+              "createConfig": {}
+            },
+            "required": [
+              "createConfig"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "trivy"
+        ],
+        "type": "object"
+      }
+    },
+    "schema16": {
+      "properties": {
+        "trivy": {
+          "properties": {
+            "mode": {
+              "enum": [
+                "ClientServer"
+              ]
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "trivy"
+      ],
+      "type": "object"
+    },
+    "schema2": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "trivy": {
+                "properties": {
+                  "serverURL": {}
+                },
+                "required": [
+                  "serverURL"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "trivy"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "trivy": {
+              "properties": {
+                "serverURL": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "serverURL"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "trivy"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema24": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema28": {
+      "description": "noProxy is a comma separated list of IPs and domain names that are not subject to proxy settings."
+    },
+    "schema29": {
+      "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
+      "type": "string"
+    },
+    "schema3": {
+      "properties": {
+        "trivy": {
+          "properties": {
+            "image": {
+              "properties": {
+                "repository": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "repository"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "image"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "trivy"
+      ],
+      "type": "object"
+    },
+    "schema34": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema37": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema4": {
+      "properties": {
+        "trivy": {
+          "properties": {
+            "image": {
+              "properties": {
+                "registry": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "registry"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "image"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "trivy"
+      ],
+      "type": "object"
+    },
+    "schema40": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema41": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema6": {
+      "properties": {
+        "trivy": {
+          "properties": {
+            "image": {
+              "properties": {
+                "tag": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "tag"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "image"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "trivy"
+      ],
+      "type": "object"
+    },
+    "schema9": {
+      "properties": {
+        "compliance": {
+          "properties": {
+            "failEntriesLimit": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "failEntriesLimit"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "compliance"
+      ],
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -376,23 +736,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -418,23 +762,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -572,23 +900,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "trivy": {
-                          "properties": {
-                            "createConfig": {}
-                          },
-                          "required": [
-                            "createConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivy"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -612,48 +924,7 @@
                 ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "trivyOperator": {
-                          "properties": {
-                            "vulnerabilityReportsPlugin": {}
-                          },
-                          "required": [
-                            "vulnerabilityReportsPlugin"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivyOperator"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "trivyOperator": {
-                        "properties": {
-                          "vulnerabilityReportsPlugin": {
-                            "enum": [
-                              "Trivy"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "vulnerabilityReportsPlugin"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivyOperator"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema1"
               }
             ]
           }
@@ -809,23 +1080,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "trivy": {
-                          "properties": {
-                            "createConfig": {}
-                          },
-                          "required": [
-                            "createConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivy"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -849,48 +1104,7 @@
                 ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "trivyOperator": {
-                          "properties": {
-                            "vulnerabilityReportsPlugin": {}
-                          },
-                          "required": [
-                            "vulnerabilityReportsPlugin"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivyOperator"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "trivyOperator": {
-                        "properties": {
-                          "vulnerabilityReportsPlugin": {
-                            "enum": [
-                              "Trivy"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "vulnerabilityReportsPlugin"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivyOperator"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema1"
               }
             ]
           },
@@ -916,27 +1130,7 @@
                 "type": "object"
               },
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "image": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema13"
               }
             ]
           },
@@ -945,23 +1139,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "trivy": {
-                          "properties": {
-                            "createConfig": {}
-                          },
-                          "required": [
-                            "createConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivy"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -985,96 +1163,15 @@
                 ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "trivyOperator": {
-                          "properties": {
-                            "vulnerabilityReportsPlugin": {}
-                          },
-                          "required": [
-                            "vulnerabilityReportsPlugin"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivyOperator"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "trivyOperator": {
-                        "properties": {
-                          "vulnerabilityReportsPlugin": {
-                            "enum": [
-                              "Trivy"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "vulnerabilityReportsPlugin"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivyOperator"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema1"
               },
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "image": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema13"
               }
             ]
           },
           {
-            "not": {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "image": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema13"
           }
         ]
       },
@@ -1209,23 +1306,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "trivy": {
-                          "properties": {
-                            "createConfig": {}
-                          },
-                          "required": [
-                            "createConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivy"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -1249,48 +1330,7 @@
                 ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "trivyOperator": {
-                          "properties": {
-                            "vulnerabilityReportsPlugin": {}
-                          },
-                          "required": [
-                            "vulnerabilityReportsPlugin"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivyOperator"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "trivyOperator": {
-                        "properties": {
-                          "vulnerabilityReportsPlugin": {
-                            "enum": [
-                              "Trivy"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "vulnerabilityReportsPlugin"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivyOperator"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema1"
               }
             ]
           },
@@ -1316,27 +1356,7 @@
                 "type": "object"
               },
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "image": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema13"
               }
             ]
           },
@@ -1345,23 +1365,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "trivy": {
-                          "properties": {
-                            "createConfig": {}
-                          },
-                          "required": [
-                            "createConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivy"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -1385,96 +1389,15 @@
                 ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "trivyOperator": {
-                          "properties": {
-                            "vulnerabilityReportsPlugin": {}
-                          },
-                          "required": [
-                            "vulnerabilityReportsPlugin"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivyOperator"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "trivyOperator": {
-                        "properties": {
-                          "vulnerabilityReportsPlugin": {
-                            "enum": [
-                              "Trivy"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "vulnerabilityReportsPlugin"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivyOperator"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema1"
               },
               {
-                "not": {
-                  "properties": {
-                    "global": {
-                      "properties": {
-                        "image": {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema13"
               }
             ]
           },
           {
-            "not": {
-              "properties": {
-                "global": {
-                  "properties": {
-                    "image": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "image"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "global"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema13"
           }
         ]
       },
@@ -1510,23 +1433,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -1552,23 +1459,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -1658,8 +1549,7 @@
         "additionalProperties": {},
         "properties": {
           "managedBy": {
-            "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
-            "type": "string"
+            "$ref": "#/$defs/schema29"
           }
         }
       }
@@ -1699,23 +1589,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -1741,23 +1615,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -1878,23 +1736,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -1918,48 +1760,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -2061,23 +1862,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -2103,23 +1888,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -2506,23 +2275,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -2577,23 +2330,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -2617,48 +2354,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -2669,20 +2365,7 @@
             "additionalProperties": {},
             "properties": {
               "dbRegistry": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema34"
               }
             }
           }
@@ -2695,23 +2378,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -2735,48 +2402,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -2787,20 +2413,7 @@
             "additionalProperties": {},
             "properties": {
               "dbRepository": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema34"
               }
             }
           }
@@ -3092,23 +2705,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "trivy": {
-                          "properties": {
-                            "createConfig": {}
-                          },
-                          "required": [
-                            "createConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivy"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -3132,48 +2729,7 @@
                 ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "trivyOperator": {
-                          "properties": {
-                            "vulnerabilityReportsPlugin": {}
-                          },
-                          "required": [
-                            "vulnerabilityReportsPlugin"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivyOperator"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "trivyOperator": {
-                        "properties": {
-                          "vulnerabilityReportsPlugin": {
-                            "enum": [
-                              "Trivy"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "vulnerabilityReportsPlugin"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivyOperator"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema1"
               }
             ]
           }
@@ -3239,23 +2795,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "trivy": {
-                          "properties": {
-                            "createConfig": {}
-                          },
-                          "required": [
-                            "createConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivy"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -3279,48 +2819,7 @@
                 ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "trivyOperator": {
-                          "properties": {
-                            "vulnerabilityReportsPlugin": {}
-                          },
-                          "required": [
-                            "vulnerabilityReportsPlugin"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivyOperator"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "trivyOperator": {
-                        "properties": {
-                          "vulnerabilityReportsPlugin": {
-                            "enum": [
-                              "Trivy"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "vulnerabilityReportsPlugin"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivyOperator"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema1"
               }
             ]
           }
@@ -3439,23 +2938,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "trivy": {
-                          "properties": {
-                            "createConfig": {}
-                          },
-                          "required": [
-                            "createConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivy"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -3479,48 +2962,7 @@
                 ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "trivyOperator": {
-                          "properties": {
-                            "vulnerabilityReportsPlugin": {}
-                          },
-                          "required": [
-                            "vulnerabilityReportsPlugin"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivyOperator"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "trivyOperator": {
-                        "properties": {
-                          "vulnerabilityReportsPlugin": {
-                            "enum": [
-                              "Trivy"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "vulnerabilityReportsPlugin"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivyOperator"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema1"
               }
             ]
           }
@@ -3550,23 +2992,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -3590,48 +3016,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -3666,23 +3051,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -3706,48 +3075,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -3785,23 +3113,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -3825,48 +3137,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -3877,20 +3148,7 @@
             "additionalProperties": {},
             "properties": {
               "javaDbRepository": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema34"
               }
             }
           }
@@ -3926,10 +3184,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema41"
                   },
                   {
                     "not": {
@@ -3952,23 +3207,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "trivy": {
-                          "properties": {
-                            "createConfig": {}
-                          },
-                          "required": [
-                            "createConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivy"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -3992,48 +3231,7 @@
                 ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "trivyOperator": {
-                          "properties": {
-                            "vulnerabilityReportsPlugin": {}
-                          },
-                          "required": [
-                            "vulnerabilityReportsPlugin"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivyOperator"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "trivyOperator": {
-                        "properties": {
-                          "vulnerabilityReportsPlugin": {
-                            "enum": [
-                              "Trivy"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "vulnerabilityReportsPlugin"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivyOperator"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema1"
               },
               {
                 "not": {
@@ -4109,23 +3307,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -4149,48 +3331,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -4248,10 +3389,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema41"
                   },
                   {
                     "not": {
@@ -4307,23 +3445,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -4347,48 +3469,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -4429,23 +3510,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -4469,48 +3534,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -4539,23 +3563,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -4644,48 +3652,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -4723,23 +3690,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -4828,48 +3779,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -4906,23 +3816,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -4995,48 +3889,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -5245,25 +4098,7 @@
           {
             "anyOf": [
               {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "ClientServer"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -5396,25 +4231,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "ClientServer"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               }
             ]
           }
@@ -5696,25 +4513,7 @@
               {
                 "anyOf": [
                   {
-                    "properties": {
-                      "trivy": {
-                        "properties": {
-                          "mode": {
-                            "enum": [
-                              "ClientServer"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "mode"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivy"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema16"
                   },
                   {
                     "properties": {
@@ -5933,25 +4732,7 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "trivy": {
-                        "properties": {
-                          "mode": {
-                            "enum": [
-                              "ClientServer"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "mode"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivy"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema16"
                   }
                 ]
               }
@@ -6152,23 +4933,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "storageClassEnabled": {}
-                      },
-                      "required": [
-                        "storageClassEnabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema10"
               },
               {
                 "properties": {
@@ -6233,23 +4998,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "storageClassEnabled": {}
-                      },
-                      "required": [
-                        "storageClassEnabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema10"
               },
               {
                 "properties": {
@@ -6365,23 +5114,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -6405,48 +5138,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -6475,23 +5167,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -6515,48 +5191,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -6619,23 +5254,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -6659,48 +5278,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -6747,23 +5325,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "trivy": {
-                          "properties": {
-                            "createConfig": {}
-                          },
-                          "required": [
-                            "createConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivy"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -6787,48 +5349,7 @@
                 ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "trivyOperator": {
-                          "properties": {
-                            "vulnerabilityReportsPlugin": {}
-                          },
-                          "required": [
-                            "vulnerabilityReportsPlugin"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivyOperator"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "trivyOperator": {
-                        "properties": {
-                          "vulnerabilityReportsPlugin": {
-                            "enum": [
-                              "Trivy"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "vulnerabilityReportsPlugin"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivyOperator"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema1"
               }
             ]
           },
@@ -6858,23 +5379,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "trivy": {
-                              "properties": {
-                                "createConfig": {}
-                              },
-                              "required": [
-                                "createConfig"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "trivy"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema15"
                       },
                       {
                         "properties": {
@@ -6898,48 +5403,7 @@
                     ]
                   },
                   {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "trivyOperator": {
-                              "properties": {
-                                "vulnerabilityReportsPlugin": {}
-                              },
-                              "required": [
-                                "vulnerabilityReportsPlugin"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "trivyOperator"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "trivyOperator": {
-                            "properties": {
-                              "vulnerabilityReportsPlugin": {
-                                "enum": [
-                                  "Trivy"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "vulnerabilityReportsPlugin"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "trivyOperator"
-                        ],
-                        "type": "object"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema1"
                   }
                 ]
               }
@@ -7146,46 +5610,10 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "compliance": {
-                    "properties": {
-                      "failEntriesLimit": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "failEntriesLimit"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "compliance"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema9"
               },
               {
-                "properties": {
-                  "compliance": {
-                    "properties": {
-                      "failEntriesLimit": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "failEntriesLimit"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "compliance"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema9"
               }
             ]
           }
@@ -7199,23 +5627,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -7239,69 +5651,10 @@
             ]
           },
           {
-            "properties": {
-              "trivy": {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "ClientServer"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "trivy"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           },
           {
             "not": {
@@ -7348,92 +5701,10 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "trivy": {
-                          "properties": {
-                            "serverURL": {}
-                          },
-                          "required": [
-                            "serverURL"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "trivy": {
-                        "properties": {
-                          "serverURL": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "serverURL"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivy"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema2"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "trivy": {
-                          "properties": {
-                            "serverURL": {}
-                          },
-                          "required": [
-                            "serverURL"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "trivy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "trivy": {
-                        "properties": {
-                          "serverURL": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "serverURL"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivy"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema2"
               }
             ]
           }
@@ -7447,23 +5718,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -7487,48 +5742,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           },
           {
             "anyOf": [
@@ -7562,62 +5776,10 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "registry": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema4"
               },
               {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "registry": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "registry"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema4"
               }
             ]
           }
@@ -7631,23 +5793,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -7671,48 +5817,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           },
           {
             "anyOf": [
@@ -7746,62 +5851,10 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "repository": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "repository"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema3"
               },
               {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "repository": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "repository"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema3"
               }
             ]
           }
@@ -7815,23 +5868,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "trivy": {
-                      "properties": {
-                        "createConfig": {}
-                      },
-                      "required": [
-                        "createConfig"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivy"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -7855,48 +5892,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "trivyOperator": {
-                      "properties": {
-                        "vulnerabilityReportsPlugin": {}
-                      },
-                      "required": [
-                        "vulnerabilityReportsPlugin"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "trivyOperator"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "trivyOperator": {
-                    "properties": {
-                      "vulnerabilityReportsPlugin": {
-                        "enum": [
-                          "Trivy"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "vulnerabilityReportsPlugin"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivyOperator"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema1"
           },
           {
             "anyOf": [
@@ -7930,62 +5926,10 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "tag": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "tag"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema6"
               },
               {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "tag": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "tag"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema6"
               }
             ]
           }
@@ -8234,20 +6178,7 @@
             "additionalProperties": {},
             "properties": {
               "registry": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema34"
               }
             }
           }
@@ -8268,20 +6199,7 @@
             "additionalProperties": {},
             "properties": {
               "repository": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema34"
               }
             }
           }
@@ -8346,8 +6264,7 @@
       "type": "object"
     },
     "managedBy": {
-      "description": "managedBy is similar to .Release.Service but allows to overwrite the value",
-      "type": "string"
+      "$ref": "#/$defs/schema29"
     },
     "nameOverride": {
       "description": "nameOverride override operator name"
@@ -8480,10 +6397,7 @@
               "serverAdditionalAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema41"
                   },
                   {
                     "not": {
@@ -8504,16 +6418,10 @@
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema37"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema41"
             },
             {
               "not": {
@@ -8568,16 +6476,10 @@
         "labels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema37"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema41"
             },
             {
               "not": {
@@ -8634,21 +6536,15 @@
           "description": "namespace to install the operator, defaults to the .Release.Namespace"
         },
         "noProxy": {
-          "description": "noProxy is a comma separated list of IPs and domain names that are not subject to proxy settings."
+          "$ref": "#/$defs/schema28"
         },
         "podLabels": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema37"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema41"
             },
             {
               "not": {
@@ -8754,16 +6650,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema37"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema41"
         },
         {
           "not": {
@@ -8975,16 +6865,10 @@
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema37"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema41"
             },
             {
               "not": {
@@ -9033,13 +6917,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema40"
                 }
               },
               {
@@ -9061,10 +6939,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema41"
                   },
                   {
                     "not": {
@@ -9081,13 +6956,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema40"
                 }
               },
               {
@@ -9175,10 +7044,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema41"
                   },
                   {
                     "not": {
@@ -9231,10 +7097,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema41"
                   },
                   {
                     "not": {
@@ -9570,7 +7433,7 @@
           "description": "mode is the Trivy client mode. Either Standalone or ClientServer. Depending\non the active mode other settings might be applicable or required."
         },
         "noProxy": {
-          "description": "noProxy is a comma separated list of IPs and domain names that are not subject to proxy settings."
+          "$ref": "#/$defs/schema28"
         },
         "nonSslRegistries": {
           "description": "Registries without SSL. There can be multiple registries with different keys.\npocRegistry: poc.myregistry.harbor.com.pl\nqaRegistry: qa.registry.aquasec.com\ninternalRegistry: registry.registry.svc:5000"

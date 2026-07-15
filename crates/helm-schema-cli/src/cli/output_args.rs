@@ -33,11 +33,15 @@ pub struct OutputArgs {
     #[arg(long)]
     pub inline_refs: bool,
 
-    /// Deduplicate repeated schema subtrees into root-level `$defs`.
+    /// Keep repeated schema subtrees inline instead of interning them into
+    /// root-level `$defs`.
     ///
-    /// This is an output-only transform over the final JSON Schema. It does not
-    /// participate in Helm template inference.
-    #[arg(long)]
+    /// Interning is an output-only transform over the final JSON Schema (it
+    /// does not participate in Helm template inference) and is on by default:
+    /// branch-scoped arms repeat large guard fragments, so interning keeps
+    /// big charts far below Helm's 5 MiB chart-file limit and speeds up every
+    /// downstream validator.
+    #[arg(long = "no-minimize", action = clap::ArgAction::SetFalse)]
     pub minimize: bool,
 }
 

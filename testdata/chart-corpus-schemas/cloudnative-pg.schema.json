@@ -24,6 +24,243 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "not": {
+        "properties": {
+          "monitoring": {
+            "properties": {
+              "grafanaDashboard": {
+                "properties": {
+                  "sidecarLabel": {}
+                },
+                "required": [
+                  "sidecarLabel"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "grafanaDashboard"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "monitoring"
+        ],
+        "type": "object"
+      }
+    },
+    "schema11": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema12": {
+      "not": {
+        "properties": {
+          "config": {
+            "properties": {
+              "clusterWide": {}
+            },
+            "required": [
+              "clusterWide"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      }
+    },
+    "schema16": {
+      "not": {
+        "properties": {
+          "config": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      }
+    },
+    "schema17": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema2": {
+      "properties": {
+        "monitoring": {
+          "properties": {
+            "grafanaDashboard": {
+              "properties": {
+                "create": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "create"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "grafanaDashboard"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "monitoring"
+      ],
+      "type": "object"
+    },
+    "schema21": {
+      "not": {
+        "properties": {
+          "sidecarLabel": {}
+        },
+        "required": [
+          "sidecarLabel"
+        ],
+        "type": "object"
+      }
+    },
+    "schema22": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema23": {
+      "properties": {
+        "create": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema25": {
+      "not": {
+        "properties": {
+          "create": {}
+        },
+        "required": [
+          "create"
+        ],
+        "type": "object"
+      }
+    },
+    "schema27": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema4": {
+      "not": {
+        "properties": {
+          "webhook": {
+            "properties": {
+              "validating": {
+                "properties": {
+                  "create": {}
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "validating"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "webhook"
+        ],
+        "type": "object"
+      }
+    },
+    "schema5": {
+      "not": {
+        "properties": {
+          "webhook": {
+            "properties": {
+              "mutating": {
+                "properties": {
+                  "create": {}
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "mutating"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "webhook"
+        ],
+        "type": "object"
+      }
+    },
+    "schema8": {
+      "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
+      "type": "string"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -35,23 +272,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -96,23 +317,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -138,23 +343,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -180,31 +369,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "mutating": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "mutating"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -243,10 +408,7 @@
           "commonAnnotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "not": {
@@ -263,23 +425,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -331,23 +477,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -374,23 +504,7 @@
             "not": {
               "anyOf": [
                 {
-                  "not": {
-                    "properties": {
-                      "config": {
-                        "properties": {
-                          "clusterWide": {}
-                        },
-                        "required": [
-                          "clusterWide"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "config"
-                    ],
-                    "type": "object"
-                  }
+                  "$ref": "#/$defs/schema12"
                 },
                 {
                   "properties": {
@@ -464,23 +578,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -506,23 +604,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -655,31 +737,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "monitoring": {
-                          "properties": {
-                            "grafanaDashboard": {
-                              "properties": {
-                                "sidecarLabel": {}
-                              },
-                              "required": [
-                                "sidecarLabel"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "grafanaDashboard"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "monitoring"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema1"
                   },
                   {
                     "properties": {
@@ -742,31 +800,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "monitoring": {
-                              "properties": {
-                                "grafanaDashboard": {
-                                  "properties": {
-                                    "sidecarLabel": {}
-                                  },
-                                  "required": [
-                                    "sidecarLabel"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "grafanaDashboard"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "monitoring"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema1"
                       },
                       {
                         "properties": {
@@ -862,31 +896,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "monitoring": {
-                              "properties": {
-                                "grafanaDashboard": {
-                                  "properties": {
-                                    "sidecarLabel": {}
-                                  },
-                                  "required": [
-                                    "sidecarLabel"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "grafanaDashboard"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "monitoring"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema1"
                       },
                       {
                         "properties": {
@@ -926,31 +936,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "monitoring": {
-                          "properties": {
-                            "grafanaDashboard": {
-                              "properties": {
-                                "sidecarLabel": {}
-                              },
-                              "required": [
-                                "sidecarLabel"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "grafanaDashboard"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "monitoring"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema1"
                   },
                   {
                     "properties": {
@@ -982,33 +968,7 @@
                 ]
               },
               {
-                "properties": {
-                  "monitoring": {
-                    "properties": {
-                      "grafanaDashboard": {
-                        "properties": {
-                          "create": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "grafanaDashboard"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "monitoring"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema2"
               },
               {
                 "anyOf": [
@@ -1042,31 +1002,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "monitoring": {
-                              "properties": {
-                                "grafanaDashboard": {
-                                  "properties": {
-                                    "sidecarLabel": {}
-                                  },
-                                  "required": [
-                                    "sidecarLabel"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "grafanaDashboard"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "monitoring"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema1"
                       },
                       {
                         "properties": {
@@ -1102,64 +1038,12 @@
             ]
           },
           {
-            "properties": {
-              "monitoring": {
-                "properties": {
-                  "grafanaDashboard": {
-                    "properties": {
-                      "create": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "grafanaDashboard"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "monitoring"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema2"
           },
           {
             "allOf": [
               {
-                "properties": {
-                  "monitoring": {
-                    "properties": {
-                      "grafanaDashboard": {
-                        "properties": {
-                          "create": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "grafanaDashboard"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "monitoring"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema2"
               },
               {
                 "anyOf": [
@@ -1193,31 +1077,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "monitoring": {
-                              "properties": {
-                                "grafanaDashboard": {
-                                  "properties": {
-                                    "sidecarLabel": {}
-                                  },
-                                  "required": [
-                                    "sidecarLabel"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "grafanaDashboard"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "monitoring"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema1"
                       },
                       {
                         "properties": {
@@ -1334,31 +1194,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "monitoring": {
-                          "properties": {
-                            "grafanaDashboard": {
-                              "properties": {
-                                "sidecarLabel": {}
-                              },
-                              "required": [
-                                "sidecarLabel"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "grafanaDashboard"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "monitoring"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema1"
                   },
                   {
                     "properties": {
@@ -1421,31 +1257,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "monitoring": {
-                              "properties": {
-                                "grafanaDashboard": {
-                                  "properties": {
-                                    "sidecarLabel": {}
-                                  },
-                                  "required": [
-                                    "sidecarLabel"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "grafanaDashboard"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "monitoring"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema1"
                       },
                       {
                         "properties": {
@@ -1541,31 +1353,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "monitoring": {
-                              "properties": {
-                                "grafanaDashboard": {
-                                  "properties": {
-                                    "sidecarLabel": {}
-                                  },
-                                  "required": [
-                                    "sidecarLabel"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "grafanaDashboard"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "monitoring"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema1"
                       },
                       {
                         "properties": {
@@ -1605,31 +1393,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "monitoring": {
-                          "properties": {
-                            "grafanaDashboard": {
-                              "properties": {
-                                "sidecarLabel": {}
-                              },
-                              "required": [
-                                "sidecarLabel"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "grafanaDashboard"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "monitoring"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema1"
                   },
                   {
                     "properties": {
@@ -1661,33 +1425,7 @@
                 ]
               },
               {
-                "properties": {
-                  "monitoring": {
-                    "properties": {
-                      "grafanaDashboard": {
-                        "properties": {
-                          "create": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "grafanaDashboard"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "monitoring"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema2"
               },
               {
                 "anyOf": [
@@ -1721,31 +1459,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "monitoring": {
-                              "properties": {
-                                "grafanaDashboard": {
-                                  "properties": {
-                                    "sidecarLabel": {}
-                                  },
-                                  "required": [
-                                    "sidecarLabel"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "grafanaDashboard"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "monitoring"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema1"
                       },
                       {
                         "properties": {
@@ -1781,64 +1495,12 @@
             ]
           },
           {
-            "properties": {
-              "monitoring": {
-                "properties": {
-                  "grafanaDashboard": {
-                    "properties": {
-                      "create": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "grafanaDashboard"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "monitoring"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema2"
           },
           {
             "allOf": [
               {
-                "properties": {
-                  "monitoring": {
-                    "properties": {
-                      "grafanaDashboard": {
-                        "properties": {
-                          "create": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "grafanaDashboard"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "monitoring"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema2"
               },
               {
                 "anyOf": [
@@ -1872,31 +1534,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "monitoring": {
-                              "properties": {
-                                "grafanaDashboard": {
-                                  "properties": {
-                                    "sidecarLabel": {}
-                                  },
-                                  "required": [
-                                    "sidecarLabel"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "grafanaDashboard"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "monitoring"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema1"
                       },
                       {
                         "properties": {
@@ -1976,23 +1614,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -2037,23 +1659,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -2079,23 +1685,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -2121,31 +1711,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "mutating": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "mutating"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -2179,31 +1745,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "validating": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "validating"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema4"
               },
               {
                 "properties": {
@@ -2253,23 +1795,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "config": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "config"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema16"
                   },
                   {
                     "properties": {
@@ -2339,23 +1865,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -2404,23 +1914,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -2447,23 +1941,7 @@
             "not": {
               "anyOf": [
                 {
-                  "not": {
-                    "properties": {
-                      "config": {
-                        "properties": {
-                          "clusterWide": {}
-                        },
-                        "required": [
-                          "clusterWide"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "config"
-                    ],
-                    "type": "object"
-                  }
+                  "$ref": "#/$defs/schema12"
                 },
                 {
                   "properties": {
@@ -2513,23 +1991,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -2555,31 +2017,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "mutating": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "mutating"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -2613,31 +2051,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "validating": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "validating"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema4"
               },
               {
                 "properties": {
@@ -2683,31 +2097,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "webhook": {
-                  "properties": {
-                    "validating": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "validating"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "webhook"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema4"
           },
           {
             "properties": {
@@ -2747,10 +2137,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "not": {
@@ -2770,31 +2157,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "mutating": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "mutating"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -2828,31 +2191,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "validating": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "validating"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema4"
               },
               {
                 "properties": {
@@ -2892,8 +2231,7 @@
             "additionalProperties": {},
             "properties": {
               "name": {
-                "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
-                "type": "string"
+                "$ref": "#/$defs/schema8"
               }
             }
           }
@@ -2906,31 +2244,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "mutating": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "mutating"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -2964,31 +2278,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "webhook": {
-                      "properties": {
-                        "validating": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "validating"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "webhook"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema4"
               },
               {
                 "properties": {
@@ -3039,23 +2329,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -3145,16 +2419,10 @@
     "commonAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema22"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema27"
         },
         {
           "not": {
@@ -3171,15 +2439,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -3475,10 +2735,7 @@
               "podMonitorAdditionalLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "not": {
@@ -3518,17 +2775,7 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "create": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema23"
                   }
                 ]
               },
@@ -3538,10 +2785,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "not": {
@@ -3569,17 +2813,7 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "create": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema23"
                   }
                 ]
               },
@@ -3625,15 +2859,7 @@
                           {
                             "anyOf": [
                               {
-                                "not": {
-                                  "properties": {
-                                    "sidecarLabel": {}
-                                  },
-                                  "required": [
-                                    "sidecarLabel"
-                                  ],
-                                  "type": "object"
-                                }
+                                "$ref": "#/$defs/schema21"
                               },
                               {
                                 "properties": {
@@ -3655,17 +2881,7 @@
                   {
                     "allOf": [
                       {
-                        "properties": {
-                          "create": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
+                        "$ref": "#/$defs/schema23"
                       },
                       {
                         "anyOf": [
@@ -3683,15 +2899,7 @@
                           {
                             "anyOf": [
                               {
-                                "not": {
-                                  "properties": {
-                                    "sidecarLabel": {}
-                                  },
-                                  "required": [
-                                    "sidecarLabel"
-                                  ],
-                                  "type": "object"
-                                }
+                                "$ref": "#/$defs/schema21"
                               },
                               {
                                 "properties": {
@@ -3718,10 +2926,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "not": {
@@ -3749,17 +2954,7 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "create": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema23"
                   }
                 ]
               },
@@ -3913,16 +3108,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema22"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema27"
         },
         {
           "not": {
@@ -3935,16 +3124,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema22"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema27"
         },
         {
           "not": {
@@ -4051,8 +3234,7 @@
           "description": "Set the ip family policy to configure dual-stack see [Configure dual-stack](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services)"
         },
         "name": {
-          "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
-          "type": "string"
+          "$ref": "#/$defs/schema8"
         },
         "port": {
           "type": "integer"
@@ -4070,15 +3252,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -4192,15 +3366,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema25"
                       },
                       {
                         "properties": {
@@ -4237,15 +3403,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema25"
                       },
                       {
                         "properties": {

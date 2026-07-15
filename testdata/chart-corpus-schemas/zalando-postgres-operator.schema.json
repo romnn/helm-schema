@@ -24,6 +24,180 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "additionalProperties": {},
+      "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\""
+    },
+    "schema10": {
+      "additionalProperties": {},
+      "description": "configure connection pooler deployment created by the operator"
+    },
+    "schema11": {
+      "additionalProperties": {},
+      "description": "automate creation of human users with teams API service"
+    },
+    "schema12": {
+      "properties": {
+        "configTarget": {
+          "enum": [
+            "ConfigMap"
+          ]
+        }
+      },
+      "required": [
+        "configTarget"
+      ],
+      "type": "object"
+    },
+    "schema13": {
+      "additionalProperties": {},
+      "description": "parameters affecting logging and REST API listener"
+    },
+    "schema14": {
+      "additionalProperties": {},
+      "description": "options to aid debugging of the operator itself"
+    },
+    "schema15": {
+      "not": {
+        "properties": {
+          "readinessProbe": {}
+        },
+        "required": [
+          "readinessProbe"
+        ],
+        "type": "object"
+      }
+    },
+    "schema16": {
+      "additionalProperties": {
+        "additionalProperties": {}
+      },
+      "items": {
+        "additionalProperties": {}
+      }
+    },
+    "schema18": {
+      "additionalProperties": {},
+      "description": "timeouts related to some operator actions"
+    },
+    "schema2": {
+      "additionalProperties": {},
+      "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\""
+    },
+    "schema21": {
+      "not": {
+        "properties": {
+          "create": {}
+        },
+        "required": [
+          "create"
+        ],
+        "type": "object"
+      }
+    },
+    "schema22": {
+      "properties": {
+        "*": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "*"
+      ],
+      "type": "object"
+    },
+    "schema23": {
+      "properties": {
+        "*": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "*"
+      ],
+      "type": "object"
+    },
+    "schema24": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema25": {
+      "enum": [
+        "OperatorConfigurationCRD"
+      ]
+    },
+    "schema3": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "configTarget": {}
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "configTarget": {
+              "enum": [
+                "OperatorConfigurationCRD"
+              ]
+            }
+          },
+          "required": [
+            "configTarget"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema4": {
+      "additionalProperties": {},
+      "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin"
+    },
+    "schema5": {
+      "additionalProperties": {},
+      "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
+    },
+    "schema6": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema9": {
+      "additionalProperties": {},
+      "properties": {
+        "cpu": {
+          "type": "string"
+        },
+        "memory": {
+          "type": "string"
+        }
+      },
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -33,31 +207,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "not": {
               "properties": {
                 "configAwsOrGcp": {
-                  "properties": {
-                    "*": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema23"
                 }
               },
               "required": [
@@ -70,15 +226,7 @@
             "not": {
               "properties": {
                 "configAwsOrGcp": {
-                  "properties": {
-                    "*": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema22"
                 }
               },
               "required": [
@@ -106,56 +254,20 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configAwsOrGcp": {
-            "additionalProperties": {},
-            "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\""
+            "$ref": "#/$defs/schema2"
           }
         }
       }
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -181,31 +293,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "not": {
               "properties": {
                 "configConnectionPooler": {
-                  "properties": {
-                    "*": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema23"
                 }
               },
               "required": [
@@ -218,15 +312,7 @@
             "not": {
               "properties": {
                 "configConnectionPooler": {
-                  "properties": {
-                    "*": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema22"
                 }
               },
               "required": [
@@ -254,56 +340,20 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configConnectionPooler": {
-            "additionalProperties": {},
-            "description": "configure connection pooler deployment created by the operator"
+            "$ref": "#/$defs/schema10"
           }
         }
       }
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -329,31 +379,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "not": {
               "properties": {
                 "configDebug": {
-                  "properties": {
-                    "*": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema23"
                 }
               },
               "required": [
@@ -366,15 +398,7 @@
             "not": {
               "properties": {
                 "configDebug": {
-                  "properties": {
-                    "*": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema22"
                 }
               },
               "required": [
@@ -402,56 +426,20 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configDebug": {
-            "additionalProperties": {},
-            "description": "options to aid debugging of the operator itself"
+            "$ref": "#/$defs/schema14"
           }
         }
       }
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -477,31 +465,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "not": {
               "properties": {
                 "configGeneral": {
-                  "properties": {
-                    "*": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema23"
                 }
               },
               "required": [
@@ -514,15 +484,7 @@
             "not": {
               "properties": {
                 "configGeneral": {
-                  "properties": {
-                    "*": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema22"
                 }
               },
               "required": [
@@ -550,32 +512,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
@@ -589,17 +526,7 @@
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -625,23 +552,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema6"
           },
           {
             "properties": {
@@ -682,31 +593,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "not": {
               "properties": {
                 "configKubernetes": {
-                  "properties": {
-                    "*": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema23"
                 }
               },
               "required": [
@@ -719,15 +612,7 @@
             "not": {
               "properties": {
                 "configKubernetes": {
-                  "properties": {
-                    "*": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema22"
                 }
               },
               "required": [
@@ -755,56 +640,20 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configKubernetes": {
-            "additionalProperties": {},
-            "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
+            "$ref": "#/$defs/schema5"
           }
         }
       }
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -830,23 +679,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema6"
           },
           {
             "properties": {
@@ -887,31 +720,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "not": {
               "properties": {
                 "configLoadBalancer": {
-                  "properties": {
-                    "*": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema23"
                 }
               },
               "required": [
@@ -924,15 +739,7 @@
             "not": {
               "properties": {
                 "configLoadBalancer": {
-                  "properties": {
-                    "*": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema22"
                 }
               },
               "required": [
@@ -960,32 +767,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
@@ -999,17 +781,7 @@
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -1035,31 +807,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "not": {
               "properties": {
                 "configLoggingRestApi": {
-                  "properties": {
-                    "*": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema23"
                 }
               },
               "required": [
@@ -1072,15 +826,7 @@
             "not": {
               "properties": {
                 "configLoggingRestApi": {
-                  "properties": {
-                    "*": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema22"
                 }
               },
               "required": [
@@ -1110,15 +856,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "readinessProbe": {}
-              },
-              "required": [
-                "readinessProbe"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema15"
           },
           {
             "properties": {
@@ -1158,56 +896,20 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configLoggingRestApi": {
-            "additionalProperties": {},
-            "description": "parameters affecting logging and REST API listener"
+            "$ref": "#/$defs/schema13"
           }
         }
       }
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -1233,15 +935,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "readinessProbe": {}
-              },
-              "required": [
-                "readinessProbe"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema15"
           },
           {
             "properties": {
@@ -1281,31 +975,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "not": {
               "properties": {
                 "configLogicalBackup": {
-                  "properties": {
-                    "*": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema23"
                 }
               },
               "required": [
@@ -1318,15 +994,7 @@
             "not": {
               "properties": {
                 "configLogicalBackup": {
-                  "properties": {
-                    "*": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema22"
                 }
               },
               "required": [
@@ -1354,56 +1022,20 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configLogicalBackup": {
-            "additionalProperties": {},
-            "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\""
+            "$ref": "#/$defs/schema1"
           }
         }
       }
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -1429,31 +1061,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "not": {
               "properties": {
                 "configMajorVersionUpgrade": {
-                  "properties": {
-                    "*": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema23"
                 }
               },
               "required": [
@@ -1466,15 +1080,7 @@
             "not": {
               "properties": {
                 "configMajorVersionUpgrade": {
-                  "properties": {
-                    "*": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema22"
                 }
               },
               "required": [
@@ -1489,44 +1095,14 @@
         "additionalProperties": {},
         "properties": {
           "configMajorVersionUpgrade": {
-            "additionalProperties": {
-              "additionalProperties": {}
-            },
-            "items": {
-              "additionalProperties": {}
-            }
+            "$ref": "#/$defs/schema16"
           }
         }
       }
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
@@ -1539,17 +1115,7 @@
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -1574,31 +1140,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "not": {
               "properties": {
                 "configPatroni": {
-                  "properties": {
-                    "*": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema23"
                 }
               },
               "required": [
@@ -1611,15 +1159,7 @@
             "not": {
               "properties": {
                 "configPatroni": {
-                  "properties": {
-                    "*": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema22"
                 }
               },
               "required": [
@@ -1634,44 +1174,14 @@
         "additionalProperties": {},
         "properties": {
           "configPatroni": {
-            "additionalProperties": {
-              "additionalProperties": {}
-            },
-            "items": {
-              "additionalProperties": {}
-            }
+            "$ref": "#/$defs/schema16"
           }
         }
       }
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
@@ -1684,17 +1194,7 @@
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -1734,31 +1234,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "not": {
               "properties": {
                 "configTeamsApi": {
-                  "properties": {
-                    "*": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema23"
                 }
               },
               "required": [
@@ -1771,15 +1253,7 @@
             "not": {
               "properties": {
                 "configTeamsApi": {
-                  "properties": {
-                    "*": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema22"
                 }
               },
               "required": [
@@ -1807,56 +1281,20 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configTeamsApi": {
-            "additionalProperties": {},
-            "description": "automate creation of human users with teams API service"
+            "$ref": "#/$defs/schema11"
           }
         }
       }
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -1882,31 +1320,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "not": {
               "properties": {
                 "configTimeouts": {
-                  "properties": {
-                    "*": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema23"
                 }
               },
               "required": [
@@ -1919,15 +1339,7 @@
             "not": {
               "properties": {
                 "configTimeouts": {
-                  "properties": {
-                    "*": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema22"
                 }
               },
               "required": [
@@ -1955,56 +1367,20 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configTimeouts": {
-            "additionalProperties": {},
-            "description": "timeouts related to some operator actions"
+            "$ref": "#/$defs/schema18"
           }
         }
       }
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -2030,31 +1406,13 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "not": {
               "properties": {
                 "configUsers": {
-                  "properties": {
-                    "*": {
-                      "type": "array"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema23"
                 }
               },
               "required": [
@@ -2067,15 +1425,7 @@
             "not": {
               "properties": {
                 "configUsers": {
-                  "properties": {
-                    "*": {
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "*"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema22"
                 }
               },
               "required": [
@@ -2103,56 +1453,20 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configUsers": {
-            "additionalProperties": {},
-            "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin"
+            "$ref": "#/$defs/schema4"
           }
         }
       }
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -2176,32 +1490,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
@@ -2228,23 +1517,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -2292,13 +1565,7 @@
                 "not": {
                   "properties": {
                     "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema24"
                     }
                   },
                   "required": [
@@ -2329,17 +1596,7 @@
             ]
           },
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           }
         ]
       },
@@ -2391,32 +1648,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
@@ -2466,32 +1698,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
@@ -2522,17 +1729,7 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "ConfigMap"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema12"
           },
           {
             "anyOf": [
@@ -2542,13 +1739,7 @@
                     "not": {
                       "properties": {
                         "podPriorityClassName": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/schema24"
                         }
                       },
                       "required": [
@@ -2619,32 +1810,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "configTarget": {}
-              },
-              "required": [
-                "configTarget"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "configTarget": {
-                "enum": [
-                  "OperatorConfigurationCRD"
-                ]
-              }
-            },
-            "required": [
-              "configTarget"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
@@ -2675,23 +1841,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema6"
           },
           {
             "properties": {
@@ -2740,17 +1890,7 @@
     },
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -2771,15 +1911,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "readinessProbe": {}
-              },
-              "required": [
-                "readinessProbe"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema15"
           },
           {
             "properties": {
@@ -2819,23 +1951,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema6"
           },
           {
             "properties": {
@@ -2888,36 +2004,30 @@
       "description": "Affinity for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
     },
     "configAwsOrGcp": {
-      "additionalProperties": {},
-      "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\""
+      "$ref": "#/$defs/schema2"
     },
     "configConnectionPooler": {
-      "additionalProperties": {},
-      "description": "configure connection pooler deployment created by the operator"
+      "$ref": "#/$defs/schema10"
     },
     "configDebug": {
-      "additionalProperties": {},
-      "description": "options to aid debugging of the operator itself"
+      "$ref": "#/$defs/schema14"
     },
     "configGeneral": {
       "additionalProperties": {},
       "description": "general configuration parameters"
     },
     "configKubernetes": {
-      "additionalProperties": {},
-      "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
+      "$ref": "#/$defs/schema5"
     },
     "configLoadBalancer": {
       "additionalProperties": {},
       "description": "configure behavior of load balancers"
     },
     "configLoggingRestApi": {
-      "additionalProperties": {},
-      "description": "parameters affecting logging and REST API listener"
+      "$ref": "#/$defs/schema13"
     },
     "configLogicalBackup": {
-      "additionalProperties": {},
-      "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\""
+      "$ref": "#/$defs/schema1"
     },
     "configMajorVersionUpgrade": {
       "additionalProperties": {}
@@ -2936,9 +2046,7 @@
           ]
         },
         {
-          "enum": [
-            "OperatorConfigurationCRD"
-          ]
+          "$ref": "#/$defs/schema25"
         },
         {
           "not": {
@@ -2951,16 +2059,13 @@
       ]
     },
     "configTeamsApi": {
-      "additionalProperties": {},
-      "description": "automate creation of human users with teams API service"
+      "$ref": "#/$defs/schema11"
     },
     "configTimeouts": {
-      "additionalProperties": {},
-      "description": "timeouts related to some operator actions"
+      "$ref": "#/$defs/schema18"
     },
     "configUsers": {
-      "additionalProperties": {},
-      "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin"
+      "$ref": "#/$defs/schema4"
     },
     "controllerID": {
       "additionalProperties": {},
@@ -3099,15 +2204,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -3145,15 +2242,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -3318,28 +2407,10 @@
       "additionalProperties": {},
       "properties": {
         "limits": {
-          "additionalProperties": {},
-          "properties": {
-            "cpu": {
-              "type": "string"
-            },
-            "memory": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema9"
         },
         "requests": {
-          "additionalProperties": {},
-          "properties": {
-            "cpu": {
-              "type": "string"
-            },
-            "memory": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema9"
         }
       },
       "type": "object"
@@ -3369,15 +2440,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {

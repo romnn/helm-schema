@@ -24,6 +24,303 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "description": "We usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 64Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
+    },
+    "schema10": {
+      "additionalProperties": {},
+      "properties": {
+        "sampleLimit": {
+          "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted.",
+          "type": "integer"
+        }
+      }
+    },
+    "schema11": {
+      "additionalProperties": {},
+      "properties": {
+        "targetLimit": {
+          "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted.",
+          "type": "integer"
+        }
+      }
+    },
+    "schema15": {
+      "not": {
+        "properties": {
+          "customResourceState": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "customResourceState"
+        ],
+        "type": "object"
+      }
+    },
+    "schema16": {
+      "properties": {
+        "networkPolicy": {
+          "properties": {
+            "flavor": {
+              "enum": [
+                "cilium"
+              ]
+            }
+          },
+          "required": [
+            "flavor"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "networkPolicy"
+      ],
+      "type": "object"
+    },
+    "schema2": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "flavor": {}
+                },
+                "required": [
+                  "flavor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "networkPolicy": {
+              "properties": {
+                "flavor": {
+                  "enum": [
+                    "kubernetes"
+                  ]
+                }
+              },
+              "required": [
+                "flavor"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "networkPolicy"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema21": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema23": {
+      "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+    },
+    "schema24": {
+      "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+    },
+    "schema28": {
+      "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+    },
+    "schema3": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "kubeRBACProxy": {
+                "properties": {
+                  "enabled": {}
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kubeRBACProxy"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "kubeRBACProxy": {
+              "properties": {
+                "enabled": {
+                  "enum": [
+                    false
+                  ]
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "kubeRBACProxy"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema32": {
+      "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted."
+    },
+    "schema34": {
+      "description": "If false then the user will opt out of automounting API credentials.",
+      "type": "boolean"
+    },
+    "schema35": {
+      "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted."
+    },
+    "schema36": {
+      "additionalProperties": {},
+      "properties": {
+        "httpHeaders": {},
+        "scheme": {}
+      },
+      "type": "object"
+    },
+    "schema39": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema4": {
+      "additionalProperties": {},
+      "properties": {
+        "httpHeaders": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {},
+                  "value": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {},
+                  "value": {}
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema41": {
+      "additionalProperties": {},
+      "properties": {
+        "scheme": {
+          "type": "string"
+        }
+      }
+    },
+    "schema42": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "schema43": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema44": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema6": {
+      "additionalProperties": {},
+      "properties": {
+        "labelValueLengthLimit": {
+          "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer.",
+          "type": "integer"
+        }
+      }
+    },
+    "schema7": {
+      "additionalProperties": {},
+      "properties": {
+        "labelNameLengthLimit": {
+          "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer.",
+          "type": "integer"
+        }
+      }
+    },
+    "schema8": {
+      "additionalProperties": {},
+      "properties": {
+        "labelLimit": {
+          "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer.",
+          "type": "integer"
+        }
+      }
+    },
+    "schema9": {
+      "description": "Secret to mount to read bearer token for scraping targets. The secret needs\nto be in the same namespace as the service monitor and accessible by the\nPrometheus Operator"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -69,23 +366,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "customResourceState": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "customResourceState"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -170,25 +451,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "flavor": {
-                        "enum": [
-                          "cilium"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "flavor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               }
             ]
           },
@@ -214,48 +477,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "flavor": {}
-                          },
-                          "required": [
-                            "flavor"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "flavor": {
-                            "enum": [
-                              "kubernetes"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "flavor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema2"
               }
             ]
           }
@@ -267,10 +489,7 @@
           "annotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "not": {
@@ -292,13 +511,7 @@
                 "not": {
                   "properties": {
                     "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema43"
                     }
                   },
                   "required": [
@@ -378,23 +591,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "customResourceState": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "customResourceState"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -594,23 +791,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "properties": {
@@ -844,38 +1025,7 @@
             "description": "Liveness probe",
             "properties": {
               "httpGet": {
-                "additionalProperties": {},
-                "properties": {
-                  "httpHeaders": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "name": {},
-                            "value": {}
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "name": {},
-                            "value": {}
-                          },
-                          "type": "object"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema4"
               }
             }
           }
@@ -912,12 +1062,7 @@
             "description": "Liveness probe",
             "properties": {
               "httpGet": {
-                "additionalProperties": {},
-                "properties": {
-                  "scheme": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -1032,25 +1177,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "flavor": {
-                        "enum": [
-                          "cilium"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "flavor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               }
             ]
           },
@@ -1076,25 +1203,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "flavor": {
-                        "enum": [
-                          "cilium"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "flavor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               }
             ]
           }
@@ -1212,25 +1321,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "flavor": {
-                        "enum": [
-                          "cilium"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "flavor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               }
             ]
           },
@@ -1256,25 +1347,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "flavor": {
-                        "enum": [
-                          "cilium"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "flavor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               }
             ]
           }
@@ -2225,38 +2298,7 @@
             "description": "Readiness probe",
             "properties": {
               "httpGet": {
-                "additionalProperties": {},
-                "properties": {
-                  "httpHeaders": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "name": {},
-                            "value": {}
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "name": {},
-                            "value": {}
-                          },
-                          "type": "object"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema4"
               }
             }
           }
@@ -2293,12 +2335,7 @@
             "description": "Readiness probe",
             "properties": {
               "httpGet": {
-                "additionalProperties": {},
-                "properties": {
-                  "scheme": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -2321,13 +2358,7 @@
             "not": {
               "properties": {
                 "securityContext": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema42"
                 }
               },
               "required": [
@@ -2514,25 +2545,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "flavor": {
-                        "enum": [
-                          "cilium"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "flavor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               }
             ]
           },
@@ -2577,48 +2590,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "flavor": {}
-                          },
-                          "required": [
-                            "flavor"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "flavor": {
-                            "enum": [
-                              "kubernetes"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "flavor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema2"
               },
               {
                 "not": {
@@ -2644,48 +2616,7 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kubeRBACProxy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "kubeRBACProxy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kubeRBACProxy": {
-                    "properties": {
-                      "enabled": {
-                        "enum": [
-                          false
-                        ]
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "kubeRBACProxy"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -2838,48 +2769,7 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kubeRBACProxy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "kubeRBACProxy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kubeRBACProxy": {
-                    "properties": {
-                      "enabled": {
-                        "enum": [
-                          false
-                        ]
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "kubeRBACProxy"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -2984,25 +2874,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "flavor": {
-                        "enum": [
-                          "cilium"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "flavor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               }
             ]
           }
@@ -3057,23 +2929,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -3221,38 +3077,7 @@
             "description": "Startup probe can optionally be enabled.",
             "properties": {
               "httpGet": {
-                "additionalProperties": {},
-                "properties": {
-                  "httpHeaders": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "name": {},
-                            "value": {}
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "name": {},
-                            "value": {}
-                          },
-                          "type": "object"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema4"
               }
             }
           }
@@ -3312,12 +3137,7 @@
             "description": "Startup probe can optionally be enabled.",
             "properties": {
               "httpGet": {
-                "additionalProperties": {},
-                "properties": {
-                  "scheme": {
-                    "type": "string"
-                  }
-                }
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -3647,16 +3467,10 @@
     "annotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema39"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema44"
         },
         {
           "not": {
@@ -3677,8 +3491,7 @@
       "type": "object"
     },
     "automountServiceAccountToken": {
-      "description": "If false then the user will opt out of automounting API credentials.",
-      "type": "boolean"
+      "$ref": "#/$defs/schema34"
     },
     "autosharding": {
       "additionalProperties": {},
@@ -4096,7 +3909,7 @@
           "description": "Configure specific proxy endpoints port\nThis port is for healthz on readinessProbe kube-rbac-proxy-http container"
         },
         "resources": {
-          "description": "We usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 64Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
+          "$ref": "#/$defs/schema1"
         },
         "volumeMounts": {
           "description": "volumeMounts enables mounting custom volumes in rbac-proxy containers\nUseful for TLS certificates and keys\n- mountPath: /etc/tls\nname: kube-rbac-proxy-tls\nreadOnly: true"
@@ -4158,16 +3971,10 @@
     "labels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema39"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema44"
         },
         {
           "not": {
@@ -4210,12 +4017,7 @@
           "type": "integer"
         },
         "httpGet": {
-          "additionalProperties": {},
-          "properties": {
-            "httpHeaders": {},
-            "scheme": {}
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema36"
         },
         "initialDelaySeconds": {
           "type": "integer"
@@ -4325,16 +4127,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema39"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema44"
         },
         {
           "not": {
@@ -4350,16 +4146,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema39"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema44"
         },
         {
           "not": {
@@ -4876,13 +4666,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "labelLimit": {
-                        "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer.",
-                        "type": "integer"
-                      }
-                    }
+                    "$ref": "#/$defs/schema8"
                   }
                 }
               ]
@@ -4907,13 +4691,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "labelNameLengthLimit": {
-                        "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer.",
-                        "type": "integer"
-                      }
-                    }
+                    "$ref": "#/$defs/schema7"
                   }
                 }
               ]
@@ -4938,13 +4716,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "labelValueLengthLimit": {
-                        "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer.",
-                        "type": "integer"
-                      }
-                    }
+                    "$ref": "#/$defs/schema6"
                   }
                 }
               ]
@@ -4969,13 +4741,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "sampleLimit": {
-                        "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted.",
-                        "type": "integer"
-                      }
-                    }
+                    "$ref": "#/$defs/schema10"
                   }
                 }
               ]
@@ -5000,13 +4766,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "targetLimit": {
-                        "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted.",
-                        "type": "integer"
-                      }
-                    }
+                    "$ref": "#/$defs/schema11"
                   }
                 }
               ]
@@ -5094,13 +4854,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "labelLimit": {
-                        "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer.",
-                        "type": "integer"
-                      }
-                    }
+                    "$ref": "#/$defs/schema8"
                   }
                 }
               ],
@@ -5126,13 +4880,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "labelNameLengthLimit": {
-                        "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer.",
-                        "type": "integer"
-                      }
-                    }
+                    "$ref": "#/$defs/schema7"
                   }
                 }
               ],
@@ -5158,13 +4906,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "labelValueLengthLimit": {
-                        "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer.",
-                        "type": "integer"
-                      }
-                    }
+                    "$ref": "#/$defs/schema6"
                   }
                 }
               ],
@@ -5221,13 +4963,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "sampleLimit": {
-                        "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted.",
-                        "type": "integer"
-                      }
-                    }
+                    "$ref": "#/$defs/schema10"
                   }
                 }
               ],
@@ -5253,12 +4989,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "scheme": {
-                        "type": "string"
-                      }
-                    }
+                    "$ref": "#/$defs/schema41"
                   }
                 }
               ],
@@ -5346,13 +5077,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "targetLimit": {
-                        "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted.",
-                        "type": "integer"
-                      }
-                    }
+                    "$ref": "#/$defs/schema11"
                   }
                 }
               ],
@@ -5391,7 +5116,7 @@
                   "description": "File to read bearer token for scraping targets"
                 },
                 "bearerTokenSecret": {
-                  "description": "Secret to mount to read bearer token for scraping targets. The secret needs\nto be in the same namespace as the service monitor and accessible by the\nPrometheus Operator"
+                  "$ref": "#/$defs/schema9"
                 },
                 "enableHttp2": {
                   "description": "Whether to enable HTTP2 for servicemonitor"
@@ -5414,13 +5139,13 @@
             "interval": {},
             "jobLabel": {},
             "labelLimit": {
-              "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+              "$ref": "#/$defs/schema28"
             },
             "labelNameLengthLimit": {
-              "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+              "$ref": "#/$defs/schema24"
             },
             "labelValueLengthLimit": {
-              "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+              "$ref": "#/$defs/schema23"
             },
             "metricRelabelings": {},
             "metrics": {
@@ -5431,7 +5156,7 @@
                   "description": "File to read bearer token for scraping targets"
                 },
                 "bearerTokenSecret": {
-                  "description": "Secret to mount to read bearer token for scraping targets. The secret needs\nto be in the same namespace as the service monitor and accessible by the\nPrometheus Operator"
+                  "$ref": "#/$defs/schema9"
                 },
                 "enableHttp2": {
                   "description": "Whether to enable HTTP2 for servicemonitor"
@@ -5459,14 +5184,14 @@
             "proxyUrl": {},
             "relabelings": {},
             "sampleLimit": {
-              "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted."
+              "$ref": "#/$defs/schema32"
             },
             "scheme": {},
             "scrapeTimeout": {},
             "selectorOverride": {},
             "targetLabels": {},
             "targetLimit": {
-              "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted."
+              "$ref": "#/$defs/schema35"
             },
             "tlsConfig": {}
           },
@@ -5499,19 +5224,19 @@
             },
             "jobName": {},
             "labelLimit": {
-              "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+              "$ref": "#/$defs/schema28"
             },
             "labelNameLengthLimit": {
-              "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+              "$ref": "#/$defs/schema24"
             },
             "labelValueLengthLimit": {
-              "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+              "$ref": "#/$defs/schema23"
             },
             "metricRelabelings": {},
             "proxyUrl": {},
             "relabelings": {},
             "sampleLimit": {
-              "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted."
+              "$ref": "#/$defs/schema32"
             },
             "scheme": {},
             "scrapeInterval": {},
@@ -5520,7 +5245,7 @@
               "description": "StaticConfigLabels defines the labels to be used in the Prometheus static configuration for scraping."
             },
             "targetLimit": {
-              "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted."
+              "$ref": "#/$defs/schema35"
             },
             "tlsConfig": {}
           },
@@ -5632,12 +5357,7 @@
           "type": "integer"
         },
         "httpGet": {
-          "additionalProperties": {},
-          "properties": {
-            "httpHeaders": {},
-            "scheme": {}
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema36"
         },
         "initialDelaySeconds": {
           "type": "integer"
@@ -5675,7 +5395,7 @@
       "type": "integer"
     },
     "resources": {
-      "description": "We usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 64Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
+      "$ref": "#/$defs/schema1"
     },
     "revisionHistoryLimit": {
       "description": "Number of old history to retain to allow rollback\nDefault Kubernetes value is set to 10",
@@ -5702,16 +5422,10 @@
     "selectorOverride": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema39"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema44"
         },
         {
           "not": {
@@ -5879,16 +5593,10 @@
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema39"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema44"
             },
             {
               "not": {
@@ -5971,13 +5679,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema43"
                 }
               },
               {
@@ -5999,10 +5701,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema44"
                   },
                   {
                     "not": {
@@ -6020,13 +5719,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema43"
                 }
               },
               {
@@ -6046,8 +5739,7 @@
             "additionalProperties": {},
             "properties": {
               "automountServiceAccountToken": {
-                "description": "If false then the user will opt out of automounting API credentials.",
-                "type": "boolean"
+                "$ref": "#/$defs/schema34"
               }
             }
           }

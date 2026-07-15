@@ -24,6 +24,276 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "not": {
+        "properties": {
+          "webhookConfig": {
+            "properties": {
+              "ingressValidationNamespaceSelector": {}
+            },
+            "required": [
+              "ingressValidationNamespaceSelector"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "webhookConfig"
+        ],
+        "type": "object"
+      }
+    },
+    "schema10": {
+      "additionalProperties": {},
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "scheme": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "schema11": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema12": {
+      "additionalProperties": {
+        "type": [
+          "boolean",
+          "integer",
+          "number",
+          "string"
+        ]
+      },
+      "items": {
+        "type": [
+          "boolean",
+          "integer",
+          "number",
+          "string"
+        ]
+      }
+    },
+    "schema15": {
+      "not": {
+        "properties": {
+          "enableServiceMutatorWebhook": {}
+        },
+        "required": [
+          "enableServiceMutatorWebhook"
+        ],
+        "type": "object"
+      }
+    },
+    "schema17": {
+      "not": {
+        "properties": {
+          "createIngressClassResource": {}
+        },
+        "required": [
+          "createIngressClassResource"
+        ],
+        "type": "object"
+      }
+    },
+    "schema2": {
+      "not": {
+        "properties": {
+          "webhookConfig": {
+            "properties": {
+              "ingressValidationObjectSelector": {}
+            },
+            "required": [
+              "ingressValidationObjectSelector"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "webhookConfig"
+        ],
+        "type": "object"
+      }
+    },
+    "schema20": {
+      "additionalProperties": {},
+      "properties": {
+        "matchExpressions": {},
+        "matchLabels": {}
+      },
+      "type": "object"
+    },
+    "schema22": {
+      "properties": {
+        "maxReplicas": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "maxReplicas"
+      ],
+      "type": "object"
+    },
+    "schema23": {
+      "not": {
+        "properties": {
+          "certManager": {}
+        },
+        "required": [
+          "certManager"
+        ],
+        "type": "object"
+      }
+    },
+    "schema25": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema26": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema27": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema28": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema29": {
+      "if": {
+        "type": "boolean"
+      },
+      "then": {
+        "type": "boolean"
+      }
+    },
+    "schema30": {
+      "type": [
+        "boolean",
+        "integer",
+        "number",
+        "string"
+      ]
+    },
+    "schema31": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema5": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "clusterName": {}
+            },
+            "required": [
+              "clusterName"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "clusterName": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "clusterName"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema6": {
+      "not": {
+        "properties": {
+          "ingressClassParams": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "ingressClassParams"
+        ],
+        "type": "object"
+      }
+    },
+    "schema7": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -54,15 +324,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "createIngressClassResource": {}
-                  },
-                  "required": [
-                    "createIngressClassResource"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -116,23 +378,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -158,23 +404,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema7"
               },
               {
                 "properties": {
@@ -224,10 +454,7 @@
           "additionalLabels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema28"
               },
               {
                 "not": {
@@ -264,10 +491,7 @@
         "additionalProperties": {},
         "properties": {
           "annotations": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
+            "$ref": "#/$defs/schema28"
           }
         }
       }
@@ -289,15 +513,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "certManager": {}
-                  },
-                  "required": [
-                    "certManager"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -363,15 +579,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "certManager": {}
-                  },
-                  "required": [
-                    "certManager"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema23"
               },
               {
                 "properties": {
@@ -739,14 +947,7 @@
         "additionalProperties": {},
         "properties": {
           "creator": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/$defs/schema31"
           }
         }
       }
@@ -846,21 +1047,11 @@
         "properties": {
           "env": {
             "additionalProperties": {
-              "type": [
-                "boolean",
-                "integer",
-                "number",
-                "string"
-              ]
+              "$ref": "#/$defs/schema30"
             },
             "description": "Environment variables to set for aws-load-balancer-controller pod.\nWe strongly discourage programming access credentials in the controller environment. You should setup IRSA or\ncomparable solutions like kube2iam, kiam etc instead.\nENV_1: \"\"\nENV_2: \"\"",
             "items": {
-              "type": [
-                "boolean",
-                "integer",
-                "number",
-                "string"
-              ]
+              "$ref": "#/$defs/schema30"
             }
           }
         }
@@ -953,23 +1144,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -995,23 +1170,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema7"
               },
               {
                 "properties": {
@@ -1089,14 +1248,7 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/$defs/schema31"
           }
         }
       }
@@ -1105,15 +1257,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "createIngressClassResource": {}
-              },
-              "required": [
-                "createIngressClassResource"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema17"
           },
           {
             "properties": {
@@ -1144,15 +1288,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "createIngressClassResource": {}
-                  },
-                  "required": [
-                    "createIngressClassResource"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -1170,23 +1306,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "ingressClassParams": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "ingressClassParams"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1298,15 +1418,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "createIngressClassResource": {}
-                      },
-                      "required": [
-                        "createIngressClassResource"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema17"
                   },
                   {
                     "properties": {
@@ -1324,23 +1436,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "ingressClassParams": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "ingressClassParams"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema6"
                   },
                   {
                     "properties": {
@@ -1412,14 +1508,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/$defs/schema31"
           }
         }
       }
@@ -1492,15 +1581,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "createIngressClassResource": {}
-                  },
-                  "required": [
-                    "createIngressClassResource"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema17"
               },
               {
                 "properties": {
@@ -1518,23 +1599,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -1560,23 +1625,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema7"
               },
               {
                 "properties": {
@@ -1693,23 +1742,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema11"
           },
           {
             "properties": {
@@ -1760,15 +1793,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "enableServiceMutatorWebhook": {}
-              },
-              "required": [
-                "enableServiceMutatorWebhook"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema15"
           },
           {
             "properties": {
@@ -1805,15 +1830,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enableServiceMutatorWebhook": {}
-                  },
-                  "required": [
-                    "enableServiceMutatorWebhook"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -1833,15 +1850,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enableServiceMutatorWebhook": {}
-                      },
-                      "required": [
-                        "enableServiceMutatorWebhook"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -1890,15 +1899,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enableServiceMutatorWebhook": {}
-                      },
-                      "required": [
-                        "enableServiceMutatorWebhook"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -1970,15 +1971,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "enableServiceMutatorWebhook": {}
-                  },
-                  "required": [
-                    "enableServiceMutatorWebhook"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -1998,15 +1991,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enableServiceMutatorWebhook": {}
-                      },
-                      "required": [
-                        "enableServiceMutatorWebhook"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -2055,15 +2040,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "enableServiceMutatorWebhook": {}
-                      },
-                      "required": [
-                        "enableServiceMutatorWebhook"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -2188,23 +2165,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "webhookConfig": {
-                          "properties": {
-                            "ingressValidationNamespaceSelector": {}
-                          },
-                          "required": [
-                            "ingressValidationNamespaceSelector"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "webhookConfig"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema1"
                   },
                   {
                     "properties": {
@@ -2289,23 +2250,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "webhookConfig": {
-                          "properties": {
-                            "ingressValidationNamespaceSelector": {}
-                          },
-                          "required": [
-                            "ingressValidationNamespaceSelector"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "webhookConfig"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema1"
                   },
                   {
                     "properties": {
@@ -2390,23 +2335,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "webhookConfig": {
-                          "properties": {
-                            "ingressValidationNamespaceSelector": {}
-                          },
-                          "required": [
-                            "ingressValidationNamespaceSelector"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "webhookConfig"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema1"
                   },
                   {
                     "properties": {
@@ -2488,23 +2417,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "webhookConfig": {
-                          "properties": {
-                            "ingressValidationObjectSelector": {}
-                          },
-                          "required": [
-                            "ingressValidationObjectSelector"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "webhookConfig"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema2"
                   },
                   {
                     "properties": {
@@ -2589,23 +2502,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "webhookConfig": {
-                          "properties": {
-                            "ingressValidationObjectSelector": {}
-                          },
-                          "required": [
-                            "ingressValidationObjectSelector"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "webhookConfig"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema2"
                   },
                   {
                     "properties": {
@@ -2690,23 +2587,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "webhookConfig": {
-                          "properties": {
-                            "ingressValidationObjectSelector": {}
-                          },
-                          "required": [
-                            "ingressValidationObjectSelector"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "webhookConfig"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema2"
                   },
                   {
                     "properties": {
@@ -2790,23 +2671,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "webhookConfig": {
-                              "properties": {
-                                "ingressValidationNamespaceSelector": {}
-                              },
-                              "required": [
-                                "ingressValidationNamespaceSelector"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "webhookConfig"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema1"
                       },
                       {
                         "properties": {
@@ -2891,23 +2756,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "webhookConfig": {
-                              "properties": {
-                                "ingressValidationNamespaceSelector": {}
-                              },
-                              "required": [
-                                "ingressValidationNamespaceSelector"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "webhookConfig"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema1"
                       },
                       {
                         "properties": {
@@ -2992,23 +2841,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "webhookConfig": {
-                              "properties": {
-                                "ingressValidationNamespaceSelector": {}
-                              },
-                              "required": [
-                                "ingressValidationNamespaceSelector"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "webhookConfig"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema1"
                       },
                       {
                         "properties": {
@@ -3070,23 +2903,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "webhookConfig": {
-                              "properties": {
-                                "ingressValidationObjectSelector": {}
-                              },
-                              "required": [
-                                "ingressValidationObjectSelector"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "webhookConfig"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema2"
                       },
                       {
                         "properties": {
@@ -3171,23 +2988,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "webhookConfig": {
-                              "properties": {
-                                "ingressValidationObjectSelector": {}
-                              },
-                              "required": [
-                                "ingressValidationObjectSelector"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "webhookConfig"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema2"
                       },
                       {
                         "properties": {
@@ -3272,23 +3073,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "webhookConfig": {
-                              "properties": {
-                                "ingressValidationObjectSelector": {}
-                              },
-                              "required": [
-                                "ingressValidationObjectSelector"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "webhookConfig"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema2"
                       },
                       {
                         "properties": {
@@ -3424,14 +3209,7 @@
             "description": "webhookTLS specifies TLS cert/key for the webhook",
             "properties": {
               "caCert": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema31"
               }
             }
           }
@@ -3508,14 +3286,7 @@
             "description": "webhookTLS specifies TLS cert/key for the webhook",
             "properties": {
               "cert": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema31"
               }
             }
           }
@@ -3592,14 +3363,7 @@
             "description": "webhookTLS specifies TLS cert/key for the webhook",
             "properties": {
               "key": {
-                "anyOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema31"
               }
             }
           }
@@ -3623,60 +3387,10 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "clusterName": {}
-                  },
-                  "required": [
-                    "clusterName"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "clusterName": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "clusterName"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema5"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "clusterName": {}
-                  },
-                  "required": [
-                    "clusterName"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "clusterName": {
-                    "enum": [
-                      null
-                    ]
-                  }
-                },
-                "required": [
-                  "clusterName"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema5"
           }
         ]
       },
@@ -3687,16 +3401,10 @@
     "additionalLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema25"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema28"
         },
         {
           "not": {
@@ -3831,30 +3539,10 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "maxReplicas": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "maxReplicas"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
-                    "properties": {
-                      "maxReplicas": {
-                        "enum": [
-                          null
-                        ]
-                      }
-                    },
-                    "required": [
-                      "maxReplicas"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema22"
                   }
                 ]
               }
@@ -4115,22 +3803,7 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "additionalProperties": {
-                      "type": [
-                        "boolean",
-                        "integer",
-                        "number",
-                        "string"
-                      ]
-                    },
-                    "items": {
-                      "type": [
-                        "boolean",
-                        "integer",
-                        "number",
-                        "string"
-                      ]
-                    }
+                    "$ref": "#/$defs/schema12"
                   }
                 }
               ],
@@ -4148,17 +3821,7 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema27"
                   }
                 }
               ],
@@ -4251,22 +3914,7 @@
             "$ref": "#/$defs/helm-truthy"
           },
           "then": {
-            "additionalProperties": {
-              "type": [
-                "boolean",
-                "integer",
-                "number",
-                "string"
-              ]
-            },
-            "items": {
-              "type": [
-                "boolean",
-                "integer",
-                "number",
-                "string"
-              ]
-            }
+            "$ref": "#/$defs/schema12"
           }
         },
         {
@@ -4274,17 +3922,7 @@
             "$ref": "#/$defs/helm-truthy"
           },
           "then": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/$defs/schema27"
           }
         }
       ],
@@ -4297,16 +3935,10 @@
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema25"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema28"
         },
         {
           "not": {
@@ -4319,12 +3951,7 @@
     "disableIngressClassAnnotation": {
       "allOf": [
         {
-          "if": {
-            "type": "boolean"
-          },
-          "then": {
-            "type": "boolean"
-          }
+          "$ref": "#/$defs/schema29"
         }
       ],
       "description": "disableIngressClassAnnotation disables the usage of kubernetes.io/ingress.class annotation, false by default"
@@ -4332,12 +3959,7 @@
     "disableIngressGroupNameAnnotation": {
       "allOf": [
         {
-          "if": {
-            "type": "boolean"
-          },
-          "then": {
-            "type": "boolean"
-          }
+          "$ref": "#/$defs/schema29"
         }
       ],
       "description": "disableIngressGroupNameAnnotation disables the usage of alb.ingress.kubernetes.io/group.name annotation, false by default"
@@ -4345,12 +3967,7 @@
     "disableRestrictedSecurityGroupRules": {
       "allOf": [
         {
-          "if": {
-            "type": "boolean"
-          },
-          "then": {
-            "type": "boolean"
-          }
+          "$ref": "#/$defs/schema29"
         }
       ],
       "description": "disableRestrictedSecurityGroupRules specifies whether to disable creating port-range restricted security group rules for traffic"
@@ -4361,12 +3978,7 @@
     "enableBackendSecurityGroup": {
       "allOf": [
         {
-          "if": {
-            "type": "boolean"
-          },
-          "then": {
-            "type": "boolean"
-          }
+          "$ref": "#/$defs/schema29"
         }
       ],
       "description": "enableBackendSecurityGroup enables shared security group for backend traffic (default true)"
@@ -4387,12 +3999,7 @@
     "enableEndpointSlices": {
       "allOf": [
         {
-          "if": {
-            "type": "boolean"
-          },
-          "then": {
-            "type": "boolean"
-          }
+          "$ref": "#/$defs/schema29"
         }
       ],
       "description": "enableEndpointSlices enables k8s EndpointSlices for IP targets instead of Endpoints (default true)"
@@ -4400,12 +4007,7 @@
     "enableManageBackendSecurityGroupRules": {
       "allOf": [
         {
-          "if": {
-            "type": "boolean"
-          },
-          "then": {
-            "type": "boolean"
-          }
+          "$ref": "#/$defs/schema29"
         }
       ],
       "description": "enableManageBackendSecurityGroupRules enables controller manages security group rules (default false)"
@@ -4413,12 +4015,7 @@
     "enablePodReadinessGateInject": {
       "allOf": [
         {
-          "if": {
-            "type": "boolean"
-          },
-          "then": {
-            "type": "boolean"
-          }
+          "$ref": "#/$defs/schema29"
         }
       ],
       "description": "If enabled, targetHealth readiness gate will get injected to the pod spec for the matching endpoint pods (default true)"
@@ -4439,12 +4036,7 @@
     "enableShield": {
       "allOf": [
         {
-          "if": {
-            "type": "boolean"
-          },
-          "then": {
-            "type": "boolean"
-          }
+          "$ref": "#/$defs/schema29"
         }
       ],
       "description": "Enable Shield addon for ALB (default true)"
@@ -4452,12 +4044,7 @@
     "enableWaf": {
       "allOf": [
         {
-          "if": {
-            "type": "boolean"
-          },
-          "then": {
-            "type": "boolean"
-          }
+          "$ref": "#/$defs/schema29"
         }
       ],
       "description": "Enable WAF addon for ALB (default true)"
@@ -4465,12 +4052,7 @@
     "enableWafv2": {
       "allOf": [
         {
-          "if": {
-            "type": "boolean"
-          },
-          "then": {
-            "type": "boolean"
-          }
+          "$ref": "#/$defs/schema29"
         }
       ],
       "description": "Enable WAF V2 addon for ALB (default true)"
@@ -4571,20 +4153,10 @@
           "type": "string"
         },
         "repository": {
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "$ref": "#/$defs/schema30"
         },
         "tag": {
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "$ref": "#/$defs/schema30"
         }
       },
       "type": "object"
@@ -4712,19 +4284,7 @@
               "type": "integer"
             },
             "httpGet": {
-              "additionalProperties": {},
-              "properties": {
-                "path": {
-                  "type": "string"
-                },
-                "port": {
-                  "type": "integer"
-                },
-                "scheme": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema10"
             },
             "initialDelaySeconds": {
               "type": "integer"
@@ -4892,16 +4452,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema25"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema28"
         },
         {
           "not": {
@@ -4918,16 +4472,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema25"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema28"
         },
         {
           "not": {
@@ -4987,19 +4535,7 @@
               "type": "integer"
             },
             "httpGet": {
-              "additionalProperties": {},
-              "properties": {
-                "path": {
-                  "type": "string"
-                },
-                "port": {
-                  "type": "integer"
-                },
-                "scheme": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema10"
             },
             "initialDelaySeconds": {
               "type": "integer"
@@ -5080,13 +4616,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema26"
                 }
               },
               {
@@ -5117,13 +4647,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema26"
                 }
               },
               {
@@ -5204,16 +4728,10 @@
     "serviceAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema25"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema28"
         },
         {
           "not": {
@@ -5269,10 +4787,7 @@
               "additionalLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema28"
                   },
                   {
                     "not": {
@@ -5542,12 +5057,7 @@
     "tolerateNonExistentBackendAction": {
       "allOf": [
         {
-          "if": {
-            "type": "boolean"
-          },
-          "then": {
-            "type": "boolean"
-          }
+          "$ref": "#/$defs/schema29"
         }
       ],
       "description": "tolerateNonExistentBackendAction permits rules which specify backend actions that don't exist, true by default (When enabled, it will return 503 error if backend action not exist)"
@@ -5555,12 +5065,7 @@
     "tolerateNonExistentBackendService": {
       "allOf": [
         {
-          "if": {
-            "type": "boolean"
-          },
-          "then": {
-            "type": "boolean"
-          }
+          "$ref": "#/$defs/schema29"
         }
       ],
       "description": "tolerateNonExistentBackendService permits rules which specify backend services that don't exist, true by default (When enabled, it will return 503 error if backend service not exist)"
@@ -5624,22 +5129,7 @@
             "$ref": "#/$defs/helm-truthy"
           },
           "then": {
-            "additionalProperties": {
-              "type": [
-                "boolean",
-                "integer",
-                "number",
-                "string"
-              ]
-            },
-            "items": {
-              "type": [
-                "boolean",
-                "integer",
-                "number",
-                "string"
-              ]
-            }
+            "$ref": "#/$defs/schema12"
           }
         },
         {
@@ -5647,17 +5137,7 @@
             "$ref": "#/$defs/helm-truthy"
           },
           "then": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/$defs/schema27"
           }
         }
       ],
@@ -5742,12 +5222,7 @@
         "ingressValidationNamespaceSelector": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "properties": {
-                "matchExpressions": {},
-                "matchLabels": {}
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema20"
             },
             {
               "not": {
@@ -5760,12 +5235,7 @@
         "ingressValidationObjectSelector": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "properties": {
-                "matchExpressions": {},
-                "matchLabels": {}
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema20"
             },
             {
               "not": {

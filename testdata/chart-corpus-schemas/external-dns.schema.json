@@ -24,6 +24,447 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "additionalProperties": {},
+      "properties": {
+        "preferredDuringSchedulingIgnoredDuringExecution": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": {},
+                "properties": {
+                  "podAffinityTerm": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "labelSelector": {}
+                    }
+                  },
+                  "weight": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "additionalProperties": {},
+                "properties": {
+                  "podAffinityTerm": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "labelSelector": {}
+                    }
+                  },
+                  "weight": {}
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "maximum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema11": {
+      "additionalProperties": {},
+      "properties": {
+        "preferredDuringSchedulingIgnoredDuringExecution": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema12": {
+      "additionalProperties": {},
+      "properties": {
+        "requiredDuringSchedulingIgnoredDuringExecution": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema13": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema15": {
+      "properties": {
+        "provider": {
+          "properties": {
+            "name": {
+              "enum": [
+                "webhook"
+              ]
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "provider"
+      ],
+      "type": "object"
+    },
+    "schema18": {
+      "not": {
+        "properties": {
+          "provider": {
+            "properties": {
+              "webhook": {}
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "type": "object"
+      }
+    },
+    "schema20": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema21": {
+      "properties": {
+        "webhook": {
+          "properties": {
+            "service": {}
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhook"
+      ],
+      "type": "object"
+    },
+    "schema24": {
+      "additionalProperties": {},
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "port": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "schema26": {
+      "not": {
+        "properties": {
+          "provider": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "type": "object"
+      }
+    },
+    "schema27": {
+      "additionalProperties": {
+        "type": [
+          "boolean",
+          "integer",
+          "number",
+          "string"
+        ]
+      },
+      "type": "object"
+    },
+    "schema28": {
+      "properties": {
+        "provider": {
+          "enum": [
+            "webhook"
+          ]
+        }
+      },
+      "required": [
+        "provider"
+      ],
+      "type": "object"
+    },
+    "schema29": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema3": {
+      "allOf": [
+        {
+          "properties": {
+            "provider": {
+              "enum": [
+                "webhook"
+              ]
+            }
+          },
+          "required": [
+            "provider"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "provider": {
+              "properties": {
+                "name": {
+                  "enum": [
+                    "webhook"
+                  ]
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "provider"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema30": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema34": {
+      "properties": {
+        "name": {
+          "enum": [
+            "webhook"
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "type": "object"
+    },
+    "schema35": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema36": {
+      "not": {
+        "properties": {
+          "create": {}
+        },
+        "required": [
+          "create"
+        ],
+        "type": "object"
+      }
+    },
+    "schema37": {
+      "items": {
+        "type": [
+          "boolean",
+          "integer",
+          "number",
+          "string"
+        ]
+      },
+      "type": "array"
+    },
+    "schema38": {
+      "properties": {
+        "webhook": {}
+      },
+      "required": [
+        "webhook"
+      ],
+      "type": "object"
+    },
+    "schema4": {
+      "not": {
+        "properties": {
+          "provider": {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "serviceMonitor": {}
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "type": "object"
+      }
+    },
+    "schema41": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema43": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema5": {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "preferredDuringSchedulingIgnoredDuringExecution": {}
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {}
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "schema7": {
+      "not": {
+        "properties": {
+          "provider": {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "service": {}
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "type": "object"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -99,52 +540,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAffinity": {
-                "additionalProperties": {},
-                "properties": {
-                  "preferredDuringSchedulingIgnoredDuringExecution": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "podAffinityTerm": {
-                              "additionalProperties": {},
-                              "properties": {
-                                "labelSelector": {}
-                              }
-                            },
-                            "weight": {}
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "podAffinityTerm": {
-                              "additionalProperties": {},
-                              "properties": {
-                                "labelSelector": {}
-                              }
-                            },
-                            "weight": {}
-                          },
-                          "type": "object"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "maximum": 0,
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema1"
               }
             }
           }
@@ -187,25 +583,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAffinity": {
-                "additionalProperties": {},
-                "properties": {
-                  "preferredDuringSchedulingIgnoredDuringExecution": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema11"
               }
             }
           }
@@ -248,25 +626,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAffinity": {
-                "additionalProperties": {},
-                "properties": {
-                  "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema12"
               }
             }
           }
@@ -397,52 +757,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAntiAffinity": {
-                "additionalProperties": {},
-                "properties": {
-                  "preferredDuringSchedulingIgnoredDuringExecution": {
-                    "anyOf": [
-                      {
-                        "items": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "podAffinityTerm": {
-                              "additionalProperties": {},
-                              "properties": {
-                                "labelSelector": {}
-                              }
-                            },
-                            "weight": {}
-                          },
-                          "type": "object"
-                        },
-                        "type": "array"
-                      },
-                      {
-                        "additionalProperties": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "podAffinityTerm": {
-                              "additionalProperties": {},
-                              "properties": {
-                                "labelSelector": {}
-                              }
-                            },
-                            "weight": {}
-                          },
-                          "type": "object"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "maximum": 0,
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema1"
               }
             }
           }
@@ -485,25 +800,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAntiAffinity": {
-                "additionalProperties": {},
-                "properties": {
-                  "preferredDuringSchedulingIgnoredDuringExecution": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema11"
               }
             }
           }
@@ -546,25 +843,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAntiAffinity": {
-                "additionalProperties": {},
-                "properties": {
-                  "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema12"
               }
             }
           }
@@ -753,23 +1032,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema20"
               },
               {
                 "properties": {
@@ -814,23 +1077,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -880,10 +1127,7 @@
           "commonLabels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "not": {
@@ -920,10 +1164,7 @@
                 "type": "array"
               },
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "type": "null"
@@ -987,23 +1228,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema20"
               },
               {
                 "properties": {
@@ -1048,23 +1273,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -1250,23 +1459,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -1333,23 +1526,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema20"
           },
           {
             "properties": {
@@ -1423,10 +1600,7 @@
           "podAnnotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "not": {
@@ -1445,23 +1619,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "provider": {
-                      "properties": {
-                        "webhook": {}
-                      },
-                      "required": [
-                        "webhook"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "provider"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema18"
               },
               {
                 "properties": {
@@ -1492,38 +1650,10 @@
             ]
           },
           {
-            "properties": {
-              "provider": {
-                "enum": [
-                  "webhook"
-                ]
-              }
-            },
-            "required": [
-              "provider"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema28"
           },
           {
-            "properties": {
-              "provider": {
-                "properties": {
-                  "name": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "provider"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema15"
           }
         ]
       },
@@ -1556,31 +1686,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "provider": {
-                      "properties": {
-                        "webhook": {
-                          "properties": {
-                            "service": {}
-                          },
-                          "required": [
-                            "service"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "webhook"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "provider"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema7"
               },
               {
                 "properties": {
@@ -1619,38 +1725,10 @@
             ]
           },
           {
-            "properties": {
-              "provider": {
-                "enum": [
-                  "webhook"
-                ]
-              }
-            },
-            "required": [
-              "provider"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema28"
           },
           {
-            "properties": {
-              "provider": {
-                "properties": {
-                  "name": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "provider"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema15"
           }
         ]
       },
@@ -1702,31 +1780,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "provider": {
-                      "properties": {
-                        "webhook": {
-                          "properties": {
-                            "serviceMonitor": {}
-                          },
-                          "required": [
-                            "serviceMonitor"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "webhook"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "provider"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema4"
               },
               {
                 "properties": {
@@ -1765,38 +1819,10 @@
             ]
           },
           {
-            "properties": {
-              "provider": {
-                "enum": [
-                  "webhook"
-                ]
-              }
-            },
-            "required": [
-              "provider"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema28"
           },
           {
-            "properties": {
-              "provider": {
-                "properties": {
-                  "name": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "provider"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema15"
           }
         ]
       },
@@ -1893,31 +1919,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "provider": {
-                      "properties": {
-                        "webhook": {
-                          "properties": {
-                            "serviceMonitor": {}
-                          },
-                          "required": [
-                            "serviceMonitor"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "webhook"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "provider"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema4"
               },
               {
                 "properties": {
@@ -1991,38 +1993,10 @@
             "type": "object"
           },
           {
-            "properties": {
-              "provider": {
-                "enum": [
-                  "webhook"
-                ]
-              }
-            },
-            "required": [
-              "provider"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema28"
           },
           {
-            "properties": {
-              "provider": {
-                "properties": {
-                  "name": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "provider"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema15"
           }
         ]
       },
@@ -2063,31 +2037,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "provider": {
-                      "properties": {
-                        "webhook": {
-                          "properties": {
-                            "serviceMonitor": {}
-                          },
-                          "required": [
-                            "serviceMonitor"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "webhook"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "provider"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema4"
               },
               {
                 "properties": {
@@ -2145,38 +2095,10 @@
             "type": "object"
           },
           {
-            "properties": {
-              "provider": {
-                "enum": [
-                  "webhook"
-                ]
-              }
-            },
-            "required": [
-              "provider"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema28"
           },
           {
-            "properties": {
-              "provider": {
-                "properties": {
-                  "name": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "provider"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema15"
           }
         ]
       },
@@ -2211,23 +2133,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "provider": {
-                          "properties": {
-                            "webhook": {}
-                          },
-                          "required": [
-                            "webhook"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "provider"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "properties": {
@@ -2285,38 +2191,10 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "provider": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema28"
               },
               {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "name": {
-                        "enum": [
-                          "webhook"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -2325,23 +2203,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "provider": {
-                          "properties": {
-                            "webhook": {}
-                          },
-                          "required": [
-                            "webhook"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "provider"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "properties": {
@@ -2372,38 +2234,10 @@
                 ]
               },
               {
-                "properties": {
-                  "provider": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema28"
               },
               {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "name": {
-                        "enum": [
-                          "webhook"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -2429,78 +2263,15 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "provider": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema28"
               },
               {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "name": {
-                        "enum": [
-                          "webhook"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
           {
-            "allOf": [
-              {
-                "properties": {
-                  "provider": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "name": {
-                        "enum": [
-                          "webhook"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -2530,23 +2301,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "provider": {
-                          "properties": {
-                            "webhook": {}
-                          },
-                          "required": [
-                            "webhook"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "provider"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "properties": {
@@ -2577,38 +2332,10 @@
                 ]
               },
               {
-                "properties": {
-                  "provider": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema28"
               },
               {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "name": {
-                        "enum": [
-                          "webhook"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -2617,31 +2344,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "provider": {
-                          "properties": {
-                            "webhook": {
-                              "properties": {
-                                "service": {}
-                              },
-                              "required": [
-                                "service"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "webhook"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "provider"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema7"
                   },
                   {
                     "properties": {
@@ -2680,38 +2383,10 @@
                 ]
               },
               {
-                "properties": {
-                  "provider": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema28"
               },
               {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "name": {
-                        "enum": [
-                          "webhook"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -2720,31 +2395,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "provider": {
-                          "properties": {
-                            "webhook": {
-                              "properties": {
-                                "serviceMonitor": {}
-                              },
-                              "required": [
-                                "serviceMonitor"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "webhook"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "provider"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema4"
                   },
                   {
                     "properties": {
@@ -2802,38 +2453,10 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "provider": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema28"
               },
               {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "name": {
-                        "enum": [
-                          "webhook"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema15"
               }
             ]
           }
@@ -2878,38 +2501,10 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "provider": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema28"
               },
               {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "name": {
-                        "enum": [
-                          "webhook"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -2935,70 +2530,15 @@
                 "type": "object"
               },
               {
-                "not": {
-                  "properties": {
-                    "provider": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "provider"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema26"
               }
             ]
           },
           {
-            "allOf": [
-              {
-                "properties": {
-                  "provider": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "name": {
-                        "enum": [
-                          "webhook"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           },
           {
-            "not": {
-              "properties": {
-                "provider": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "provider"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema26"
           }
         ]
       },
@@ -3023,23 +2563,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "provider": {
-                          "properties": {
-                            "webhook": {}
-                          },
-                          "required": [
-                            "webhook"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "provider"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "properties": {
@@ -3097,38 +2621,10 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "provider": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema28"
               },
               {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "name": {
-                        "enum": [
-                          "webhook"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -3137,23 +2633,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "provider": {
-                          "properties": {
-                            "webhook": {}
-                          },
-                          "required": [
-                            "webhook"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "provider"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "properties": {
@@ -3184,38 +2664,10 @@
                 ]
               },
               {
-                "properties": {
-                  "provider": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema28"
               },
               {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "name": {
-                        "enum": [
-                          "webhook"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -3241,78 +2693,15 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "provider": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema28"
               },
               {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "name": {
-                        "enum": [
-                          "webhook"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
           {
-            "allOf": [
-              {
-                "properties": {
-                  "provider": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "provider": {
-                    "properties": {
-                      "name": {
-                        "enum": [
-                          "webhook"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -3428,39 +2817,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "anyOf": [
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
+                      "$ref": "#/$defs/schema30"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "anyOf": [
-                        {
-                          "type": "boolean"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "number"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
+                      "$ref": "#/$defs/schema30"
                     },
                     "type": "object"
                   },
@@ -3853,23 +3216,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -3928,10 +3275,7 @@
                     "type": "array"
                   },
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema43"
                   },
                   {
                     "type": "null"
@@ -3950,23 +3294,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -4040,23 +3368,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema20"
           },
           {
             "properties": {
@@ -4244,23 +3556,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema20"
               },
               {
                 "properties": {
@@ -4308,23 +3604,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema20"
           },
           {
             "properties": {
@@ -4494,17 +3774,7 @@
                         "$ref": "#/$defs/helm-truthy"
                       },
                       "then": {
-                        "anyOf": [
-                          {
-                            "type": "array"
-                          },
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
+                        "$ref": "#/$defs/schema41"
                       }
                     }
                   ]
@@ -4526,17 +3796,7 @@
                         "$ref": "#/$defs/helm-truthy"
                       },
                       "then": {
-                        "anyOf": [
-                          {
-                            "type": "array"
-                          },
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
+                        "$ref": "#/$defs/schema41"
                       }
                     }
                   ]
@@ -4558,17 +3818,7 @@
                         "$ref": "#/$defs/helm-truthy"
                       },
                       "then": {
-                        "anyOf": [
-                          {
-                            "type": "array"
-                          },
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
+                        "$ref": "#/$defs/schema41"
                       }
                     }
                   ]
@@ -4590,17 +3840,7 @@
                         "$ref": "#/$defs/helm-truthy"
                       },
                       "then": {
-                        "anyOf": [
-                          {
-                            "type": "array"
-                          },
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ]
+                        "$ref": "#/$defs/schema41"
                       }
                     }
                   ]
@@ -4612,48 +3852,17 @@
       ],
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema35"
         },
         {
           "additionalProperties": {},
           "properties": {
             "nodeAffinity": {},
             "podAffinity": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "preferredDuringSchedulingIgnoredDuringExecution": {}
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "requiredDuringSchedulingIgnoredDuringExecution": {}
-                  },
-                  "type": "object"
-                }
-              ]
+              "$ref": "#/$defs/schema5"
             },
             "podAntiAffinity": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "preferredDuringSchedulingIgnoredDuringExecution": {}
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "requiredDuringSchedulingIgnoredDuringExecution": {}
-                  },
-                  "type": "object"
-                }
-              ]
+              "$ref": "#/$defs/schema5"
             }
           },
           "type": "object"
@@ -4722,16 +3931,10 @@
     "commonLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema35"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema43"
         },
         {
           "not": {
@@ -4744,16 +3947,10 @@
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema35"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema43"
         },
         {
           "not": {
@@ -4782,26 +3979,10 @@
     "domainFilters": {
       "anyOf": [
         {
-          "items": {
-            "type": [
-              "boolean",
-              "integer",
-              "number",
-              "string"
-            ]
-          },
-          "type": "array"
+          "$ref": "#/$defs/schema37"
         },
         {
-          "items": {
-            "type": [
-              "boolean",
-              "integer",
-              "number",
-              "string"
-            ]
-          },
-          "type": "array"
+          "$ref": "#/$defs/schema37"
         },
         {
           "type": "integer"
@@ -4810,15 +3991,7 @@
           "type": "null"
         },
         {
-          "additionalProperties": {
-            "type": [
-              "boolean",
-              "integer",
-              "number",
-              "string"
-            ]
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema27"
         }
       ],
       "description": "Limit possible target zones by domain suffixes."
@@ -4850,26 +4023,10 @@
     "excludeDomains": {
       "anyOf": [
         {
-          "items": {
-            "type": [
-              "boolean",
-              "integer",
-              "number",
-              "string"
-            ]
-          },
-          "type": "array"
+          "$ref": "#/$defs/schema37"
         },
         {
-          "items": {
-            "type": [
-              "boolean",
-              "integer",
-              "number",
-              "string"
-            ]
-          },
-          "type": "array"
+          "$ref": "#/$defs/schema37"
         },
         {
           "type": "integer"
@@ -4878,15 +4035,7 @@
           "type": "null"
         },
         {
-          "additionalProperties": {
-            "type": [
-              "boolean",
-              "integer",
-              "number",
-              "string"
-            ]
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema27"
         }
       ],
       "description": "Intentionally exclude domains from being managed."
@@ -4928,17 +4077,7 @@
             "type": "object"
           },
           "then": {
-            "anyOf": [
-              {
-                "type": "array"
-              },
-              {
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/$defs/schema41"
           }
         }
       ],
@@ -5090,16 +4229,7 @@
           "type": "integer"
         },
         "httpGet": {
-          "additionalProperties": {},
-          "properties": {
-            "path": {
-              "type": "string"
-            },
-            "port": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema24"
         },
         "initialDelaySeconds": {
           "type": "integer"
@@ -5137,26 +4267,10 @@
     "managedRecordTypes": {
       "anyOf": [
         {
-          "items": {
-            "type": [
-              "boolean",
-              "integer",
-              "number",
-              "string"
-            ]
-          },
-          "type": "array"
+          "$ref": "#/$defs/schema37"
         },
         {
-          "items": {
-            "type": [
-              "boolean",
-              "integer",
-              "number",
-              "string"
-            ]
-          },
-          "type": "array"
+          "$ref": "#/$defs/schema37"
         },
         {
           "type": "integer"
@@ -5165,15 +4279,7 @@
           "type": "null"
         },
         {
-          "additionalProperties": {
-            "type": [
-              "boolean",
-              "integer",
-              "number",
-              "string"
-            ]
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema27"
         }
       ],
       "description": "Record types to manage (default: A, AAAA, CNAME)"
@@ -5222,16 +4328,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema35"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema43"
         },
         {
           "not": {
@@ -5293,13 +4393,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "properties": {
-                        "webhook": {}
-                      },
-                      "required": [
-                        "webhook"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema38"
                     }
                   },
                   {
@@ -5328,17 +4422,7 @@
                 ]
               },
               {
-                "properties": {
-                  "name": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema34"
               }
             ]
           },
@@ -5368,21 +4452,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "properties": {
-                        "webhook": {
-                          "properties": {
-                            "service": {}
-                          },
-                          "required": [
-                            "service"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "webhook"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema21"
                     }
                   },
                   {
@@ -5419,17 +4489,7 @@
                 ]
               },
               {
-                "properties": {
-                  "name": {
-                    "enum": [
-                      "webhook"
-                    ]
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema34"
               }
             ]
           },
@@ -5589,16 +4649,7 @@
           "type": "integer"
         },
         "httpGet": {
-          "additionalProperties": {},
-          "properties": {
-            "path": {
-              "type": "string"
-            },
-            "port": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema24"
         },
         "initialDelaySeconds": {
           "type": "integer"
@@ -5740,16 +4791,10 @@
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema35"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema43"
             },
             {
               "not": {
@@ -5795,15 +4840,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema36"
                   },
                   {
                     "properties": {
@@ -5836,31 +4873,11 @@
             "properties": {
               "annotations": {
                 "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
+                  "$ref": "#/$defs/schema29"
                 },
                 "description": "Annotations to add to the service account. Templates are allowed in both the key and the value. Example: `example.com/annotation/{{ .Values.nameOverride }}: {{ .Values.nameOverride }}`",
                 "items": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
+                  "$ref": "#/$defs/schema29"
                 }
               }
             }
@@ -5872,15 +4889,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema36"
                   },
                   {
                     "properties": {
@@ -5923,15 +4932,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema36"
               },
               {
                 "properties": {
@@ -5960,15 +4961,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema36"
               },
               {
                 "properties": {
@@ -5989,10 +4982,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema43"
                   },
                   {
                     "not": {
@@ -6009,15 +4999,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema36"
               },
               {
                 "properties": {
@@ -6115,10 +5097,7 @@
               "additionalLabels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema43"
                   },
                   {
                     "not": {
@@ -6149,10 +5128,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema43"
                   },
                   {
                     "not": {
@@ -6297,26 +5273,10 @@
     "sources": {
       "anyOf": [
         {
-          "items": {
-            "type": [
-              "boolean",
-              "integer",
-              "number",
-              "string"
-            ]
-          },
-          "type": "array"
+          "$ref": "#/$defs/schema37"
         },
         {
-          "items": {
-            "type": [
-              "boolean",
-              "integer",
-              "number",
-              "string"
-            ]
-          },
-          "type": "array"
+          "$ref": "#/$defs/schema37"
         },
         {
           "type": "integer"
@@ -6325,15 +5285,7 @@
           "type": "null"
         },
         {
-          "additionalProperties": {
-            "type": [
-              "boolean",
-              "integer",
-              "number",
-              "string"
-            ]
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema27"
         }
       ],
       "description": "_Kubernetes_ resources to monitor for DNS entries."

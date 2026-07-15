@@ -24,6 +24,173 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "additionalProperties": {
+        "additionalProperties": {},
+        "properties": {
+          "hosts": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
+      "items": {
+        "additionalProperties": {},
+        "properties": {
+          "hosts": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "schema11": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema12": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema2": {
+      "additionalProperties": {
+        "additionalProperties": {},
+        "properties": {
+          "paths": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "items": {
+        "additionalProperties": {},
+        "properties": {
+          "paths": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "schema3": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ]
+        },
+        "secretName": {}
+      },
+      "type": "object"
+    },
+    "schema4": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema8": {
+      "additionalProperties": {},
+      "properties": {
+        "paths": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "schema9": {
+      "additionalProperties": {},
+      "properties": {
+        "cpu": {
+          "type": "string"
+        },
+        "memory": {
+          "type": "string"
+        }
+      },
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -54,23 +221,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema4"
               },
               {
                 "properties": {
@@ -99,13 +250,7 @@
                 "not": {
                   "properties": {
                     "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema11"
                     }
                   },
                   "required": [
@@ -211,48 +356,7 @@
             "description": "configure UI ingress. If needed: \"enabled: true\"",
             "properties": {
               "hosts": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
+                "$ref": "#/$defs/schema2"
               }
             }
           }
@@ -380,49 +484,7 @@
             "description": "configure UI ingress. If needed: \"enabled: true\"",
             "properties": {
               "tls": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
+                "$ref": "#/$defs/schema1"
               }
             }
           }
@@ -483,45 +545,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "secretName": {}
-                      },
-                      "type": "object"
+                      "$ref": "#/$defs/schema3"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "secretName": {}
-                      },
-                      "type": "object"
+                      "$ref": "#/$defs/schema3"
                     },
                     "type": "object"
                   },
@@ -593,23 +623,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema4"
           },
           {
             "properties": {
@@ -769,10 +783,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema12"
                   },
                   {
                     "not": {
@@ -801,30 +812,10 @@
             "properties": {
               "hosts": {
                 "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  }
+                  "$ref": "#/$defs/schema8"
                 },
                 "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  }
+                  "$ref": "#/$defs/schema8"
                 }
               }
             }
@@ -846,48 +837,7 @@
             "additionalProperties": {},
             "properties": {
               "hosts": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "paths": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
+                "$ref": "#/$defs/schema2"
               }
             }
           }
@@ -956,49 +906,7 @@
             "additionalProperties": {},
             "properties": {
               "tls": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
+                "$ref": "#/$defs/schema1"
               }
             }
           }
@@ -1080,10 +988,7 @@
           "type": "object"
         },
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema12"
         },
         {
           "not": {
@@ -1133,28 +1038,10 @@
       "description": "configure UI pod resources",
       "properties": {
         "limits": {
-          "additionalProperties": {},
-          "properties": {
-            "cpu": {
-              "type": "string"
-            },
-            "memory": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema9"
         },
         "requests": {
-          "additionalProperties": {},
-          "properties": {
-            "cpu": {
-              "type": "string"
-            },
-            "memory": {
-              "type": "string"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema9"
         }
       },
       "type": "object"
@@ -1172,10 +1059,7 @@
               "type": "object"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema12"
             },
             {
               "not": {
@@ -1212,13 +1096,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema11"
                 }
               },
               {

@@ -24,6 +24,276 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "kind": {}
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "DaemonSet"
+                  ]
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "properties": {
+            "kind": {
+              "enum": [
+                "Deployment"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema10": {
+      "description": "This supports either a structured array or a templatable string",
+      "items": {},
+      "type": "array"
+    },
+    "schema11": {
+      "not": {
+        "properties": {
+          "extraContainers": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "extraContainers"
+        ],
+        "type": "object"
+      }
+    },
+    "schema12": {
+      "not": {
+        "properties": {
+          "initContainers": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "initContainers"
+        ],
+        "type": "object"
+      }
+    },
+    "schema13": {
+      "properties": {
+        "extraContainers": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "extraContainers"
+      ],
+      "type": "object"
+    },
+    "schema14": {
+      "properties": {
+        "initContainers": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "initContainers"
+      ],
+      "type": "object"
+    },
+    "schema15": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema16": {
+      "properties": {
+        "kind": {
+          "enum": [
+            "Deployment"
+          ]
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    "schema19": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema2": {
+      "properties": {
+        "securityContextConstraints": {
+          "properties": {
+            "create": {}
+          },
+          "required": [
+            "create"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "securityContextConstraints"
+      ],
+      "type": "object"
+    },
+    "schema21": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema22": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "schema3": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ]
+        },
+        "secretName": {}
+      },
+      "type": "object"
+    },
+    "schema4": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "kind": {}
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "enum": [
+                "DaemonSet"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema5": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "This supports either a structured array or a templatable string"
+    },
+    "schema6": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema7": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema9": {
+      "additionalProperties": {},
+      "properties": {
+        "containerPort": {},
+        "name": {},
+        "nodePort": {},
+        "port": {},
+        "protocol": {}
+      },
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -31,49 +301,7 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kind": {}
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "DaemonSet"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema1"
       },
       "then": {
         "additionalProperties": {},
@@ -81,10 +309,7 @@
           "annotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "not": {
@@ -119,17 +344,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -171,17 +386,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -223,17 +428,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -374,10 +569,7 @@
                     "type": "array"
                   },
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "type": "null"
@@ -751,10 +943,7 @@
                     "type": "array"
                   },
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "type": "null"
@@ -769,49 +958,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kind": {}
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "DaemonSet"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema1"
       },
       "then": {
         "additionalProperties": {},
@@ -828,32 +975,7 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema4"
               },
               {
                 "anyOf": [
@@ -886,17 +1008,7 @@
           {
             "allOf": [
               {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "Deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               },
               {
                 "anyOf": [
@@ -959,32 +1071,7 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema4"
               },
               {
                 "anyOf": [
@@ -1017,17 +1104,7 @@
           {
             "allOf": [
               {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "Deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               },
               {
                 "anyOf": [
@@ -1105,32 +1182,7 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema4"
               },
               {
                 "anyOf": [
@@ -1163,17 +1215,7 @@
           {
             "allOf": [
               {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "Deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               },
               {
                 "anyOf": [
@@ -1234,32 +1276,7 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema4"
               },
               {
                 "anyOf": [
@@ -1292,17 +1309,7 @@
           {
             "allOf": [
               {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "Deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               },
               {
                 "anyOf": [
@@ -1356,49 +1363,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kind": {}
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "DaemonSet"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema1"
       },
       "then": {
         "additionalProperties": {},
@@ -1416,71 +1381,20 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema4"
               },
               {
-                "properties": {
-                  "extraContainers": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "extraContainers"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema13"
               }
             ]
           },
           {
             "allOf": [
               {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "Deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               },
               {
-                "properties": {
-                  "extraContainers": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "extraContainers"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema13"
               }
             ]
           }
@@ -1490,16 +1404,7 @@
         "additionalProperties": {},
         "properties": {
           "extraContainers": {
-            "anyOf": [
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "This supports either a structured array or a templatable string"
+            "$ref": "#/$defs/schema5"
           }
         }
       }
@@ -1510,75 +1415,20 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema4"
               },
               {
-                "not": {
-                  "properties": {
-                    "extraContainers": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "extraContainers"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               }
             ]
           },
           {
             "allOf": [
               {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "Deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               },
               {
-                "not": {
-                  "properties": {
-                    "extraContainers": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "extraContainers"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema11"
               }
             ]
           }
@@ -1588,9 +1438,7 @@
         "additionalProperties": {},
         "properties": {
           "extraContainers": {
-            "description": "This supports either a structured array or a templatable string",
-            "items": {},
-            "type": "array"
+            "$ref": "#/$defs/schema10"
           }
         }
       }
@@ -1614,29 +1462,13 @@
             "anyOf": [
               {
                 "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "containerPort": {},
-                    "name": {},
-                    "nodePort": {},
-                    "port": {},
-                    "protocol": {}
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema9"
                 },
                 "type": "array"
               },
               {
                 "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "containerPort": {},
-                    "name": {},
-                    "nodePort": {},
-                    "port": {},
-                    "protocol": {}
-                  },
-                  "type": "object"
+                  "$ref": "#/$defs/schema9"
                 },
                 "type": "object"
               },
@@ -1683,49 +1515,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kind": {}
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "DaemonSet"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema1"
       },
       "then": {
         "additionalProperties": {},
@@ -1761,32 +1551,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema4"
               }
             ]
           },
@@ -1812,17 +1577,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "Deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               }
             ]
           }
@@ -1877,32 +1632,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema4"
               }
             ]
           },
@@ -1928,17 +1658,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "Deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               }
             ]
           }
@@ -1987,32 +1707,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema4"
               }
             ]
           },
@@ -2038,17 +1733,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "Deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               }
             ]
           }
@@ -2065,49 +1750,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kind": {}
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "DaemonSet"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema1"
       },
       "then": {
         "additionalProperties": {},
@@ -2125,49 +1768,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kind": {}
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "DaemonSet"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema1"
       },
       "then": {
         "additionalProperties": {},
@@ -2227,17 +1828,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -2250,30 +1841,10 @@
             "properties": {
               "annotations": {
                 "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
+                  "$ref": "#/$defs/schema15"
                 },
                 "items": {
-                  "anyOf": [
-                    {
-                      "additionalProperties": {
-                        "type": "string"
-                      },
-                      "type": "object"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
+                  "$ref": "#/$defs/schema15"
                 }
               }
             }
@@ -2323,17 +1894,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -2345,8 +1906,7 @@
             "description": "only available if kind is Deployment",
             "properties": {
               "annotations": {
-                "additionalProperties": {},
-                "type": "object"
+                "$ref": "#/$defs/schema22"
               }
             }
           }
@@ -2395,17 +1955,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -2425,10 +1975,7 @@
                     "type": "array"
                   },
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "type": "null"
@@ -2463,17 +2010,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -2523,17 +2060,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -2583,17 +2110,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -2635,17 +2152,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -2658,47 +2165,11 @@
             "properties": {
               "tls": {
                 "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
+                  "$ref": "#/$defs/schema7"
                 },
                 "description": "- host: fluent-bit-extra.example.tld\nspecify extraPort number\nport: 5170\n- secretName: fluent-bit-example-tld\nhosts:\n- fluent-bit.example.tld",
                 "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
+                  "$ref": "#/$defs/schema7"
                 }
               }
             }
@@ -2748,17 +2219,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -2773,45 +2234,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "secretName": {}
-                      },
-                      "type": "object"
+                      "$ref": "#/$defs/schema3"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "secretName": {}
-                      },
-                      "type": "object"
+                      "$ref": "#/$defs/schema3"
                     },
                     "type": "object"
                   },
@@ -2836,71 +2265,20 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema4"
               },
               {
-                "properties": {
-                  "initContainers": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "initContainers"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema14"
               }
             ]
           },
           {
             "allOf": [
               {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "Deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               },
               {
-                "properties": {
-                  "initContainers": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "initContainers"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema14"
               }
             ]
           }
@@ -2910,16 +2288,7 @@
         "additionalProperties": {},
         "properties": {
           "initContainers": {
-            "anyOf": [
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "This supports either a structured array or a templatable string"
+            "$ref": "#/$defs/schema5"
           }
         }
       }
@@ -2930,75 +2299,20 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema4"
               },
               {
-                "not": {
-                  "properties": {
-                    "initContainers": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "initContainers"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema12"
               }
             ]
           },
           {
             "allOf": [
               {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "Deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               },
               {
-                "not": {
-                  "properties": {
-                    "initContainers": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "initContainers"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema12"
               }
             ]
           }
@@ -3008,9 +2322,7 @@
         "additionalProperties": {},
         "properties": {
           "initContainers": {
-            "description": "This supports either a structured array or a templatable string",
-            "items": {},
-            "type": "array"
+            "$ref": "#/$defs/schema10"
           }
         }
       }
@@ -3033,49 +2345,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kind": {}
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "DaemonSet"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema1"
       },
       "then": {
         "additionalProperties": {},
@@ -3083,10 +2353,7 @@
           "labels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "not": {
@@ -3195,10 +2462,7 @@
                 "type": "array"
               },
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "type": "null"
@@ -3266,49 +2530,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kind": {}
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "DaemonSet"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema1"
       },
       "then": {
         "additionalProperties": {},
@@ -3415,21 +2637,7 @@
                     "not": {
                       "properties": {
                         "openShift": {
-                          "properties": {
-                            "securityContextConstraints": {
-                              "properties": {
-                                "create": {}
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "securityContextConstraints"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/schema2"
                         }
                       },
                       "required": [
@@ -3472,23 +2680,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -3517,13 +2709,7 @@
                 "not": {
                   "properties": {
                     "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema19"
                     }
                   },
                   "required": [
@@ -3554,45 +2740,10 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kind": {}
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "DaemonSet"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema4"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           },
           {
             "not": {
@@ -3783,32 +2934,7 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema4"
               },
               {
                 "anyOf": [
@@ -3851,17 +2977,7 @@
           {
             "allOf": [
               {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "Deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema16"
               },
               {
                 "anyOf": [
@@ -3909,10 +3025,7 @@
           "podAnnotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "not": {
@@ -3947,17 +3060,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -3971,10 +3074,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "not": {
@@ -4011,17 +3111,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -4042,49 +3132,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kind": {}
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "DaemonSet"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema1"
       },
       "then": {
         "additionalProperties": {},
@@ -4092,10 +3140,7 @@
           "podLabels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "not": {
@@ -4109,49 +3154,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kind": {}
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "DaemonSet"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema1"
       },
       "then": {
         "additionalProperties": {},
@@ -4166,17 +3169,7 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           },
           {
             "not": {
@@ -4294,23 +3287,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -4334,45 +3311,10 @@
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kind": {}
-                  },
-                  "required": [
-                    "kind"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "DaemonSet"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema4"
           },
           {
-            "properties": {
-              "kind": {
-                "enum": [
-                  "Deployment"
-                ]
-              }
-            },
-            "required": [
-              "kind"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema16"
           }
         ]
       },
@@ -4434,8 +3376,7 @@
           "additionalProperties": {},
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema22"
             },
             "controlledResources": {
               "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory",
@@ -4569,10 +3510,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "not": {
@@ -4902,21 +3840,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "properties": {
-                        "securityContextConstraints": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "securityContextConstraints"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema2"
                     }
                   },
                   {
@@ -4951,10 +3875,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
+                        "$ref": "#/$defs/schema21"
                       },
                       {
                         "not": {
@@ -5043,8 +3964,7 @@
       "description": "Configure podsecuritypolicy\nRef: https://kubernetes.io/docs/concepts/policy/pod-security-policy/\nfrom Kubernetes 1.25, PSP is deprecated\nSee: https://kubernetes.io/blog/2022/08/23/kubernetes-v1-25-release/#pod-security-changes\nWe automatically disable PSP if Kubernetes version is 1.25 or higher",
       "properties": {
         "annotations": {
-          "additionalProperties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema22"
         },
         "create": {
           "type": "boolean"
@@ -5128,10 +4048,7 @@
               "type": "object"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema21"
             },
             {
               "not": {
@@ -5169,10 +4086,7 @@
               "type": "object"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema21"
             },
             {
               "not": {
@@ -5221,13 +4135,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema19"
                 }
               },
               {
@@ -5249,10 +4157,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "not": {
@@ -5269,13 +4174,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema19"
                 }
               },
               {

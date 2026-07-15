@@ -29,9 +29,14 @@ fn cli_perf_flags_parse() {
 }
 
 #[test]
-fn cli_output_minimize_flag_parses() {
-    let cli = parse(&["--minimize"]).expect("parse");
-    assert!(cli.output.minimize);
+fn cli_output_minimize_defaults_on_with_opt_out() {
+    let cli = parse(&[]).expect("parse");
+    assert!(
+        cli.output.minimize,
+        "interning is the default output policy"
+    );
+    let cli = parse(&["--no-minimize"]).expect("parse");
+    assert!(!cli.output.minimize);
 }
 
 #[test]

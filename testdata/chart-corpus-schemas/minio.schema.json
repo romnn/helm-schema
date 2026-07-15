@@ -24,6 +24,651 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "additionalProperties": {},
+      "properties": {
+        "tls": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "secretName": {}
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "secretName": {}
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "maximum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local"
+        }
+      }
+    },
+    "schema12": {
+      "additionalProperties": {},
+      "properties": {
+        "egressEntities": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "only when using flavor: cilium"
+        }
+      }
+    },
+    "schema14": {
+      "if": {
+        "properties": {
+          "type": {
+            "enum": [
+              "NodePort"
+            ]
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nodePort": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "schema15": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "mode": {}
+            },
+            "required": [
+              "mode"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "mode": {
+              "enum": [
+                "distributed"
+              ]
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema18": {
+      "properties": {
+        "networkPolicy": {
+          "properties": {
+            "flavor": {
+              "enum": [
+                "cilium"
+              ]
+            }
+          },
+          "required": [
+            "flavor"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "networkPolicy"
+      ],
+      "type": "object"
+    },
+    "schema19": {
+      "not": {
+        "properties": {
+          "securityContext": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "securityContext"
+        ],
+        "type": "object"
+      }
+    },
+    "schema20": {
+      "additionalProperties": {},
+      "properties": {
+        "tls": {
+          "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
+          "items": {},
+          "type": "array"
+        }
+      }
+    },
+    "schema21": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema24": {
+      "not": {
+        "properties": {
+          "persistence": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "persistence"
+        ],
+        "type": "object"
+      }
+    },
+    "schema3": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "deploymentUpdate": {
+                    "properties": {
+                      "type": {}
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "deploymentUpdate"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "deploymentUpdate": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "RollingUpdate"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "deploymentUpdate"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "properties": {
+            "mode": {
+              "enum": [
+                "standalone"
+              ]
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema30": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema32": {
+      "additionalProperties": {
+        "additionalProperties": {},
+        "properties": {
+          "policy": {}
+        },
+        "type": "object"
+      },
+      "type": "object"
+    },
+    "schema33": {
+      "properties": {
+        "trustedCertsSecret": {
+          "not": {
+            "enum": [
+              ""
+            ]
+          }
+        }
+      },
+      "required": [
+        "trustedCertsSecret"
+      ],
+      "type": "object"
+    },
+    "schema34": {
+      "not": {
+        "properties": {
+          "extraContainers": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "extraContainers"
+        ],
+        "type": "object"
+      }
+    },
+    "schema36": {
+      "anyOf": [
+        {
+          "enum": [
+            "ClusterIP"
+          ]
+        },
+        {
+          "enum": [
+            "LoadBalancer"
+          ]
+        },
+        {
+          "enum": [
+            "NodePort"
+          ]
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema37": {
+      "properties": {
+        "extraContainers": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "extraContainers"
+      ],
+      "type": "object"
+    },
+    "schema38": {
+      "items": {
+        "additionalProperties": {},
+        "properties": {
+          "policy": {}
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "schema4": {
+      "additionalProperties": {},
+      "properties": {
+        "tls": {
+          "additionalProperties": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
+          "items": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "schema41": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema42": {
+      "properties": {
+        "type": {
+          "enum": [
+            "LoadBalancer"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "schema44": {
+      "properties": {
+        "mode": {
+          "enum": [
+            "standalone"
+          ]
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "type": "object"
+    },
+    "schema45": {
+      "properties": {
+        "flavor": {
+          "enum": [
+            "cilium"
+          ]
+        }
+      },
+      "required": [
+        "flavor"
+      ],
+      "type": "object"
+    },
+    "schema47": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema48": {
+      "properties": {
+        "type": {
+          "enum": [
+            "NodePort"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "schema49": {
+      "not": {
+        "properties": {
+          "users": {}
+        },
+        "required": [
+          "users"
+        ],
+        "type": "object"
+      }
+    },
+    "schema56": {
+      "description": "Command to run after the main command on exit"
+    },
+    "schema58": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema59": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema6": {
+      "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nkubernetes.io/ingress.allow-http: \"false\"\nkubernetes.io/ingress.global-static-ip-name: \"\"\nnginx.ingress.kubernetes.io/secure-backends: \"true\"\nnginx.ingress.kubernetes.io/backend-protocol: \"HTTPS\"\nnginx.ingress.kubernetes.io/whitelist-source-range: 0.0.0.0/0",
+      "type": "string"
+    },
+    "schema8": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "flavor": {}
+                },
+                "required": [
+                  "flavor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "networkPolicy": {
+              "properties": {
+                "flavor": {
+                  "enum": [
+                    "kubernetes"
+                  ]
+                }
+              },
+              "required": [
+                "flavor"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "networkPolicy"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema9": {
+      "anyOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "mode": {}
+                },
+                "required": [
+                  "mode"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "mode": {
+                  "enum": [
+                    "distributed"
+                  ]
+                }
+              },
+              "required": [
+                "mode"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "properties": {
+            "mode": {
+              "enum": [
+                "standalone"
+              ]
+            }
+          },
+          "required": [
+            "mode"
+          ],
+          "type": "object"
+        }
+      ]
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -31,49 +676,7 @@
   "allOf": [
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -81,10 +684,7 @@
           "additionalAnnotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "not": {
@@ -99,49 +699,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -149,10 +707,7 @@
           "additionalLabels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "not": {
@@ -167,49 +722,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -259,32 +772,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -310,17 +798,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -420,15 +898,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -528,15 +998,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -636,15 +1098,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -744,15 +1198,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -795,15 +1241,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -867,15 +1305,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -900,20 +1330,7 @@
         "additionalProperties": {},
         "properties": {
           "configPathmc": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "$ref": "#/$defs/schema41"
           }
         }
       }
@@ -942,25 +1359,7 @@
         "additionalProperties": {},
         "properties": {
           "consoleIngress": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema30"
           }
         }
       }
@@ -989,54 +1388,7 @@
         "additionalProperties": {},
         "properties": {
           "consoleIngress": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema4"
           }
         }
       }
@@ -1088,65 +1440,7 @@
         "additionalProperties": {},
         "properties": {
           "consoleIngress": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "secretName": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "secretName": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local"
-              }
-            }
+            "$ref": "#/$defs/schema1"
           }
         }
       }
@@ -1178,17 +1472,7 @@
             "additionalProperties": {},
             "properties": {
               "externalIPs": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema58"
               }
             }
           }
@@ -1278,15 +1562,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -1402,15 +1678,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -1511,15 +1779,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -1550,65 +1810,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "deploymentUpdate": {
-                      "properties": {
-                        "type": {}
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deploymentUpdate"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "deploymentUpdate": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "RollingUpdate"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "deploymentUpdate"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
@@ -1627,65 +1829,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "deploymentUpdate": {
-                      "properties": {
-                        "type": {}
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "deploymentUpdate"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "deploymentUpdate": {
-                    "properties": {
-                      "type": {
-                        "enum": [
-                          "RollingUpdate"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "type"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "deploymentUpdate"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema3"
       },
       "then": {
         "additionalProperties": {},
@@ -1704,17 +1848,7 @@
     },
     {
       "if": {
-        "properties": {
-          "mode": {
-            "enum": [
-              "standalone"
-            ]
-          }
-        },
-        "required": [
-          "mode"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -1740,49 +1874,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -1801,49 +1893,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -1857,10 +1907,7 @@
                 "type": "array"
               },
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "type": "null"
@@ -1894,17 +1941,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema44"
           }
         ]
       },
@@ -1946,17 +1983,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema44"
           }
         ]
       },
@@ -1979,45 +2006,10 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema15"
           },
           {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema44"
           },
           {
             "anyOf": [
@@ -2068,15 +2060,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -2107,49 +2091,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -2178,49 +2120,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -2251,71 +2151,20 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               },
               {
-                "properties": {
-                  "extraContainers": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "extraContainers"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema37"
               }
             ]
           },
           {
             "allOf": [
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               },
               {
-                "properties": {
-                  "extraContainers": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "extraContainers"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema37"
               }
             ]
           }
@@ -2345,75 +2194,20 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               },
               {
-                "not": {
-                  "properties": {
-                    "extraContainers": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "extraContainers"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema34"
               }
             ]
           },
           {
             "allOf": [
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               },
               {
-                "not": {
-                  "properties": {
-                    "extraContainers": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "extraContainers"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema34"
               }
             ]
           }
@@ -2484,32 +2278,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -2535,17 +2304,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           },
@@ -2619,15 +2378,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -2655,20 +2406,7 @@
             "additionalProperties": {},
             "properties": {
               "imagePullSecrets": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema47"
               }
             }
           }
@@ -2711,32 +2449,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -2773,17 +2486,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           },
@@ -2868,15 +2571,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -2909,32 +2604,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -2952,17 +2622,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           },
@@ -3028,15 +2688,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -3072,49 +2724,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -3133,49 +2743,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -3185,20 +2753,7 @@
             "description": "Set default image, imageTag, and imagePullPolicy. mode is used to indicate the",
             "properties": {
               "repository": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -3207,49 +2762,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -3259,20 +2772,7 @@
             "description": "Set default image, imageTag, and imagePullPolicy. mode is used to indicate the",
             "properties": {
               "tag": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -3303,25 +2803,7 @@
         "additionalProperties": {},
         "properties": {
           "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema30"
           }
         }
       }
@@ -3350,54 +2832,7 @@
         "additionalProperties": {},
         "properties": {
           "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema4"
           }
         }
       }
@@ -3449,65 +2884,7 @@
         "additionalProperties": {},
         "properties": {
           "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "secretName": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "additionalProperties": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "hosts": {
-                          "anyOf": [
-                            {
-                              "items": {},
-                              "type": "array"
-                            },
-                            {
-                              "additionalProperties": {},
-                              "type": "object"
-                            }
-                          ]
-                        },
-                        "secretName": {}
-                      },
-                      "type": "object"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "maximum": 0,
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local"
-              }
-            }
+            "$ref": "#/$defs/schema1"
           }
         }
       }
@@ -3575,15 +2952,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -3699,15 +3068,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -3808,15 +3169,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -3908,15 +3261,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -4032,15 +3377,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -4141,15 +3478,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -4241,15 +3570,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -4364,15 +3685,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -4472,15 +3785,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -4514,15 +3819,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "users": {}
-                  },
-                  "required": [
-                    "users"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema49"
               },
               {
                 "properties": {
@@ -4586,15 +3883,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -4653,15 +3942,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "users": {}
-                  },
-                  "required": [
-                    "users"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema49"
               },
               {
                 "properties": {
@@ -4725,15 +4006,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -4777,15 +4050,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "users": {}
-                  },
-                  "required": [
-                    "users"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema49"
               },
               {
                 "properties": {
@@ -4849,15 +4114,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -4951,15 +4208,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -5040,15 +4289,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -5129,15 +4370,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -5218,15 +4451,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -5250,15 +4475,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -5322,15 +4539,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -5431,15 +4640,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -5520,15 +4721,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -5609,15 +4802,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -5698,15 +4883,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -5730,15 +4907,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -5802,15 +4971,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -5839,20 +5000,7 @@
             "description": "Set default image, imageTag, and imagePullPolicy for the `mc` (the minio\nclient used to create a default bucket).",
             "properties": {
               "repository": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -5924,15 +5072,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -6013,15 +5153,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -6102,15 +5234,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -6191,15 +5315,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -6223,15 +5339,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -6295,15 +5403,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -6332,20 +5432,7 @@
             "description": "Set default image, imageTag, and imagePullPolicy for the `mc` (the minio\nclient used to create a default bucket).",
             "properties": {
               "tag": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -6377,68 +5464,15 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "flavor": {
-                        "enum": [
-                          "cilium"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "flavor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema18"
               }
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema15"
           },
           {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema44"
           }
         ]
       },
@@ -6490,48 +5524,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "flavor": {}
-                          },
-                          "required": [
-                            "flavor"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "flavor": {
-                            "enum": [
-                              "kubernetes"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "flavor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema8"
               }
             ]
           },
@@ -6583,17 +5576,7 @@
                 {
                   "properties": {
                     "service": {
-                      "properties": {
-                        "type": {
-                          "enum": [
-                            "NodePort"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema48"
                     }
                   },
                   "required": [
@@ -6641,68 +5624,15 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "flavor": {
-                        "enum": [
-                          "cilium"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "flavor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema18"
               }
             ]
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema15"
           },
           {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema44"
           }
         ]
       },
@@ -6754,48 +5684,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "flavor": {}
-                          },
-                          "required": [
-                            "flavor"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "flavor": {
-                            "enum": [
-                              "kubernetes"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "flavor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema8"
               }
             ]
           },
@@ -6847,17 +5736,7 @@
                 {
                   "properties": {
                     "consoleService": {
-                      "properties": {
-                        "type": {
-                          "enum": [
-                            "NodePort"
-                          ]
-                        }
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema48"
                     }
                   },
                   "required": [
@@ -6898,17 +5777,7 @@
     },
     {
       "if": {
-        "properties": {
-          "mode": {
-            "enum": [
-              "standalone"
-            ]
-          }
-        },
-        "required": [
-          "mode"
-        ],
-        "type": "object"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -6970,15 +5839,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "users": {}
-                  },
-                  "required": [
-                    "users"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema49"
               },
               {
                 "properties": {
@@ -7142,25 +6003,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "flavor": {
-                        "enum": [
-                          "cilium"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "flavor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema18"
               }
             ]
           },
@@ -7186,48 +6029,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "flavor": {}
-                          },
-                          "required": [
-                            "flavor"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "networkPolicy": {
-                        "properties": {
-                          "flavor": {
-                            "enum": [
-                              "kubernetes"
-                            ]
-                          }
-                        },
-                        "required": [
-                          "flavor"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "networkPolicy"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema8"
               }
             ]
           },
@@ -7251,45 +6053,10 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema15"
           },
           {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
@@ -7339,25 +6106,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "networkPolicy": {
-                "properties": {
-                  "flavor": {
-                    "enum": [
-                      "cilium"
-                    ]
-                  }
-                },
-                "required": [
-                  "flavor"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "networkPolicy"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema18"
           }
         ]
       },
@@ -7365,26 +6114,7 @@
         "additionalProperties": {},
         "properties": {
           "networkPolicy": {
-            "additionalProperties": {},
-            "properties": {
-              "egressEntities": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "only when using flavor: cilium"
-              }
-            }
+            "$ref": "#/$defs/schema12"
           }
         }
       }
@@ -7435,32 +6165,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -7486,17 +6191,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -7542,32 +6237,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -7593,17 +6263,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -7650,32 +6310,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               },
               {
                 "not": {
@@ -7745,17 +6380,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "not": {
@@ -7845,32 +6470,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               },
               {
                 "not": {
@@ -7940,17 +6540,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "not": {
@@ -8040,32 +6630,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -8091,17 +6656,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -8147,32 +6702,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -8198,17 +6728,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -8254,32 +6774,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -8305,17 +6800,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -8380,32 +6865,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -8450,17 +6910,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -8525,32 +6975,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -8595,17 +7020,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -8670,32 +7085,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -8740,17 +7130,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           },
@@ -8795,32 +7175,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -8865,17 +7220,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -8922,32 +7267,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -8973,17 +7293,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -9029,32 +7339,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -9080,17 +7365,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -9117,23 +7392,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "persistence": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -9157,17 +7416,7 @@
             ]
           },
           {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
@@ -9202,10 +7451,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema59"
                   },
                   {
                     "not": {
@@ -9225,23 +7471,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "persistence": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -9265,17 +7495,7 @@
             ]
           },
           {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema44"
           }
         ]
       },
@@ -9301,23 +7521,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "persistence": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -9341,17 +7545,7 @@
             ]
           },
           {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
@@ -9439,23 +7633,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "persistence": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -9498,17 +7676,7 @@
             "type": "object"
           },
           {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
@@ -9562,23 +7730,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "persistence": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -9602,17 +7754,7 @@
             ]
           },
           {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema44"
           }
         ]
       },
@@ -9656,23 +7798,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "persistence": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "persistence"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -9696,17 +7822,7 @@
             ]
           },
           {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
@@ -9766,49 +7882,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -9816,10 +7890,7 @@
           "podAnnotations": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "not": {
@@ -9836,45 +7907,10 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema15"
           },
           {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema44"
           },
           {
             "anyOf": [
@@ -9925,15 +7961,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -9958,10 +7986,7 @@
           "podLabels": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "not": {
@@ -10024,15 +8049,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "users": {}
-                  },
-                  "required": [
-                    "users"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema49"
               },
               {
                 "properties": {
@@ -10059,10 +8076,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema59"
                   },
                   {
                     "not": {
@@ -10126,15 +8140,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "users": {}
-                  },
-                  "required": [
-                    "users"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema49"
               },
               {
                 "properties": {
@@ -10161,10 +8167,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema59"
                   },
                   {
                     "not": {
@@ -10257,15 +8260,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -10356,15 +8351,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "users": {}
-                  },
-                  "required": [
-                    "users"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema49"
               },
               {
                 "properties": {
@@ -10450,15 +8437,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "users": {}
-                  },
-                  "required": [
-                    "users"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema49"
               },
               {
                 "properties": {
@@ -10487,49 +8466,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -10561,49 +8498,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -10641,23 +8536,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "persistence": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "persistence"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "properties": {
@@ -10683,23 +8562,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "securityContext": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "securityContext"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema19"
                   },
                   {
                     "properties": {
@@ -10723,32 +8586,7 @@
                 ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -10757,23 +8595,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "persistence": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "persistence"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "properties": {
@@ -10799,23 +8621,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "securityContext": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "securityContext"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema19"
                   },
                   {
                     "properties": {
@@ -10839,17 +8645,7 @@
                 ]
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -10900,17 +8696,7 @@
             "description": "Expose the MinIO service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
             "properties": {
               "externalIPs": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema58"
               }
             }
           }
@@ -10968,20 +8754,7 @@
             "description": "Expose the MinIO service to be accessed from outside the cluster (LoadBalancer service).\nor access it from within the cluster (ClusterIP service). Set the service type and the port to serve it.\nref: http://kubernetes.io/docs/user-guide/services/",
             "properties": {
               "port": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -11017,23 +8790,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "properties": {
@@ -11057,32 +8814,7 @@
                 ]
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -11091,23 +8823,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "properties": {
@@ -11131,17 +8847,7 @@
                 ]
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           },
@@ -11150,23 +8856,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "properties": {
@@ -11238,15 +8928,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -11285,32 +8967,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "mode": {}
-              },
-              "required": [
-                "mode"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "distributed"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema15"
       },
       "then": {
         "additionalProperties": {},
@@ -11333,24 +8990,10 @@
         "svcaccts": {
           "anyOf": [
             {
-              "items": {
-                "additionalProperties": {},
-                "properties": {
-                  "policy": {}
-                },
-                "type": "object"
-              },
-              "type": "array"
+              "$ref": "#/$defs/schema38"
             },
             {
-              "additionalProperties": {
-                "additionalProperties": {},
-                "properties": {
-                  "policy": {}
-                },
-                "type": "object"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema32"
             },
             {
               "type": "null"
@@ -11423,15 +9066,7 @@
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "users": {}
-                      },
-                      "required": [
-                        "users"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema49"
                   },
                   {
                     "properties": {
@@ -11511,32 +9146,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -11581,17 +9191,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -11695,32 +9295,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -11746,17 +9321,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           },
@@ -11830,15 +9395,7 @@
                   {
                     "anyOf": [
                       {
-                        "not": {
-                          "properties": {
-                            "users": {}
-                          },
-                          "required": [
-                            "users"
-                          ],
-                          "type": "object"
-                        }
+                        "$ref": "#/$defs/schema49"
                       },
                       {
                         "properties": {
@@ -11860,49 +9417,12 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               },
               {
                 "anyOf": [
                   {
-                    "properties": {
-                      "trustedCertsSecret": {
-                        "not": {
-                          "enum": [
-                            ""
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "trustedCertsSecret"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema33"
                   },
                   {
                     "properties": {
@@ -11930,34 +9450,12 @@
           {
             "allOf": [
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "anyOf": [
                   {
-                    "properties": {
-                      "trustedCertsSecret": {
-                        "not": {
-                          "enum": [
-                            ""
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "trustedCertsSecret"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema33"
                   },
                   {
                     "properties": {
@@ -12025,32 +9523,7 @@
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               }
             ]
           },
@@ -12076,17 +9549,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               }
             ]
           }
@@ -12113,32 +9576,7 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               },
               {
                 "anyOf": [
@@ -12162,19 +9600,7 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "trustedCertsSecret": {
-                        "not": {
-                          "enum": [
-                            ""
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "trustedCertsSecret"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema33"
                   }
                 ]
               }
@@ -12183,17 +9609,7 @@
           {
             "allOf": [
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "anyOf": [
@@ -12217,19 +9633,7 @@
                     "type": "object"
                   },
                   {
-                    "properties": {
-                      "trustedCertsSecret": {
-                        "not": {
-                          "enum": [
-                            ""
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "trustedCertsSecret"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema33"
                   }
                 ]
               }
@@ -12261,49 +9665,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "mode": {}
-                  },
-                  "required": [
-                    "mode"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "distributed"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "mode": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema9"
       },
       "then": {
         "additionalProperties": {},
@@ -12328,49 +9690,12 @@
           {
             "allOf": [
               {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "mode": {}
-                      },
-                      "required": [
-                        "mode"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "mode": {
-                        "enum": [
-                          "distributed"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "mode"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema15"
               },
               {
                 "anyOf": [
                   {
-                    "properties": {
-                      "trustedCertsSecret": {
-                        "not": {
-                          "enum": [
-                            ""
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "trustedCertsSecret"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema33"
                   },
                   {
                     "properties": {
@@ -12398,34 +9723,12 @@
           {
             "allOf": [
               {
-                "properties": {
-                  "mode": {
-                    "enum": [
-                      "standalone"
-                    ]
-                  }
-                },
-                "required": [
-                  "mode"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "anyOf": [
                   {
-                    "properties": {
-                      "trustedCertsSecret": {
-                        "not": {
-                          "enum": [
-                            ""
-                          ]
-                        }
-                      }
-                    },
-                    "required": [
-                      "trustedCertsSecret"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/schema33"
                   },
                   {
                     "properties": {
@@ -12512,15 +9815,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "users": {}
-                  },
-                  "required": [
-                    "users"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema49"
               },
               {
                 "properties": {
@@ -12610,10 +9905,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema59"
                   },
                   {
                     "not": {
@@ -12683,25 +9975,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema30"
           }
         },
         {
@@ -12722,10 +9996,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema59"
                   },
                   {
                     "not": {
@@ -12750,54 +10021,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema4"
           }
         },
         {
@@ -12828,14 +10052,7 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                "items": {},
-                "type": "array"
-              }
-            }
+            "$ref": "#/$defs/schema20"
           }
         }
       ],
@@ -12859,8 +10076,7 @@
         "ingressClassName": {},
         "labels": {},
         "path": {
-          "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nkubernetes.io/ingress.allow-http: \"false\"\nkubernetes.io/ingress.global-static-ip-name: \"\"\nnginx.ingress.kubernetes.io/secure-backends: \"true\"\nnginx.ingress.kubernetes.io/backend-protocol: \"HTTPS\"\nnginx.ingress.kubernetes.io/whitelist-source-range: 0.0.0.0/0",
-          "type": "string"
+          "$ref": "#/$defs/schema6"
         },
         "tls": {
           "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local"
@@ -12873,17 +10089,7 @@
       "allOf": [
         {
           "if": {
-            "properties": {
-              "type": {
-                "enum": [
-                  "LoadBalancer"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema42"
           },
           "then": {
             "additionalProperties": {},
@@ -12897,27 +10103,7 @@
           }
         },
         {
-          "if": {
-            "properties": {
-              "type": {
-                "enum": [
-                  "NodePort"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "nodePort": {
-                "type": "integer"
-              }
-            }
-          }
+          "$ref": "#/$defs/schema14"
         },
         {
           "additionalProperties": {},
@@ -12929,17 +10115,7 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema58"
                   }
                 }
               ]
@@ -12957,10 +10133,7 @@
               "type": "object"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema59"
             },
             {
               "not": {
@@ -12995,26 +10168,7 @@
           "type": "string"
         },
         "type": {
-          "anyOf": [
-            {
-              "enum": [
-                "ClusterIP"
-              ]
-            },
-            {
-              "enum": [
-                "LoadBalancer"
-              ]
-            },
-            {
-              "enum": [
-                "NodePort"
-              ]
-            },
-            {
-              "type": "string"
-            }
-          ]
+          "$ref": "#/$defs/schema36"
         }
       },
       "type": "object"
@@ -13161,10 +10315,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema59"
                   },
                   {
                     "not": {
@@ -13234,25 +10385,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            }
+            "$ref": "#/$defs/schema30"
           }
         },
         {
@@ -13273,10 +10406,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema59"
                   },
                   {
                     "not": {
@@ -13301,54 +10431,7 @@
             "type": "object"
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "additionalProperties": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                "items": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "hosts": {
-                      "anyOf": [
-                        {
-                          "type": "array"
-                        },
-                        {
-                          "type": "object"
-                        },
-                        {
-                          "type": "integer"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/schema4"
           }
         },
         {
@@ -13379,14 +10462,7 @@
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local",
-                "items": {},
-                "type": "array"
-              }
-            }
+            "$ref": "#/$defs/schema20"
           }
         }
       ],
@@ -13410,8 +10486,7 @@
         "ingressClassName": {},
         "labels": {},
         "path": {
-          "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nkubernetes.io/ingress.allow-http: \"false\"\nkubernetes.io/ingress.global-static-ip-name: \"\"\nnginx.ingress.kubernetes.io/secure-backends: \"true\"\nnginx.ingress.kubernetes.io/backend-protocol: \"HTTPS\"\nnginx.ingress.kubernetes.io/whitelist-source-range: 0.0.0.0/0",
-          "type": "string"
+          "$ref": "#/$defs/schema6"
         },
         "tls": {
           "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local"
@@ -13425,7 +10500,7 @@
       "properties": {
         "containerSecurityContext": {},
         "exitCommand": {
-          "description": "Command to run after the main command on exit"
+          "$ref": "#/$defs/schema56"
         },
         "resources": {},
         "securityContext": {
@@ -13454,7 +10529,7 @@
       "properties": {
         "containerSecurityContext": {},
         "exitCommand": {
-          "description": "Command to run after the main command on exit"
+          "$ref": "#/$defs/schema56"
         },
         "resources": {},
         "securityContext": {
@@ -13482,7 +10557,7 @@
       "properties": {
         "containerSecurityContext": {},
         "exitCommand": {
-          "description": "Command to run after the main command on exit"
+          "$ref": "#/$defs/schema56"
         },
         "resources": {},
         "securityContext": {
@@ -13511,7 +10586,7 @@
       "properties": {
         "containerSecurityContext": {},
         "exitCommand": {
-          "description": "Command to run after the main command on exit"
+          "$ref": "#/$defs/schema56"
         },
         "resources": {},
         "securityContext": {
@@ -13570,10 +10645,7 @@
                       "additionalLabels": {
                         "anyOf": [
                           {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "type": "object"
+                            "$ref": "#/$defs/schema59"
                           },
                           {
                             "not": {
@@ -13627,10 +10699,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "additionalProperties": {
-                              "type": "string"
-                            },
-                            "type": "object"
+                            "$ref": "#/$defs/schema59"
                           },
                           {
                             "not": {
@@ -13804,17 +10873,7 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "flavor": {
-                    "enum": [
-                      "cilium"
-                    ]
-                  }
-                },
-                "required": [
-                  "flavor"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema45"
               }
             ]
           },
@@ -13848,41 +10907,12 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "flavor": {
-                    "enum": [
-                      "cilium"
-                    ]
-                  }
-                },
-                "required": [
-                  "flavor"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema45"
               }
             ]
           },
           "then": {
-            "additionalProperties": {},
-            "properties": {
-              "egressEntities": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "only when using flavor: cilium"
-              }
-            }
+            "$ref": "#/$defs/schema12"
           }
         }
       ],
@@ -14140,17 +11170,7 @@
       "allOf": [
         {
           "if": {
-            "properties": {
-              "type": {
-                "enum": [
-                  "LoadBalancer"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema42"
           },
           "then": {
             "additionalProperties": {},
@@ -14172,17 +11192,7 @@
         },
         {
           "if": {
-            "properties": {
-              "type": {
-                "enum": [
-                  "LoadBalancer"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/schema42"
           },
           "then": {
             "additionalProperties": {},
@@ -14196,27 +11206,7 @@
           }
         },
         {
-          "if": {
-            "properties": {
-              "type": {
-                "enum": [
-                  "NodePort"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "nodePort": {
-                "type": "integer"
-              }
-            }
-          }
+          "$ref": "#/$defs/schema14"
         },
         {
           "additionalProperties": {},
@@ -14228,17 +11218,7 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema58"
                   }
                 }
               ]
@@ -14257,10 +11237,7 @@
               "type": "object"
             },
             {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
+              "$ref": "#/$defs/schema59"
             },
             {
               "not": {
@@ -14293,26 +11270,7 @@
         "nodePort": {},
         "port": {},
         "type": {
-          "anyOf": [
-            {
-              "enum": [
-                "ClusterIP"
-              ]
-            },
-            {
-              "enum": [
-                "LoadBalancer"
-              ]
-            },
-            {
-              "enum": [
-                "NodePort"
-              ]
-            },
-            {
-              "type": "string"
-            }
-          ]
+          "$ref": "#/$defs/schema36"
         }
       },
       "type": "object"
@@ -14359,27 +11317,13 @@
           "type": "array"
         },
         {
-          "items": {
-            "additionalProperties": {},
-            "properties": {
-              "policy": {}
-            },
-            "type": "object"
-          },
-          "type": "array"
+          "$ref": "#/$defs/schema38"
         },
         {
           "type": "null"
         },
         {
-          "additionalProperties": {
-            "additionalProperties": {},
-            "properties": {
-              "policy": {}
-            },
-            "type": "object"
-          },
-          "type": "object"
+          "$ref": "#/$defs/schema32"
         }
       ],
       "description": "List of service accounts to be created after minio install\naccessKey, secretKey and parent user to be assigned to the service accounts\nAdd new service accounts as explained here https://min.io/docs/minio/kubernetes/upstream/administration/identity-access-management/minio-user-management.html#service-accounts\n- accessKey: console-svcacct\nsecretKey: console123\nuser: console\nOr you can refer to specific secret\n- accessKey: externalSecret\nexistingSecret: my-secret\nexistingSecretKey: password\nuser: console\nYou also can pass custom policy\n- accessKey: console-svcacct\nsecretKey: console123\nuser: console\npolicy:\nstatements:\n- resources:\n- 'arn:aws:s3:::example*/*'\nactions:\n- \"s3:AbortMultipartUpload\"\n- \"s3:GetObject\"\n- \"s3:DeleteObject\"\n- \"s3:PutObject\"\n- \"s3:ListMultipartUploadParts\""

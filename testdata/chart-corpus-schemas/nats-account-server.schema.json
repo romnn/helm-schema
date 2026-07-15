@@ -24,6 +24,95 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "store": {
+                "properties": {
+                  "type": {}
+                },
+                "required": [
+                  "type"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "store"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "store": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "file"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "store"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema5": {
+      "additionalProperties": {},
+      "properties": {
+        "configMap": {
+          "additionalProperties": {},
+          "properties": {
+            "name": {}
+          }
+        }
+      }
+    },
+    "schema6": {
+      "additionalProperties": {},
+      "properties": {
+        "configMap": {
+          "anyOf": [
+            {
+              "type": "object"
+            }
+          ]
+        }
+      }
+    },
+    "schema7": {
+      "properties": {
+        "type": {
+          "enum": [
+            "file"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "schema8": {
+      "properties": {
+        "type": {}
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -214,16 +303,7 @@
             "additionalProperties": {},
             "properties": {
               "operatorjwt": {
-                "additionalProperties": {},
-                "properties": {
-                  "configMap": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema6"
               }
             }
           }
@@ -377,16 +457,7 @@
             "additionalProperties": {},
             "properties": {
               "systemaccountjwt": {
-                "additionalProperties": {},
-                "properties": {
-                  "configMap": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      }
-                    ]
-                  }
-                }
+                "$ref": "#/$defs/schema6"
               }
             }
           }
@@ -619,48 +690,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "store": {
-                  "properties": {
-                    "type": {}
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "store"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "store": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "file"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "store"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema1"
       },
       "then": {
         "additionalProperties": {},
@@ -702,48 +732,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "store": {
-                  "properties": {
-                    "type": {}
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "store"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "store": {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "file"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "store"
-            ],
-            "type": "object"
-          }
-        ]
+        "$ref": "#/$defs/schema1"
       },
       "then": {
         "additionalProperties": {},
@@ -790,26 +779,10 @@
       "additionalProperties": {},
       "properties": {
         "operatorjwt": {
-          "additionalProperties": {},
-          "properties": {
-            "configMap": {
-              "additionalProperties": {},
-              "properties": {
-                "name": {}
-              }
-            }
-          }
+          "$ref": "#/$defs/schema5"
         },
         "systemaccountjwt": {
-          "additionalProperties": {},
-          "properties": {
-            "configMap": {
-              "additionalProperties": {},
-              "properties": {
-                "name": {}
-              }
-            }
-          }
+          "$ref": "#/$defs/schema5"
         }
       }
     },
@@ -821,27 +794,11 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "type": {}
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema8"
                 }
               },
               {
-                "properties": {
-                  "type": {
-                    "enum": [
-                      "file"
-                    ]
-                  }
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema7"
               }
             ]
           },

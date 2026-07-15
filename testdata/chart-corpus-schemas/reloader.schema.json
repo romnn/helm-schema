@@ -24,6 +24,152 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "anyOf": [
+        {
+          "items": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "existing secret, you can specify multiple existing secrets, for each\nspecify the env var name followed by the key in existing secret that\nwill be used to populate the env var\nexisting_secret_name:\nALERT_ON_RELOAD: alert_on_reload_key\nALERT_SINK: alert_sink_key\nALERT_WEBHOOK_URL: alert_webhook_key\nALERT_ADDITIONAL_INFO: alert_additional_info_key"
+    },
+    "schema10": {
+      "properties": {
+        "rbac": {
+          "properties": {
+            "enabled": {}
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "rbac"
+      ],
+      "type": "object"
+    },
+    "schema13": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "schema14": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema15": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema16": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema2": {
+      "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
+    },
+    "schema3": {
+      "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
+    },
+    "schema4": {
+      "description": "Used to pass Labels that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
+    },
+    "schema5": {
+      "description": "Retain the job and instance labels of the metrics pushed to the Pushgateway\n[Scraping Pushgateway](https://github.com/prometheus/pushgateway#configure-the-pushgateway-as-a-target-to-scrape)",
+      "type": "boolean"
+    },
+    "schema6": {
+      "not": {
+        "properties": {
+          "reloader": {
+            "properties": {
+              "serviceAccount": {
+                "properties": {
+                  "create": {}
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "reloader"
+        ],
+        "type": "object"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -45,14 +191,7 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/$defs/schema16"
           }
         }
       }
@@ -138,20 +277,7 @@
             "additionalProperties": {},
             "properties": {
               "name": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema13"
               }
             }
           }
@@ -187,20 +313,7 @@
             "additionalProperties": {},
             "properties": {
               "repository": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema13"
               }
             }
           }
@@ -284,20 +397,7 @@
             "additionalProperties": {},
             "properties": {
               "tag": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/schema13"
               }
             }
           }
@@ -320,14 +420,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
+            "$ref": "#/$defs/schema16"
           }
         }
       }
@@ -490,21 +583,7 @@
                 "not": {
                   "properties": {
                     "reloader": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/schema10"
                     }
                   },
                   "required": [
@@ -564,31 +643,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "reloader": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "reloader"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -653,48 +708,7 @@
                   "description": "Support for extra environment variables.",
                   "properties": {
                     "existing": {
-                      "anyOf": [
-                        {
-                          "items": {
-                            "anyOf": [
-                              {
-                                "items": {},
-                                "type": "array"
-                              },
-                              {
-                                "additionalProperties": {},
-                                "type": "object"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "type": "array"
-                        },
-                        {
-                          "additionalProperties": {
-                            "anyOf": [
-                              {
-                                "items": {},
-                                "type": "array"
-                              },
-                              {
-                                "additionalProperties": {},
-                                "type": "object"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ],
-                      "description": "existing secret, you can specify multiple existing secrets, for each\nspecify the env var name followed by the key in existing secret that\nwill be used to populate the env var\nexisting_secret_name:\nALERT_ON_RELOAD: alert_on_reload_key\nALERT_SINK: alert_sink_key\nALERT_WEBHOOK_URL: alert_webhook_key\nALERT_ADDITIONAL_INFO: alert_additional_info_key"
+                      "$ref": "#/$defs/schema1"
                     }
                   }
                 }
@@ -805,14 +819,7 @@
                         "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
                         "properties": {
                           "ALERT_ADDITIONAL_INFO": {
-                            "anyOf": [
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
+                            "$ref": "#/$defs/schema16"
                           }
                         }
                       }
@@ -926,14 +933,7 @@
                         "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
                         "properties": {
                           "ALERT_ON_RELOAD": {
-                            "anyOf": [
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
+                            "$ref": "#/$defs/schema16"
                           }
                         }
                       }
@@ -1047,14 +1047,7 @@
                         "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
                         "properties": {
                           "ALERT_SINK": {
-                            "anyOf": [
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
+                            "$ref": "#/$defs/schema16"
                           }
                         }
                       }
@@ -1168,14 +1161,7 @@
                         "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
                         "properties": {
                           "ALERT_WEBHOOK_URL": {
-                            "anyOf": [
-                              {
-                                "type": "string"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
+                            "$ref": "#/$defs/schema16"
                           }
                         }
                       }
@@ -2014,14 +2000,7 @@
           "additionalProperties": {},
           "properties": {
             "isArgoRollouts": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
-                }
-              ]
+              "$ref": "#/$defs/schema15"
             }
           }
         }
@@ -2123,14 +2102,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "from": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema16"
                   }
                 }
               }
@@ -2321,14 +2293,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "namespace": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema16"
                   }
                 }
               }
@@ -2433,14 +2398,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "tlsConfig": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema16"
                   }
                 }
               }
@@ -2477,14 +2435,7 @@
           "additionalProperties": {},
           "properties": {
             "reloadOnCreate": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
-                }
-              ]
+              "$ref": "#/$defs/schema15"
             }
           }
         }
@@ -2497,14 +2448,7 @@
           "additionalProperties": {},
           "properties": {
             "reloadOnDelete": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
-                }
-              ]
+              "$ref": "#/$defs/schema15"
             }
           }
         }
@@ -2677,31 +2621,7 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "reloader": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "reloader"
-              ],
-              "type": "object"
-            }
+            "$ref": "#/$defs/schema6"
           },
           {
             "properties": {
@@ -2761,14 +2681,7 @@
           "additionalProperties": {},
           "properties": {
             "watchGlobally": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
-                }
-              ]
+              "$ref": "#/$defs/schema15"
             }
           }
         }
@@ -2892,21 +2805,7 @@
             "anyOf": [
               {
                 "not": {
-                  "properties": {
-                    "rbac": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema10"
                 }
               },
               {
@@ -3249,8 +3148,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "honorLabels": {
-                        "description": "Retain the job and instance labels of the metrics pushed to the Pushgateway\n[Scraping Pushgateway](https://github.com/prometheus/pushgateway#configure-the-pushgateway-as-a-target-to-scrape)",
-                        "type": "boolean"
+                        "$ref": "#/$defs/schema5"
                       }
                     }
                   }
@@ -3347,13 +3245,7 @@
                     "anyOf": [
                       {
                         "not": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/schema14"
                         }
                       },
                       {
@@ -3435,48 +3327,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "existing": {
-                      "anyOf": [
-                        {
-                          "items": {
-                            "anyOf": [
-                              {
-                                "items": {},
-                                "type": "array"
-                              },
-                              {
-                                "additionalProperties": {},
-                                "type": "object"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "type": "array"
-                        },
-                        {
-                          "additionalProperties": {
-                            "anyOf": [
-                              {
-                                "items": {},
-                                "type": "array"
-                              },
-                              {
-                                "additionalProperties": {},
-                                "type": "object"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ],
-                      "description": "existing secret, you can specify multiple existing secrets, for each\nspecify the env var name followed by the key in existing secret that\nwill be used to populate the env var\nexisting_secret_name:\nALERT_ON_RELOAD: alert_on_reload_key\nALERT_SINK: alert_sink_key\nALERT_WEBHOOK_URL: alert_webhook_key\nALERT_ADDITIONAL_INFO: alert_additional_info_key"
+                      "$ref": "#/$defs/schema1"
                     }
                   }
                 },
@@ -3904,7 +3755,7 @@
           "additionalProperties": {},
           "properties": {
             "annotations": {
-              "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
+              "$ref": "#/$defs/schema3"
             },
             "bearerTokenSecret": {},
             "enabled": {
@@ -3925,10 +3776,10 @@
             },
             "interval": {},
             "labels": {
-              "description": "Used to pass Labels that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
+              "$ref": "#/$defs/schema4"
             },
             "metricRelabelings": {
-              "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
+              "$ref": "#/$defs/schema2"
             },
             "namespace": {},
             "podTargetLabels": {},
@@ -4067,21 +3918,20 @@
           "additionalProperties": {},
           "properties": {
             "annotations": {
-              "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
+              "$ref": "#/$defs/schema3"
             },
             "enabled": {
               "description": "Deprecated: Service monitor will be removed in future releases of reloader in favour of Pod monitor\nEnabling this requires service to be enabled as well, or no endpoints will be found\nSet the namespace the ServiceMonitor should be deployed\nnamespace: monitoring",
               "type": "boolean"
             },
             "honorLabels": {
-              "description": "Retain the job and instance labels of the metrics pushed to the Pushgateway\n[Scraping Pushgateway](https://github.com/prometheus/pushgateway#configure-the-pushgateway-as-a-target-to-scrape)",
-              "type": "boolean"
+              "$ref": "#/$defs/schema5"
             },
             "labels": {
-              "description": "Used to pass Labels that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
+              "$ref": "#/$defs/schema4"
             },
             "metricRelabelings": {
-              "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
+              "$ref": "#/$defs/schema2"
             },
             "relabelings": {
               "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace",
