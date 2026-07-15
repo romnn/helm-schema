@@ -618,6 +618,15 @@ fn harbor_string_comparisons_reject_composite_operands() -> color_eyre::eyre::Re
                 json!({ "logLevel": { "level": "info" } }),
             ),
             SemanticCase::accepted("string logLevel", json!({ "logLevel": "info" })),
+            SemanticCase::rejected(
+                "string internal TLS selector",
+                "/internalTLS/enabled",
+                json!({ "internalTLS": { "enabled": "true" } }),
+            ),
+            SemanticCase::accepted(
+                "Boolean internal TLS selector",
+                json!({ "internalTLS": { "enabled": true } }),
+            ),
         ],
     )
 }
@@ -824,6 +833,100 @@ fn airflow_webserver_contract_abstains_at_unlowerable_version_guard() -> color_e
                     "airflowVersion": "2.11.0",
                     "config": { "webserver": { "base_url": "https://airflow.example.com" } }
                 }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn airflow_version_requires_semver_lexical_form() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::rejected(
+                "invalid airflowVersion",
+                "/airflowVersion",
+                json!({ "airflowVersion": "garbage" }),
+            ),
+            SemanticCase::accepted("valid airflowVersion", json!({ "airflowVersion": "3.2.2" })),
+        ],
+    )
+}
+
+#[test]
+fn postgres_operator_ui_team_elements_are_formatted_as_text() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "zalando-postgres-operator-ui",
+        vec![
+            SemanticCase::accepted("numeric teams", json!({ "envs": { "teams": [7, 8] } })),
+            SemanticCase::accepted(
+                "structured teams",
+                json!({ "envs": { "teams": [{ "name": "acid" }] } }),
+            ),
+            SemanticCase::accepted(
+                "ordinary string teams",
+                json!({ "envs": { "teams": ["acid"] } }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn kyverno_image_pull_secret_keys_require_a_map() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "kyverno",
+        vec![
+            SemanticCase::rejected(
+                "array passed to keys",
+                "/imagePullSecrets",
+                json!({ "imagePullSecrets": [{ "name": "regcred" }] }),
+            ),
+            SemanticCase::accepted(
+                "map passed to keys",
+                json!({
+                    "imagePullSecrets": {
+                        "regcred": {
+                            "registry": "registry.example.com",
+                            "username": "audit",
+                            "password": "secret"
+                        }
+                    }
+                }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn bitnami_redis_ternary_selector_requires_boolean() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "bitnami-redis",
+        vec![
+            SemanticCase::rejected(
+                "string auth enabled",
+                "/auth/enabled",
+                json!({ "auth": { "enabled": "true" } }),
+            ),
+            SemanticCase::accepted(
+                "Boolean auth enabled",
+                json!({ "auth": { "enabled": true } }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn kube_state_metrics_namespace_fallback_accepts_null() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "kube-state-metrics",
+        vec![
+            SemanticCase::accepted(
+                "null namespaceOverride selects release namespace",
+                json!({ "namespaceOverride": null }),
+            ),
+            SemanticCase::accepted(
+                "string namespaceOverride",
+                json!({ "namespaceOverride": "audit" }),
             ),
         ],
     )
