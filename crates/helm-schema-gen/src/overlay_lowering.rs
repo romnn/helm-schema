@@ -378,7 +378,7 @@ fn fail_requirement_runtime_types(
                             && !(rejected == "number" && *runtime_type == "integer")
                     }
                     FailValueRequirement::HasMember(_) => *runtime_type == "object",
-                    FailValueRequirement::MatchesPattern(_) => *runtime_type == "string",
+                    FailValueRequirement::MatchesPattern { .. } => *runtime_type == "string",
                     FailValueRequirement::MemberHost { handled_kinds } => {
                         *runtime_type == "object"
                             || handled_kinds.iter().any(|handled| handled == runtime_type)

@@ -4455,15 +4455,15 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
             "properties": {
-              "autoscalingGroups": {
+              "awsRegion": {
                 "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
-              "autoscalingGroups"
+              "awsRegion"
             ],
             "type": "object"
           },
@@ -4471,60 +4471,75 @@
             "anyOf": [
               {
                 "properties": {
-                  "autoDiscovery": {
-                    "properties": {
-                      "clusterName": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "clusterName"
-                    ],
-                    "type": "object"
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "autoDiscovery"
+                  "autoscalingGroups"
                 ],
                 "type": "object"
               },
               {
-                "properties": {
-                  "autoDiscovery": {
+                "anyOf": [
+                  {
                     "properties": {
-                      "labels": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "labels"
+                      "autoDiscovery"
                     ],
                     "type": "object"
-                  }
-                },
-                "required": [
-                  "autoDiscovery"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "autoDiscovery": {
+                  },
+                  {
                     "properties": {
-                      "namespace": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "namespace"
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "autoDiscovery"
-                ],
-                "type": "object"
+                ]
               }
             ]
           }

@@ -104,8 +104,15 @@ pub enum Guard {
     Absent { path: String },
     /// The path's string value matches a literal regular expression:
     /// `if regexMatch "…" .Values.X`. `regexMatch` type-asserts a string
-    /// subject, so the guard holding implies string-ness as well.
-    MatchesPattern { path: String, pattern: String },
+    /// subject, so the guard holding implies string-ness as well. When
+    /// `templated` is set the subject reached the match through `tpl`, so
+    /// the pattern constrains the rendered OUTPUT: a raw value carrying a
+    /// template action is admitted regardless (its render may match).
+    MatchesPattern {
+        path: String,
+        pattern: String,
+        templated: bool,
+    },
     /// Disjunction: `if or .Values.A .Values.B`
     Or { paths: Vec<String> },
     /// Disjunction whose arms may each contain a conjunction of typed guards.
@@ -226,9 +233,14 @@ impl Guard {
                 value,
             },
             Guard::Absent { path } => Guard::Absent { path: map(&path) },
-            Guard::MatchesPattern { path, pattern } => Guard::MatchesPattern {
+            Guard::MatchesPattern {
+                path,
+                pattern,
+                templated,
+            } => Guard::MatchesPattern {
                 path: map(&path),
                 pattern,
+                templated,
             },
             Guard::Or { paths } => Guard::Or {
                 paths: paths.into_iter().map(|path| map(&path)).collect(),

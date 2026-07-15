@@ -1,5 +1,55 @@
 use super::*;
 
+/// A `regexMatch` fail whose subject reached the match through `tpl` (a
+/// raw template PROGRAM, not the rendered text) constrains only the
+/// output: a values string carrying a template action is admitted (its
+/// render may match), a matching literal is accepted, and an action-free
+/// non-matching literal still terminates. redis-ha's `masterGroupName`
+/// helper is the driving case.
+#[test]
+fn post_tpl_regex_admits_template_programs() {
+    let helpers = indoc! {r#"
+        {{- define "repro.masterGroupName" -}}
+        {{- $name := tpl (.Values.masterGroupName | default "") . -}}
+        {{- if regexMatch "^[\w.-]+$" $name -}}
+        {{ $name }}
+        {{- else -}}
+        {{ required "a valid masterGroupName is required" "" }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ include "repro.masterGroupName" . }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), None);
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "masterGroupName": "mymaster" }),
+            true,
+            "a literal matching the pattern renders",
+        ),
+        (
+            serde_json::json!({ "masterGroupName": "{{ .Release.Name }}" }),
+            true,
+            "a template program is admitted (its render may match)",
+        ),
+        (
+            serde_json::json!({ "masterGroupName": "bad group" }),
+            false,
+            "an action-free non-matching literal terminates",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// The grafana `assertNoLeakedSecrets` traversal: a folded literal table
 /// of sensitive paths is ranged with per-item bindings, an indexed inner
 /// range advances a traversal local under `hasKey` guards, and the last

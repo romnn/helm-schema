@@ -4558,20 +4558,11 @@
       "description": "readiness probe configuration for the controller"
     },
     "region": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ],
-      "description": "The AWS region for the kubernetes cluster. Set to use KIAM or kube2iam for example."
+      "description": "The AWS region for the kubernetes cluster. Set to use KIAM or kube2iam for example.",
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "replicaCount": {},
     "resources": {
@@ -5107,20 +5098,11 @@
       "description": "type: RollingUpdate\nrollingUpdate:\nmaxSurge: 1\nmaxUnavailable: 1"
     },
     "vpcId": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ],
-      "description": "The VPC ID for the Kubernetes cluster. Set this manually when your pods are unable to use the metadata service to determine this automatically"
+      "description": "The VPC ID for the Kubernetes cluster. Set this manually when your pods are unable to use the metadata service to determine this automatically",
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "vpcTags": {
       "allOf": [

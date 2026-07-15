@@ -467,7 +467,7 @@ fn requirements_allow_runtime_kind(
     requirements.iter().all(|requirement| match requirement {
         FailValueRequirement::SchemaType(required) => required == schema_type,
         FailValueRequirement::NotSchemaType(rejected) => rejected != schema_type,
-        FailValueRequirement::MatchesPattern(_) => schema_type == "string",
+        FailValueRequirement::MatchesPattern { .. } => schema_type == "string",
         FailValueRequirement::Iterable { allow_integer } => {
             matches!(schema_type, "array" | "object" | "null")
                 || schema_type == "integer" && *allow_integer
@@ -504,12 +504,26 @@ fn fail_value_requirement_schema(
             FailValueRequirement::HasMember(member) => {
                 required_members.push(member);
             }
-            FailValueRequirement::MatchesPattern(pattern) => {
+            FailValueRequirement::MatchesPattern { pattern, templated } => {
                 // JSON Schema patterns are ECMA 262; abstaining on an
                 // untranslatable Go/RE2 pattern only widens the arm back
                 // to its other requirements.
                 if let Some(pattern) = ecma_compatible_pattern(pattern) {
-                    parts.push(serde_json::json!({ "type": "string", "pattern": pattern }));
+                    let matches = serde_json::json!({ "type": "string", "pattern": pattern });
+                    if *templated {
+                        // The pattern constrains `tpl`'s OUTPUT: a raw value
+                        // carrying a template action renders to something
+                        // that may match, so admit it alongside the
+                        // action-free strings the pattern already accepts.
+                        parts.push(serde_json::json!({
+                            "anyOf": [
+                                matches,
+                                { "type": "string", "pattern": "\\{\\{" },
+                            ]
+                        }));
+                    } else {
+                        parts.push(matches);
+                    }
                 }
             }
             FailValueRequirement::MemberHost { handled_kinds } => {

@@ -158,8 +158,16 @@ pub(super) fn eval_tpl(
         // subject (`tpl .Values.extraEnv $`, also through a `with`-bound
         // dot) carries the same runtime string contract as any other
         // string-only consumer.
-        record_string_consumer_effects(&identity_value_paths(&template.value), &mut effects);
+        let subject_paths = identity_value_paths(&template.value);
+        record_string_consumer_effects(&subject_paths, &mut effects);
         record_range_key_string_consumer_effects(&template.value, &mut effects);
+        // The rendered result is DERIVED TEXT: the raw argument is a Go
+        // template PROGRAM, and constraints observed on the evaluated
+        // output (a regex, an enum, a length) apply to the render, never
+        // to the program source. redis-ha's `masterGroupName` is matched
+        // against a regex only after `tpl`, so its raw value stays a
+        // free template string.
+        effects.derived_text_paths.extend(subject_paths);
         template.value
     }
     .and_then(rendered_content_value);

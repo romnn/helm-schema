@@ -502,10 +502,31 @@ impl ValuePathContext<'_> {
             AbstractValue::ValuesPath(path) if !path.is_empty() => path,
             _ => return None,
         };
+        // A subject that reached this consumer through `tpl` carries its
+        // rendered OUTPUT here, not the raw program: the pattern then
+        // constrains the render, and a raw value carrying a template action
+        // is admitted (redis-ha `masterGroupName: "{{ .Release.Name }}"`).
+        // The string contract from `tpl`'s input assertion still stands.
+        let templated = self.subject_is_derived_text(subject, &path);
         Some(Predicate::from(Guard::MatchesPattern {
             path,
             pattern: pattern.to_string(),
+            templated,
         }))
+    }
+
+    /// Whether the subject expression's resolved `path` reached this site
+    /// through a derived-text transform (`tpl`, a stringification) recorded
+    /// on a bound local's output metadata.
+    fn subject_is_derived_text(&self, subject: &TemplateExpr, path: &str) -> bool {
+        let TemplateExpr::Variable(name) = subject.deparen() else {
+            return false;
+        };
+        let name = name.trim_start_matches('$');
+        self.template_output_meta
+            .get(name)
+            .and_then(|by_path| by_path.get(path))
+            .is_some_and(|meta| meta.derived_text || meta.shape_erased)
     }
 
     /// The single string a statically known scalar expression denotes:

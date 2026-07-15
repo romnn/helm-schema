@@ -18712,6 +18712,64 @@
       "if": {
         "anyOf": [
           {
+            "properties": {
+              "redis-ha": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "redis-ha"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema74"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis-ha": {
+            "additionalProperties": {},
+            "description": "Enables and configure the automatic deployment of the redis-ha subchart",
+            "properties": {
+              "redis": {
+                "additionalProperties": {},
+                "description": "Redis specific configuration options",
+                "properties": {
+                  "masterGroupName": {
+                    "anyOf": [
+                      {
+                        "pattern": "^[\\w\\-\\.]+$",
+                        "type": "string"
+                      },
+                      {
+                        "pattern": "\\{\\{",
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Redis convention for naming the cluster group: must match `^[\\\\w-\\\\.]+$` and can be templated\nmust match ^[\\\\w-\\\\.]+$) and can be templated"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "properties": {
@@ -18832,56 +18890,6 @@
                       }
                     ],
                     "description": "Redis convention for naming the cluster group: must match `^[\\\\w-\\\\.]+$` and can be templated\nmust match ^[\\\\w-\\\\.]+$) and can be templated"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "redis-ha": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "redis-ha"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/schema74"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis-ha": {
-            "additionalProperties": {},
-            "description": "Enables and configure the automatic deployment of the redis-ha subchart",
-            "properties": {
-              "redis": {
-                "additionalProperties": {},
-                "description": "Redis specific configuration options",
-                "properties": {
-                  "masterGroupName": {
-                    "description": "Redis convention for naming the cluster group: must match `^[\\\\w-\\\\.]+$` and can be templated\nmust match ^[\\\\w-\\\\.]+$) and can be templated",
-                    "pattern": "^[\\w\\-\\.]+$",
-                    "type": "string"
                   }
                 }
               }

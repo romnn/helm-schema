@@ -53768,6 +53768,64 @@
       "if": {
         "anyOf": [
           {
+            "properties": {
+              "redis-ha": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "redis-ha"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema188"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis-ha": {
+            "additionalProperties": {},
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+            "properties": {
+              "redis": {
+                "additionalProperties": {},
+                "description": "Redis specific configuration options",
+                "properties": {
+                  "masterGroupName": {
+                    "anyOf": [
+                      {
+                        "pattern": "^[\\w\\-\\.]+$",
+                        "type": "string"
+                      },
+                      {
+                        "pattern": "\\{\\{",
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Redis convention for naming the cluster group: must match `^[\\\\w-\\\\.]+$` and can be templated"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "properties": {
@@ -53888,56 +53946,6 @@
                       }
                     ],
                     "description": "Redis convention for naming the cluster group: must match `^[\\\\w-\\\\.]+$` and can be templated"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "redis-ha": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "redis-ha"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/schema188"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis-ha": {
-            "additionalProperties": {},
-            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
-            "properties": {
-              "redis": {
-                "additionalProperties": {},
-                "description": "Redis specific configuration options",
-                "properties": {
-                  "masterGroupName": {
-                    "description": "Redis convention for naming the cluster group: must match `^[\\\\w-\\\\.]+$` and can be templated",
-                    "pattern": "^[\\w\\-\\.]+$",
-                    "type": "string"
                   }
                 }
               }

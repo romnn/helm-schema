@@ -938,9 +938,14 @@ fn requirements_from_holding(
         }
         // `regexMatch` type-asserts a string subject, so the negated fail
         // test (`if not (regexMatch …) fail`) requires a matching string.
-        Predicate::Guard(Guard::MatchesPattern { path, pattern }) if path == scope => {
-            Some(vec![FailValueRequirement::MatchesPattern(pattern.clone())])
-        }
+        Predicate::Guard(Guard::MatchesPattern {
+            path,
+            pattern,
+            templated,
+        }) if path == scope => Some(vec![FailValueRequirement::MatchesPattern {
+            pattern: pattern.clone(),
+            templated: *templated,
+        }]),
         // The tested value's own PRESENCE holding (the `hasKey` conjunct of
         // the fail path, `¬Absent(scope)` in the conjunction): an arm
         // encoded at the value's position is vacuous when the value is

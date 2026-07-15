@@ -184,7 +184,7 @@ pub enum FailValueRequirement {
     /// The value must be a string matching this regular expression
     /// (`regexMatch` type-asserts a string subject, so string-ness rides
     /// along).
-    MatchesPattern(String),
+    MatchesPattern { pattern: String, templated: bool },
     /// The value HOSTS literal member reads: it must be an object — or one
     /// of the kinds the chart's own type dispatch provably handles before
     /// the reads run (nack converts the string image form with `set`).
