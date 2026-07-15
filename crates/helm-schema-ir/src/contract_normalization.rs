@@ -28,24 +28,50 @@ pub(crate) fn normalize_contract_uses(uses: &mut Vec<ContractUse>) {
 pub(crate) fn canonicalize_contract_uses(uses: &mut Vec<ContractUse>) {
     canonicalize_contract_use_inputs(uses);
     expand_condition_disjuncts(uses);
-    uses.sort_by(contract_use_semantic_cmp);
+    // Deep `GuardDnf` comparisons dominate both sorts below, and conditions
+    // repeat heavily across rows. Ranking each DISTINCT condition once and
+    // comparing ranks yields the identical order (rank order is condition
+    // order) at integer-comparison cost.
+    let condition_ranks: Vec<u32> = {
+        let distinct: std::collections::BTreeSet<&helm_schema_core::GuardDnf> = uses
+            .iter()
+            .map(|contract_use| &contract_use.condition)
+            .collect();
+        let rank_by_condition: std::collections::HashMap<&helm_schema_core::GuardDnf, u32> =
+            distinct
+                .into_iter()
+                .enumerate()
+                .map(|(rank, condition)| (condition, u32::try_from(rank).unwrap_or(u32::MAX)))
+                .collect();
+        uses.iter()
+            .map(|contract_use| rank_by_condition[&contract_use.condition])
+            .collect()
+    };
+    let mut rows: Vec<(u32, ContractUse)> = condition_ranks
+        .into_iter()
+        .zip(std::mem::take(uses))
+        .collect();
+    rows.sort_by(|(left_rank, left), (right_rank, right)| {
+        contract_use_base_cmp(left, right).then_with(|| left_rank.cmp(right_rank))
+    });
 
-    let mut semantic_rows = Vec::with_capacity(uses.len());
-    for contract_use in std::mem::take(uses) {
-        if let Some(existing) = semantic_rows.last_mut()
-            && contract_use_semantic_cmp(existing, &contract_use).is_eq()
+    let mut semantic_rows: Vec<(u32, ContractUse)> = Vec::with_capacity(rows.len());
+    for (rank, contract_use) in rows {
+        if let Some((existing_rank, existing)) = semantic_rows.last_mut()
+            && *existing_rank == rank
+            && contract_use_render_site_cmp(existing, &contract_use).is_eq()
         {
             merge_contract_use_provenance(existing, contract_use.provenance);
             continue;
         }
-        semantic_rows.push(contract_use);
+        semantic_rows.push((rank, contract_use));
     }
 
-    semantic_rows.sort_by(|left, right| {
-        contract_use_render_site_cmp(left, right).then_with(|| left.condition.cmp(&right.condition))
+    semantic_rows.sort_by(|(left_rank, left), (right_rank, right)| {
+        contract_use_render_site_cmp(left, right).then_with(|| left_rank.cmp(right_rank))
     });
     let mut merged_sites: Vec<ContractUse> = Vec::with_capacity(semantic_rows.len());
-    for contract_use in semantic_rows {
+    for (_, contract_use) in semantic_rows {
         if let Some(existing) = merged_sites.last_mut()
             && contract_use_render_site_cmp(existing, &contract_use).is_eq()
         {
@@ -262,10 +288,6 @@ fn expand_condition_disjuncts(uses: &mut Vec<ContractUse>) {
     expanded.sort_unstable();
     expanded.dedup();
     *uses = expanded;
-}
-
-fn contract_use_semantic_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::Ordering {
-    contract_use_base_cmp(left, right).then_with(|| left.condition.cmp(&right.condition))
 }
 
 fn contract_use_render_site_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::Ordering {
