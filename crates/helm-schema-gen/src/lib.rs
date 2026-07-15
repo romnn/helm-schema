@@ -153,6 +153,7 @@ fn build_root_schema(
         .map(|evidence| split_value_path(&evidence.value_path))
         .collect::<Vec<_>>();
     let no_owning_ancestors = BTreeSet::new();
+    let base_span = tracing::info_span!("base_path_insertion").entered();
     let owning_paths = resolved_paths
         .iter()
         .filter(|resolved_path| {
@@ -172,6 +173,7 @@ fn build_root_schema(
             root_schema.insert_path_schema(&resolved_path.path_segments, schema);
         }
     }
+    drop(base_span);
     append_conditional_schemas(&mut root_schema, conditional_schemas, values_yaml_doc);
     append_terminal_clauses(
         &mut root_schema,
@@ -197,22 +199,31 @@ fn build_root_schema(
     for value_path in contract_schema_signals.direct_ranged_value_paths() {
         default_fill_skip_paths.insert(split_value_path(value_path));
     }
-    root_schema.merge_missing_values_yaml_defaults_under_roots(
-        values_yaml_doc,
-        &accepted_values_root_paths,
-        &default_fill_skip_paths,
-    );
+    let fill_span = tracing::info_span!("default_fill_and_finish").entered();
+    {
+        let _span = tracing::info_span!("merge_missing_defaults").entered();
+        root_schema.merge_missing_values_yaml_defaults_under_roots(
+            values_yaml_doc,
+            &accepted_values_root_paths,
+            &default_fill_skip_paths,
+        );
+    }
     root_schema.open_helm_global_namespace();
 
     let mut root_schema = root_schema.into_value();
     if let Ok(declared_defaults) = serde_json::to_value(values_yaml_doc)
         && declared_defaults.is_object()
     {
+        let _span = tracing::info_span!("preserve_declared_defaults").entered();
         root_schema =
             resolve_policy::preserve_declared_default_in_schema(root_schema, &declared_defaults);
     }
     let mut provider_definitions = provider_definitions;
-    provider_definitions.extend(extract_repeated_provider_payloads(&mut root_schema));
+    {
+        let _span = tracing::info_span!("extract_repeated_provider_payloads").entered();
+        provider_definitions.extend(extract_repeated_provider_payloads(&mut root_schema));
+    }
+    let truthy_span = tracing::info_span!("helm_truthy_scan").entered();
     if value_references_helm_truthy(&root_schema)
         || provider_definitions
             .values()
@@ -223,8 +234,13 @@ fn build_root_schema(
             helm_truthy_definition_schema(),
         );
     }
+    drop(truthy_span);
     insert_definitions_into_root(&mut root_schema, provider_definitions);
-    schema_tree::apply_values_descriptions(&mut root_schema, values_descriptions);
+    {
+        let _span = tracing::info_span!("apply_values_descriptions").entered();
+        schema_tree::apply_values_descriptions(&mut root_schema, values_descriptions);
+    }
+    drop(fill_span);
     root_schema
 }
 

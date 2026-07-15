@@ -18,6 +18,7 @@ const MIN_SHARED_PROVIDER_PAYLOAD_BYTES: usize = 16 * 1024;
 /// definitions, rewriting each extracted `resolved_path.schema` to an
 /// internal `$ref`. Returns the definitions keyed by definition name.
 #[tracing::instrument(skip_all)]
+#[tracing::instrument(skip_all)]
 pub(crate) fn extract_provider_definitions(
     resolved_paths: &mut [ResolvedPathSchema],
     conditional_schemas: &mut [ConditionalResolvedSchema],
@@ -105,24 +106,28 @@ pub(crate) fn insert_definitions_into_root(
     }
 }
 
+#[derive(Debug)]
+struct RepeatedPayload {
+    schema: Value,
+    uses: usize,
+}
+
 pub(crate) fn extract_repeated_provider_payloads(schema: &mut Value) -> BTreeMap<String, Value> {
-    #[derive(Debug)]
-    struct RepeatedPayload {
-        schema: Value,
-        uses: usize,
-    }
+    // Serializing every subtree's canonical form is O(size x depth); count
+    // candidates with a bottom-up structural hash plus an exact canonical
+    // byte length instead, and materialize the true canonical string only
+    // for the handful of repeated large cores (naming stays sorted by that
+    // string, so the emitted definitions are unchanged).
+    let mut counts = std::collections::HashMap::<u64, usize>::new();
+    visit_repeated_core_hashes(schema, &mut |core_hash, core_len| {
+        if core_len >= MIN_SHARED_PROVIDER_PAYLOAD_BYTES {
+            *counts.entry(core_hash).or_insert(0) += 1;
+        }
+    });
+    counts.retain(|_, uses| *uses > 1);
 
     let mut payloads = BTreeMap::<String, RepeatedPayload>::new();
-    collect_repeated_schema_cores(schema, &mut |key, core| {
-        if key.len() < MIN_SHARED_PROVIDER_PAYLOAD_BYTES {
-            return;
-        }
-        let payload = payloads.entry(key).or_insert_with(|| RepeatedPayload {
-            schema: core,
-            uses: 0,
-        });
-        payload.uses += 1;
-    });
+    collect_selected_schema_cores(schema, &counts, &mut payloads);
 
     let selected = payloads
         .into_iter()
@@ -139,7 +144,7 @@ pub(crate) fn extract_repeated_provider_payloads(schema: &mut Value) -> BTreeMap
         })
         .collect::<BTreeMap<_, _>>();
     let mut used = BTreeSet::new();
-    replace_repeated_schema_cores(schema, &selected, &mut used);
+    replace_repeated_schema_cores(schema, &counts, &selected, &mut used);
 
     selected
         .into_values()
@@ -147,28 +152,139 @@ pub(crate) fn extract_repeated_provider_payloads(schema: &mut Value) -> BTreeMap
         .collect()
 }
 
-fn collect_repeated_schema_cores(schema: &Value, record: &mut impl FnMut(String, Value)) {
+/// Bottom-up structural hash and exact canonical-serialization byte length.
+///
+/// Equal canonical strings imply equal hashes and lengths; only leaves are
+/// serialized, so the whole document costs one linear pass.
+fn canonical_hash_len(value: &Value) -> (u64, usize) {
+    use std::hash::{Hash, Hasher};
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    let len = match value {
+        Value::Object(object) => {
+            let mut keys: Vec<_> = object.keys().collect();
+            keys.sort();
+            let mut len = 2 + keys.len().saturating_sub(1);
+            0u8.hash(&mut hasher);
+            for key in keys {
+                let Some(child) = object.get(key) else {
+                    continue;
+                };
+                let (child_hash, child_len) = canonical_hash_len(child);
+                key.hash(&mut hasher);
+                child_hash.hash(&mut hasher);
+                len += json_string_len(key) + 1 + child_len;
+            }
+            len
+        }
+        Value::Array(items) => {
+            let mut len = 2 + items.len().saturating_sub(1);
+            1u8.hash(&mut hasher);
+            for item in items {
+                let (child_hash, child_len) = canonical_hash_len(item);
+                child_hash.hash(&mut hasher);
+                len += child_len;
+            }
+            len
+        }
+        scalar => {
+            let text = serde_json::to_string(scalar).unwrap_or_default();
+            2u8.hash(&mut hasher);
+            text.hash(&mut hasher);
+            text.len()
+        }
+    };
+    (hasher.finish(), len)
+}
+
+/// Hash and length of one object's CORE (its non-decoration entries), reusing
+/// the full-value hashes of the retained children.
+fn core_hash_len(object: &Map<String, Value>) -> (u64, usize) {
+    use std::hash::{Hash, Hasher};
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    0u8.hash(&mut hasher);
+    let mut keys: Vec<_> = object
+        .keys()
+        .filter(|key| !is_schema_decoration(key))
+        .collect();
+    keys.sort();
+    let mut len = 2 + keys.len().saturating_sub(1);
+    for key in keys {
+        let Some(child) = object.get(key) else {
+            continue;
+        };
+        let (child_hash, child_len) = canonical_hash_len(child);
+        key.hash(&mut hasher);
+        child_hash.hash(&mut hasher);
+        len += json_string_len(key) + 1 + child_len;
+    }
+    (hasher.finish(), len)
+}
+
+/// Exact `serde_json` string-encoding length (quotes plus escapes).
+fn json_string_len(text: &str) -> usize {
+    let mut len = 2;
+    for byte in text.bytes() {
+        len += match byte {
+            b'"' | b'\\' | 0x08 | 0x09 | 0x0a | 0x0c | 0x0d => 2,
+            0x00..=0x1f => 6,
+            _ => 1,
+        };
+    }
+    len
+}
+
+fn visit_repeated_core_hashes(schema: &Value, record: &mut impl FnMut(u64, usize)) {
     let Value::Object(object) = schema else {
         return;
     };
-    let core = schema_core(object);
-    record(json_schema_walk::canonical_json_string(&core), core);
+    let (core_hash, core_len) = core_hash_len(object);
+    record(core_hash, core_len);
     visit_schema_children(object, |child| {
-        collect_repeated_schema_cores(child, record);
+        visit_repeated_core_hashes(child, record);
+    });
+}
+
+/// Materialize cores and their canonical strings only for hash-selected
+/// candidates; the canonical-string map keeps the original naming order.
+fn collect_selected_schema_cores(
+    schema: &Value,
+    counts: &std::collections::HashMap<u64, usize>,
+    payloads: &mut BTreeMap<String, RepeatedPayload>,
+) {
+    let Value::Object(object) = schema else {
+        return;
+    };
+    let (core_hash, core_len) = core_hash_len(object);
+    if core_len >= MIN_SHARED_PROVIDER_PAYLOAD_BYTES && counts.contains_key(&core_hash) {
+        let core = schema_core(object);
+        let key = json_schema_walk::canonical_json_string(&core);
+        let payload = payloads.entry(key).or_insert_with(|| RepeatedPayload {
+            schema: core,
+            uses: 0,
+        });
+        payload.uses += 1;
+    }
+    visit_schema_children(object, |child| {
+        collect_selected_schema_cores(child, counts, payloads);
     });
 }
 
 fn replace_repeated_schema_cores(
     schema: &mut Value,
+    counts: &std::collections::HashMap<u64, usize>,
     selected: &BTreeMap<String, (String, Value)>,
     used: &mut BTreeSet<String>,
 ) {
     let Value::Object(object) = schema else {
         return;
     };
-    let core = schema_core(object);
-    let key = json_schema_walk::canonical_json_string(&core);
-    if let Some((name, _)) = selected.get(&key) {
+    let (core_hash, core_len) = core_hash_len(object);
+    if core_len >= MIN_SHARED_PROVIDER_PAYLOAD_BYTES
+        && counts.contains_key(&core_hash)
+        && let core = schema_core(object)
+        && let key = json_schema_walk::canonical_json_string(&core)
+        && let Some((name, _)) = selected.get(&key)
+    {
         let mut replacement = schema_decorations(object);
         replacement.insert(
             "allOf".to_string(),
@@ -179,7 +295,7 @@ fn replace_repeated_schema_cores(
         return;
     }
     visit_schema_children_mut(object, |child| {
-        replace_repeated_schema_cores(child, selected, used);
+        replace_repeated_schema_cores(child, counts, selected, used);
     });
 }
 

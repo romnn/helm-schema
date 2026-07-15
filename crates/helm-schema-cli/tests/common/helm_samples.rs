@@ -19,20 +19,33 @@ pub fn assert_generated_schema_accepts_helm_samples_for_path(
 ) -> std::result::Result<(), Report> {
     let temp_chart = GeneratedSchemaHelmChart::new(chart_relative_path, schema)?;
 
+    // Each helm invocation re-parses the chart and its generated schema;
+    // samples are independent, so all lint/template runs execute in
+    // parallel and errors are reported after the batch completes.
+    let mut runs = Vec::new();
     for sample in samples {
         let values_file = temp_chart.write_sample_values(sample)?;
-        run_helm_lint(temp_chart.chart_dir(), values_file.as_deref()).wrap_err_with(|| {
-            format!(
-                "helm lint must accept sample '{}' for {}",
-                sample.name, chart_relative_path
-            )
-        })?;
-        run_helm_template(temp_chart.chart_dir(), values_file.as_deref()).wrap_err_with(|| {
-            format!(
-                "helm template must render sample '{}' for {}",
-                sample.name, chart_relative_path
-            )
-        })?;
+        for kind in ["lint", "template"] {
+            let chart_dir = temp_chart.chart_dir().to_path_buf();
+            let values_file = values_file.clone();
+            let name = sample.name.to_string();
+            runs.push((
+                name,
+                kind,
+                std::thread::spawn(move || match kind {
+                    "lint" => run_helm_lint(&chart_dir, values_file.as_deref()),
+                    _ => run_helm_template(&chart_dir, values_file.as_deref()),
+                }),
+            ));
+        }
+    }
+    for (name, kind, handle) in runs {
+        handle
+            .join()
+            .expect("helm sample thread panicked")
+            .wrap_err_with(|| {
+                format!("helm {kind} must accept sample '{name}' for {chart_relative_path}")
+            })?;
     }
 
     Ok(())
