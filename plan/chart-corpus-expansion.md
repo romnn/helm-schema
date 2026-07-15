@@ -4882,7 +4882,7 @@ the dormant arm open. Pin absent, explicit-null, present-wrong, present-good,
 and dormant cases for unconditional and compound guards, and distinguish an
 explicit null field from a template branch that omits the field entirely.
 
-### F99. Finite literal `fromYaml` path programs remain opaque (PARTIAL 2026-07-15)
+### F99. Finite literal `fromYaml` path programs remain opaque (FIXED 2026-07-15)
 
 Grafana's `grafana.assertNoLeakedSecrets` helper
 (`templates/_helpers.tpl:231-266`) embeds a literal YAML table of twenty
@@ -5170,3 +5170,43 @@ with per-item dict bindings, the indexed inner range with loop-carried
 last-segment arithmetic, and the final regexMatch string contract under the
 flag. That traversal interpreter is the remaining work; the folded table now
 gives it exact finite inputs to consume.
+
+## F99 traversal interpreter (2026-07-15, second increment)
+
+The remaining traversal half is implemented; grafana's
+`assertNoLeakedSecrets` pins all hold (numeric and plaintext sensitive
+values reject, `$__env{…}` expansion and the disabled flag accept, and the
+dotted `auth.basic` segment stays atomic).
+
+- Exact helper-scope iterations now bind destructured value variables and
+  the key variable (iteration ordinals for lists), so
+  `eq (len $secret.path) (add1 $index)` partitions last-element branches
+  statically per unrolled iteration (`len`/`add1` gained constant transfer
+  functions; `eq` compares two statically known scalars as a constant).
+- `hasKey`/`index` resolve variable keys through concrete bindings, and
+  evaluated index keys are ATOMIC (the structural split option for dotted
+  strings is gone: `index`/`get` select one member).
+- A guarded self-advance (`$x = index $x $k` under this step's `hasKey`
+  presence conjunct) marks the local so the branch join keeps the advanced
+  value instead of widening to a choice: consumers stay finite exact paths
+  whose facts carry the member's presence guard, which only holds at
+  runtime when the advance happened. Plain reassignments now record
+  branch-local static truthy reductions (`$shouldContinue = false`), and
+  statically-true conjuncts are dropped from `and` decodes so the
+  remaining conjunct keeps its exact shape.
+- `regexMatch`/`mustRegexMatch` over a literal pattern and one
+  values-backed subject decode to the new `Guard::MatchesPattern`; the
+  negated fail test lowers to a string+pattern requirement
+  (`FailValueRequirement::MatchesPattern`), emitted through a bounded
+  Go/RE2→ECMA translation (non-quantifier braces and class-escape-adjacent
+  dashes are escaped; untranslatable constructs abstain, widening the arm
+  back to its other requirements).
+
+Reproducer: `literal_table_traversal_binds_pattern_validators` (verified
+failing before the fix). Fixture audits: dead-else phantom label rows
+dropped from three bitnami-family IR fixtures (each keeps its live
+YamlSerialized twin); the zookeeper statefulset IR/gen fixtures refine
+storage-class and image-registry conditions into equivalent branch-precise
+disjuncts; twelve whole-chart fixtures gained traversal/pattern arms
+(grafana and its kube-prometheus-stack copy dominate) with all 161 CLI
+tests, including every chart-specific semantic suite, green.
