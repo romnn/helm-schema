@@ -706,6 +706,44 @@
     },
     {
       "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "disableBaseClientPort": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "disableBaseClientPort"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "containerPorts": {
+            "additionalProperties": {},
+            "properties": {
+              "client": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -3530,6 +3568,126 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "nodeAffinityPreset": {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "hard"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "nodeAffinityPreset"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "affinity": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "nodeAffinityPreset": {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "soft"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "nodeAffinityPreset"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "nodeAffinityPreset": {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "soft"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "nodeAffinityPreset"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "affinity": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nodeAffinityPreset": {
+            "additionalProperties": {},
+            "properties": {
+              "key": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "not": {
           "properties": {
             "affinity": {
@@ -3858,6 +4016,119 @@
                 "type": "object"
               }
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "nodeAffinityPreset": {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "hard"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "nodeAffinityPreset"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "affinity": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "nodeAffinityPreset": {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "soft"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "nodeAffinityPreset"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "nodeAffinityPreset": {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "soft"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "nodeAffinityPreset"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "affinity": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nodeAffinityPreset": {
+            "type": "object"
           }
         }
       }

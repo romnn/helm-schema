@@ -15,6 +15,7 @@ pub(crate) struct LocalSchemaLeaf {
     schema: Value,
     source_schema: Option<Value>,
     pointer: Option<String>,
+    required_in_parent: bool,
 }
 
 impl LocalSchemaLeaf {
@@ -23,6 +24,7 @@ impl LocalSchemaLeaf {
             schema: leaf.schema().clone(),
             source_schema: keep_source.then(|| leaf.source_schema().clone()),
             pointer: keep_source.then(|| leaf.location().pointer().to_string()),
+            required_in_parent: leaf.required_in_parent(),
         }
     }
 
@@ -48,7 +50,9 @@ pub(crate) fn fragment_for_source_leaf(
     leaf: LocalSchemaLeaf,
 ) -> ProviderSchemaFragment {
     let source_schema = leaf.source_schema().cloned();
-    let mut fragment = ProviderSchemaFragment::new(leaf.into_schema());
+    let required_in_parent = leaf.required_in_parent;
+    let mut fragment =
+        ProviderSchemaFragment::new(leaf.into_schema()).with_required_in_parent(required_in_parent);
     match (source, source_schema) {
         (Some(source), Some(source_schema)) => {
             let definition_schema = bundle_source_definition(

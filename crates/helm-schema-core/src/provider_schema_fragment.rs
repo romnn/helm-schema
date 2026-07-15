@@ -77,6 +77,10 @@ impl ProviderSchemaSource {
 pub struct ProviderSchemaFragment {
     schema: Value,
     source_fragment: Option<ProviderSourceFragment>,
+    /// Whether the resolved path's final segment is listed in its parent
+    /// object's `required` array: the provider rejects a resource that
+    /// omits the field (or, for typed fields, supplies null).
+    required_in_parent: bool,
 }
 
 /// Provider-owned source leaf.
@@ -118,6 +122,7 @@ impl ProviderSchemaFragment {
         Self {
             schema,
             source_fragment: None,
+            required_in_parent: false,
         }
     }
 
@@ -144,6 +149,17 @@ impl ProviderSchemaFragment {
             definition_schema,
         ));
         self
+    }
+
+    #[must_use]
+    pub fn with_required_in_parent(mut self, required_in_parent: bool) -> Self {
+        self.required_in_parent = required_in_parent;
+        self
+    }
+
+    #[must_use]
+    pub fn required_in_parent(&self) -> bool {
+        self.required_in_parent
     }
 
     #[must_use]
@@ -174,12 +190,14 @@ impl ProviderSchemaFragment {
         let Self {
             schema,
             source_fragment,
+            required_in_parent,
         } = self;
         let mapped = map_schema(&schema)?;
         let source_fragment = (mapped == schema).then_some(source_fragment).flatten();
         Some(Self {
             schema: mapped,
             source_fragment,
+            required_in_parent,
         })
     }
 }

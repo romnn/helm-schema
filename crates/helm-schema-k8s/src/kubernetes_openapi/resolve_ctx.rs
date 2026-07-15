@@ -107,15 +107,29 @@ pub(crate) struct ResolvedSchemaLeaf {
     location: SchemaNodeLocation,
     source_schema: Value,
     schema: Value,
+    required_in_parent: bool,
 }
 
 impl ResolvedSchemaLeaf {
-    fn new(location: SchemaNodeLocation, source_schema: Value, schema: Value) -> Self {
+    fn new(
+        location: SchemaNodeLocation,
+        source_schema: Value,
+        schema: Value,
+        required_in_parent: bool,
+    ) -> Self {
         Self {
             location,
             source_schema,
             schema,
+            required_in_parent,
         }
+    }
+
+    /// Whether the resolved path's final segment is listed in its parent
+    /// object's `required` array.
+    #[must_use]
+    pub fn required_in_parent(&self) -> bool {
+        self.required_in_parent
     }
 
     #[must_use]
@@ -328,7 +342,50 @@ pub(crate) fn descend_schema_path_expanding_leaf_with_location<
     let location = leaf.location.clone();
     let source_schema = leaf.schema.clone();
     let expanded = expand_schema_node_at(ctx, leaf, 0).into_schema();
-    Some(ResolvedSchemaLeaf::new(location, source_schema, expanded))
+    let required_in_parent = final_segment_required_in_parent(ctx, current_filename, schema, path);
+    Some(ResolvedSchemaLeaf::new(
+        location,
+        source_schema,
+        expanded,
+        required_in_parent,
+    ))
+}
+
+/// Whether the path's final segment is a plain property the parent object
+/// schema lists in `required`. Item segments (`x[*]`), dynamic mapping
+/// values, and paths the parent resolves through `additionalProperties`
+/// are never provider-required, and a parent that cannot be re-descended
+/// abstains to `false`.
+fn final_segment_required_in_parent<F: FnMut(&str) -> Option<SchemaDoc>>(
+    ctx: &mut ResolveCtx<F>,
+    current_filename: &str,
+    schema: &Value,
+    path: &[String],
+) -> bool {
+    let Some((leaf_segment, parents)) = path.split_last() else {
+        return false;
+    };
+    if leaf_segment.ends_with("[*]")
+        || leaf_segment == helm_schema_core::DYNAMIC_MAPPING_VALUE_SEGMENT
+    {
+        return false;
+    }
+    let root = ResolvedSchemaNode::root(current_filename.to_string(), schema.clone());
+    let Some(parent) = descend_schema_path_node(ctx, root, parents) else {
+        return false;
+    };
+    let Some(parent) = resolve_direct_ref(ctx, parent, 0) else {
+        return false;
+    };
+    parent
+        .schema
+        .get("required")
+        .and_then(Value::as_array)
+        .is_some_and(|required| {
+            required
+                .iter()
+                .any(|member| member.as_str() == Some(leaf_segment))
+        })
 }
 
 fn descend_schema_path_node<F: FnMut(&str) -> Option<SchemaDoc>>(

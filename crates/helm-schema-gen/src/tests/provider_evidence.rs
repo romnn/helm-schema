@@ -2,6 +2,80 @@ use test_util::prelude::sim_assert_eq;
 
 use super::*;
 
+/// A conditional branch rendering a DIRECT scalar hole into a
+/// provider-required field (a Service `port`) backprojects presence and
+/// non-nullability of the source leaf under the branch's guards: Helm
+/// renders a missing or null source as an explicit null the provider
+/// rejects. The dormant arm stays open, and a `default` fallback abstains
+/// (absence renders the fallback instead).
+#[test]
+fn provider_required_field_requires_direct_source_leaf() {
+    let guarded = indoc! {r#"
+        {{- if .Values.svc.enabled }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: probe
+        spec:
+          ports:
+          - port: {{ .Values.svc.port }}
+            name: http
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        svc:
+          enabled: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(guarded), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "svc": { "enabled": false } }),
+            true,
+            "dormant branch stays open",
+        ),
+        (
+            serde_json::json!({ "svc": { "enabled": true, "port": 80 } }),
+            true,
+            "present integer port renders a valid Service",
+        ),
+        (
+            serde_json::json!({ "svc": { "enabled": true } }),
+            false,
+            "missing port renders a provider-invalid null",
+        ),
+        (
+            serde_json::json!({ "svc": { "enabled": true, "port": null } }),
+            false,
+            "explicit null port renders a provider-invalid null",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+
+    let defaulted = indoc! {r#"
+        {{- if .Values.svc.enabled }}
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: probe
+        spec:
+          ports:
+          - port: {{ .Values.svc.port | default 9090 }}
+            name: http
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(defaulted), Some(values_yaml));
+    let instance = serde_json::json!({ "svc": { "enabled": true, "port": null } });
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "a default fallback renders on absence, so the source stays optional; schema={schema}"
+    );
+}
+
 #[test]
 fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants() {
     let mut contract = ContractIr::from_contract_uses(vec![ContractUse {

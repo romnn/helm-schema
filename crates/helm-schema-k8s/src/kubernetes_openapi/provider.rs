@@ -256,20 +256,20 @@ impl KubernetesJsonSchemaProvider {
         let schema_node = descend_schema_path_expanding_leaf_with_location(
             &mut ctx, &filename, &root_doc, &path.0,
         );
-        let fragment =
-            schema_node.map(|schema_node| {
-                let source = ProviderSchemaSource::kubernetes_openapi(
-                    source.source_id.clone(),
-                    version.clone(),
-                    schema_node.location().filename(),
-                    schema_node.location().pointer(),
-                );
-                let source_schema = schema_node.source_schema().clone();
-                let definition_schema =
-                    bundled_definition_schema_for_source_leaf(&mut ctx, &schema_node);
-                ProviderSchemaFragment::new(schema_node.schema().clone())
-                    .with_source_definition_schema(source, source_schema, definition_schema)
-            });
+        let fragment = schema_node.map(|schema_node| {
+            let source = ProviderSchemaSource::kubernetes_openapi(
+                source.source_id.clone(),
+                version.clone(),
+                schema_node.location().filename(),
+                schema_node.location().pointer(),
+            );
+            let source_schema = schema_node.source_schema().clone();
+            let definition_schema =
+                bundled_definition_schema_for_source_leaf(&mut ctx, &schema_node);
+            ProviderSchemaFragment::new(schema_node.schema().clone())
+                .with_required_in_parent(schema_node.required_in_parent())
+                .with_source_definition_schema(source, source_schema, definition_schema)
+        });
         Some((version, fragment))
     }
 

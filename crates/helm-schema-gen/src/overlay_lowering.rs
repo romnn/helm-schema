@@ -41,6 +41,11 @@ pub(crate) fn collect_conditional_schemas(
     values_yaml_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
 ) -> Vec<ConditionalResolvedSchema> {
+    let synthesized_implications =
+        crate::required_source_backprojection::synthesized_required_source_implications(
+            contract_schema_signals,
+            provider,
+        );
     let resolved_by_path = resolved_paths
         .iter()
         .map(|resolved| (resolved.value_path.as_str(), resolved))
@@ -78,7 +83,11 @@ pub(crate) fn collect_conditional_schemas(
         // defaults, range alternatives, carrier variants) must never
         // bypass it. An empty guard set means the requirement is
         // unconditional and the arm's condition is trivially true.
-        for implication in &evidence.fail_implications {
+        let synthesized = synthesized_implications
+            .get(target_value_path)
+            .map(Vec::as_slice)
+            .unwrap_or_default();
+        for implication in evidence.fail_implications.iter().chain(synthesized) {
             if is_bare_iterable_implication(implication)
                 && member_implication_covers_range_domain(
                     &evidence.fail_implications,
