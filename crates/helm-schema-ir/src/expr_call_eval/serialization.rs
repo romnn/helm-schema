@@ -243,6 +243,9 @@ pub(super) fn eval_from_json_pipeline(
 }
 
 pub(super) fn eval_from_json_result(result: EvalResult) -> EvalResult {
+    if let Some(folded) = literal_decoded_value(result.value.as_ref(), DecodeFormat::Json) {
+        return EvalResult::with_effects(Some(folded), result.effects);
+    }
     let paths = serialization_payload_paths(&result.value);
     let round_trips_json = result
         .value
@@ -277,7 +280,95 @@ pub(super) fn eval_from_yaml_pipeline(
     result
 }
 
+enum DecodeFormat {
+    Yaml,
+    Json,
+}
+
+/// Constant-fold a literal serialized document into its typed abstract
+/// value: chart-authored YAML/JSON tables (grafana's `fromYaml` over a
+/// backtick literal of sensitive paths) become concrete dicts and lists
+/// whose leaves are exact strings, so membership probes and comparisons
+/// over them stay structural. Non-string scalars have no literal lattice
+/// value and become `Unknown` members (present, untyped); undecodable
+/// documents abstain to the widened result.
+fn literal_decoded_value(
+    value: Option<&AbstractValue>,
+    format: DecodeFormat,
+) -> Option<AbstractValue> {
+    let AbstractValue::StringSet(strings) = value? else {
+        return None;
+    };
+    let mut strings = strings.iter();
+    let (Some(text), None) = (strings.next(), strings.next()) else {
+        return None;
+    };
+    match format {
+        DecodeFormat::Yaml => {
+            abstract_value_from_yaml(&serde_yaml::from_str::<serde_yaml::Value>(text).ok()?)
+        }
+        DecodeFormat::Json => {
+            abstract_value_from_json(&serde_json::from_str::<serde_json::Value>(text).ok()?)
+        }
+    }
+}
+
+fn abstract_value_from_yaml(node: &serde_yaml::Value) -> Option<AbstractValue> {
+    match node {
+        serde_yaml::Value::Mapping(entries) => {
+            let mut members = std::collections::BTreeMap::new();
+            for (key, value) in entries {
+                let serde_yaml::Value::String(key) = key else {
+                    return None;
+                };
+                members.insert(key.clone(), abstract_value_from_yaml(value)?);
+            }
+            Some(AbstractValue::Dict(members))
+        }
+        serde_yaml::Value::Sequence(items) => Some(AbstractValue::List(
+            items
+                .iter()
+                .map(abstract_value_from_yaml)
+                .collect::<Option<Vec<_>>>()?,
+        )),
+        serde_yaml::Value::String(text) => Some(AbstractValue::StringSet(
+            [text.clone()].into_iter().collect(),
+        )),
+        serde_yaml::Value::Bool(_) | serde_yaml::Value::Number(_) | serde_yaml::Value::Null => {
+            Some(AbstractValue::Unknown)
+        }
+        serde_yaml::Value::Tagged(_) => None,
+    }
+}
+
+fn abstract_value_from_json(node: &serde_json::Value) -> Option<AbstractValue> {
+    match node {
+        serde_json::Value::Object(entries) => {
+            let mut members = std::collections::BTreeMap::new();
+            for (key, value) in entries {
+                members.insert(key.clone(), abstract_value_from_json(value)?);
+            }
+            Some(AbstractValue::Dict(members))
+        }
+        serde_json::Value::Array(items) => Some(AbstractValue::List(
+            items
+                .iter()
+                .map(abstract_value_from_json)
+                .collect::<Option<Vec<_>>>()?,
+        )),
+        serde_json::Value::String(text) => Some(AbstractValue::StringSet(
+            [text.clone()].into_iter().collect(),
+        )),
+        serde_json::Value::Bool(_) | serde_json::Value::Number(_) | serde_json::Value::Null => {
+            Some(AbstractValue::Unknown)
+        }
+    }
+}
+
 pub(super) fn eval_from_yaml_result(result: EvalResult) -> EvalResult {
+    if let Some(folded) = literal_decoded_value(result.value.as_ref(), DecodeFormat::Yaml) {
+        return EvalResult::with_effects(Some(folded), result.effects);
+    }
     let paths = serialization_payload_paths(&result.value);
     let round_trips_yaml = !paths.is_empty()
         && paths

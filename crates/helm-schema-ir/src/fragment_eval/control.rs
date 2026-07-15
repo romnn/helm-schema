@@ -393,7 +393,7 @@ impl Interpreter<'_> {
                     }
                     self.push_predicate(Predicate::from(guard.clone()));
                 }
-            } else if !conjunct.is_trivial() {
+            } else if !matches!(conjunct, Predicate::True) {
                 for path in conjunct.value_paths() {
                     self.push_read(&path, &[]);
                 }
@@ -460,7 +460,7 @@ impl Interpreter<'_> {
                 for guard in &conjunct.contract_guards() {
                     self.push_predicate(Predicate::from(guard.clone()));
                 }
-            } else if !conjunct.is_trivial() {
+            } else if !matches!(conjunct, Predicate::True) {
                 self.push_predicate(conjunct);
             }
         }

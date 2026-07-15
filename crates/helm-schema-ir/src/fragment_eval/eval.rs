@@ -833,7 +833,10 @@ impl<'a> Interpreter<'a> {
     }
 
     pub(super) fn push_predicate(&mut self, predicate: Predicate) {
-        if !predicate.is_trivial() && !self.active_predicates.contains(&predicate) {
+        // `False` is load-bearing: a decoded-dead branch (a `hasKey` probe
+        // into a folded literal table that misses) must poison the captures
+        // recorded under it. Only `True` is skippable noise.
+        if !matches!(predicate, Predicate::True) && !self.active_predicates.contains(&predicate) {
             self.active_predicates.push(predicate);
         }
     }

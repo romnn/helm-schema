@@ -1,5 +1,62 @@
 use super::*;
 
+/// A literal YAML table decoded with `fromYaml` constant-folds into a
+/// typed abstract dict (the F99 literal-data foundation): membership
+/// probes over it decode to exact live/dead branches, so a `fail` behind
+/// a present key binds its validator while one behind an absent key
+/// never fires.
+#[test]
+fn literal_from_yaml_table_folds_into_exact_membership_branches() {
+    let src = indoc! {r#"
+        {{- $removed := `
+        legacyMode:
+          since: "1.16"
+        ` | fromYaml }}
+        {{- if hasKey $removed "legacyMode" }}
+        {{- if .Values.legacyMode }}
+        {{ fail "legacyMode has been removed" }}
+        {{- end }}
+        {{- end }}
+        {{- if hasKey $removed "activeMode" }}
+        {{- if .Values.activeMode }}
+        {{ fail "unreachable: activeMode is not in the table" }}
+        {{- end }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+    "#};
+    let values_yaml = indoc! {"
+        legacyMode: false
+        activeMode: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "legacyMode": true }),
+            false,
+            "the folded table contains legacyMode, so its fail binds",
+        ),
+        (
+            serde_json::json!({ "legacyMode": false }),
+            true,
+            "falsy legacyMode renders",
+        ),
+        (
+            serde_json::json!({ "activeMode": true }),
+            true,
+            "the dead absent-key branch must not bind its fail",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// An explicit `fail` branch is a VALIDATOR: rendering aborts whenever its
 /// guards hold, so valid inputs must falsify the failing test wherever the
 /// outer conditions hold (kyverno fails on non-string image tags inside a
