@@ -1061,3 +1061,35 @@ fn root_values_merge_records_the_fallback_values_subtree() {
         }])
     );
 }
+
+#[test]
+fn coercing_arithmetic_erases_raw_operand_shape() {
+    // `mulf`/`divf`/`floor` cast operands through Sprig's numeric coercion,
+    // so the raw operand's kind is unconstrained (Traefik's goMemLimit
+    // arithmetic accepts numeric strings and junk that coerces to zero).
+    let result = eval_expr(
+        &single_expr(r#"mulf .Values.pct 1048576.0 | divf 1048576.0 | floor"#),
+        &EvalEnv::default(),
+    );
+    assert!(
+        result.effects.shape_erased_paths.contains("pct"),
+        "arithmetic operand shape is coerced, not constrained: {:?}",
+        result.effects.shape_erased_paths
+    );
+    sim_assert_eq!(
+        have: result.effects.type_hints.get("pct"),
+        want: None,
+        "arithmetic must not type its raw operand"
+    );
+}
+
+#[test]
+fn division_operand_is_not_arithmetic_erased() {
+    // Division/modulo keep a real zero-denominator precondition, so they are
+    // deliberately excluded from the coercing-arithmetic widening.
+    let result = eval_expr(&single_expr(r#"div .Values.count 2"#), &EvalEnv::default());
+    assert!(
+        !result.effects.shape_erased_paths.contains("count"),
+        "div is not part of the coercing-arithmetic catalog"
+    );
+}

@@ -2802,6 +2802,33 @@
       "allOf": [
         {
           "if": {
+            "properties": {
+              "enableHA": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enableHA"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "deployment": {
+                "additionalProperties": {},
+                "properties": {
+                  "replicas": {
+                    "description": "If you wish to run multiple replicas set reloader.enableHA = true",
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
             "anyOf": [
               {
                 "not": {

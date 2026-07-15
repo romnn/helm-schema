@@ -6,8 +6,9 @@ use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 
 use helm_schema_ast::{
-    is_merge_function, is_provenance_preserving_function, is_string_predicate_function,
-    is_string_splitting_function, is_string_transform_function, is_total_numeric_cast_function,
+    is_coercing_arithmetic_function, is_merge_function, is_provenance_preserving_function,
+    is_string_predicate_function, is_string_splitting_function, is_string_transform_function,
+    is_total_numeric_cast_function,
 };
 
 mod collections;
@@ -129,18 +130,33 @@ pub(crate) fn eval_call_with_helper_calls(
             }
             result
         }
-        // Constant integer arithmetic over statically known operands
-        // (`add1 $index` on an unrolled iteration ordinal).
-        "add1" if args.len() == 1 => {
+        // Coercing Sprig arithmetic (`mulf`, `add`, `floor`, …): every
+        // values-backed operand passes through `cast.ToInt64`/`ToFloat64`
+        // before the computation, so the arithmetic constrains nothing
+        // about the raw operand's kind (a numeric string or junk that
+        // coerces to zero all render); the result is derived numeric
+        // content. Traefik's `goMemLimitPercentage` reaches `mulf` this way.
+        function if is_coercing_arithmetic_function(function) => {
             let mut result = eval_all_args(args, env, resolver);
-            let incremented = eval_expr_with_helper_calls(&args[0], env, resolver)
-                .value
-                .as_ref()
-                .and_then(concrete_integer)
-                .map(|value| value + 1);
-            if let Some(value) = incremented {
+            for arg in args {
+                let operand = eval_expr_with_helper_calls(arg, env, resolver);
+                record_total_conversion_effects(
+                    identity_value_paths(&operand.value),
+                    &mut result.effects,
+                );
+            }
+            // Constant-fold `add1` over a statically known integer so an
+            // unrolled-iteration ordinal stays exact (F99 last-element
+            // arithmetic).
+            if function == "add1"
+                && let [arg] = args
+                && let Some(value) = eval_expr_with_helper_calls(arg, env, resolver)
+                    .value
+                    .as_ref()
+                    .and_then(concrete_integer)
+            {
                 result.value = Some(AbstractValue::StringSet(
-                    [value.to_string()].into_iter().collect(),
+                    [(value + 1).to_string()].into_iter().collect(),
                 ));
             }
             result
@@ -356,6 +372,29 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 record_total_conversion_effects(identity_value_paths(&current.value), &mut effects);
                 merge_arg_effects(args, env, resolver, &mut effects);
                 EvalResult::with_effects(current.value, effects)
+            }
+            // The piped operand and every explicit operand of a coercing
+            // arithmetic stage are coerced before the computation: their raw
+            // kinds are unconstrained (`… | mulf $percentage`).
+            function if is_coercing_arithmetic_function(function) => {
+                let mut effects = current.effects;
+                record_total_conversion_effects(identity_value_paths(&current.value), &mut effects);
+                for arg in args {
+                    let operand = eval_expr_with_helper_calls(arg, env, resolver);
+                    record_total_conversion_effects(
+                        identity_value_paths(&operand.value),
+                        &mut effects,
+                    );
+                    effects.merge(operand.effects);
+                }
+                let value = AbstractValue::widened(
+                    current
+                        .value
+                        .as_ref()
+                        .map(AbstractValue::paths)
+                        .unwrap_or_default(),
+                );
+                EvalResult::with_effects(value, effects)
             }
             function
                 if is_string_splitting_function(function)

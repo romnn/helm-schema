@@ -114,6 +114,35 @@ pub fn is_total_numeric_cast_function(function: &str) -> bool {
     matches!(function, "int" | "int64" | "float64")
 }
 
+/// Returns whether a function is a COERCING Sprig arithmetic operation:
+/// its numeric operands pass through `cast.ToInt64`/`cast.ToFloat64`
+/// before the computation, so any scalar (a numeric string, or junk that
+/// coerces to zero) is accepted and the result is derived numeric content.
+/// The raw operand shape is therefore not constrained by the arithmetic —
+/// only its evaluated value participates. Division and modulo are
+/// intentionally EXCLUDED: a zero denominator is a genuine precondition,
+/// so they must not be widened by this analogy.
+pub fn is_coercing_arithmetic_function(function: &str) -> bool {
+    matches!(
+        function,
+        "add"
+            | "add1"
+            | "sub"
+            | "mul"
+            | "max"
+            | "min"
+            | "floor"
+            | "ceil"
+            | "round"
+            | "addf"
+            | "add1f"
+            | "subf"
+            | "mulf"
+            | "maxf"
+            | "minf"
+    )
+}
+
 /// Returns whether a function consumes a Go `string` subject as its LAST
 /// parameter (Sprig's subject-last convention) and fails template evaluation
 /// for non-string values, without transforming template output flow itself.

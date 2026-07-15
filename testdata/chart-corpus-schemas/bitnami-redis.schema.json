@@ -137,20 +137,19 @@
       ],
       "description": "Additional endpoints to scrape (e.g sentinel)"
     },
-    "schema100": {
-      "description": "Extra ports to expose (normally used with the `sidecar` value)",
-      "items": {},
-      "type": "array"
+    "schema10": {
+      "description": "Persistent Volume storage class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner",
+      "type": "string"
     },
-    "schema101": {
+    "schema100": {
       "description": "[object] Minimum number/percentage of pods that should remain scheduled",
       "type": "string"
     },
-    "schema103": {
+    "schema102": {
       "description": "Volume retention behavior that applies when the StatefulSet is deleted",
       "type": "string"
     },
-    "schema105": {
+    "schema104": {
       "additionalProperties": {},
       "properties": {
         "containerSecurityContext": {
@@ -162,7 +161,7 @@
         }
       }
     },
-    "schema106": {
+    "schema105": {
       "properties": {
         "architecture": {
           "enum": [
@@ -175,28 +174,28 @@
       ],
       "type": "object"
     },
-    "schema107": {
+    "schema106": {
       "additionalProperties": {},
       "description": "Additional custom labels for the PVC",
       "type": "object"
     },
-    "schema108": {
+    "schema107": {
       "description": "Limit of how many samples should be scraped from every Pod",
       "type": "boolean"
     },
-    "schema109": {
+    "schema108": {
       "description": "Set container's Security Context read-only root filesystem",
       "type": "boolean"
     },
     "schema11": {
-      "description": "Persistent Volume storage class\nIf defined, storageClassName: <storageClass>\nIf set to \"-\", storageClassName: \"\", which disables dynamic provisioning\nIf undefined (the default) or set to null, no storageClassName spec is set, choosing the default provisioner",
+      "description": "Session Affinity for Kubernetes service, can be \"None\" or \"ClientIP\"\nIf \"ClientIP\", consecutive client requests will be directed to the same Pod\nref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
       "type": "string"
     },
-    "schema112": {
+    "schema111": {
       "description": "Specify honorLabels parameter to add the scrape endpoint",
       "type": "boolean"
     },
-    "schema113": {
+    "schema112": {
       "additionalProperties": {},
       "properties": {
         "containerPorts": {
@@ -208,7 +207,7 @@
         }
       }
     },
-    "schema114": {
+    "schema113": {
       "additionalProperties": {},
       "properties": {
         "readinessProbe": {
@@ -220,15 +219,15 @@
         }
       }
     },
-    "schema115": {
+    "schema114": {
       "description": "Additional endpoints to scrape (e.g sentinel)",
       "items": {},
       "type": "array"
     },
-    "schema116": {
+    "schema115": {
       "description": "Labels from the Kubernetes pod to be transferred to the created metrics"
     },
-    "schema117": {
+    "schema116": {
       "additionalProperties": {},
       "properties": {
         "livenessProbe": {
@@ -240,7 +239,7 @@
         }
       }
     },
-    "schema118": {
+    "schema117": {
       "not": {
         "properties": {
           "allowExternal": {}
@@ -251,7 +250,7 @@
         "type": "object"
       }
     },
-    "schema119": {
+    "schema118": {
       "additionalProperties": {},
       "properties": {
         "startupProbe": {
@@ -263,72 +262,24 @@
         }
       }
     },
-    "schema12": {
-      "description": "Session Affinity for Kubernetes service, can be \"None\" or \"ClientIP\"\nIf \"ClientIP\", consecutive client requests will be directed to the same Pod\nref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
-      "type": "string"
-    },
-    "schema124": {
+    "schema123": {
       "additionalProperties": {},
       "description": "Custom PVC data source",
       "type": "object"
     },
-    "schema128": {
+    "schema127": {
       "description": "Initial delay seconds for readinessProbe",
       "type": "integer"
     },
-    "schema129": {
+    "schema128": {
       "description": "Initial delay seconds for livenessProbe",
       "type": "integer"
     },
-    "schema130": {
+    "schema129": {
       "description": "Failure threshold for readinessProbe",
       "type": "integer"
     },
-    "schema131": {
-      "description": "Success threshold for readinessProbe",
-      "type": "integer"
-    },
-    "schema132": {
-      "description": "Failure threshold for livenessProbe",
-      "type": "integer"
-    },
-    "schema133": {
-      "description": "Success threshold for livenessProbe",
-      "type": "integer"
-    },
-    "schema134": {
-      "properties": {
-        "enabled": {}
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "schema135": {
-      "description": "Period seconds for readinessProbe",
-      "type": "integer"
-    },
-    "schema136": {
-      "description": "Period seconds for livenessProbe",
-      "type": "integer"
-    },
-    "schema137": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema139": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "schema14": {
+    "schema13": {
       "not": {
         "properties": {
           "replica": {
@@ -355,14 +306,58 @@
         "type": "object"
       }
     },
-    "schema140": {
+    "schema130": {
+      "description": "Success threshold for readinessProbe",
+      "type": "integer"
+    },
+    "schema131": {
+      "description": "Failure threshold for livenessProbe",
+      "type": "integer"
+    },
+    "schema132": {
+      "description": "Success threshold for livenessProbe",
+      "type": "integer"
+    },
+    "schema133": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "schema134": {
+      "description": "Period seconds for readinessProbe",
+      "type": "integer"
+    },
+    "schema135": {
+      "description": "Period seconds for livenessProbe",
+      "type": "integer"
+    },
+    "schema136": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema138": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema139": {
       "description": "Provide a medium for `emptyDir` volumes."
     },
-    "schema141": {
+    "schema140": {
       "additionalProperties": {},
       "type": "object"
     },
-    "schema16": {
+    "schema15": {
       "not": {
         "properties": {
           "networkPolicy": {
@@ -389,7 +384,7 @@
         "type": "object"
       }
     },
-    "schema17": {
+    "schema16": {
       "not": {
         "properties": {
           "replica": {
@@ -416,18 +411,7 @@
         "type": "object"
       }
     },
-    "schema2": {
-      "additionalProperties": {},
-      "description": "ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport\nNOTE: choose port between <30000-32767>\nNOTE: By leaving these values blank, they will be generated by ports-configmap\nIf setting manually, please leave at least replica.replicaCount + 1 in between sentinel.service.nodePorts.redis and sentinel.service.nodePorts.sentinel to take into account the ports that will be created while incrementing that base port",
-      "properties": {
-        "redis": {
-          "description": "Node port for Redis(R)",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "schema21": {
+    "schema20": {
       "not": {
         "properties": {
           "replica": {
@@ -454,7 +438,7 @@
         "type": "object"
       }
     },
-    "schema22": {
+    "schema21": {
       "not": {
         "properties": {
           "replica": {
@@ -481,7 +465,7 @@
         "type": "object"
       }
     },
-    "schema23": {
+    "schema22": {
       "not": {
         "properties": {
           "replica": {
@@ -508,15 +492,15 @@
         "type": "object"
       }
     },
-    "schema24": {
+    "schema23": {
       "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
     },
-    "schema25": {
+    "schema24": {
       "additionalProperties": {},
       "description": "Additional custom annotations for the ServiceAccount\nPod Disruption Budget configuration\nref: https://kubernetes.io/docs/tasks/run-application/configure-pdb",
       "type": "object"
     },
-    "schema26": {
+    "schema25": {
       "not": {
         "properties": {
           "master": {
@@ -543,7 +527,7 @@
         "type": "object"
       }
     },
-    "schema27": {
+    "schema26": {
       "properties": {
         "replica": {
           "properties": {
@@ -572,7 +556,7 @@
       ],
       "type": "object"
     },
-    "schema28": {
+    "schema27": {
       "not": {
         "properties": {
           "replica": {
@@ -599,7 +583,7 @@
         "type": "object"
       }
     },
-    "schema30": {
+    "schema29": {
       "not": {
         "properties": {
           "master": {
@@ -626,10 +610,10 @@
         "type": "object"
       }
     },
-    "schema34": {
+    "schema33": {
       "description": "Whether to auto mount the service account token\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server"
     },
-    "schema35": {
+    "schema34": {
       "additionalProperties": {},
       "properties": {
         "additionalAnnotations": {
@@ -648,7 +632,7 @@
         }
       }
     },
-    "schema38": {
+    "schema37": {
       "not": {
         "properties": {
           "metrics": {
@@ -675,7 +659,7 @@
         "type": "object"
       }
     },
-    "schema39": {
+    "schema38": {
       "not": {
         "anyOf": [
           {
@@ -705,100 +689,7 @@
         ]
       }
     },
-    "schema41": {
-      "description": "The number of old history to retain to allow rollback\nNOTE: Explicitly setting this field to 0, will result in cleaning up all the history, breaking ability to rollback",
-      "type": "integer"
-    },
-    "schema43": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "architecture": {}
-            },
-            "required": [
-              "architecture"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "architecture": {
-              "enum": [
-                "replication"
-              ]
-            }
-          },
-          "required": [
-            "architecture"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "schema44": {
-      "description": "Redis(R) master service external traffic policy\nref: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip"
-    },
-    "schema45": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "channels": {}
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "commands": {},
-            "enabled": {},
-            "keys": {},
-            "password": {}
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "schema46": {
-      "not": {
-        "properties": {
-          "networkPolicy": {
-            "properties": {
-              "allowExternalEgress": {}
-            },
-            "required": [
-              "allowExternalEgress"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "networkPolicy"
-        ],
-        "type": "object"
-      }
-    },
-    "schema47": {
-      "not": {
-        "properties": {
-          "auth": {
-            "properties": {
-              "usePasswordFileFromSecret": {}
-            },
-            "required": [
-              "usePasswordFileFromSecret"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "auth"
-        ],
-        "type": "object"
-      }
-    },
-    "schema5": {
+    "schema4": {
       "anyOf": [
         {
           "properties": {
@@ -860,7 +751,100 @@
         }
       ]
     },
-    "schema50": {
+    "schema40": {
+      "description": "The number of old history to retain to allow rollback\nNOTE: Explicitly setting this field to 0, will result in cleaning up all the history, breaking ability to rollback",
+      "type": "integer"
+    },
+    "schema42": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "architecture": {}
+            },
+            "required": [
+              "architecture"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "architecture": {
+              "enum": [
+                "replication"
+              ]
+            }
+          },
+          "required": [
+            "architecture"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema43": {
+      "description": "Redis(R) master service external traffic policy\nref: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip"
+    },
+    "schema44": {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "channels": {}
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "commands": {},
+            "enabled": {},
+            "keys": {},
+            "password": {}
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "schema45": {
+      "not": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "allowExternalEgress": {}
+            },
+            "required": [
+              "allowExternalEgress"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "networkPolicy"
+        ],
+        "type": "object"
+      }
+    },
+    "schema46": {
+      "not": {
+        "properties": {
+          "auth": {
+            "properties": {
+              "usePasswordFileFromSecret": {}
+            },
+            "required": [
+              "usePasswordFileFromSecret"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "auth"
+        ],
+        "type": "object"
+      }
+    },
+    "schema49": {
       "not": {
         "properties": {
           "networkPolicy": {
@@ -879,12 +863,12 @@
         "type": "object"
       }
     },
-    "schema52": {
+    "schema51": {
       "additionalProperties": {},
       "description": "Additional settings for the sessionAffinity\nsessionAffinityConfig:\nclientIP:\ntimeoutSeconds: 300",
       "type": "object"
     },
-    "schema53": {
+    "schema52": {
       "properties": {
         "replica": {
           "properties": {
@@ -907,7 +891,7 @@
       ],
       "type": "object"
     },
-    "schema56": {
+    "schema55": {
       "not": {
         "properties": {
           "networkPolicy": {
@@ -926,7 +910,7 @@
         "type": "object"
       }
     },
-    "schema57": {
+    "schema56": {
       "not": {
         "properties": {
           "auth": {
@@ -945,7 +929,7 @@
         "type": "object"
       }
     },
-    "schema58": {
+    "schema57": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -964,7 +948,7 @@
         "type": "object"
       }
     },
-    "schema59": {
+    "schema58": {
       "properties": {
         "service": {
           "properties": {
@@ -985,10 +969,30 @@
       ],
       "type": "object"
     },
-    "schema60": {
+    "schema59": {
       "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the common.names.fullname template"
     },
-    "schema62": {
+    "schema6": {
+      "additionalProperties": {},
+      "properties": {
+        "service": {
+          "additionalProperties": {},
+          "description": "Redis(R) Sentinel service parameters\nNote: values passed in this section also configure the master service, unless the sentinel.masterService is explicitly overridden.",
+          "properties": {
+            "ports": {
+              "additionalProperties": {},
+              "properties": {
+                "sentinel": {
+                  "description": "Redis(R) service port for Redis(R) Sentinel",
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schema61": {
       "properties": {
         "service": {
           "properties": {
@@ -1009,7 +1013,7 @@
       ],
       "type": "object"
     },
-    "schema64": {
+    "schema63": {
       "properties": {
         "master": {
           "properties": {
@@ -1030,31 +1034,26 @@
       ],
       "type": "object"
     },
+    "schema69": {
+      "description": "Enable master service pointing to the current master (experimental)\nNOTE: rbac.create need to be set to true",
+      "type": "boolean"
+    },
     "schema7": {
       "additionalProperties": {},
       "properties": {
-        "service": {
+        "serviceAccount": {
           "additionalProperties": {},
-          "description": "Redis(R) Sentinel service parameters\nNote: values passed in this section also configure the master service, unless the sentinel.masterService is explicitly overridden.",
+          "description": "ServiceAccount configuration",
           "properties": {
-            "ports": {
-              "additionalProperties": {},
-              "properties": {
-                "sentinel": {
-                  "description": "Redis(R) service port for Redis(R) Sentinel",
-                  "type": "integer"
-                }
-              }
+            "automountServiceAccountToken": {
+              "description": "Whether to auto mount the service account token\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server",
+              "type": "boolean"
             }
           }
         }
       }
     },
-    "schema70": {
-      "description": "Enable master service pointing to the current master (experimental)\nNOTE: rbac.create need to be set to true",
-      "type": "boolean"
-    },
-    "schema73": {
+    "schema72": {
       "not": {
         "properties": {
           "service": {
@@ -1073,12 +1072,12 @@
         "type": "object"
       }
     },
-    "schema74": {
+    "schema73": {
       "additionalProperties": {},
       "description": "Additional labels to match for the PVC\ne.g:\nselector:\nmatchLabels:\napp: my-app",
       "type": "object"
     },
-    "schema75": {
+    "schema74": {
       "anyOf": [
         {
           "type": "array"
@@ -1092,7 +1091,7 @@
       ],
       "description": "Pod labels to match to allow traffic from other namespaces"
     },
-    "schema76": {
+    "schema75": {
       "not": {
         "properties": {
           "auth": {
@@ -1111,7 +1110,7 @@
         "type": "object"
       }
     },
-    "schema78": {
+    "schema77": {
       "additionalProperties": {},
       "properties": {
         "enabled": {
@@ -1120,7 +1119,7 @@
         }
       }
     },
-    "schema79": {
+    "schema78": {
       "anyOf": [
         {
           "type": "array"
@@ -1134,22 +1133,7 @@
       ],
       "description": "Labels to match to allow traffic from other namespaces"
     },
-    "schema8": {
-      "additionalProperties": {},
-      "properties": {
-        "serviceAccount": {
-          "additionalProperties": {},
-          "description": "ServiceAccount configuration",
-          "properties": {
-            "automountServiceAccountToken": {
-              "description": "Whether to auto mount the service account token\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server",
-              "type": "boolean"
-            }
-          }
-        }
-      }
-    },
-    "schema82": {
+    "schema81": {
       "properties": {
         "service": {
           "properties": {
@@ -1166,7 +1150,7 @@
       ],
       "type": "object"
     },
-    "schema83": {
+    "schema82": {
       "anyOf": [
         {
           "type": "array"
@@ -1183,11 +1167,11 @@
       ],
       "description": "Persistent Volume access modes"
     },
-    "schema85": {
+    "schema84": {
       "description": "Whether information about services should be injected into pod's environment variable",
       "type": "boolean"
     },
-    "schema86": {
+    "schema85": {
       "anyOf": [
         {
           "type": "array"
@@ -1198,40 +1182,40 @@
       ],
       "description": "Metrics RelabelConfigs to apply to samples before scraping."
     },
-    "schema87": {
+    "schema86": {
       "description": "How many seconds a pod needs to be ready before killing the next, during update",
       "type": "integer"
     },
-    "schema88": {
+    "schema87": {
       "description": "Override default container command (useful when using custom images)",
       "items": {},
       "type": "array"
     },
-    "schema89": {
+    "schema88": {
       "description": "Volume retention behavior when the replica count of the StatefulSet is reduced",
       "type": "string"
     },
-    "schema90": {
+    "schema89": {
       "additionalProperties": {},
       "description": "Custom readinessProbe that overrides the default one",
       "type": "object"
     },
-    "schema91": {
+    "schema90": {
       "additionalProperties": {},
       "description": "Custom livenessProbe that overrides the default one",
       "type": "object"
     },
-    "schema92": {
+    "schema91": {
       "additionalProperties": {},
       "description": "Custom startupProbe that overrides the default one",
       "type": "object"
     },
-    "schema93": {
+    "schema92": {
       "additionalProperties": {},
       "description": "[object,nullable] Set SELinux options in container",
       "type": "object"
     },
-    "schema94": {
+    "schema93": {
       "additionalProperties": {},
       "properties": {
         "pullPolicy": {
@@ -1239,16 +1223,16 @@
         }
       }
     },
-    "schema95": {
+    "schema94": {
       "description": "Override default container args (useful when using custom images)",
       "items": {},
       "type": "array"
     },
-    "schema97": {
+    "schema96": {
       "description": "Controls if and how PVCs are deleted during the lifecycle of a StatefulSet",
       "type": "boolean"
     },
-    "schema99": {
+    "schema98": {
       "properties": {
         "architecture": {
           "not": {
@@ -1262,6 +1246,11 @@
         "architecture"
       ],
       "type": "object"
+    },
+    "schema99": {
+      "description": "Extra ports to expose (normally used with the `sidecar` value)",
+      "items": {},
+      "type": "array"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1287,7 +1276,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -1336,7 +1325,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -1362,7 +1351,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema47"
+                    "$ref": "#/$defs/schema46"
                   },
                   {
                     "properties": {
@@ -1388,7 +1377,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema57"
+                    "$ref": "#/$defs/schema56"
                   },
                   {
                     "properties": {
@@ -1412,7 +1401,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -1442,7 +1431,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -1466,13 +1455,13 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema57"
+                      "$ref": "#/$defs/schema56"
                     },
                     {
                       "properties": {
@@ -1524,7 +1513,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -1605,7 +1594,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -1650,7 +1639,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema47"
+                    "$ref": "#/$defs/schema46"
                   },
                   {
                     "properties": {
@@ -1676,7 +1665,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema57"
+                    "$ref": "#/$defs/schema56"
                   },
                   {
                     "properties": {
@@ -1700,7 +1689,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -1730,7 +1719,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -1773,13 +1762,13 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema57"
+                      "$ref": "#/$defs/schema56"
                     },
                     {
                       "properties": {
@@ -1831,7 +1820,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -1929,7 +1918,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -1974,7 +1963,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema47"
+                    "$ref": "#/$defs/schema46"
                   },
                   {
                     "properties": {
@@ -2000,7 +1989,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema57"
+                    "$ref": "#/$defs/schema56"
                   },
                   {
                     "properties": {
@@ -2024,7 +2013,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -2054,7 +2043,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -2097,13 +2086,13 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema57"
+                      "$ref": "#/$defs/schema56"
                     },
                     {
                       "properties": {
@@ -2185,7 +2174,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -2249,7 +2238,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema47"
+                    "$ref": "#/$defs/schema46"
                   },
                   {
                     "properties": {
@@ -2275,7 +2264,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema57"
+                    "$ref": "#/$defs/schema56"
                   },
                   {
                     "properties": {
@@ -2299,7 +2288,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -2329,7 +2318,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -2391,13 +2380,13 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema57"
+                      "$ref": "#/$defs/schema56"
                     },
                     {
                       "properties": {
@@ -2473,7 +2462,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -2554,7 +2543,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -2599,7 +2588,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -2658,7 +2647,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -2727,7 +2716,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -2809,7 +2798,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -2858,7 +2847,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema76"
+                        "$ref": "#/$defs/schema75"
                       },
                       {
                         "properties": {
@@ -2915,7 +2904,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema47"
+                        "$ref": "#/$defs/schema46"
                       },
                       {
                         "properties": {
@@ -2942,7 +2931,7 @@
                     "not": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema57"
+                          "$ref": "#/$defs/schema56"
                         },
                         {
                           "properties": {
@@ -2975,7 +2964,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -3024,7 +3013,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema47"
+                        "$ref": "#/$defs/schema46"
                       },
                       {
                         "properties": {
@@ -3051,7 +3040,7 @@
                     "not": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema57"
+                          "$ref": "#/$defs/schema56"
                         },
                         {
                           "properties": {
@@ -3124,7 +3113,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema76"
+                        "$ref": "#/$defs/schema75"
                       },
                       {
                         "properties": {
@@ -3206,7 +3195,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -3255,7 +3244,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema76"
+                        "$ref": "#/$defs/schema75"
                       },
                       {
                         "properties": {
@@ -3312,7 +3301,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema47"
+                        "$ref": "#/$defs/schema46"
                       },
                       {
                         "properties": {
@@ -3339,7 +3328,7 @@
                     "not": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema57"
+                          "$ref": "#/$defs/schema56"
                         },
                         {
                           "properties": {
@@ -3372,7 +3361,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -3421,7 +3410,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema47"
+                        "$ref": "#/$defs/schema46"
                       },
                       {
                         "properties": {
@@ -3448,7 +3437,7 @@
                     "not": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema57"
+                          "$ref": "#/$defs/schema56"
                         },
                         {
                           "properties": {
@@ -3521,7 +3510,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema76"
+                        "$ref": "#/$defs/schema75"
                       },
                       {
                         "properties": {
@@ -3590,7 +3579,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -3634,7 +3623,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema56"
+            "$ref": "#/$defs/schema55"
           },
           {
             "properties": {
@@ -3683,7 +3672,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema56"
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -3711,7 +3700,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -3735,13 +3724,13 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema46"
+                      "$ref": "#/$defs/schema45"
                     },
                     {
                       "properties": {
@@ -3789,14 +3778,14 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -3853,7 +3842,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -3878,7 +3867,7 @@
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/schema43"
+                      "$ref": "#/$defs/schema42"
                     }
                   ]
                 }
@@ -3891,7 +3880,7 @@
         "additionalProperties": {},
         "properties": {
           "master": {
-            "$ref": "#/$defs/schema113"
+            "$ref": "#/$defs/schema112"
           }
         }
       }
@@ -3920,7 +3909,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema43"
+              "$ref": "#/$defs/schema42"
             }
           ]
         }
@@ -3929,7 +3918,7 @@
         "additionalProperties": {},
         "properties": {
           "master": {
-            "$ref": "#/$defs/schema105"
+            "$ref": "#/$defs/schema104"
           }
         }
       }
@@ -3979,7 +3968,7 @@
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/schema43"
+                  "$ref": "#/$defs/schema42"
                 }
               ]
             }
@@ -4041,7 +4030,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema29"
               },
               {
                 "properties": {
@@ -4073,10 +4062,10 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema106"
+            "$ref": "#/$defs/schema105"
           },
           {
-            "$ref": "#/$defs/schema64"
+            "$ref": "#/$defs/schema63"
           },
           {
             "not": {
@@ -4120,7 +4109,7 @@
                 "description": "Persistence parameters\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
                 "properties": {
                   "accessModes": {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema82"
                   }
                 }
               }
@@ -4135,7 +4124,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema29"
               },
               {
                 "properties": {
@@ -4167,10 +4156,10 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema106"
+            "$ref": "#/$defs/schema105"
           },
           {
-            "$ref": "#/$defs/schema64"
+            "$ref": "#/$defs/schema63"
           },
           {
             "not": {
@@ -4216,7 +4205,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema139"
+                        "$ref": "#/$defs/schema138"
                       },
                       {
                         "not": {
@@ -4278,7 +4267,7 @@
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/schema43"
+                  "$ref": "#/$defs/schema42"
                 }
               ]
             }
@@ -4300,7 +4289,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/schema139"
+                    "$ref": "#/$defs/schema138"
                   },
                   {
                     "maximum": 0,
@@ -4362,7 +4351,7 @@
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/schema43"
+                  "$ref": "#/$defs/schema42"
                 }
               ]
             }
@@ -4450,7 +4439,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -4547,7 +4536,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -4617,7 +4606,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/schema39"
+                "$ref": "#/$defs/schema38"
               }
             ]
           },
@@ -4677,7 +4666,7 @@
                 "not": {
                   "properties": {
                     "master": {
-                      "$ref": "#/$defs/schema82"
+                      "$ref": "#/$defs/schema81"
                     }
                   },
                   "required": [
@@ -4791,7 +4780,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -4882,7 +4871,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/schema39"
+                "$ref": "#/$defs/schema38"
               }
             ]
           },
@@ -4915,7 +4904,7 @@
                     {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema56"
+                          "$ref": "#/$defs/schema55"
                         },
                         {
                           "properties": {
@@ -4942,7 +4931,7 @@
                       "not": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema50"
+                            "$ref": "#/$defs/schema49"
                           },
                           {
                             "properties": {
@@ -4992,7 +4981,7 @@
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/schema43"
+                      "$ref": "#/$defs/schema42"
                     }
                   ]
                 }
@@ -5066,7 +5055,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -5136,7 +5125,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/schema39"
+                "$ref": "#/$defs/schema38"
               }
             ]
           },
@@ -5184,7 +5173,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema26"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -5218,7 +5207,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema99"
+                "$ref": "#/$defs/schema98"
               },
               {
                 "not": {
@@ -5249,7 +5238,7 @@
         "additionalProperties": {},
         "properties": {
           "master": {
-            "$ref": "#/$defs/schema8"
+            "$ref": "#/$defs/schema7"
           }
         }
       }
@@ -5260,7 +5249,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema26"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -5294,7 +5283,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema99"
+                "$ref": "#/$defs/schema98"
               },
               {
                 "not": {
@@ -5384,7 +5373,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema56"
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -5456,7 +5445,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -5503,7 +5492,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -5534,7 +5523,7 @@
         "additionalProperties": {},
         "properties": {
           "metrics": {
-            "$ref": "#/$defs/schema113"
+            "$ref": "#/$defs/schema112"
           }
         }
       }
@@ -5564,7 +5553,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -5592,7 +5581,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -5623,7 +5612,7 @@
         "additionalProperties": {},
         "properties": {
           "metrics": {
-            "$ref": "#/$defs/schema105"
+            "$ref": "#/$defs/schema104"
           }
         }
       }
@@ -5651,7 +5640,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -5766,7 +5755,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -5832,7 +5821,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -5903,7 +5892,7 @@
         "additionalProperties": {},
         "properties": {
           "metrics": {
-            "$ref": "#/$defs/schema117"
+            "$ref": "#/$defs/schema116"
           }
         }
       }
@@ -6041,7 +6030,7 @@
                 "description": "uncomment in order to scrape sentinel metrics, also to in order distinguish between Sentinel and Redis container metrics\nadd metricRelabelings with label like app=redis to main redis pod-monitor port\n- interval: \"30s\"\npath: \"/scrape\"\nport: \"http-metrics\"\nparams:\ntarget: [\"localhost:26379\"]\nmetricRelabelings:\n- targetLabel: \"app\"\nreplacement: \"sentinel\"\nPrometheus Pod Monitor\nref: https://github.com/coreos/prometheus-operator\nhttps://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#podmonitor",
                 "properties": {
                   "relabelings": {
-                    "$ref": "#/$defs/schema86"
+                    "$ref": "#/$defs/schema85"
                   }
                 }
               }
@@ -6151,7 +6140,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -6222,7 +6211,7 @@
         "additionalProperties": {},
         "properties": {
           "metrics": {
-            "$ref": "#/$defs/schema114"
+            "$ref": "#/$defs/schema113"
           }
         }
       }
@@ -6269,7 +6258,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -6345,7 +6334,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -6438,7 +6427,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema38"
+                "$ref": "#/$defs/schema37"
               },
               {
                 "properties": {
@@ -6520,7 +6509,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema38"
+                "$ref": "#/$defs/schema37"
               },
               {
                 "properties": {
@@ -6606,7 +6595,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema38"
+                "$ref": "#/$defs/schema37"
               },
               {
                 "properties": {
@@ -6787,7 +6776,7 @@
                 "description": "Prometheus Service Monitor\nref: https://github.com/coreos/prometheus-operator\nhttps://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint",
                 "properties": {
                   "relabelings": {
-                    "$ref": "#/$defs/schema86"
+                    "$ref": "#/$defs/schema85"
                   }
                 }
               }
@@ -6897,7 +6886,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -6968,7 +6957,7 @@
         "additionalProperties": {},
         "properties": {
           "metrics": {
-            "$ref": "#/$defs/schema119"
+            "$ref": "#/$defs/schema118"
           }
         }
       }
@@ -6987,7 +6976,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema56"
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -7033,7 +7022,7 @@
             "not": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema50"
+                  "$ref": "#/$defs/schema49"
                 },
                 {
                   "properties": {
@@ -7109,7 +7098,7 @@
             "description": "Network Policy configuration\nref: https://kubernetes.io/docs/concepts/services-networking/network-policies/",
             "properties": {
               "ingressNSMatchLabels": {
-                "$ref": "#/$defs/schema79"
+                "$ref": "#/$defs/schema78"
               }
             }
           }
@@ -7122,7 +7111,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema56"
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -7168,7 +7157,7 @@
             "not": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema50"
+                  "$ref": "#/$defs/schema49"
                 },
                 {
                   "properties": {
@@ -7244,7 +7233,7 @@
             "description": "Network Policy configuration\nref: https://kubernetes.io/docs/concepts/services-networking/network-policies/",
             "properties": {
               "ingressNSPodMatchLabels": {
-                "$ref": "#/$defs/schema75"
+                "$ref": "#/$defs/schema74"
               }
             }
           }
@@ -7276,7 +7265,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema56"
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -7330,7 +7319,7 @@
             "not": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema16"
+                  "$ref": "#/$defs/schema15"
                 },
                 {
                   "properties": {
@@ -7478,7 +7467,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema56"
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -7532,7 +7521,7 @@
             "not": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema16"
+                  "$ref": "#/$defs/schema15"
                 },
                 {
                   "properties": {
@@ -7682,7 +7671,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -7731,7 +7720,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -7785,7 +7774,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema16"
+                      "$ref": "#/$defs/schema15"
                     },
                     {
                       "properties": {
@@ -7901,7 +7890,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -7955,7 +7944,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema16"
+                      "$ref": "#/$defs/schema15"
                     },
                     {
                       "properties": {
@@ -8071,7 +8060,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -8098,7 +8087,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema16"
+                      "$ref": "#/$defs/schema15"
                     },
                     {
                       "properties": {
@@ -8156,7 +8145,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -8183,7 +8172,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema16"
+                      "$ref": "#/$defs/schema15"
                     },
                     {
                       "properties": {
@@ -8323,7 +8312,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -8372,7 +8361,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -8426,7 +8415,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema16"
+                      "$ref": "#/$defs/schema15"
                     },
                     {
                       "properties": {
@@ -8542,7 +8531,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -8596,7 +8585,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema16"
+                      "$ref": "#/$defs/schema15"
                     },
                     {
                       "properties": {
@@ -8712,7 +8701,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -8739,7 +8728,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema16"
+                      "$ref": "#/$defs/schema15"
                     },
                     {
                       "properties": {
@@ -8797,7 +8786,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -8824,7 +8813,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema16"
+                      "$ref": "#/$defs/schema15"
                     },
                     {
                       "properties": {
@@ -8932,7 +8921,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -9014,7 +9003,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -9116,7 +9105,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -9163,7 +9152,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -9191,7 +9180,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -9219,7 +9208,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -9271,7 +9260,7 @@
         "additionalProperties": {},
         "properties": {
           "replica": {
-            "$ref": "#/$defs/schema113"
+            "$ref": "#/$defs/schema112"
           }
         }
       }
@@ -9301,14 +9290,14 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -9336,7 +9325,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -9361,7 +9350,7 @@
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/schema43"
+                      "$ref": "#/$defs/schema42"
                     }
                   ]
                 }
@@ -9374,7 +9363,7 @@
         "additionalProperties": {},
         "properties": {
           "replica": {
-            "$ref": "#/$defs/schema105"
+            "$ref": "#/$defs/schema104"
           }
         }
       }
@@ -9383,7 +9372,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -9427,7 +9416,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -9459,7 +9448,7 @@
             "additionalProperties": {},
             "properties": {
               "enableServiceLinks": {
-                "$ref": "#/$defs/schema85"
+                "$ref": "#/$defs/schema84"
               }
             }
           }
@@ -9499,7 +9488,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -9527,7 +9516,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -9576,7 +9565,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -9662,7 +9651,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -9788,7 +9777,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               }
             ]
           },
@@ -9814,7 +9803,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -9839,7 +9828,7 @@
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/schema43"
+                      "$ref": "#/$defs/schema42"
                     }
                   ]
                 }
@@ -9880,7 +9869,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -9933,7 +9922,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema22"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -9965,7 +9954,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -10042,7 +10031,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "failureThreshold": {
-                    "$ref": "#/$defs/schema132"
+                    "$ref": "#/$defs/schema131"
                   }
                 }
               }
@@ -10057,7 +10046,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema22"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -10089,7 +10078,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -10166,7 +10155,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "initialDelaySeconds": {
-                    "$ref": "#/$defs/schema129"
+                    "$ref": "#/$defs/schema128"
                   }
                 }
               }
@@ -10181,7 +10170,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema22"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -10213,7 +10202,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -10290,7 +10279,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "periodSeconds": {
-                    "$ref": "#/$defs/schema136"
+                    "$ref": "#/$defs/schema135"
                   }
                 }
               }
@@ -10305,7 +10294,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema22"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -10337,7 +10326,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -10414,145 +10403,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "successThreshold": {
-                    "$ref": "#/$defs/schema133"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema22"
-              },
-              {
-                "properties": {
-                  "replica": {
-                    "properties": {
-                      "livenessProbe": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "livenessProbe"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "replica"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema43"
-          },
-          {
-            "not": {
-              "properties": {
-                "diagnosticMode": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "diagnosticMode"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "replica": {
-                  "properties": {
-                    "customLivenessProbe": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "customLivenessProbe"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "replica"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "sentinel": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "sentinel"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "replica": {
-            "additionalProperties": {},
-            "properties": {
-              "livenessProbe": {
-                "additionalProperties": {},
-                "properties": {
-                  "timeoutSeconds": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Timeout seconds for livenessProbe"
+                    "$ref": "#/$defs/schema132"
                   }
                 }
               }
@@ -10569,7 +10420,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema22"
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "properties": {
@@ -10601,7 +10452,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -10671,7 +10522,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -10744,7 +10595,7 @@
         "additionalProperties": {},
         "properties": {
           "replica": {
-            "$ref": "#/$defs/schema117"
+            "$ref": "#/$defs/schema116"
           }
         }
       }
@@ -10753,7 +10604,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -10785,7 +10636,7 @@
             "additionalProperties": {},
             "properties": {
               "minReadySeconds": {
-                "$ref": "#/$defs/schema87"
+                "$ref": "#/$defs/schema86"
               }
             }
           }
@@ -10841,7 +10692,7 @@
                     "replica": {
                       "properties": {
                         "pdb": {
-                          "$ref": "#/$defs/schema137"
+                          "$ref": "#/$defs/schema136"
                         }
                       },
                       "required": [
@@ -10886,7 +10737,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           }
         ]
       },
@@ -10900,7 +10751,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "minAvailable": {
-                    "$ref": "#/$defs/schema101"
+                    "$ref": "#/$defs/schema100"
                   }
                 }
               }
@@ -10913,7 +10764,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -10969,13 +10820,13 @@
             "not": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema53"
+                  "$ref": "#/$defs/schema52"
                 },
                 {
                   "not": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -11023,7 +10874,7 @@
                 "description": "Persistence Parameters\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
                 "properties": {
                   "accessModes": {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema82"
                   }
                 }
               }
@@ -11036,7 +10887,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -11092,13 +10943,13 @@
             "not": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema53"
+                  "$ref": "#/$defs/schema52"
                 },
                 {
                   "not": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -11148,7 +10999,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema139"
+                        "$ref": "#/$defs/schema138"
                       },
                       {
                         "not": {
@@ -11169,7 +11020,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -11196,13 +11047,13 @@
             "not": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema53"
+                  "$ref": "#/$defs/schema52"
                 },
                 {
                   "not": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -11300,7 +11151,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -11327,13 +11178,13 @@
             "not": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema53"
+                  "$ref": "#/$defs/schema52"
                 },
                 {
                   "not": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -11404,7 +11255,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema14"
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -11438,7 +11289,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema28"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -11472,7 +11323,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -11523,7 +11374,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -11553,7 +11404,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema14"
+                        "$ref": "#/$defs/schema13"
                       },
                       {
                         "properties": {
@@ -11587,7 +11438,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -11621,7 +11472,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema17"
+                        "$ref": "#/$defs/schema16"
                       },
                       {
                         "properties": {
@@ -11744,7 +11595,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -11794,7 +11645,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -11900,7 +11751,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -11956,13 +11807,13 @@
             "not": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema53"
+                  "$ref": "#/$defs/schema52"
                 },
                 {
                   "not": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -12009,7 +11860,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "whenDeleted": {
-                    "$ref": "#/$defs/schema103"
+                    "$ref": "#/$defs/schema102"
                   }
                 }
               }
@@ -12049,7 +11900,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -12105,13 +11956,13 @@
             "not": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema53"
+                  "$ref": "#/$defs/schema52"
                 },
                 {
                   "not": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -12158,7 +12009,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "whenScaled": {
-                    "$ref": "#/$defs/schema89"
+                    "$ref": "#/$defs/schema88"
                   }
                 }
               }
@@ -12200,7 +12051,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -12256,13 +12107,13 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema53"
+                      "$ref": "#/$defs/schema52"
                     },
                     {
                       "not": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema28"
+                            "$ref": "#/$defs/schema27"
                           },
                           {
                             "properties": {
@@ -12302,7 +12153,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -12358,13 +12209,13 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema53"
+                      "$ref": "#/$defs/schema52"
                     },
                     {
                       "not": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema28"
+                            "$ref": "#/$defs/schema27"
                           },
                           {
                             "properties": {
@@ -12425,7 +12276,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -12512,7 +12363,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               }
             ]
           },
@@ -12538,7 +12389,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -12563,7 +12414,7 @@
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/schema43"
+                      "$ref": "#/$defs/schema42"
                     }
                   ]
                 }
@@ -12587,7 +12438,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/schema139"
+                    "$ref": "#/$defs/schema138"
                   },
                   {
                     "maximum": 0,
@@ -12648,7 +12499,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               }
             ]
           },
@@ -12674,7 +12525,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -12699,7 +12550,7 @@
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/schema43"
+                      "$ref": "#/$defs/schema42"
                     }
                   ]
                 }
@@ -12730,7 +12581,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema21"
+                "$ref": "#/$defs/schema20"
               },
               {
                 "properties": {
@@ -12762,7 +12613,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -12839,7 +12690,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "failureThreshold": {
-                    "$ref": "#/$defs/schema130"
+                    "$ref": "#/$defs/schema129"
                   }
                 }
               }
@@ -12854,7 +12705,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema21"
+                "$ref": "#/$defs/schema20"
               },
               {
                 "properties": {
@@ -12886,7 +12737,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -12963,7 +12814,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "initialDelaySeconds": {
-                    "$ref": "#/$defs/schema128"
+                    "$ref": "#/$defs/schema127"
                   }
                 }
               }
@@ -12978,7 +12829,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema21"
+                "$ref": "#/$defs/schema20"
               },
               {
                 "properties": {
@@ -13010,7 +12861,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -13087,7 +12938,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "periodSeconds": {
-                    "$ref": "#/$defs/schema135"
+                    "$ref": "#/$defs/schema134"
                   }
                 }
               }
@@ -13102,7 +12953,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema21"
+                "$ref": "#/$defs/schema20"
               },
               {
                 "properties": {
@@ -13134,7 +12985,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -13211,145 +13062,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "successThreshold": {
-                    "$ref": "#/$defs/schema131"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema21"
-              },
-              {
-                "properties": {
-                  "replica": {
-                    "properties": {
-                      "readinessProbe": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "readinessProbe"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "replica"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema43"
-          },
-          {
-            "not": {
-              "properties": {
-                "diagnosticMode": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "diagnosticMode"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "replica": {
-                  "properties": {
-                    "customReadinessProbe": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "customReadinessProbe"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "replica"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "sentinel": {
-                  "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "sentinel"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "replica": {
-            "additionalProperties": {},
-            "properties": {
-              "readinessProbe": {
-                "additionalProperties": {},
-                "properties": {
-                  "timeoutSeconds": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Timeout seconds for readinessProbe"
+                    "$ref": "#/$defs/schema130"
                   }
                 }
               }
@@ -13366,7 +13079,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema21"
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "properties": {
@@ -13398,7 +13111,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -13468,7 +13181,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -13541,7 +13254,7 @@
         "additionalProperties": {},
         "properties": {
           "replica": {
-            "$ref": "#/$defs/schema114"
+            "$ref": "#/$defs/schema113"
           }
         }
       }
@@ -13550,7 +13263,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "anyOf": [
@@ -13669,7 +13382,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -13741,7 +13454,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -13773,7 +13486,7 @@
             "additionalProperties": {},
             "properties": {
               "revisionHistoryLimit": {
-                "$ref": "#/$defs/schema41"
+                "$ref": "#/$defs/schema40"
               }
             }
           }
@@ -13784,7 +13497,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "anyOf": [
@@ -13792,7 +13505,7 @@
                 "not": {
                   "properties": {
                     "replica": {
-                      "$ref": "#/$defs/schema82"
+                      "$ref": "#/$defs/schema81"
                     }
                   },
                   "required": [
@@ -13804,7 +13517,7 @@
               {
                 "properties": {
                   "replica": {
-                    "$ref": "#/$defs/schema62"
+                    "$ref": "#/$defs/schema61"
                   }
                 },
                 "required": [
@@ -13862,7 +13575,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -13912,10 +13625,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
-            "$ref": "#/$defs/schema27"
+            "$ref": "#/$defs/schema26"
           },
           {
             "not": {
@@ -13965,10 +13678,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
-            "$ref": "#/$defs/schema27"
+            "$ref": "#/$defs/schema26"
           },
           {
             "not": {
@@ -14018,7 +13731,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -14042,7 +13755,7 @@
             }
           },
           {
-            "$ref": "#/$defs/schema5"
+            "$ref": "#/$defs/schema4"
           }
         ]
       },
@@ -14114,7 +13827,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -14138,14 +13851,14 @@
                 }
               },
               {
-                "$ref": "#/$defs/schema5"
+                "$ref": "#/$defs/schema4"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -14201,7 +13914,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -14258,7 +13971,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -14307,7 +14020,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -14362,7 +14075,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -14398,7 +14111,7 @@
                 "description": "Redis(R) replicas service parameters",
                 "properties": {
                   "sessionAffinity": {
-                    "$ref": "#/$defs/schema12"
+                    "$ref": "#/$defs/schema11"
                   }
                 }
               }
@@ -14411,7 +14124,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -14507,7 +14220,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema43"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
                     "not": {
@@ -14531,14 +14244,14 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema5"
+                    "$ref": "#/$defs/schema4"
                   }
                 ]
               },
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema43"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
                     "not": {
@@ -14570,7 +14283,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema43"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
                     "not": {
@@ -14619,7 +14332,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema43"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
                     "not": {
@@ -14669,7 +14382,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema23"
+                "$ref": "#/$defs/schema22"
               },
               {
                 "properties": {
@@ -14701,7 +14414,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -14730,7 +14443,7 @@
         "additionalProperties": {},
         "properties": {
           "replica": {
-            "$ref": "#/$defs/schema8"
+            "$ref": "#/$defs/schema7"
           }
         }
       }
@@ -14743,7 +14456,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -14775,7 +14488,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -14803,13 +14516,13 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema23"
+                      "$ref": "#/$defs/schema22"
                     },
                     {
                       "properties": {
@@ -14866,7 +14579,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema58"
+                      "$ref": "#/$defs/schema57"
                     },
                     {
                       "properties": {
@@ -14928,7 +14641,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -14972,7 +14685,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -15043,7 +14756,7 @@
         "additionalProperties": {},
         "properties": {
           "replica": {
-            "$ref": "#/$defs/schema119"
+            "$ref": "#/$defs/schema118"
           }
         }
       }
@@ -15052,7 +14765,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -15142,7 +14855,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           }
         ]
       },
@@ -15174,7 +14887,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema56"
+                "$ref": "#/$defs/schema55"
               },
               {
                 "properties": {
@@ -15246,7 +14959,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -15295,7 +15008,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema55"
                   },
                   {
                     "properties": {
@@ -15338,13 +15051,13 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema46"
+                      "$ref": "#/$defs/schema45"
                     },
                     {
                       "properties": {
@@ -15392,14 +15105,14 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -15424,7 +15137,7 @@
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/schema43"
+                      "$ref": "#/$defs/schema42"
                     }
                   ]
                 }
@@ -15437,7 +15150,7 @@
         "additionalProperties": {},
         "properties": {
           "sentinel": {
-            "$ref": "#/$defs/schema113"
+            "$ref": "#/$defs/schema112"
           }
         }
       }
@@ -15529,7 +15242,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               }
             ]
           },
@@ -15582,7 +15295,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               }
             ]
           },
@@ -15608,7 +15321,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               }
             ]
           }
@@ -15724,7 +15437,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               }
             ]
           },
@@ -15777,7 +15490,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               }
             ]
           },
@@ -15803,7 +15516,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               }
             ]
           }
@@ -15865,7 +15578,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           }
         ]
       },
@@ -15884,7 +15597,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/schema139"
+                    "$ref": "#/$defs/schema138"
                   },
                   {
                     "maximum": 0,
@@ -15943,7 +15656,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           }
         ]
       },
@@ -16034,7 +15747,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -16108,7 +15821,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -16137,7 +15850,7 @@
         "additionalProperties": {},
         "properties": {
           "sentinel": {
-            "$ref": "#/$defs/schema7"
+            "$ref": "#/$defs/schema6"
           }
         }
       }
@@ -16228,7 +15941,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
@@ -16353,7 +16066,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema58"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "properties": {
@@ -16379,7 +16092,7 @@
         ]
       },
       "then": {
-        "$ref": "#/$defs/schema8"
+        "$ref": "#/$defs/schema7"
       }
     },
     {
@@ -16428,7 +16141,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema58"
+                    "$ref": "#/$defs/schema57"
                   },
                   {
                     "properties": {
@@ -16458,7 +16171,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema58"
+                    "$ref": "#/$defs/schema57"
                   },
                   {
                     "properties": {
@@ -16482,13 +16195,13 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema23"
+                      "$ref": "#/$defs/schema22"
                     },
                     {
                       "properties": {
@@ -16593,7 +16306,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -16623,7 +16336,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema14"
+                        "$ref": "#/$defs/schema13"
                       },
                       {
                         "properties": {
@@ -16657,7 +16370,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -16691,7 +16404,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema17"
+                        "$ref": "#/$defs/schema16"
                       },
                       {
                         "properties": {
@@ -16842,7 +16555,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -16872,7 +16585,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema14"
+                        "$ref": "#/$defs/schema13"
                       },
                       {
                         "properties": {
@@ -16906,7 +16619,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -16940,7 +16653,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema17"
+                        "$ref": "#/$defs/schema16"
                       },
                       {
                         "properties": {
@@ -17080,7 +16793,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -17131,7 +16844,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema14"
+                        "$ref": "#/$defs/schema13"
                       },
                       {
                         "properties": {
@@ -17165,7 +16878,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -17199,7 +16912,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema17"
+                        "$ref": "#/$defs/schema16"
                       },
                       {
                         "properties": {
@@ -17343,7 +17056,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -17373,7 +17086,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema14"
+                        "$ref": "#/$defs/schema13"
                       },
                       {
                         "properties": {
@@ -17407,7 +17120,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -17441,7 +17154,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema17"
+                        "$ref": "#/$defs/schema16"
                       },
                       {
                         "properties": {
@@ -17572,7 +17285,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -17655,7 +17368,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -17770,7 +17483,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -17853,7 +17566,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -18013,7 +17726,7 @@
         "additionalProperties": {},
         "properties": {
           "useExternalDNS": {
-            "$ref": "#/$defs/schema35"
+            "$ref": "#/$defs/schema34"
           }
         }
       }
@@ -18024,7 +17737,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema14"
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -18058,7 +17771,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema28"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -18092,7 +17805,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -18143,7 +17856,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -18173,7 +17886,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema14"
+                        "$ref": "#/$defs/schema13"
                       },
                       {
                         "properties": {
@@ -18207,7 +17920,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -18241,7 +17954,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema17"
+                        "$ref": "#/$defs/schema16"
                       },
                       {
                         "properties": {
@@ -18365,7 +18078,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema14"
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -18399,7 +18112,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema28"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -18433,7 +18146,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -18484,7 +18197,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -18514,7 +18227,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema14"
+                        "$ref": "#/$defs/schema13"
                       },
                       {
                         "properties": {
@@ -18548,7 +18261,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -18582,7 +18295,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema17"
+                        "$ref": "#/$defs/schema16"
                       },
                       {
                         "properties": {
@@ -18705,7 +18418,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema14"
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -18739,7 +18452,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema28"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -18773,7 +18486,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -18824,7 +18537,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -18875,7 +18588,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema14"
+                        "$ref": "#/$defs/schema13"
                       },
                       {
                         "properties": {
@@ -18909,7 +18622,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -18943,7 +18656,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema17"
+                        "$ref": "#/$defs/schema16"
                       },
                       {
                         "properties": {
@@ -19070,7 +18783,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema14"
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -19104,7 +18817,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema28"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -19138,7 +18851,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema16"
               },
               {
                 "properties": {
@@ -19189,7 +18902,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema43"
+            "$ref": "#/$defs/schema42"
           },
           {
             "not": {
@@ -19219,7 +18932,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema14"
+                        "$ref": "#/$defs/schema13"
                       },
                       {
                         "properties": {
@@ -19253,7 +18966,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -19287,7 +19000,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema17"
+                        "$ref": "#/$defs/schema16"
                       },
                       {
                         "properties": {
@@ -19444,13 +19157,13 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema45"
+                    "$ref": "#/$defs/schema44"
                   },
                   "type": "object"
                 },
                 {
                   "items": {
-                    "$ref": "#/$defs/schema45"
+                    "$ref": "#/$defs/schema44"
                   },
                   "type": "array"
                 }
@@ -19695,7 +19408,7 @@
               "type": "boolean"
             },
             "readOnlyRootFilesystem": {
-              "$ref": "#/$defs/schema109"
+              "$ref": "#/$defs/schema108"
             },
             "runAsGroup": {
               "description": "Set kubectl containers' Security Context runAsGroup",
@@ -19710,7 +19423,7 @@
               "type": "integer"
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/schema93"
+              "$ref": "#/$defs/schema92"
             },
             "seccompProfile": {
               "additionalProperties": {},
@@ -19787,14 +19500,14 @@
           "type": "object"
         },
         "args": {
-          "$ref": "#/$defs/schema95"
+          "$ref": "#/$defs/schema94"
         },
         "automountServiceAccountToken": {
           "description": "Mount Service Account token in pod",
           "type": "boolean"
         },
         "command": {
-          "$ref": "#/$defs/schema88"
+          "$ref": "#/$defs/schema87"
         },
         "configuration": {
           "description": "Configuration for Redis(R) master nodes\nref: https://redis.io/topics/config",
@@ -19820,7 +19533,7 @@
           "description": "Number of Redis(R) master instances to deploy (experimental, requires additional configuration)"
         },
         "customLivenessProbe": {
-          "$ref": "#/$defs/schema91"
+          "$ref": "#/$defs/schema90"
         },
         "customReadinessProbe": {
           "additionalProperties": {},
@@ -19828,7 +19541,7 @@
           "type": "object"
         },
         "customStartupProbe": {
-          "$ref": "#/$defs/schema92"
+          "$ref": "#/$defs/schema91"
         },
         "disableCommands": {
           "description": "Array with Redis(R) commands to disable on master nodes\nCommands will be completely disabled by renaming each to an empty string.\nref: https://redis.io/topics/security#disabling-of-specific-commands",
@@ -19847,7 +19560,7 @@
           "type": "string"
         },
         "enableServiceLinks": {
-          "$ref": "#/$defs/schema85"
+          "$ref": "#/$defs/schema84"
         },
         "extraEnvVars": {
           "description": "Array with extra environment variables to add to Redis(R) master nodes\ne.g:\nextraEnvVars:\n- name: FOO\nvalue: \"bar\"",
@@ -19921,26 +19634,25 @@
               "type": "boolean"
             },
             "failureThreshold": {
-              "$ref": "#/$defs/schema132"
+              "$ref": "#/$defs/schema131"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/schema129"
+              "$ref": "#/$defs/schema128"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/schema136"
+              "$ref": "#/$defs/schema135"
             },
             "successThreshold": {
-              "$ref": "#/$defs/schema133"
+              "$ref": "#/$defs/schema132"
             },
             "timeoutSeconds": {
-              "description": "Timeout seconds for livenessProbe",
-              "type": "integer"
+              "description": "Timeout seconds for livenessProbe"
             }
           },
           "type": "object"
         },
         "minReadySeconds": {
-          "$ref": "#/$defs/schema87"
+          "$ref": "#/$defs/schema86"
         },
         "nodeAffinityPreset": {
           "additionalProperties": {},
@@ -19986,7 +19698,7 @@
               "description": "[object] Maximum number/percentage of pods that may be made unavailable. Defaults to `1` if both `master.pdb.minAvailable` and `master.pdb.maxUnavailable` are empty."
             },
             "minAvailable": {
-              "$ref": "#/$defs/schema101"
+              "$ref": "#/$defs/schema100"
             }
           },
           "type": "object"
@@ -20002,7 +19714,7 @@
               "description": "Additional custom annotations for the PVC"
             },
             "dataSource": {
-              "$ref": "#/$defs/schema124"
+              "$ref": "#/$defs/schema123"
             },
             "enabled": {
               "anyOf": [
@@ -20031,17 +19743,17 @@
               "description": "Use a existing PVC which must be created manually before bound\nNOTE: requires master.persistence.enabled: true\npersistentVolumeClaimRetentionPolicy\nref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention"
             },
             "labels": {
-              "$ref": "#/$defs/schema107"
+              "$ref": "#/$defs/schema106"
             },
             "medium": {
-              "$ref": "#/$defs/schema140"
+              "$ref": "#/$defs/schema139"
             },
             "path": {
               "description": "The path the volume will be mounted at on Redis(R) master containers\nNOTE: Useful when using different Redis(R) images",
               "type": "string"
             },
             "selector": {
-              "$ref": "#/$defs/schema74"
+              "$ref": "#/$defs/schema73"
             },
             "size": {
               "description": "Persistent Volume size"
@@ -20050,7 +19762,7 @@
               "description": "Set this to enable a size limit for `emptyDir` volumes."
             },
             "storageClass": {
-              "$ref": "#/$defs/schema11"
+              "$ref": "#/$defs/schema10"
             },
             "subPath": {
               "description": "The subdirectory of the volume to mount on Redis(R) master containers\nNOTE: Useful in dev environments",
@@ -20067,13 +19779,13 @@
           "additionalProperties": {},
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/schema97"
+              "$ref": "#/$defs/schema96"
             },
             "whenDeleted": {
-              "$ref": "#/$defs/schema103"
+              "$ref": "#/$defs/schema102"
             },
             "whenScaled": {
-              "$ref": "#/$defs/schema89"
+              "$ref": "#/$defs/schema88"
             }
           },
           "type": "object"
@@ -20138,20 +19850,19 @@
               "type": "boolean"
             },
             "failureThreshold": {
-              "$ref": "#/$defs/schema130"
+              "$ref": "#/$defs/schema129"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/schema128"
+              "$ref": "#/$defs/schema127"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/schema135"
+              "$ref": "#/$defs/schema134"
             },
             "successThreshold": {
-              "$ref": "#/$defs/schema131"
+              "$ref": "#/$defs/schema130"
             },
             "timeoutSeconds": {
-              "description": "Timeout seconds for readinessProbe",
-              "type": "integer"
+              "description": "Timeout seconds for readinessProbe"
             }
           },
           "type": "object"
@@ -20166,7 +19877,7 @@
           "type": "string"
         },
         "revisionHistoryLimit": {
-          "$ref": "#/$defs/schema41"
+          "$ref": "#/$defs/schema40"
         },
         "schedulerName": {
           "description": "Alternate scheduler for Redis(R) master pods\nref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/"
@@ -20177,7 +19888,7 @@
               "additionalProperties": {},
               "properties": {
                 "externalTrafficPolicy": {
-                  "$ref": "#/$defs/schema44"
+                  "$ref": "#/$defs/schema43"
                 }
               }
             },
@@ -20207,10 +19918,10 @@
           "description": "ServiceAccount configuration",
           "properties": {
             "annotations": {
-              "$ref": "#/$defs/schema25"
+              "$ref": "#/$defs/schema24"
             },
             "automountServiceAccountToken": {
-              "$ref": "#/$defs/schema34"
+              "$ref": "#/$defs/schema33"
             },
             "create": {
               "anyOf": [
@@ -20226,7 +19937,7 @@
               "description": "Specifies whether a ServiceAccount should be created"
             },
             "name": {
-              "$ref": "#/$defs/schema60"
+              "$ref": "#/$defs/schema59"
             }
           },
           "type": "object"
@@ -20344,7 +20055,7 @@
                 "description": "uncomment in order to scrape sentinel metrics, also to in order distinguish between Sentinel and Redis container metrics\nadd metricRelabelings with label like app=redis to main redis pod-monitor port\n- interval: \"30s\"\npath: \"/scrape\"\nport: \"http-metrics\"\nparams:\ntarget: [\"localhost:26379\"]\nmetricRelabelings:\n- targetLabel: \"app\"\nreplacement: \"sentinel\"\nPrometheus Pod Monitor\nref: https://github.com/coreos/prometheus-operator\nhttps://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#podmonitor",
                 "properties": {
                   "additionalEndpoints": {
-                    "$ref": "#/$defs/schema115"
+                    "$ref": "#/$defs/schema114"
                   }
                 }
               }
@@ -20394,7 +20105,7 @@
                 "description": "uncomment in order to scrape sentinel metrics, also to in order distinguish between Sentinel and Redis container metrics\nadd metricRelabelings with label like app=redis to main redis pod-monitor port\n- interval: \"30s\"\npath: \"/scrape\"\nport: \"http-metrics\"\nparams:\ntarget: [\"localhost:26379\"]\nmetricRelabelings:\n- targetLabel: \"app\"\nreplacement: \"sentinel\"\nPrometheus Pod Monitor\nref: https://github.com/coreos/prometheus-operator\nhttps://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#podmonitor",
                 "properties": {
                   "honorLabels": {
-                    "$ref": "#/$defs/schema112"
+                    "$ref": "#/$defs/schema111"
                   }
                 }
               }
@@ -20546,7 +20257,7 @@
                 "description": "uncomment in order to scrape sentinel metrics, also to in order distinguish between Sentinel and Redis container metrics\nadd metricRelabelings with label like app=redis to main redis pod-monitor port\n- interval: \"30s\"\npath: \"/scrape\"\nport: \"http-metrics\"\nparams:\ntarget: [\"localhost:26379\"]\nmetricRelabelings:\n- targetLabel: \"app\"\nreplacement: \"sentinel\"\nPrometheus Pod Monitor\nref: https://github.com/coreos/prometheus-operator\nhttps://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#podmonitor",
                 "properties": {
                   "sampleLimit": {
-                    "$ref": "#/$defs/schema108"
+                    "$ref": "#/$defs/schema107"
                   }
                 }
               }
@@ -20672,7 +20383,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema73"
+                    "$ref": "#/$defs/schema72"
                   },
                   {
                     "properties": {
@@ -20699,11 +20410,11 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/schema82"
+                      "$ref": "#/$defs/schema81"
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema62"
+                    "$ref": "#/$defs/schema61"
                   }
                 ]
               }
@@ -20742,7 +20453,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema73"
+                    "$ref": "#/$defs/schema72"
                   },
                   {
                     "properties": {
@@ -20766,7 +20477,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema58"
               }
             ]
           },
@@ -20803,7 +20514,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema73"
+                    "$ref": "#/$defs/schema72"
                   },
                   {
                     "properties": {
@@ -20827,7 +20538,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema58"
               }
             ]
           },
@@ -20864,7 +20575,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema73"
+                    "$ref": "#/$defs/schema72"
                   },
                   {
                     "properties": {
@@ -20888,7 +20599,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema58"
               }
             ]
           },
@@ -20925,7 +20636,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema73"
+                    "$ref": "#/$defs/schema72"
                   },
                   {
                     "properties": {
@@ -21014,7 +20725,7 @@
                 "description": "Prometheus Service Monitor\nref: https://github.com/coreos/prometheus-operator\nhttps://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint",
                 "properties": {
                   "additionalEndpoints": {
-                    "$ref": "#/$defs/schema115"
+                    "$ref": "#/$defs/schema114"
                   }
                 }
               }
@@ -21064,7 +20775,7 @@
                 "description": "Prometheus Service Monitor\nref: https://github.com/coreos/prometheus-operator\nhttps://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint",
                 "properties": {
                   "honorLabels": {
-                    "$ref": "#/$defs/schema112"
+                    "$ref": "#/$defs/schema111"
                   }
                 }
               }
@@ -21216,7 +20927,7 @@
                 "description": "Prometheus Service Monitor\nref: https://github.com/coreos/prometheus-operator\nhttps://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#endpoint",
                 "properties": {
                   "sampleLimit": {
-                    "$ref": "#/$defs/schema108"
+                    "$ref": "#/$defs/schema107"
                   }
                 }
               }
@@ -21382,13 +21093,13 @@
           ]
         },
         "customLivenessProbe": {
-          "$ref": "#/$defs/schema91"
-        },
-        "customReadinessProbe": {
           "$ref": "#/$defs/schema90"
         },
+        "customReadinessProbe": {
+          "$ref": "#/$defs/schema89"
+        },
         "customStartupProbe": {
-          "$ref": "#/$defs/schema92"
+          "$ref": "#/$defs/schema91"
         },
         "enabled": {
           "anyOf": [
@@ -21494,7 +21205,7 @@
               "description": "The namespace in which the PodMonitor will be created"
             },
             "podTargetLabels": {
-              "$ref": "#/$defs/schema116"
+              "$ref": "#/$defs/schema115"
             },
             "port": {
               "description": "the pod port to scrape metrics from"
@@ -21566,7 +21277,7 @@
           "description": "A way to specify an alternative Redis(R) hostname\nUseful for certificate CN/SAN matching"
         },
         "resources": {
-          "$ref": "#/$defs/schema24"
+          "$ref": "#/$defs/schema23"
         },
         "resourcesPreset": {
           "description": "Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if metrics.resources is set (metrics.resources is recommended for production).\nMore information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15"
@@ -21606,7 +21317,7 @@
                   "description": "Redis(R) exporter service external traffic policy\nref: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip"
                 },
                 "extraPorts": {
-                  "$ref": "#/$defs/schema100"
+                  "$ref": "#/$defs/schema99"
                 },
                 "loadBalancerClass": {
                   "description": "exporter service Load Balancer class if service type is `LoadBalancer` (optional, cloud specific)\nref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer"
@@ -21675,7 +21386,7 @@
               "description": "The namespace in which the ServiceMonitor will be created"
             },
             "podTargetLabels": {
-              "$ref": "#/$defs/schema116"
+              "$ref": "#/$defs/schema115"
             },
             "port": {
               "description": "the service port to scrape metrics from"
@@ -21700,7 +21411,7 @@
           "type": "object"
         },
         "startupProbe": {
-          "$ref": "#/$defs/schema78"
+          "$ref": "#/$defs/schema77"
         }
       },
       "type": "object"
@@ -21731,7 +21442,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/schema134"
+                      "$ref": "#/$defs/schema133"
                     }
                   },
                   {
@@ -21762,7 +21473,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema118"
+                      "$ref": "#/$defs/schema117"
                     },
                     {
                       "properties": {
@@ -21810,7 +21521,7 @@
             "additionalProperties": {},
             "properties": {
               "ingressNSMatchLabels": {
-                "$ref": "#/$defs/schema79"
+                "$ref": "#/$defs/schema78"
               }
             }
           }
@@ -21822,7 +21533,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/schema134"
+                      "$ref": "#/$defs/schema133"
                     }
                   },
                   {
@@ -21853,7 +21564,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema118"
+                      "$ref": "#/$defs/schema117"
                     },
                     {
                       "properties": {
@@ -21901,7 +21612,7 @@
             "additionalProperties": {},
             "properties": {
               "ingressNSPodMatchLabels": {
-                "$ref": "#/$defs/schema75"
+                "$ref": "#/$defs/schema74"
               }
             }
           }
@@ -22195,7 +21906,7 @@
           "type": "object"
         },
         "args": {
-          "$ref": "#/$defs/schema95"
+          "$ref": "#/$defs/schema94"
         },
         "automountServiceAccountToken": {
           "description": "Mount Service Account token in pod"
@@ -22233,7 +21944,7 @@
           "type": "object"
         },
         "command": {
-          "$ref": "#/$defs/schema88"
+          "$ref": "#/$defs/schema87"
         },
         "configuration": {
           "description": "Configuration for Redis(R) replicas nodes\nref: https://redis.io/topics/config",
@@ -22300,7 +22011,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema141"
+              "$ref": "#/$defs/schema140"
             },
             {
               "not": {
@@ -22319,7 +22030,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema141"
+              "$ref": "#/$defs/schema140"
             },
             {
               "not": {
@@ -22330,7 +22041,7 @@
           "description": "Custom readinessProbe that overrides the default one\nRedis(R) replicas resource requests and limits\nref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/"
         },
         "customStartupProbe": {
-          "$ref": "#/$defs/schema92"
+          "$ref": "#/$defs/schema91"
         },
         "disableCommands": {
           "description": "Array with Redis(R) commands to disable on replicas nodes\nCommands will be completely disabled by renaming each to an empty string.\nref: https://redis.io/topics/security#disabling-of-specific-commands",
@@ -22555,7 +22266,7 @@
               "description": "Additional custom annotations for the PVC"
             },
             "dataSource": {
-              "$ref": "#/$defs/schema124"
+              "$ref": "#/$defs/schema123"
             },
             "enabled": {
               "anyOf": [
@@ -22574,16 +22285,16 @@
               "description": "Use a existing PVC which must be created manually before bound\nNOTE: requires replica.persistence.enabled: true\npersistentVolumeClaimRetentionPolicy\nref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention"
             },
             "labels": {
-              "$ref": "#/$defs/schema107"
+              "$ref": "#/$defs/schema106"
             },
             "medium": {
-              "$ref": "#/$defs/schema140"
+              "$ref": "#/$defs/schema139"
             },
             "path": {
               "description": "The path the volume will be mounted at on Redis(R) replicas containers\nNOTE: Useful when using different Redis(R) images"
             },
             "selector": {
-              "$ref": "#/$defs/schema74"
+              "$ref": "#/$defs/schema73"
             },
             "size": {
               "description": "Persistent Volume size"
@@ -22592,7 +22303,7 @@
               "description": "Set this to enable a size limit for `emptyDir` volumes."
             },
             "storageClass": {
-              "$ref": "#/$defs/schema11"
+              "$ref": "#/$defs/schema10"
             },
             "subPath": {
               "description": "The subdirectory of the volume to mount on Redis(R) replicas containers\nNOTE: Useful in dev environments"
@@ -22762,7 +22473,7 @@
                   "description": "Redis(R) replicas service external traffic policy\nref: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip"
                 },
                 "extraPorts": {
-                  "$ref": "#/$defs/schema100"
+                  "$ref": "#/$defs/schema99"
                 },
                 "internalTrafficPolicy": {
                   "description": "Redis(R) replicas service internal traffic policy (requires Kubernetes v1.22 or greater to be usable)\nref: https://kubernetes.io/docs/concepts/services-networking/service-traffic-policy/"
@@ -22799,7 +22510,7 @@
                   "description": "Session Affinity for Kubernetes service, can be \"None\" or \"ClientIP\"\nIf \"ClientIP\", consecutive client requests will be directed to the same Pod\nref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies"
                 },
                 "sessionAffinityConfig": {
-                  "$ref": "#/$defs/schema52"
+                  "$ref": "#/$defs/schema51"
                 },
                 "type": {
                   "description": "Redis(R) replicas service type"
@@ -22815,10 +22526,10 @@
           "description": "ServiceAccount configuration",
           "properties": {
             "annotations": {
-              "$ref": "#/$defs/schema25"
+              "$ref": "#/$defs/schema24"
             },
             "automountServiceAccountToken": {
-              "$ref": "#/$defs/schema34"
+              "$ref": "#/$defs/schema33"
             },
             "create": {
               "anyOf": [
@@ -22834,7 +22545,7 @@
               "description": "Specifies whether a ServiceAccount should be created"
             },
             "name": {
-              "$ref": "#/$defs/schema60"
+              "$ref": "#/$defs/schema59"
             }
           },
           "type": "object"
@@ -22848,7 +22559,7 @@
           "type": "array"
         },
         "startupProbe": {
-          "$ref": "#/$defs/schema78"
+          "$ref": "#/$defs/schema77"
         },
         "terminationGracePeriodSeconds": {
           "description": "Integer setting the termination grace period for the redis-replicas pods"
@@ -22940,7 +22651,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema7"
+            "$ref": "#/$defs/schema6"
           }
         }
       ],
@@ -22951,14 +22662,14 @@
           "type": "object"
         },
         "args": {
-          "$ref": "#/$defs/schema95"
+          "$ref": "#/$defs/schema94"
         },
         "automateClusterRecovery": {
           "description": "Automate cluster recovery in cases where the last replica is not considered a good replica and Sentinel won't automatically failover to it.\nThis also prevents any new replica from starting until the last remaining replica is elected as master to guarantee that it is the one to be elected by Sentinel, and not a newly started replica with no data.\nNOTE: This feature requires a \"downAfterMilliseconds\" value less or equal to 2000.",
           "type": "boolean"
         },
         "command": {
-          "$ref": "#/$defs/schema88"
+          "$ref": "#/$defs/schema87"
         },
         "commonAnnotations": {},
         "configuration": {
@@ -22997,7 +22708,7 @@
               "type": "boolean"
             },
             "readOnlyRootFilesystem": {
-              "$ref": "#/$defs/schema109"
+              "$ref": "#/$defs/schema108"
             },
             "runAsGroup": {
               "description": "Set Redis(R) Sentinel containers' Security Context runAsGroup",
@@ -23012,7 +22723,7 @@
               "type": "integer"
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/schema93"
+              "$ref": "#/$defs/schema92"
             },
             "seccompProfile": {
               "additionalProperties": {},
@@ -23028,19 +22739,19 @@
           "type": "object"
         },
         "customLivenessProbe": {
-          "$ref": "#/$defs/schema91"
-        },
-        "customReadinessProbe": {
           "$ref": "#/$defs/schema90"
         },
+        "customReadinessProbe": {
+          "$ref": "#/$defs/schema89"
+        },
         "customStartupProbe": {
-          "$ref": "#/$defs/schema92"
+          "$ref": "#/$defs/schema91"
         },
         "downAfterMilliseconds": {
           "description": "Timeout for detecting a Redis(R) node is down"
         },
         "enableServiceLinks": {
-          "$ref": "#/$defs/schema85"
+          "$ref": "#/$defs/schema84"
         },
         "enabled": {
           "anyOf": [
@@ -23098,7 +22809,7 @@
                           "type": "array"
                         },
                         {
-                          "$ref": "#/$defs/schema141"
+                          "$ref": "#/$defs/schema140"
                         }
                       ],
                       "description": "Array of load balancer IPs for each Redis(R) node. Length must be the same as sentinel.replicaCount"
@@ -23244,16 +22955,16 @@
               "type": "boolean"
             },
             "failureThreshold": {
-              "$ref": "#/$defs/schema132"
+              "$ref": "#/$defs/schema131"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/schema129"
+              "$ref": "#/$defs/schema128"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/schema136"
+              "$ref": "#/$defs/schema135"
             },
             "successThreshold": {
-              "$ref": "#/$defs/schema133"
+              "$ref": "#/$defs/schema132"
             },
             "timeoutSeconds": {
               "description": "Timeout seconds for livenessProbe",
@@ -23276,13 +22987,13 @@
               "type": "string"
             },
             "enabled": {
-              "$ref": "#/$defs/schema70"
+              "$ref": "#/$defs/schema69"
             },
             "externalTrafficPolicy": {
-              "$ref": "#/$defs/schema44"
+              "$ref": "#/$defs/schema43"
             },
             "extraPorts": {
-              "$ref": "#/$defs/schema100"
+              "$ref": "#/$defs/schema99"
             },
             "loadBalancerClass": {
               "description": "master service Load Balancer class if service type is `LoadBalancer` (optional, cloud specific)\nref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer",
@@ -23298,7 +23009,15 @@
               "type": "array"
             },
             "nodePorts": {
-              "$ref": "#/$defs/schema2"
+              "additionalProperties": {},
+              "description": "ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport\nNOTE: choose port between <30000-32767>\nNOTE: By leaving these values blank, they will be generated by ports-configmap\nIf setting manually, please leave at least replica.replicaCount + 1 in between sentinel.service.nodePorts.redis and sentinel.service.nodePorts.sentinel to take into account the ports that will be created while incrementing that base port",
+              "properties": {
+                "redis": {
+                  "description": "Node port for Redis(R)",
+                  "type": "string"
+                }
+              },
+              "type": "object"
             },
             "ports": {
               "additionalProperties": {},
@@ -23311,10 +23030,10 @@
               "type": "object"
             },
             "sessionAffinity": {
-              "$ref": "#/$defs/schema12"
+              "$ref": "#/$defs/schema11"
             },
             "sessionAffinityConfig": {
-              "$ref": "#/$defs/schema52"
+              "$ref": "#/$defs/schema51"
             },
             "type": {
               "description": "Redis(R) Sentinel master service type",
@@ -23346,20 +23065,20 @@
               "type": "object"
             },
             "dataSource": {
-              "$ref": "#/$defs/schema124"
+              "$ref": "#/$defs/schema123"
             },
             "enabled": {
               "description": "Enable persistence on Redis(R) sentinel nodes using Persistent Volume Claims (Experimental)",
               "type": "boolean"
             },
             "labels": {
-              "$ref": "#/$defs/schema107"
+              "$ref": "#/$defs/schema106"
             },
             "medium": {
-              "$ref": "#/$defs/schema140"
+              "$ref": "#/$defs/schema139"
             },
             "selector": {
-              "$ref": "#/$defs/schema74"
+              "$ref": "#/$defs/schema73"
             },
             "size": {
               "description": "Persistent Volume size"
@@ -23368,7 +23087,7 @@
               "description": "Set this to enable a size limit for `emptyDir` volumes.\npersistentVolumeClaimRetentionPolicy\nref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention"
             },
             "storageClass": {
-              "$ref": "#/$defs/schema11"
+              "$ref": "#/$defs/schema10"
             }
           },
           "type": "object"
@@ -23377,14 +23096,14 @@
           "additionalProperties": {},
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/schema97"
+              "$ref": "#/$defs/schema96"
             },
             "whenDeleted": {
               "description": "Volume retention behavior that applies when the StatefulSet is deleted\nRedis(R) Sentinel resource requests and limits\nref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/",
               "type": "string"
             },
             "whenScaled": {
-              "$ref": "#/$defs/schema89"
+              "$ref": "#/$defs/schema88"
             }
           },
           "type": "object"
@@ -23404,16 +23123,16 @@
               "type": "boolean"
             },
             "failureThreshold": {
-              "$ref": "#/$defs/schema130"
+              "$ref": "#/$defs/schema129"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/schema128"
+              "$ref": "#/$defs/schema127"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/schema135"
+              "$ref": "#/$defs/schema134"
             },
             "successThreshold": {
-              "$ref": "#/$defs/schema131"
+              "$ref": "#/$defs/schema130"
             },
             "timeoutSeconds": {
               "description": "Timeout seconds for readinessProbe",
@@ -23441,7 +23160,7 @@
               "additionalProperties": {},
               "properties": {
                 "createMaster": {
-                  "$ref": "#/$defs/schema70"
+                  "$ref": "#/$defs/schema69"
                 }
               }
             },
@@ -23469,7 +23188,17 @@
                   "type": "object"
                 },
                 "nodePorts": {
-                  "$ref": "#/$defs/schema2"
+                  "additionalProperties": {},
+                  "description": "ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport\nNOTE: choose port between <30000-32767>\nNOTE: By leaving these values blank, they will be generated by ports-configmap\nIf setting manually, please leave at least replica.replicaCount + 1 in between sentinel.service.nodePorts.redis and sentinel.service.nodePorts.sentinel to take into account the ports that will be created while incrementing that base port",
+                  "properties": {
+                    "redis": {
+                      "description": "Node port for Redis(R)"
+                    },
+                    "sentinel": {
+                      "description": "Node port for Sentinel"
+                    }
+                  },
+                  "type": "object"
                 },
                 "ports": {
                   "additionalProperties": {},
@@ -23523,8 +23252,7 @@
           "type": "object"
         },
         "terminationGracePeriodSeconds": {
-          "description": "Integer setting the termination grace period for the redis-node pods",
-          "type": "integer"
+          "description": "Integer setting the termination grace period for the redis-node pods"
         }
       },
       "type": "object"
@@ -23539,7 +23267,7 @@
           "type": "object"
         },
         "automountServiceAccountToken": {
-          "$ref": "#/$defs/schema34"
+          "$ref": "#/$defs/schema33"
         },
         "create": {
           "anyOf": [
@@ -23555,7 +23283,7 @@
           "description": "Specifies whether a ServiceAccount should be created"
         },
         "name": {
-          "$ref": "#/$defs/schema60"
+          "$ref": "#/$defs/schema59"
         }
       },
       "type": "object"
@@ -23603,14 +23331,14 @@
           "description": "Enable init container to modify Kernel settings\nOS Shell + Utility image\nref: https://hub.docker.com/r/bitnami/os-shell/tags/"
         },
         "image": {
-          "$ref": "#/$defs/schema94"
+          "$ref": "#/$defs/schema93"
         },
         "mountHostSys": {
           "description": "Mount the host `/sys` folder to `/host-sys`\nInit container's resource requests and limits\nref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/",
           "type": "boolean"
         },
         "resources": {
-          "$ref": "#/$defs/schema24"
+          "$ref": "#/$defs/schema23"
         },
         "resourcesPreset": {
           "description": "Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if sysctl.resources is set (sysctl.resources is recommended for production).\nMore information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15"
@@ -23699,7 +23427,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema35"
+            "$ref": "#/$defs/schema34"
           }
         }
       ],
@@ -23757,7 +23485,7 @@
           "type": "array"
         },
         "image": {
-          "$ref": "#/$defs/schema94"
+          "$ref": "#/$defs/schema93"
         },
         "resources": {
           "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nInit container Container Security Context\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
