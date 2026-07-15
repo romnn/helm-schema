@@ -31,6 +31,191 @@
   "allOf": [
     {
       "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "nfs": {
+                "properties": {
+                  "mountOptions": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "mountOptions"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nfs"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "podSecurityPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podSecurityPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "storageClass": {
+                  "properties": {
+                    "provisionerName": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "provisionerName"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "storageClass"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "fullnameOverride": {
             "$ref": "#/$defs/helm-truthy"
@@ -42,6 +227,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
             "anyOf": [
@@ -53,8 +239,366 @@
               }
             ]
           }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "nfs": {
+                "properties": {
+                  "mountOptions": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "mountOptions"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nfs"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "podSecurityPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podSecurityPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "storageClass": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "storageClass"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "storageClass": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ],
+            "description": "Additional labels for any resource created"
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "leaderElection": {
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "When set to false leader election will be disabled"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
+        "required": [
+          "nameOverride"
+        ],
         "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nfs": {
+            "properties": {
+              "mountOptions": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "mountOptions"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "nfs"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nfs": {
+            "additionalProperties": {},
+            "properties": {
+              "mountOptions": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "buildMode": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "buildMode"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "nfs": {
+                  "properties": {
+                    "mountOptions": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "mountOptions"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "nfs"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nfs": {
+            "additionalProperties": {},
+            "properties": {
+              "path": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -101,41 +645,27 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "labels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Additional labels for any resource created"
-          },
           "serviceAccount": {
+            "additionalProperties": {},
             "properties": {
               "name": {
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -159,512 +689,19 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "labels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Additional labels for any resource created"
-          },
           "storageClass": {
+            "additionalProperties": {},
             "description": "For creating the StorageClass automatically:",
             "properties": {
               "accessModes": {
                 "description": "Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany",
                 "type": "string"
               }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "podDisruptionBudget": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podDisruptionBudget"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "podSecurityPolicy": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podSecurityPolicy"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "fullnameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "labels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Additional labels for any resource created"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "podSecurityPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "podSecurityPolicy"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "rbac": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "rbac"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "rbac": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "rbac"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "rbac": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "rbac"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "serviceAccount": {
-                          "properties": {
-                            "create": {}
-                          },
-                          "required": [
-                            "create"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "serviceAccount"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "serviceAccount": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "fullnameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "storageClass": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "storageClass"
-              ],
-              "type": "object"
             }
-          },
-          {
-            "properties": {
-              "storageClass": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storageClass"
-            ],
-            "type": "object"
           }
-        ]
-      },
-      "then": {
-        "properties": {
-          "labels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Additional labels for any resource created"
-          },
-          "nfs": {
-            "properties": {
-              "mountOptions": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "properties": {
-        "leaderElection": {
-          "properties": {
-            "enabled": {
-              "description": "When set to false leader election will be disabled",
-              "not": {
-                "type": "array"
-              }
-            }
-          },
-          "type": "object"
         }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "leaderElection": {
-          "properties": {
-            "enabled": {
-              "description": "When set to false leader election will be disabled",
-              "not": {
-                "type": "integer"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "leaderElection": {
-          "properties": {
-            "enabled": {
-              "description": "When set to false leader election will be disabled",
-              "not": {
-                "type": "number"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "leaderElection": {
-          "properties": {
-            "enabled": {
-              "description": "When set to false leader election will be disabled",
-              "not": {
-                "type": "object"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "leaderElection": {
-          "properties": {
-            "enabled": {
-              "description": "When set to false leader election will be disabled",
-              "not": {
-                "type": "string"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object"
       }
     }
   ],
@@ -672,9 +709,15 @@
     "affinity": {},
     "buildMode": {},
     "fullnameOverride": {
-      "type": [
-        "string",
-        "null"
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
       ]
     },
     "image": {
@@ -709,15 +752,23 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ]
     },
     "labels": {
       "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
         {
           "additionalProperties": {
             "type": "string"
@@ -725,7 +776,9 @@
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Additional labels for any resource created"
@@ -766,36 +819,69 @@
             "type": "object"
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "path": {
                 "type": "string"
-              },
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mountOptions": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "mountOptions"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "reclaimPolicy": {
                 "description": "Reclaim policy for the main nfs volume",
                 "type": "string"
               }
-            },
-            "type": "object"
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "mountOptions": {
+              "allOf": [
+                {
+                  "if": {
+                    "$ref": "#/$defs/helm-truthy"
+                  },
+                  "then": {
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
           }
         }
       ],
       "properties": {
-        "mountOptions": {
-          "anyOf": [
-            {
-              "type": "array"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
+        "mountOptions": {},
         "path": {
           "type": "string"
         },
@@ -813,13 +899,21 @@
     "podAnnotations": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Deployment pod annotations"
@@ -840,25 +934,36 @@
             "type": "object"
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "maxUnavailable": {
                 "anyOf": [
                   {
-                    "type": "integer"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   },
                   {
-                    "type": "null"
+                    "type": "integer"
                   }
                 ]
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
         "enabled": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "maxUnavailable": {}
       },
@@ -870,7 +975,16 @@
       "description": "If true, create & use Pod Security Policy resources\nhttps://kubernetes.io/docs/concepts/policy/pod-security-policy/",
       "properties": {
         "enabled": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         }
       },
       "type": "object"
@@ -881,8 +995,17 @@
       "description": "For RBAC support:",
       "properties": {
         "create": {
-          "description": "Specifies whether RBAC resources should be created",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Specifies whether RBAC resources should be created"
         }
       },
       "type": "object"
@@ -925,6 +1048,7 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "annotations": {
                 "anyOf": [
@@ -935,83 +1059,94 @@
                     "type": "object"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ],
                 "description": "Annotations to add to the service account"
-              },
-              "name": {
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                "type": [
-                  "string",
-                  "null"
-                ]
               }
-            },
-            "type": "object"
+            }
           }
         },
         {
           "if": {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "create": {}
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
+            "anyOf": [
+              {
+                "not": {
                   "properties": {
-                    "create": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "create": {}
                   },
                   "required": [
                     "create"
                   ],
                   "type": "object"
                 }
-              ]
-            }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "name": {
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
         "annotations": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
           "description": "Annotations to add to the service account"
         },
         "create": {
-          "description": "Specifies whether a ServiceAccount should be created",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Specifies whether a ServiceAccount should be created"
         },
         "name": {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
           "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
         }
       },
@@ -1048,11 +1183,45 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "allowVolumeExpansion": {
                 "description": "Allow volume to be expanded dynamically",
                 "type": "boolean"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
               },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "annotations": {
                 "anyOf": [
                   {
@@ -1062,35 +1231,330 @@
                     "type": "object"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ],
                 "description": "Storage class annotations"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
               },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "archiveOnDelete": {
-                "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC.",
-                "type": "boolean"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
               },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "name": {
                 "description": "Set a StorageClass name\nIgnored if storageClass.create is false",
                 "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
               },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "onDelete": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "If it exists and has 'delete' value, delete the directory. If it exists and has 'retain' value, save the directory.\nOverrides archiveOnDelete.\nIgnored if value not set."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "pathPattern": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.\nIgnored if value not set."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "provisionerName": {
-                "type": [
-                  "string",
-                  "null"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
                 ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
               },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "reclaimPolicy": {
                 "description": "Method used to reclaim an obsoleted volume",
                 "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
               },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "volumeBindingMode": {
                 "description": "Set volume bindinng mode - Immediate or WaitForFirstConsumer",
                 "type": "string"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
@@ -1103,22 +1567,22 @@
           "description": "Allow volume to be expanded dynamically"
         },
         "annotations": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
           "description": "Storage class annotations"
         },
         "archiveOnDelete": {
           "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC."
         },
         "create": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "defaultClass": {
           "description": "Set StorageClass as the default StorageClass\nIgnored if storageClass.create is false",
@@ -1147,18 +1611,8 @@
       "type": "string"
     },
     "tolerations": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
+      "items": {},
+      "type": "array"
     }
   },
   "type": "object"

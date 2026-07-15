@@ -31,6 +31,132 @@
   "allOf": [
     {
       "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "fullnameOverride": {
             "$ref": "#/$defs/helm-truthy"
@@ -42,6 +168,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
             "anyOf": [
@@ -53,8 +180,364 @@
               }
             ]
           }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ingress": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
         },
+        "required": [
+          "ingress"
+        ],
         "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "configure UI ingress. If needed: \"enabled: true\"",
+            "properties": {
+              "hosts": {
+                "additionalProperties": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "paths": {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "paths": {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ingress": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "configure UI ingress. If needed: \"enabled: true\"",
+            "properties": {
+              "hosts": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "host": {},
+                        "paths": {
+                          "anyOf": [
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            },
+                            {
+                              "not": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "host": {},
+                        "paths": {
+                          "anyOf": [
+                            {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            },
+                            {
+                              "not": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ingress": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "configure UI ingress. If needed: \"enabled: true\"",
+            "properties": {
+              "tls": {
+                "additionalProperties": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "hosts": {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "hosts": {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "tls": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "configure UI ingress. If needed: \"enabled: true\"",
+            "properties": {
+              "tls": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "hosts": {
+                          "anyOf": [
+                            {
+                              "items": {},
+                              "type": "array"
+                            },
+                            {
+                              "additionalProperties": {},
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "secretName": {}
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "hosts": {
+                          "anyOf": [
+                            {
+                              "items": {},
+                              "type": "array"
+                            },
+                            {
+                              "additionalProperties": {},
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "secretName": {}
+                      },
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org"
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -70,6 +553,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "nameOverride": {
             "anyOf": [
@@ -81,89 +565,29 @@
               }
             ]
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
+      "additionalProperties": {},
       "properties": {
         "service": {
+          "additionalProperties": {},
           "description": "configure UI service",
           "properties": {
             "type": {
-              "not": {
-                "type": "array"
-              }
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
-          },
-          "type": "object"
+          }
         }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "service": {
-          "description": "configure UI service",
-          "properties": {
-            "type": {
-              "not": {
-                "type": "boolean"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "service": {
-          "description": "configure UI service",
-          "properties": {
-            "type": {
-              "not": {
-                "type": "integer"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "service": {
-          "description": "configure UI service",
-          "properties": {
-            "type": {
-              "not": {
-                "type": "number"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "service": {
-          "description": "configure UI service",
-          "properties": {
-            "type": {
-              "not": {
-                "type": "object"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
+      }
     },
     {
       "if": {
@@ -209,21 +633,27 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "serviceAccount": {
+            "additionalProperties": {},
             "properties": {
               "name": {
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     }
   ],
@@ -261,15 +691,28 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "configure extra UI ENVs\nExtra ENVs are writen in kubenertes format and added \"as is\" to the pod's env variables\nhttps://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/\nhttps://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#environment-variables\nUI specific env variables can be found here: https://github.com/zalando/postgres-operator/blob/master/ui/operator_ui/main.py"
     },
-    "fullnameOverride": {},
+    "fullnameOverride": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
     "image": {
       "additionalProperties": {},
       "description": "configure ui image",
@@ -321,6 +764,7 @@
             "type": "object"
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "annotations": {
                 "anyOf": [
@@ -331,67 +775,287 @@
                     "type": "object"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ]
-              },
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "hosts": {
-                "anyOf": [
-                  {
-                    "items": {
-                      "additionalProperties": {},
-                      "properties": {},
-                      "type": "object"
-                    },
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "object"
+                "additionalProperties": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "paths": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "items": {
+                        "type": "string"
+                      }
+                    }
                   }
-                ]
-              },
+                },
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "paths": {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "additionalProperties": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "paths": {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "paths": {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {},
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "ingressClassName": {
                 "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
                 "type": "string"
-              },
-              "tls": {
-                "anyOf": [
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "object"
-                  }
-                ],
-                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
               }
             },
+            "required": [
+              "enabled"
+            ],
             "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "additionalProperties": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "hosts": {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "hosts": {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
+                "items": {},
+                "type": "array"
+              }
+            }
           }
         }
       ],
       "description": "configure UI ingress. If needed: \"enabled: true\"",
       "properties": {
-        "annotations": {
+        "annotations": {},
+        "enabled": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "type": "object"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "null"
+              "type": "boolean"
             }
           ]
-        },
-        "enabled": {
-          "type": "boolean"
         },
         "hosts": {},
         "ingressClassName": {
@@ -410,30 +1074,53 @@
     "podAnnotations": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Extra pod annotations"
     },
     "priorityClassName": {
-      "description": "priority class for operator-ui pod",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "priority class for operator-ui pod"
     },
     "rbac": {
       "additionalProperties": {},
       "properties": {
         "create": {
-          "description": "Specifies whether RBAC resources should be created",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Specifies whether RBAC resources should be created"
         }
       },
       "type": "object"
@@ -479,13 +1166,21 @@
         "annotations": {
           "anyOf": [
             {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ],
           "description": "If the type of the service is NodePort a port can be specified using the nodePort field\nIf the nodePort field is not specified, or if it has no value, then a random port is used\nnodePort: 32521"
@@ -540,36 +1235,40 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "name": {
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
         "create": {
-          "description": "Specifies whether a ServiceAccount should be created",
-          "type": "boolean"
-        },
-        "name": {
           "anyOf": [
             {
-              "const": null
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "null"
-            },
-            {
-              "type": "string"
+              "type": "boolean"
             }
           ],
+          "description": "Specifies whether a ServiceAccount should be created"
+        },
+        "name": {
           "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
         }
       },
@@ -583,9 +1282,6 @@
         },
         {
           "type": "null"
-        },
-        {
-          "type": "string"
         }
       ],
       "description": "Tolerations for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"

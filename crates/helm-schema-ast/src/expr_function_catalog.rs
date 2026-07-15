@@ -35,13 +35,65 @@ pub fn is_string_transform_function(function: &str) -> bool {
             | "b64enc"
             | "b64dec"
             | "toString"
+            | "lower"
+            | "indent"
+            | "nindent"
             | "trunc"
             | "trim"
             | "trimAll"
             | "trimPrefix"
             | "trimSuffix"
             | "replace"
+            | "regexReplaceAll"
+            | "mustRegexReplaceAll"
+            | "regexReplaceAllLiteral"
+            | "mustRegexReplaceAllLiteral"
     )
+}
+
+/// Returns the argument positions that a Helm/Sprig call requires to be Go strings.
+///
+/// `argument_count` includes a pipeline input, which Go templates append as the final
+/// argument. An empty result means the function has no catalogued string operands.
+pub fn string_operand_indices(function: &str, argument_count: usize) -> Vec<usize> {
+    if argument_count == 0 {
+        return Vec::new();
+    }
+
+    match function {
+        // These functions accept only string arguments. Total stringifiers are included so
+        // callers can share the position catalog while deciding whether the input is strict.
+        "quote"
+        | "squote"
+        | "b64enc"
+        | "b64dec"
+        | "toString"
+        | "trimAll"
+        | "trimPrefix"
+        | "trimSuffix"
+        | "replace"
+        | "regexReplaceAll"
+        | "mustRegexReplaceAll"
+        | "regexReplaceAllLiteral"
+        | "mustRegexReplaceAllLiteral"
+        | "regexMatch"
+        | "mustRegexMatch"
+        | "contains"
+        | "hasPrefix"
+        | "hasSuffix"
+        | "semverCompare"
+        | "splitList"
+        | "split" => (0..argument_count).collect(),
+        // The string subject is final; `trunc`'s preceding width is numeric.
+        "trunc" | "trim" | "lower" | "indent" | "nindent" => {
+            vec![argument_count - 1]
+        }
+        // `splitn separator count subject` has a non-string middle argument.
+        "splitn" if argument_count >= 3 => vec![0, argument_count - 1],
+        // `regexSplit expression subject count` has a non-string final argument.
+        "regexSplit" if argument_count >= 3 => vec![0, 1],
+        _ => Vec::new(),
+    }
 }
 
 /// Returns whether a function stringifies ANY input. These call Sprig's

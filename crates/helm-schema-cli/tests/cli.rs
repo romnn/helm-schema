@@ -1216,11 +1216,9 @@ fn parens_form_does_not_lose_default_driven_nullability_on_inner_field()
         &chart_dir.join("Chart.yaml")?,
         "apiVersion: v2\nname: root\nversion: 0.1.0\n",
     )?;
-    // values.yaml ships `tag` as an empty string so helm-schema has a
-    // type signal to anchor the schema. With `tag: null` instead, the
-    // YAML null gives no type information and the schema falls back to
-    // `{}` (allow-anything), which is functionally null-tolerant but
-    // not what most charts want to express.
+    // values.yaml ships `tag` as an empty string so helm-schema has a type
+    // signal to anchor the schema. An explicit null supplied by a user still
+    // selects the downstream default and must remain valid.
     test_util::write(
         &chart_dir.join("values.yaml")?,
         "image:\n  repository: example/app\n  tag: \"\"\n",
@@ -1261,31 +1259,17 @@ fn parens_form_does_not_lose_default_driven_nullability_on_inner_field()
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
-    let tag = actual
-        .pointer("/properties/image/properties/tag")
-        .ok_or_else(|| eyre!("image.tag missing from generated schema: {actual}"))?;
-
-    // `image.tag` should accept null because (a) the values.yaml ships
-    // it as null and (b) the template guards it with `| default`. The
-    // exact shape can be `{type: ["null","string"]}` or
-    // `{anyOf: [{type:"null"}, {type:"string"}]}` depending on
-    // upstream-K8s merging; both encode "null is allowed".
-    let accepts_null = match tag.get("type") {
-        Some(serde_json::Value::Array(types)) => types.iter().any(|t| t == "null"),
-        Some(serde_json::Value::String(t)) => t == "null",
-        _ => false,
-    } || tag
-        .get("anyOf")
-        .and_then(serde_json::Value::as_array)
-        .is_some_and(|variants| {
-            variants
-                .iter()
-                .any(|v| matches!(v.get("type"), Some(serde_json::Value::String(t)) if t == "null"))
-        });
-
     assert!(
-        accepts_null,
-        "image.tag should be inferred as nullable when guarded by `| default` even through the parens-form prefix; got {tag}",
+        schema_validates_instance(
+            &actual,
+            &serde_json::json!({
+                "image": {
+                    "repository": "example/app",
+                    "tag": null
+                }
+            })
+        ),
+        "image.tag should accept null when guarded by `| default` even through the parens-form prefix; got {actual}",
     );
 
     Ok(())
@@ -1619,11 +1603,11 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable()
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
-    // `fullnameOverride` is consumed by `trunc` directly, a real runtime
-    // string contract, so its typing stays and the self-guarded consumer
-    // additionally emits the truthy⇒string arm. `nameOverride` only
-    // reaches the render as a printf data argument (any value formats), so
-    // its slot is unconstrained and no branch narrows it.
+    // Falsy fullnameOverride values skip its strict trunc consumer, while a
+    // truthy value must be a string. When that override is inactive,
+    // nameOverride is selected by default and reaches the strict `contains`
+    // call only when truthy. The bases therefore stay open and the two live
+    // consumer domains remain conditional.
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "$defs": {
@@ -1648,23 +1632,47 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable()
                     "type": "object"
                 },
                 "then": {
+                    "additionalProperties": {},
                     "properties": {
                         "fullnameOverride": {
                             "anyOf": [{ "type": "string" }, { "type": "null" }]
                         }
-                    },
-                    "type": "object"
+                    }
+                }
+            },
+            {
+                "if": {
+                    "allOf": [
+                        {
+                            "properties": {
+                                "nameOverride": { "$ref": "#/$defs/helm-truthy" }
+                            },
+                            "required": ["nameOverride"],
+                            "type": "object"
+                        },
+                        {
+                            "not": {
+                                "properties": {
+                                    "fullnameOverride": { "$ref": "#/$defs/helm-truthy" }
+                                },
+                                "required": ["fullnameOverride"],
+                                "type": "object"
+                            }
+                        }
+                    ]
+                },
+                "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                        "nameOverride": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }]
+                        }
+                    }
                 }
             }
         ],
         "properties": {
-            "fullnameOverride": {
-                "anyOf": [
-                    { "const": null },
-                    { "type": "null" },
-                    { "type": "string" }
-                ]
-            },
+            "fullnameOverride": {},
             "nameOverride": {}
         },
         "type": "object"

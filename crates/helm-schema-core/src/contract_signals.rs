@@ -132,17 +132,44 @@ pub struct ContractPathSchemaEvidence {
     pub fail_implications: Vec<ContractFailImplication>,
 }
 
+/// A chart-wide default subtree merged into an effective `.Values` subtree.
+///
+/// The target remains user-overridable; the source supplies only keys absent
+/// from the target, matching `mustMergeOverwrite SOURCE TARGET` before the
+/// result replaces a root or nested `Values` object.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ValuesDefaultSource {
+    /// Effective values subtree receiving defaults, with an empty path denoting `.Values`.
+    pub target_path: String,
+    /// Chart values subtree supplying defaults.
+    pub source_path: String,
+}
+
 /// One `fail`-branch implication on a values path.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct ContractFailImplication {
     /// Conditions outside the failing test; empty means the requirement
     /// binds the path unconditionally.
     pub outer_guards: Vec<ConditionalGuard>,
-    /// The requirement applies to every MEMBER value of the path (the fail
-    /// sits inside `range` over it) instead of the path's own value.
-    pub per_member: bool,
+    /// The runtime value affected by the requirement.
+    pub target: ContractRequirementTarget,
     /// Conjunction of requirements the affected value must satisfy.
     pub requirements: Vec<FailValueRequirement>,
+}
+
+/// Runtime value within a values-path contract that must satisfy a requirement.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum ContractRequirementTarget {
+    /// The values path itself.
+    Value,
+    /// Every value produced by ranging the path.
+    ///
+    /// `allow_integer` describes the range header's own integer lane. It is
+    /// false for a two-variable range, even when the member requirement would
+    /// otherwise accept integer values.
+    Members { allow_integer: bool },
+    /// Every key produced by ranging the path.
+    Keys,
 }
 
 /// One requirement a `fail` branch imposes on an affected value.
@@ -185,6 +212,7 @@ pub struct ContractSchemaSignals {
     referenced_value_paths: BTreeSet<String>,
     pruned_parent_value_paths: BTreeSet<String>,
     direct_ranged_value_paths: BTreeSet<String>,
+    values_default_sources: BTreeSet<ValuesDefaultSource>,
     /// Terminating validator formulas spanning several paths: rendering
     /// aborts whenever ALL guards of one clause hold, so no valid values
     /// document may satisfy them (`fail`/`required` under fully lowerable
@@ -220,8 +248,25 @@ impl ContractSchemaSignals {
             referenced_value_paths,
             pruned_parent_value_paths,
             direct_ranged_value_paths,
+            values_default_sources: BTreeSet::new(),
             terminal_clauses,
         }
+    }
+
+    /// Attaches chart subtrees that supply runtime defaults to effective values paths.
+    #[must_use]
+    pub fn with_values_default_sources(
+        mut self,
+        sources: impl IntoIterator<Item = ValuesDefaultSource>,
+    ) -> Self {
+        self.values_default_sources.extend(sources);
+        self
+    }
+
+    /// Default subtrees applied to effective values before templates consume them.
+    #[must_use]
+    pub fn values_default_sources(&self) -> &BTreeSet<ValuesDefaultSource> {
+        &self.values_default_sources
     }
 
     /// Paths the chart ranges DIRECTLY: their runtime iterable domain is
@@ -285,6 +330,9 @@ pub struct ContractValuePathFacts {
     /// (`tpl (toYaml …)`, `quote`, `toString`, `join`): any input type
     /// renders, so the use exposes provenance but no input shape.
     pub used_as_serialized: bool,
+    /// The path is rendered through `toYaml`. The input kind is unrestricted,
+    /// while the resulting YAML fragment still obeys structural placement.
+    pub used_as_yaml_serialized: bool,
     /// A string-consuming transform (`trunc`, `b64enc`, `fromYaml`, a
     /// dynamic `printf` format) bound a real runtime string contract on the
     /// path: rendering fails for non-string values, so this typing survives
@@ -305,6 +353,9 @@ pub struct ContractValuePathFacts {
     /// (`range $k, $v := …`): integers iterate single-variable ranges only
     /// ("can't use 2 to iterate over more than one variable").
     pub has_destructured_range_use: bool,
+    /// Some direct range sees the path after JSON decoding, where numbers are
+    /// `float64` values rather than Helm's integer iteration counts.
+    pub has_json_decoded_range_use: bool,
     pub is_partial_scalar_value_path: bool,
     pub has_render_use: bool,
     pub has_unconditional_render_use: bool,

@@ -92,6 +92,10 @@ pub struct EvaluatedDocument {
     /// ranging a derived expression over them: only these carry an iterable
     /// input domain.
     pub(crate) direct_range_source_paths: BTreeSet<String>,
+    /// Direct range sources whose runtime values were decoded from JSON.
+    pub(crate) json_decoded_range_source_paths: BTreeSet<String>,
+    /// Chart value subtrees supplying defaults to the effective values tree.
+    pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
     /// The subset of direct range sources iterated with TWO variables:
     /// integers iterate single-variable ranges only.
     pub(crate) destructured_range_source_paths: BTreeSet<String>,
@@ -142,6 +146,8 @@ pub(crate) fn eval_document(
         shape_erased_paths: interpreter.shape_erased_paths,
         string_contract_paths: interpreter.string_contract_paths,
         direct_range_source_paths: interpreter.direct_range_source_paths,
+        json_decoded_range_source_paths: interpreter.json_decoded_range_source_paths,
+        values_default_sources: interpreter.values_default_sources_observed,
         destructured_range_source_paths: interpreter.destructured_range_source_paths,
         fail_conditions: interpreter.fail_conditions,
     }
@@ -152,6 +158,7 @@ pub(crate) fn eval_document(
 /// start byte).
 pub(crate) struct ControlFacts {
     pub(super) header: Option<TemplateHeader>,
+    pub(super) is_range: bool,
     pub(super) range_destructured: bool,
     /// The VALUE variable of a destructured range header (`$v` in
     /// `range $k, $v := …`).
@@ -199,6 +206,7 @@ fn collect_control_facts(
                 node.start_byte(),
                 ControlFacts {
                     header: control_header(source, node),
+                    is_range: false,
                     range_destructured: false,
                     range_value_variable: None,
                     range_key_variable: None,
@@ -211,6 +219,7 @@ fn collect_control_facts(
                 node.start_byte(),
                 ControlFacts {
                     header: range_header_from_source(node, source),
+                    is_range: true,
                     range_destructured: range_has_destructured_variable_definition(node),
                     range_value_variable: helm_schema_ast::range_destructured_value_variable(
                         node, source,
@@ -466,6 +475,11 @@ pub(super) struct Interpreter<'a> {
     /// none: its value dot derives from the fragment dot.
     pub(super) root_value_dot: Option<AbstractValue>,
     pub(super) root_bindings: HashMap<String, AbstractValue>,
+    pub(super) root_truthy_predicates: HashMap<String, Predicate>,
+    /// Root-context replacements observed in source order and exported by helper summaries.
+    pub(super) root_set_mutations_observed: BTreeMap<String, AbstractValue>,
+    pub(super) root_set_predicates_observed: BTreeMap<String, Predicate>,
+    pub(super) values_default_sources_observed: BTreeSet<crate::ValuesDefaultSource>,
     pub(super) active_predicates: Vec<Predicate>,
     pub(super) reads: Vec<ValueRead>,
     /// Dedup shadow of `reads` (order lives in the vec).
@@ -492,6 +506,8 @@ pub(super) struct Interpreter<'a> {
     /// Paths a `range` iterates DIRECTLY (`range .Values.x`): only these
     /// carry an iterable input domain.
     pub(super) direct_range_source_paths: BTreeSet<String>,
+    /// Direct range sources whose runtime values were decoded from JSON.
+    pub(super) json_decoded_range_source_paths: BTreeSet<String>,
     /// The subset of direct range sources iterated with TWO variables
     /// (`range $k, $v := …`): integers iterate single-variable ranges only
     /// ("can't use 2 to iterate over more than one variable").
@@ -499,6 +515,8 @@ pub(super) struct Interpreter<'a> {
     /// `fail` captures (see [`FailCapture`]): no valid values document may
     /// satisfy one of these conjunctions.
     pub(super) fail_conditions: Vec<FailCapture>,
+    /// Object-producing mutations observed before subsequent member reads.
+    pub(super) member_host_conversions: BTreeSet<crate::eval_effect::MemberHostConversion>,
     /// Values paths of enclosing conditions whose lowering is APPROXIMATE
     /// (truthy fallbacks, dropped conjuncts), stacked with the region walk.
     /// Rows tolerate wider conditions; fail NEGATION abstains when the
@@ -564,6 +582,10 @@ impl<'a> Interpreter<'a> {
             dot_stack: Vec::new(),
             root_value_dot: None,
             root_bindings: HashMap::new(),
+            root_truthy_predicates: HashMap::new(),
+            root_set_mutations_observed: BTreeMap::new(),
+            root_set_predicates_observed: BTreeMap::new(),
+            values_default_sources_observed: BTreeSet::new(),
             active_predicates: Vec::new(),
             reads: Vec::new(),
             reads_seen: HashSet::new(),
@@ -574,8 +596,10 @@ impl<'a> Interpreter<'a> {
             shape_erased_paths: BTreeSet::new(),
             string_contract_paths: BTreeSet::new(),
             direct_range_source_paths: BTreeSet::new(),
+            json_decoded_range_source_paths: BTreeSet::new(),
             destructured_range_source_paths: BTreeSet::new(),
             fail_conditions: Vec::new(),
+            member_host_conversions: BTreeSet::new(),
             approximate_condition_paths: Vec::new(),
             active_direct_ranged_paths: Vec::new(),
             suppress_predicate_paths: BTreeSet::new(),
@@ -721,11 +745,13 @@ impl<'a> Interpreter<'a> {
         );
         ValuePathContext {
             root_bindings: &self.root_bindings,
+            root_truthy_predicates: &self.root_truthy_predicates,
             template_bindings,
             range_domains: &self.locals.range_domains,
             get_bindings: &self.locals.get_bindings,
             template_default_paths: &self.locals.default_paths,
             template_output_meta: &self.locals.output_meta,
+            template_truthy_reductions: &self.locals.truthy_reductions,
             typeof_bindings: &self.locals.typeof_sources,
             fragment_context: FragmentEvalContext::new(self.db),
             current_dot_fragment: self.current_dot_fragment(),
@@ -743,7 +769,11 @@ impl<'a> Interpreter<'a> {
             conjunction: self.fail_capture_conjunction(Vec::new()),
             approximate_condition_paths: self.approximate_condition_paths.iter().cloned().collect(),
             direct_ranged_paths: self.active_direct_ranged_paths.iter().cloned().collect(),
+            json_decoded_ranged_paths: self.json_decoded_range_source_paths.clone(),
+            destructured_ranged_paths: self.destructured_range_source_paths.clone(),
             member_access: false,
+            member_access_handled_kinds: BTreeSet::new(),
+            range_key_string_paths: BTreeSet::new(),
         };
         if capture
             .conjunction
@@ -778,7 +808,11 @@ impl<'a> Interpreter<'a> {
             conjunction: self.fail_capture_conjunction(vec![empty]),
             approximate_condition_paths: self.approximate_condition_paths.iter().cloned().collect(),
             direct_ranged_paths: self.active_direct_ranged_paths.iter().cloned().collect(),
+            json_decoded_ranged_paths: self.json_decoded_range_source_paths.clone(),
+            destructured_ranged_paths: self.destructured_range_source_paths.clone(),
             member_access: false,
+            member_access_handled_kinds: BTreeSet::new(),
+            range_key_string_paths: BTreeSet::new(),
         };
         if capture
             .conjunction
@@ -792,8 +826,8 @@ impl<'a> Interpreter<'a> {
         }
     }
 
-    /// The ambient predicates plus `tail`, with the active direct range
-    /// facts re-added (helper-scope ranges push truthy flavors only).
+    /// The ambient predicates plus `tail`, with active direct range facts
+    /// present even when a caller constructed the capture indirectly.
     fn fail_capture_conjunction(&self, tail: Vec<Predicate>) -> Vec<Predicate> {
         let mut conjunction = self.active_predicates.clone();
         for path in &self.active_direct_ranged_paths {
@@ -807,7 +841,7 @@ impl<'a> Interpreter<'a> {
     }
 
     pub(super) fn ambient_condition(&self) -> GuardDnf {
-        GuardDnf::from_contract_predicate_conjunction(self.active_predicates.iter().cloned())
+        GuardDnf::from_conjunction(self.active_predicates.iter().cloned())
     }
 
     pub(super) fn push_predicate(&mut self, predicate: Predicate) {
@@ -974,7 +1008,10 @@ impl<'a> Interpreter<'a> {
         claim_path: &str,
         sibling_claims: &BTreeSet<String>,
     ) -> GuardDnf {
-        GuardDnf::from_contract_predicate_conjunction(
+        if !self.helper_scope {
+            return GuardDnf::from_conjunction(self.active_predicates.iter().cloned());
+        }
+        GuardDnf::from_conjunction(
             self.active_predicates
                 .iter()
                 .filter(|predicate| {
@@ -1010,11 +1047,48 @@ impl<'a> Interpreter<'a> {
             let mut direct_ranged: BTreeSet<String> =
                 self.active_direct_ranged_paths.iter().cloned().collect();
             direct_ranged.extend(body_capture.direct_ranged_paths.iter().cloned());
+            let mut json_decoded_ranged = self.json_decoded_range_source_paths.clone();
+            json_decoded_ranged.extend(body_capture.json_decoded_ranged_paths.iter().cloned());
+            let mut destructured_ranged = self.destructured_range_source_paths.clone();
+            destructured_ranged.extend(body_capture.destructured_ranged_paths.iter().cloned());
+            let conjunction = self.fail_capture_conjunction(body_capture.conjunction.clone());
+            let mut member_access_handled_kinds = body_capture.member_access_handled_kinds.clone();
+            if body_capture.member_access {
+                let target = conjunction.iter().find_map(|predicate| match predicate {
+                    Predicate::Not(inner) => match inner.as_ref() {
+                        Predicate::Guard(Guard::TypeIs { path, schema_type })
+                            if schema_type == "object" =>
+                        {
+                            Some(path)
+                        }
+                        _ => None,
+                    },
+                    _ => None,
+                });
+                if let Some(target) = target {
+                    member_access_handled_kinds.extend(
+                        self.member_host_conversions
+                            .iter()
+                            .filter(|conversion| {
+                                &conversion.path == target
+                                    && conversion
+                                        .outer_predicates
+                                        .iter()
+                                        .all(|predicate| conjunction.contains(predicate))
+                            })
+                            .map(|conversion| conversion.input_kind.clone()),
+                    );
+                }
+            }
             let capture = FailCapture {
-                conjunction: self.fail_capture_conjunction(body_capture.conjunction.clone()),
+                conjunction,
                 approximate_condition_paths: approximate,
                 direct_ranged_paths: direct_ranged,
+                json_decoded_ranged_paths: json_decoded_ranged,
+                destructured_ranged_paths: destructured_ranged,
                 member_access: body_capture.member_access,
+                member_access_handled_kinds,
+                range_key_string_paths: body_capture.range_key_string_paths.clone(),
             };
             if capture
                 .conjunction

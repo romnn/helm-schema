@@ -34,6 +34,165 @@
         "anyOf": [
           {
             "properties": {
+              "serviceAccount": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "natskafka": {
+                    "properties": {
+                      "monitoring": {
+                        "properties": {
+                          "httpPort": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "httpPort"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "monitoring"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "natskafka"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "natskafka": {
+                    "properties": {
+                      "monitoring": {
+                        "properties": {
+                          "httpsPort": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "httpsPort"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "monitoring"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "natskafka"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "fullnameOverride overrides nats-kafka.fullname"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "fullnameOverride overrides nats-kafka.fullname"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "nameOverride overrides nats-kafka.name"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
               "natskafka": {
                 "properties": {
                   "monitoring": {
@@ -89,74 +248,106 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "fullnameOverride overrides nats-kafka.fullname"
-          },
           "nameOverride": {
             "description": "nameOverride overrides nats-kafka.name",
             "type": "string"
-          },
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "namespaceOverride overrides nats-kafka.namespace"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
-        "properties": {
-          "serviceAccount": {
+        "anyOf": [
+          {
             "properties": {
-              "create": {
-                "$ref": "#/$defs/helm-truthy"
+              "serviceAccount": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "create"
+              "serviceAccount"
             ],
             "type": "object"
-          }
-        },
-        "required": [
-          "serviceAccount"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "fullnameOverride": {
+          },
+          {
             "anyOf": [
               {
-                "type": "null"
+                "properties": {
+                  "natskafka": {
+                    "properties": {
+                      "monitoring": {
+                        "properties": {
+                          "httpPort": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "httpPort"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "monitoring"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "natskafka"
+                ],
+                "type": "object"
               },
               {
-                "type": "string"
+                "properties": {
+                  "natskafka": {
+                    "properties": {
+                      "monitoring": {
+                        "properties": {
+                          "httpsPort": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "httpsPort"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "monitoring"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "natskafka"
+                ],
+                "type": "object"
               }
-            ],
-            "description": "fullnameOverride overrides nats-kafka.fullname"
-          },
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
           "namespaceOverride": {
             "anyOf": [
               {
-                "type": "null"
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
               },
               {
                 "type": "string"
@@ -164,66 +355,7 @@
             ],
             "description": "namespaceOverride overrides nats-kafka.namespace"
           }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "fullnameOverride overrides nats-kafka.fullname"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "nameOverride overrides nats-kafka.name"
-          }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -239,6 +371,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "namespaceOverride": {
             "anyOf": [
@@ -251,8 +384,90 @@
             ],
             "description": "namespaceOverride overrides nats-kafka.namespace"
           }
-        },
-        "type": "object"
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "natskafka": {
+                "properties": {
+                  "additionalArguments": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "additionalArguments"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "natskafka"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "natskafka": {
+                "properties": {
+                  "additionalArguments": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "additionalArguments"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "natskafka"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "natskafka": {
+            "additionalProperties": {},
+            "properties": {
+              "additionalArguments": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "natskafka": {
+          "additionalProperties": {},
+          "properties": {
+            "monitoring": {
+              "type": "object"
+            }
+          }
+        }
       }
     },
     {
@@ -284,29 +499,185 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
+        "properties": {
+          "natskafka": {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "additionalProperties": {},
+                "properties": {
+                  "credentials": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "secret": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "natskafka": {
             "properties": {
               "nats": {
                 "properties": {
                   "credentials": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
+                "required": [
+                  "credentials"
+                ],
                 "type": "object"
               }
             },
+            "required": [
+              "nats"
+            ],
             "type": "object"
           }
         },
+        "required": [
+          "natskafka"
+        ],
         "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "natskafka": {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "additionalProperties": {},
+                "properties": {
+                  "credentials": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "natskafka": {
+            "properties": {
+              "nats": {
+                "properties": {
+                  "credentials": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "credentials"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nats"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "natskafka"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "natskafka": {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "additionalProperties": {},
+                "properties": {
+                  "credentials": {
+                    "required": [
+                      "secret"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "natskafka": {
+            "properties": {
+              "nats": {
+                "properties": {
+                  "credentials": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "credentials"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nats"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "natskafka"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "natskafka": {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "required": [
+                  "credentials"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "natskafka": {
+          "type": "object"
+        }
       }
     }
   ],
@@ -314,13 +685,15 @@
     "fullnameOverride": {
       "anyOf": [
         {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
           "type": "boolean"
         },
         {
           "type": "integer"
-        },
-        {
-          "type": "null"
         },
         {
           "type": "number"
@@ -349,14 +722,150 @@
       "description": "nameOverride overrides nats-kafka.name"
     },
     "namespaceOverride": {
-      "description": "namespaceOverride overrides nats-kafka.namespace",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "namespaceOverride overrides nats-kafka.namespace"
     },
     "natskafka": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "additionalArguments": {
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  },
+                  "then": {
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "monitoring": {
+              "allOf": [
+                {
+                  "if": {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "httpPort": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "httpPort"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "httpsPort": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "httpsPort"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "httpPort": {
+                        "description": "0 means no monitoring, -1 means some available port",
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "monitoring": {
+              "allOf": [
+                {
+                  "if": {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "httpPort": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "httpPort"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "httpsPort": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "httpsPort"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "httpsPort": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ],
       "properties": {
         "additionalArguments": {
           "anyOf": [
@@ -365,16 +874,9 @@
               "type": "array"
             },
             {
-              "type": "array"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "object"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ]
         },
@@ -386,7 +888,9 @@
         "configPath": {
           "anyOf": [
             {
-              "const": null
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
               "type": "null"
@@ -405,9 +909,6 @@
             },
             {
               "type": "null"
-            },
-            {
-              "type": "string"
             }
           ]
         },
@@ -417,13 +918,21 @@
         "deploymentLabels": {
           "anyOf": [
             {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ]
         },
@@ -450,58 +959,22 @@
         },
         "monitoring": {
           "additionalProperties": {},
-          "allOf": [
-            {
-              "if": {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "httpPort": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "httpPort"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "httpsPort": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "httpsPort"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "httpPort": {
-                    "description": "0 means no monitoring, -1 means some available port",
-                    "type": "integer"
-                  },
-                  "httpsPort": {
-                    "type": "integer"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          ],
           "properties": {
             "httpHost": {
               "type": "string"
             },
             "httpPort": {
-              "description": "0 means no monitoring, -1 means some available port",
-              "type": [
-                "integer",
-                "null"
-              ]
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "integer"
+                }
+              ],
+              "description": "0 means no monitoring, -1 means some available port"
             },
             "httpsPort": {},
             "tls": {
@@ -517,9 +990,15 @@
                   "type": "string"
                 },
                 "secret": {
-                  "type": [
-                    "string",
-                    "null"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
                   ]
                 }
               },
@@ -529,34 +1008,60 @@
           "type": "object"
         },
         "nats": {
-          "additionalProperties": {},
-          "properties": {
-            "connectTimeout": {
-              "type": "integer"
-            },
-            "credentials": {
+          "anyOf": [
+            {
               "additionalProperties": {},
               "properties": {
-                "secret": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "name": {}
-                  },
-                  "type": "object"
+                "connectTimeout": {
+                  "type": "integer"
                 }
               }
             },
-            "maxReconnects": {
-              "type": "integer"
-            },
-            "reconnectWait": {
-              "type": "integer"
-            },
-            "servers": {
-              "items": {},
-              "type": "array"
+            {
+              "additionalProperties": {},
+              "properties": {
+                "credentials": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "secret": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "name": {}
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "maxReconnects": {
+                  "type": "integer"
+                },
+                "reconnectWait": {
+                  "type": "integer"
+                },
+                "servers": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "properties": {},
+                      "type": "object"
+                    },
+                    {
+                      "items": {},
+                      "type": "array"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "type": "object"
             }
-          },
+          ],
           "type": "object"
         },
         "nodeSelector": {
@@ -565,13 +1070,21 @@
         "podLabels": {
           "anyOf": [
             {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ]
         },
@@ -588,10 +1101,12 @@
               "type": "array"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "string"
+              "type": "null"
             }
           ],
           "description": "Node tolerations for server scheduling to nodes with taints\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/\n- key: \"key\"\noperator: \"Equal|Exists\"\nvalue: \"value\"\neffect: \"NoSchedule|PreferNoSchedule|NoExecute(1.6 only)\""
@@ -606,26 +1121,61 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "properties": {
-            "name": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+          "if": {
+            "properties": {
+              "create": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
           },
-          "type": "object"
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
         }
       ],
       "properties": {
         "create": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
-        "name": {}
+        "name": {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
       },
       "type": "object"
     }

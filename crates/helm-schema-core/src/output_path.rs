@@ -2,6 +2,10 @@ use std::collections::BTreeSet;
 
 use crate::YamlPath;
 
+/// Structural path segment for the value of a rendered mapping entry whose
+/// key is supplied by a template expression.
+pub const DYNAMIC_MAPPING_VALUE_SEGMENT: &str = "{*}";
+
 pub fn values_path_has_descendant(path: &str, sources: &BTreeSet<String>) -> bool {
     sources
         .iter()
@@ -29,5 +33,13 @@ pub fn sequence_item_path(relative_path: &YamlPath) -> YamlPath {
     } else {
         path.0.push("[*]".to_string());
     }
+    path
+}
+
+/// Appends the structural dynamic-key value segment to a rendered YAML path.
+#[must_use]
+pub fn dynamic_mapping_value_path(relative_path: &YamlPath) -> YamlPath {
+    let mut path = relative_path.clone();
+    path.0.push(DYNAMIC_MAPPING_VALUE_SEGMENT.to_string());
     path
 }

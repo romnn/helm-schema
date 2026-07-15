@@ -1,7 +1,8 @@
 use std::collections::BTreeSet;
 
 use crate::contract::{ContractIr, ContractUse};
-use crate::{Guard, GuardValue, ResourceRef, ValueKind, YamlPath};
+use crate::{Guard, GuardValue, ResourceRef, SymbolicIrContext, ValueKind, YamlPath};
+use helm_schema_ast::DefineIndex;
 use helm_schema_core::{ConditionalGuard, ContractSchemaSignals, MetadataFieldKind};
 use test_util::prelude::sim_assert_eq;
 
@@ -15,6 +16,14 @@ struct FlattenedConditionalOverlay {
 
 fn signals_for(uses: Vec<ContractUse>) -> ContractSchemaSignals {
     ContractIr::from_contract_uses(uses)
+        .finalize()
+        .into_schema_signals()
+}
+
+fn signals_for_template(source: &str) -> ContractSchemaSignals {
+    let defines = DefineIndex::new();
+    SymbolicIrContext::new(&defines)
+        .generate_contract_ir(source)
         .finalize()
         .into_schema_signals()
 }
@@ -122,7 +131,7 @@ fn contract_ir_path_evidence_collects_references_and_typed_guard_predicates() {
                     path: "extraConfig".to_string(),
                     schema_type: "string".to_string(),
                 },
-                Guard::Range {
+                Guard::Truthy {
                     path: "extraEnv".to_string(),
                 },
             ],
@@ -184,7 +193,8 @@ fn contract_ir_path_evidence_collects_references_and_typed_guard_predicates() {
             .filter(|(_, evidence)| evidence.facts.is_ranged_source)
             .map(|(path, _)| path.clone())
             .collect::<BTreeSet<_>>(),
-        want: BTreeSet::from(["extraEnv".to_string()]),
+        want: BTreeSet::new(),
+        "a control guard does not prove the path itself was the iterable",
     );
     sim_assert_eq!(
         have: evidence
@@ -206,7 +216,19 @@ fn contract_ir_path_evidence_collects_references_and_typed_guard_predicates() {
         have: evidence
             .get("podLabels")
             .map(|evidence| &evidence.metadata_field_kinds),
-        want: Some(&BTreeSet::from([MetadataFieldKind::StringMap])),
+        want: Some(&BTreeSet::new()),
+        "guarded metadata typing must not bind the unconditional path",
+    );
+    assert!(
+        evidence.get("podLabels").is_some_and(|evidence| {
+            evidence.conditional_overlays.iter().any(|overlay| {
+                overlay
+                    .evidence
+                    .metadata_field_kinds
+                    .contains(&MetadataFieldKind::StringMap)
+            })
+        }),
+        "guarded metadata typing should stay on its conditional overlay",
     );
     sim_assert_eq!(
         have: evidence
@@ -610,9 +632,14 @@ fn contract_ir_conditional_path_overlays_capture_single_supported_guard_set() {
     );
     sim_assert_eq!(
         have: overlay.guards,
-        want: vec![ConditionalGuard::Truthy {
-            path: "feature.enabled".to_string(),
-        }],
+        want: vec![
+            ConditionalGuard::Truthy {
+                path: "feature.enabled".to_string(),
+            },
+            ConditionalGuard::With {
+                path: "feature".to_string(),
+            },
+        ],
     );
     assert!(
         overlay.evidence.provider_schema_uses.is_empty(),
@@ -841,7 +868,7 @@ fn contract_ir_conditional_path_overlays_preserve_multiple_guarded_variants_per_
 }
 
 #[test]
-fn contract_ir_conditional_path_overlays_keep_supported_guards_beside_unconditional_base_uses() {
+fn contract_ir_unconditional_use_subsumes_matching_guarded_overlay() {
     let signals = signals_for(vec![
         ContractUse::new(
             "feature.host".to_string(),
@@ -873,19 +900,16 @@ fn contract_ir_conditional_path_overlays_keep_supported_guards_beside_unconditio
     let overlays = conditional_overlays_for(&signals);
     sim_assert_eq!(
         have: overlays.len(),
-        want: 1,
-        "supported guarded branches should survive even when the path also has an unconditional base use: {:?}",
+        want: 0,
+        "the guarded use adds no evidence beyond the identical unconditional use: {:?}",
         overlays
     );
-    sim_assert_eq!(
-        have: overlays[0].guards,
-        want: vec![ConditionalGuard::Truthy {
-            path: "feature.enabled".to_string(),
-        }],
-    );
     assert!(
-        overlays[0].preserve_base_schema,
-        "unguarded peers should request base-schema preservation"
+        signals
+            .schema_evidence_by_value_path()
+            .get("feature.host")
+            .is_some_and(|evidence| evidence.facts.has_unconditional_render_use),
+        "the surviving use should remain unconditional",
     );
     assert!(
         !overlays
@@ -1208,4 +1232,199 @@ fn contract_ir_requiredness_evidence_ignores_pathless_scalar_non_headers() {
         "plain pathless scalar uses must not be treated as positive header facts: {:#?}",
         signals.schema_evidence_by_value_path()
     );
+}
+
+#[test]
+fn unsupported_conditional_row_does_not_promote_sink_evidence() {
+    let signals = signals_for_template(
+        r#"
+{{- if semverCompare ">=1.0.0" .Values.version }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.name }}
+{{- end }}
+"#,
+    );
+    assert!(
+        signals
+            .evidence_for("name")
+            .is_none_or(|evidence| evidence.provider_schema_uses.is_empty()),
+        "a sink hidden behind an unlowerable condition cannot constrain the global path: {:#?}",
+        signals.schema_evidence_by_value_path(),
+    );
+    assert!(
+        signals
+            .evidence_for("name")
+            .is_none_or(|evidence| evidence.metadata_field_kinds.is_empty()),
+        "branch-local metadata typing cannot escape an unlowerable condition: {:#?}",
+        signals.schema_evidence_by_value_path(),
+    );
+    assert!(
+        signals
+            .evidence_for("name")
+            .is_none_or(|evidence| evidence.conditional_overlays.is_empty()),
+        "an unlowerable condition cannot be represented as a conditional overlay: {:#?}",
+        signals.schema_evidence_by_value_path(),
+    );
+}
+
+#[test]
+fn foreign_range_does_not_globalize_strict_consumer() {
+    let signals = signals_for_template(
+        r#"
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test
+data:
+  keys: |
+    {{- range .Values.items }}
+    {{ keys $.Values.config | join "," }}
+    {{- end }}
+"#,
+    );
+    let evidence = signals
+        .evidence_for("config")
+        .expect("strict consumer evidence");
+
+    assert!(
+        evidence.fail_implications.is_empty(),
+        "a strict call that only executes inside a foreign range cannot constrain the path globally: {evidence:#?}",
+    );
+}
+
+#[test]
+fn nested_member_range_abstains_under_unlowerable_outer_guard() {
+    let signals = signals_for_template(
+        r#"
+{{- if semverCompare ">=1.0.0" .Values.version }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test
+data:
+  values: |
+    {{- range $group := .Values.groups }}
+    {{- range $item := $group }}
+    {{ $item }}
+    {{- end }}
+    {{- end }}
+{{- end }}
+"#,
+    );
+    assert!(
+        signals.evidence_for("groups").is_none_or(|evidence| {
+            !evidence.fail_implications.iter().any(|implication| {
+                matches!(
+                    implication.target,
+                    helm_schema_core::ContractRequirementTarget::Members { .. }
+                )
+            })
+        }),
+        "a nested range cannot impose a member contract after its outer guard was lost: {:#?}",
+        signals.schema_evidence_by_value_path(),
+    );
+}
+
+#[test]
+fn unlowerable_mixed_guard_retains_its_values_path_reference() {
+    let signals = signals_for_template(
+        r#"
+{{- if .Values.alertmanager.enabled }}
+{{- if .Values.alertmanager.ingress.enabled }}
+{{- if and .Values.alertmanager.ingress.className (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test
+data:
+  class: {{ .Values.alertmanager.ingress.className }}
+{{- end }}
+{{- end }}
+{{- end }}
+"#,
+    );
+
+    let evidence = signals
+        .evidence_for("alertmanager.ingress.className")
+        .unwrap_or_else(|| panic!("mixed guard path reference disappeared: {signals:#?}"));
+    assert!(
+        evidence.provider_schema_uses.is_empty(),
+        "the opaque semver arm must still block provider typing: {evidence:#?}"
+    );
+}
+
+#[test]
+fn member_row_without_direct_range_identity_does_not_seed_schema_paths() {
+    let signals = signals_for(vec![ContractUse::new(
+        "$sentinel.*".to_string(),
+        YamlPath(Vec::new()),
+        ValueKind::Scalar,
+        vec![Guard::Range {
+            path: "$sentinel".to_string(),
+        }],
+        None,
+    )]);
+
+    assert!(signals.evidence_for("$sentinel").is_none());
+    assert!(signals.evidence_for("$sentinel.*").is_none());
+}
+
+#[test]
+fn direct_ranged_nested_sentinel_retains_its_member_contract() {
+    let signals = signals_for_template(
+        r#"
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test
+data:
+  rendered: |
+    {{- range $entry := .Values.entries }}
+    {{ tpl (get $entry "$tplYaml") $ }}
+    {{- end }}
+"#,
+    );
+
+    let evidence = signals
+        .evidence_for("entries.*.$tplYaml")
+        .unwrap_or_else(|| {
+            panic!(
+                "direct ranged sentinel member must survive: {:#?}",
+                signals.schema_evidence_by_value_path()
+            )
+        });
+    assert!(
+        evidence.facts.has_string_contract,
+        "tpl must retain its strict string contract on the nested sentinel: {evidence:#?}"
+    );
+    assert!(signals.evidence_for("$tplYaml").is_none());
+    assert!(signals.evidence_for("$tplYaml.*").is_none());
+}
+
+#[test]
+fn get_on_destructured_range_value_requires_object_members() {
+    let signals = signals_for_template(
+        r#"
+{{- range $name, $context := .Values.contexts }}
+{{- $_ := get $context "creds" }}
+{{- end }}
+"#,
+    );
+    let evidence = signals
+        .evidence_for("contexts")
+        .expect("direct range evidence");
+
+    assert!(evidence.fail_implications.iter().any(|implication| {
+        matches!(
+            implication.target,
+            helm_schema_core::ContractRequirementTarget::Members {
+                allow_integer: false
+            }
+        ) && implication.requirements
+            == vec![helm_schema_core::FailValueRequirement::SchemaType(
+                "object".to_string(),
+            )]
+    }));
 }

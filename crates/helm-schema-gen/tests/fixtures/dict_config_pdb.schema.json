@@ -44,9 +44,15 @@
             "type": "object"
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "maxUnavailable": {
                 "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
                   {
                     "oneOf": [
                       {
@@ -56,12 +62,27 @@
                         "type": "integer"
                       }
                     ]
-                  },
-                  {
-                    "type": "null"
                   }
                 ]
-              },
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "minAvailable": {
                 "oneOf": [
                   {
@@ -72,14 +93,22 @@
                   }
                 ]
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
         "enabled": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "maxUnavailable": {},
         "minAvailable": {}

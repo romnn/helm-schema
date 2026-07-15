@@ -20,16 +20,25 @@ pub(crate) struct Effects {
     pub(crate) tested_type_hints: BTreeMap<String, BTreeSet<String>>,
     pub(crate) parsed_yaml_input_paths: BTreeSet<String>,
     pub(crate) yaml_serialized_paths: BTreeSet<String>,
+    pub(crate) json_serialized_paths: BTreeSet<String>,
     pub(crate) encoded_paths: BTreeSet<String>,
     pub(crate) shape_erased_paths: BTreeSet<String>,
     /// Paths whose value was replaced by derived text in this expression
     /// (`printf`, `quote`, `trunc`, `b64enc`, …): later transform stages
     /// operate on that text, so they claim nothing about the raw path.
     pub(crate) derived_text_paths: BTreeSet<String>,
+    /// Range keys converted to text by an earlier pipeline stage.
+    pub(crate) derived_range_key_paths: BTreeSet<String>,
     /// Paths on which a string-consuming transform (`trunc`, `b64enc`, …)
     /// bound a real runtime string contract: rendering fails for non-string
     /// values, so a later total stringification must not erase their shape.
     pub(crate) string_contract_paths: BTreeSet<String>,
+    /// Direct range identities exported by called helper bodies.
+    pub(crate) direct_range_source_paths: BTreeSet<String>,
+    /// Direct helper range identities whose values came through JSON decoding.
+    pub(crate) json_decoded_range_source_paths: BTreeSet<String>,
+    /// Direct helper range identities iterated with key and value variables.
+    pub(crate) destructured_range_source_paths: BTreeSet<String>,
     /// The subset of string contracts recorded by consumers evaluated in
     /// THIS expression (never copied across a helper-summary boundary):
     /// only these may become ambient-scoped truthy⇒string fail captures —
@@ -44,6 +53,12 @@ pub(crate) struct Effects {
     /// resolution consume this; output rows ride the value itself.
     pub(crate) local_source_paths: BTreeSet<String>,
     pub(crate) local_set_mutations: BTreeMap<String, BTreeMap<String, AbstractValue>>,
+    /// Literal root-context fields replaced by structural `set` calls.
+    pub(crate) root_set_mutations: BTreeMap<String, AbstractValue>,
+    /// Root-field truth predicates already decoded inside called helpers.
+    pub(crate) root_set_predicates: BTreeMap<String, helm_schema_core::Predicate>,
+    /// Chart value subtrees that supply defaults to a replaced effective `.Values` tree.
+    pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
     /// Pathless reads observed inside called helper bodies (guard reads and
     /// dependency-lane rows), carrying helper-internal guards only; the
     /// absorbing site adds its ambient guards and provenance.
@@ -51,12 +66,27 @@ pub(crate) struct Effects {
     /// Rendered claims of called helpers, for no-render demotion and
     /// per-path meta restoration (see [`RenderedRow`]).
     pub(crate) helper_rendered: Vec<RenderedRow>,
+    /// Rendered claims produced while eagerly evaluating a call argument.
+    /// They executed, but are not the enclosing helper's returned value, so
+    /// every later absorption keeps them on the dependency lane.
+    pub(crate) helper_dependency_rendered: Vec<RenderedRow>,
     /// Predicate paths severed by index-call narrowing inside called
     /// helpers; ancestor guard reads absorb against them.
     pub(crate) helper_suppressed_paths: BTreeSet<String>,
     /// `fail` captures of called helpers, carrying helper-internal
     /// predicates only; the absorbing site prepends its ambient state.
     pub(crate) helper_fails: Vec<FailCapture>,
+    /// Object-producing mutations that have executed before later member
+    /// reads. Their outer predicates remain attached so only accesses that
+    /// imply the mutation's execution may accept the converted input kind.
+    pub(crate) member_host_conversions: BTreeSet<MemberHostConversion>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct MemberHostConversion {
+    pub(crate) path: String,
+    pub(crate) input_kind: String,
+    pub(crate) outer_predicates: Vec<helm_schema_core::Predicate>,
 }
 
 /// One captured `fail` call: the predicate conjunction reaching it, plus
@@ -75,11 +105,19 @@ pub(crate) struct FailCapture {
     /// helper-scope ranges never reach the document-lane directness
     /// channel.
     pub(crate) direct_ranged_paths: BTreeSet<String>,
-    /// A MEMBER-ACCESS capture (`[outer…, truthy(P), ¬object(P)]` from a
-    /// field access through `P`): the signal builder folds these per path
-    /// into one bypass-proof arm instead of lowering each as its own
-    /// implication (the F57/F63 size-aware encoding).
+    /// Direct range sources whose values came through JSON decoding.
+    pub(crate) json_decoded_ranged_paths: BTreeSet<String>,
+    /// Direct range sources iterated with key and value variables.
+    pub(crate) destructured_ranged_paths: BTreeSet<String>,
+    /// A member-access capture (`[outer…, ¬object(P)]` from a field access
+    /// through `P`): the signal builder folds these per path into one
+    /// bypass-proof arm instead of lowering each as its own implication.
     pub(crate) member_access: bool,
+    /// Raw input kinds converted to an object by a proven earlier mutation
+    /// on every execution path reaching this member access.
+    pub(crate) member_access_handled_kinds: BTreeSet<String>,
+    /// Collections whose range key reaches a strict string consumer.
+    pub(crate) range_key_string_paths: BTreeSet<String>,
 }
 
 impl Effects {
@@ -98,11 +136,21 @@ impl Effects {
             .extend(other.parsed_yaml_input_paths);
         self.yaml_serialized_paths
             .extend(other.yaml_serialized_paths);
+        self.json_serialized_paths
+            .extend(other.json_serialized_paths);
         self.encoded_paths.extend(other.encoded_paths);
         self.shape_erased_paths.extend(other.shape_erased_paths);
         self.derived_text_paths.extend(other.derived_text_paths);
+        self.derived_range_key_paths
+            .extend(other.derived_range_key_paths);
         self.string_contract_paths
             .extend(other.string_contract_paths);
+        self.direct_range_source_paths
+            .extend(other.direct_range_source_paths);
+        self.json_decoded_range_source_paths
+            .extend(other.json_decoded_range_source_paths);
+        self.destructured_range_source_paths
+            .extend(other.destructured_range_source_paths);
         self.direct_string_consumer_paths
             .extend(other.direct_string_consumer_paths);
         self.chart_default_paths.extend(other.chart_default_paths);
@@ -117,6 +165,13 @@ impl Effects {
                 .or_default()
                 .extend(entries);
         }
+        for key in other.root_set_mutations.keys() {
+            self.root_set_predicates.remove(key);
+        }
+        self.root_set_mutations.extend(other.root_set_mutations);
+        self.root_set_predicates.extend(other.root_set_predicates);
+        self.values_default_sources
+            .extend(other.values_default_sources);
         for read in other.helper_reads {
             if !self.helper_reads.contains(&read) {
                 self.helper_reads.push(read);
@@ -127,6 +182,11 @@ impl Effects {
                 self.helper_rendered.push(row);
             }
         }
+        for row in other.helper_dependency_rendered {
+            if !self.helper_dependency_rendered.contains(&row) {
+                self.helper_dependency_rendered.push(row);
+            }
+        }
         self.helper_suppressed_paths
             .extend(other.helper_suppressed_paths);
         for condition in other.helper_fails {
@@ -134,6 +194,8 @@ impl Effects {
                 self.helper_fails.push(condition);
             }
         }
+        self.member_host_conversions
+            .extend(other.member_host_conversions);
         for (path, hints) in other.type_hints {
             for hint in hints {
                 insert_type_hint(&mut self.type_hints, path.clone(), &hint);
@@ -149,6 +211,31 @@ impl Effects {
                 insert_type_hint(&mut self.tested_type_hints, path.clone(), &hint);
             }
         }
+    }
+
+    /// Keep effects caused by evaluating a value while discarding facts that
+    /// merely describe the value returned by that expression.
+    ///
+    /// Helper arguments are eager, so failures, strict consumers, nested
+    /// helper reads, and mutations still execute even when the callee ignores
+    /// its context. The argument value itself does not render at the call
+    /// site; its output identity and selection metadata must not leak there.
+    pub(crate) fn execution_only(mut self) -> Self {
+        self.output_paths.clear();
+        self.bound_output_paths.clear();
+        self.defaults.clear();
+        self.type_hints.clear();
+        self.guarded_type_hints.clear();
+        self.tested_type_hints.clear();
+        self.local_default_paths.clear();
+        self.local_output_meta.clear();
+        self.local_source_paths.clear();
+        for row in std::mem::take(&mut self.helper_rendered) {
+            if !self.helper_dependency_rendered.contains(&row) {
+                self.helper_dependency_rendered.push(row);
+            }
+        }
+        self
     }
 
     pub(crate) fn add_default_paths(&mut self, paths: BTreeSet<String>) {

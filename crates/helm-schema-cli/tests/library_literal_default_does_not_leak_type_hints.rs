@@ -124,14 +124,21 @@ fn library_literal_default_does_not_leak_type_to_sibling_chart() -> color_eyre::
         .pointer("/properties/app/properties/replicas")
         .expect("/properties/app/properties/replicas present");
 
-    // Before the fix: app.replicas would be `{"type": "integer"}` —
-    // wrongly typed from the unused library's literal default.
-    // After the fix: app.replicas should be `{}` — no type signal
-    // (the app's own template doesn't assert a type).
+    // The app's quoted interpolation accepts any scalar. The unused library's integer default
+    // must not narrow that chart-owned domain.
     sim_assert_eq!(
         have: app_replicas,
-        want: &serde_json::json!({}),
-        "library-helper literal default leaked across chart boundary: app.replicas = {app_replicas}",
+        want: &serde_json::json!({
+            "anyOf": [
+                { "const": null },
+                { "type": "boolean" },
+                { "type": "integer" },
+                { "type": "number" },
+                { "type": "string" },
+            ],
+        }),
+        "app.replicas must retain only its generic quoted-scalar domain; the unused library \
+         helper must not narrow it with an integer default: {app_replicas}",
     );
 
     Ok(())

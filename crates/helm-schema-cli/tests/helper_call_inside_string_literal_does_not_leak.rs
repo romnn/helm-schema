@@ -121,10 +121,17 @@ fn quoted_string_payload_does_not_create_phantom_helper_edge() -> color_eyre::ey
 
     sim_assert_eq!(
         have: replicas,
-        want: &serde_json::json!({}),
-        "quoted-string payload made common.unusedReplicas look \
-         reachable; its literal default leaked into root.replicas \
-         as: {replicas}",
+        want: &serde_json::json!({
+            "anyOf": [
+                { "const": null },
+                { "type": "boolean" },
+                { "type": "integer" },
+                { "type": "number" },
+                { "type": "string" },
+            ],
+        }),
+        "root.replicas must retain only its generic quoted-scalar domain; quoted payload text \
+         must not make common.unusedReplicas reachable or apply its integer default: {replicas}",
     );
 
     Ok(())

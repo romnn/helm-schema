@@ -12,7 +12,7 @@
 
 use crate::contract::ContractIr;
 use crate::{ContractProvenance, ContractUse, Guard, ValueKind, YamlPath};
-use helm_schema_core::{GuardDnf, Predicate, sequence_item_path};
+use helm_schema_core::{GuardDnf, Predicate, dynamic_mapping_value_path, sequence_item_path};
 
 use super::domain::{
     AbstractFragment, AbstractString, EntryKey, Guarded, SiteFacts, Splice, StringPart,
@@ -68,6 +68,10 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
     contract.extend_shape_erased_value_paths(document.shape_erased_paths.iter().cloned());
     contract.extend_string_contract_value_paths(document.string_contract_paths.iter().cloned());
     contract.extend_direct_range_source_paths(document.direct_range_source_paths.iter().cloned());
+    contract.extend_json_decoded_range_source_paths(
+        document.json_decoded_range_source_paths.iter().cloned(),
+    );
+    contract.extend_values_default_sources(document.values_default_sources.iter().cloned());
     contract.extend_destructured_range_source_paths(
         document.destructured_range_source_paths.iter().cloned(),
     );
@@ -161,7 +165,10 @@ fn predicate_has_range(predicate: &Predicate) -> bool {
         Predicate::And(predicates) | Predicate::Or(predicates) => {
             predicates.iter().any(predicate_has_range)
         }
-        Predicate::True | Predicate::False | Predicate::Guard(_) => false,
+        Predicate::True
+        | Predicate::False
+        | Predicate::Approximate { .. }
+        | Predicate::Guard(_) => false,
     }
 }
 
@@ -207,10 +214,13 @@ fn walk_node(
                     }
                     EntryKey::Dynamic(_) => {
                         // Templated keys: the key's reads were recorded at
-                        // the eval site (where range/branch predicates were
-                        // still ambient); the value attributes at the parent
-                        // path without an invented segment.
-                        walk_guarded(&entry.value, path, conditions, contract);
+                        // the eval site, where range/branch predicates were
+                        // still ambient. The structural member segment lets
+                        // provider lookup descend through the container's
+                        // additionalProperties schema without guessing the
+                        // rendered key.
+                        let child = dynamic_mapping_value_path(path);
+                        walk_guarded(&entry.value, &child, conditions, contract);
                     }
                 }
             }
@@ -246,7 +256,7 @@ fn walk_node(
                     taint_path.clone(),
                     path,
                     opaque.kind,
-                    GuardDnf::from_contract_predicate_conjunction(conditions.iter().cloned()),
+                    GuardDnf::from_conjunction(conditions.iter().cloned()),
                     opaque.site.as_deref(),
                     &opaque.provenance,
                 ));
@@ -279,7 +289,7 @@ fn project_parts(
                         taint_path.clone(),
                         path,
                         ValueKind::PartialScalar,
-                        GuardDnf::from_contract_predicate_conjunction(conditions.iter().cloned()),
+                        GuardDnf::from_conjunction(conditions.iter().cloned()),
                         taint.site.as_deref(),
                         &taint.provenance,
                     ));
@@ -290,7 +300,7 @@ fn project_parts(
 }
 
 fn splice_row(splice: &Splice, path: &YamlPath, conditions: &[Predicate]) -> ContractUse {
-    let mut condition = GuardDnf::from_contract_predicate_conjunction(conditions.iter().cloned());
+    let mut condition = GuardDnf::from_conjunction(conditions.iter().cloned());
     if splice.meta.defaulted {
         let default_guard = Guard::Default {
             path: splice.values_path.clone(),
@@ -310,6 +320,8 @@ fn splice_row(splice: &Splice, path: &YamlPath, conditions: &[Predicate]) -> Con
         } else {
             ValueKind::PartialScalar
         }
+    } else if splice.meta.yaml_serialized {
+        ValueKind::YamlSerialized
     } else {
         splice.kind
     };

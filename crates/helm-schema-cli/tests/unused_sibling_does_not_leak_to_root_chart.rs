@@ -105,9 +105,17 @@ fn unused_sibling_does_not_leak_when_consumer_is_root_chart() -> color_eyre::eyr
 
     sim_assert_eq!(
         have: replicas,
-        want: &serde_json::json!({}),
-        "unused-sibling-helper integer hint leaked into root.replicas \
-         even though the app only includes common.used; got: {replicas}",
+        want: &serde_json::json!({
+            "anyOf": [
+                { "const": null },
+                { "type": "boolean" },
+                { "type": "integer" },
+                { "type": "number" },
+                { "type": "string" },
+            ],
+        }),
+        "root.replicas must retain only its generic quoted-scalar domain; the unused sibling \
+         helper must not narrow it with an integer default: {replicas}",
     );
 
     Ok(())

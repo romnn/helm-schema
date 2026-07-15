@@ -132,15 +132,21 @@ fn unused_helper_in_used_library_does_not_leak_type_hint() -> color_eyre::eyre::
         .pointer("/properties/app/properties/replicas")
         .expect("/properties/app/properties/replicas present");
 
-    // Before the fix: app.replicas would be a nullable-integer union
-    // courtesy of the unused `common.unusedReplicas` helper.
-    // After the fix: app.replicas should be `{}` — the app's own
-    // template asserts nothing, and the unused helper contributes
-    // nothing because it's never reachable from the app's includes.
+    // The app's quoted interpolation accepts any scalar. The unreachable sibling helper's
+    // integer default must not narrow that chart-owned domain.
     sim_assert_eq!(
         have: app_replicas,
-        want: &serde_json::json!({}),
-        "unused-helper signal leaked across helper boundary: app.replicas = {app_replicas}",
+        want: &serde_json::json!({
+            "anyOf": [
+                { "const": null },
+                { "type": "boolean" },
+                { "type": "integer" },
+                { "type": "number" },
+                { "type": "string" },
+            ],
+        }),
+        "app.replicas must retain only its generic quoted-scalar domain; the unreachable sibling \
+         helper must not narrow it with an integer default: {app_replicas}",
     );
 
     Ok(())

@@ -31,178 +31,77 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "configTarget": {
-            "enum": [
-              "ConfigMap"
-            ]
-          }
-        },
-        "required": [
-          "configTarget"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "configAwsOrGcp": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ],
-            "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\""
-          },
-          "configConnectionPooler": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ],
-            "description": "configure connection pooler deployment created by the operator"
-          },
-          "configDebug": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ],
-            "description": "options to aid debugging of the operator itself"
-          },
-          "configGeneral": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ],
-            "description": "general configuration parameters"
-          },
-          "configKubernetes": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ],
-            "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
-          },
-          "configLoadBalancer": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ],
-            "description": "configure behavior of load balancers"
-          },
-          "configLoggingRestApi": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ],
-            "description": "parameters affecting logging and REST API listener"
-          },
-          "configLogicalBackup": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ],
-            "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\""
-          },
-          "configMajorVersionUpgrade": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ]
-          },
-          "configPatroni": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ]
-          },
-          "configTeamsApi": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ],
-            "description": "automate creation of human users with teams API service"
-          },
-          "configTimeouts": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ],
-            "description": "timeouts related to some operator actions"
-          },
-          "configUsers": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              }
-            ],
-            "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin"
-          },
-          "fullnameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "podServiceAccount": {
+        "allOf": [
+          {
             "properties": {
-              "name": {
-                "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix",
-                "type": "string"
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
               }
             },
+            "required": [
+              "configTarget"
+            ],
             "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "configAwsOrGcp": {
+                  "properties": {
+                    "*": {
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configAwsOrGcp"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "configAwsOrGcp": {
+                  "properties": {
+                    "*": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configAwsOrGcp"
+              ],
+              "type": "object"
+            }
           }
-        },
-        "type": "object"
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configAwsOrGcp": {
+            "additionalProperties": {
+              "additionalProperties": {}
+            },
+            "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\"",
+            "items": {
+              "additionalProperties": {}
+            }
+          }
+        }
       }
     },
     {
@@ -235,191 +134,481 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "configAwsOrGcp": {
-            "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\"",
-            "type": "object"
-          },
-          "configConnectionPooler": {
-            "description": "configure connection pooler deployment created by the operator",
-            "type": "object"
-          },
-          "configDebug": {
-            "description": "options to aid debugging of the operator itself",
-            "type": "object"
-          },
-          "configGeneral": {
-            "description": "general configuration parameters",
-            "type": "object"
-          },
-          "configKubernetes": {
-            "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\"",
-            "type": "object"
-          },
-          "configLoadBalancer": {
-            "description": "configure behavior of load balancers",
-            "type": "object"
-          },
-          "configLoggingRestApi": {
-            "description": "parameters affecting logging and REST API listener",
-            "type": "object"
-          },
-          "configLogicalBackup": {
-            "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\"",
-            "type": "object"
-          },
-          "configMajorVersionUpgrade": {
-            "type": "object"
-          },
-          "configPatroni": {
-            "type": "object"
-          },
-          "configTeamsApi": {
-            "description": "automate creation of human users with teams API service",
-            "type": "object"
-          },
-          "configTimeouts": {
-            "description": "timeouts related to some operator actions",
-            "type": "object"
-          },
-          "configUsers": {
-            "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin",
-            "type": "object"
-          },
-          "fullnameOverride": {
-            "type": [
-              "string",
-              "null"
+            "additionalProperties": {},
+            "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\""
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
             ]
-          },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "podPriorityClassName": {
-            "description": "priority class for database pods",
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "If not set a name is generated using the fullname template and \"-pod\" suffix"
-              }
-            },
-            "type": "object"
-          },
-          "podServiceAccount": {
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "default": "postgres-pod",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix"
-              }
-            },
-            "type": "object"
           }
         },
+        "required": [
+          "configTarget"
+        ],
         "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configAwsOrGcp": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\""
+          }
+        }
       }
     },
     {
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "configConnectionPooler": {
                   "properties": {
-                    "configGeneral": {}
+                    "*": {
+                      "type": "array"
+                    }
                   },
                   "required": [
-                    "configGeneral"
+                    "*"
                   ],
                   "type": "object"
                 }
               },
-              {
-                "properties": {
-                  "configGeneral": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "configGeneral"
-                ],
-                "type": "object"
-              }
-            ]
+              "required": [
+                "configConnectionPooler"
+              ],
+              "type": "object"
+            }
           },
           {
-            "anyOf": [
-              {
-                "not": {
+            "not": {
+              "properties": {
+                "configConnectionPooler": {
                   "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
+                    "*": {
                       "type": "object"
                     }
                   },
                   "required": [
-                    "rbac"
+                    "*"
                   ],
                   "type": "object"
                 }
               },
-              {
-                "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            ]
+              "required": [
+                "configConnectionPooler"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
       "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configConnectionPooler": {
+            "additionalProperties": {
+              "additionalProperties": {}
+            },
+            "description": "configure connection pooler deployment created by the operator",
+            "items": {
+              "additionalProperties": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configConnectionPooler": {
+            "additionalProperties": {},
+            "description": "configure connection pooler deployment created by the operator"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
+            ]
+          }
+        },
+        "required": [
+          "configTarget"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configConnectionPooler": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "configure connection pooler deployment created by the operator"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "configDebug": {
+                  "properties": {
+                    "*": {
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configDebug"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "configDebug": {
+                  "properties": {
+                    "*": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configDebug"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configDebug": {
+            "additionalProperties": {
+              "additionalProperties": {}
+            },
+            "description": "options to aid debugging of the operator itself",
+            "items": {
+              "additionalProperties": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configDebug": {
+            "additionalProperties": {},
+            "description": "options to aid debugging of the operator itself"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
+            ]
+          }
+        },
+        "required": [
+          "configTarget"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configDebug": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "options to aid debugging of the operator itself"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "configGeneral": {
+                  "properties": {
+                    "*": {
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configGeneral"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "configGeneral": {
+                  "properties": {
+                    "*": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configGeneral"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configGeneral": {
+            "additionalProperties": {
+              "additionalProperties": {}
+            },
+            "description": "general configuration parameters",
+            "items": {
+              "additionalProperties": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configGeneral": {
+            "additionalProperties": {},
+            "description": "general configuration parameters"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
+            ]
+          }
+        },
+        "required": [
+          "configTarget"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
         "properties": {
           "configGeneral": {
             "anyOf": [
+              {
+                "type": "array"
+              },
               {
                 "type": "object"
               },
@@ -429,94 +618,202 @@
             ],
             "description": "general configuration parameters"
           }
-        },
-        "type": "object"
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configGeneral": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ],
+            "description": "general configuration parameters"
+          }
+        }
       }
     },
     {
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "configKubernetes": {
                   "properties": {
-                    "configKubernetes": {}
+                    "*": {
+                      "type": "array"
+                    }
                   },
                   "required": [
-                    "configKubernetes"
+                    "*"
                   ],
                   "type": "object"
                 }
               },
-              {
-                "properties": {
-                  "configKubernetes": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "configKubernetes"
-                ],
-                "type": "object"
-              }
-            ]
+              "required": [
+                "configKubernetes"
+              ],
+              "type": "object"
+            }
           },
           {
-            "anyOf": [
-              {
-                "not": {
+            "not": {
+              "properties": {
+                "configKubernetes": {
                   "properties": {
-                    "rbac": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
+                    "*": {
                       "type": "object"
                     }
                   },
                   "required": [
-                    "rbac"
+                    "*"
                   ],
                   "type": "object"
                 }
               },
-              {
-                "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            ]
+              "required": [
+                "configKubernetes"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
       "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configKubernetes": {
+            "additionalProperties": {
+              "additionalProperties": {}
+            },
+            "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\"",
+            "items": {
+              "additionalProperties": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configKubernetes": {
+            "additionalProperties": {},
+            "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
+            ]
+          }
+        },
+        "required": [
+          "configTarget"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
         "properties": {
           "configKubernetes": {
             "anyOf": [
+              {
+                "type": "array"
+              },
               {
                 "type": "object"
               },
@@ -526,85 +823,202 @@
             ],
             "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
           }
-        },
-        "type": "object"
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configKubernetes": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ],
+            "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
+          }
+        }
       }
     },
     {
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configLoggingRestApi": {}
-                  },
-                  "required": [
-                    "configLoggingRestApi"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configLoggingRestApi": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "configLoggingRestApi"
-                ],
-                "type": "object"
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
               }
-            ]
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
+            "not": {
+              "properties": {
+                "configLoadBalancer": {
                   "properties": {
-                    "readinessProbe": {}
+                    "*": {
+                      "type": "array"
+                    }
                   },
                   "required": [
-                    "readinessProbe"
+                    "*"
                   ],
                   "type": "object"
                 }
               },
-              {
-                "properties": {
-                  "readinessProbe": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "readinessProbe"
-                ],
-                "type": "object"
-              }
-            ]
+              "required": [
+                "configLoadBalancer"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "configLoadBalancer": {
+                  "properties": {
+                    "*": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configLoadBalancer"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "configLoggingRestApi": {
+          "configLoadBalancer": {
+            "additionalProperties": {
+              "additionalProperties": {}
+            },
+            "description": "configure behavior of load balancers",
+            "items": {
+              "additionalProperties": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLoadBalancer": {
+            "additionalProperties": {},
+            "description": "configure behavior of load balancers"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
+            ]
+          }
+        },
+        "required": [
+          "configTarget"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLoadBalancer": {
             "anyOf": [
+              {
+                "type": "array"
+              },
               {
                 "type": "object"
               },
@@ -612,10 +1026,84 @@
                 "type": "null"
               }
             ],
-            "description": "parameters affecting logging and REST API listener"
+            "description": "configure behavior of load balancers"
           }
-        },
-        "type": "object"
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "configLoggingRestApi": {
+                  "properties": {
+                    "*": {
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configLoggingRestApi"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "configLoggingRestApi": {
+                  "properties": {
+                    "*": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configLoggingRestApi"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLoggingRestApi": {
+            "additionalProperties": {
+              "additionalProperties": {}
+            },
+            "description": "parameters affecting logging and REST API listener",
+            "items": {
+              "additionalProperties": {}
+            }
+          }
+        }
       }
     },
     {
@@ -653,19 +1141,82 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "configLoggingRestApi": {
+            "additionalProperties": {},
             "description": "parameters affecting logging and REST API listener",
             "properties": {
               "api_port": {
                 "description": "REST API listener listens to this port",
                 "type": "integer"
               }
-            },
-            "type": "object"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
           },
-          "readinessProbe": {
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLoggingRestApi": {
+            "additionalProperties": {},
+            "description": "parameters affecting logging and REST API listener"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
+            ]
+          }
+        },
+        "required": [
+          "configTarget"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLoggingRestApi": {
             "anyOf": [
+              {
+                "type": "array"
+              },
               {
                 "type": "object"
               },
@@ -673,61 +1224,1142 @@
                 "type": "null"
               }
             ],
-            "description": "Allow to setup operator Deployment readiness probe"
+            "description": "parameters affecting logging and REST API listener"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
-      "properties": {
-        "configTarget": {
-          "not": {
-            "type": "array"
-          }
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "configTarget": {
-          "not": {
-            "type": "boolean"
-          }
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "configTarget": {
-          "not": {
-            "type": "integer"
-          }
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "configTarget": {
-          "not": {
-            "type": "number"
-          }
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "configTarget": {
-          "not": {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "readinessProbe": {}
+              },
+              "required": [
+                "readinessProbe"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "readinessProbe": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "readinessProbe"
+            ],
             "type": "object"
           }
-        }
+        ]
       },
-      "type": "object"
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLoggingRestApi": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ],
+            "description": "parameters affecting logging and REST API listener"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "configLogicalBackup": {
+                  "properties": {
+                    "*": {
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configLogicalBackup"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "configLogicalBackup": {
+                  "properties": {
+                    "*": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configLogicalBackup"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLogicalBackup": {
+            "additionalProperties": {
+              "additionalProperties": {}
+            },
+            "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\"",
+            "items": {
+              "additionalProperties": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLogicalBackup": {
+            "additionalProperties": {},
+            "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\""
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
+            ]
+          }
+        },
+        "required": [
+          "configTarget"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLogicalBackup": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\""
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "configMajorVersionUpgrade": {
+                  "properties": {
+                    "*": {
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configMajorVersionUpgrade"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "configMajorVersionUpgrade": {
+                  "properties": {
+                    "*": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configMajorVersionUpgrade"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configMajorVersionUpgrade": {
+            "additionalProperties": {
+              "additionalProperties": {}
+            },
+            "items": {
+              "additionalProperties": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configMajorVersionUpgrade": {
+            "additionalProperties": {}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
+            ]
+          }
+        },
+        "required": [
+          "configTarget"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configMajorVersionUpgrade": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "configPatroni": {
+                  "properties": {
+                    "*": {
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configPatroni"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "configPatroni": {
+                  "properties": {
+                    "*": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configPatroni"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configPatroni": {
+            "additionalProperties": {
+              "additionalProperties": {}
+            },
+            "items": {
+              "additionalProperties": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configPatroni": {
+            "additionalProperties": {}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
+            ]
+          }
+        },
+        "required": [
+          "configTarget"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configPatroni": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "configTarget": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "configTeamsApi": {
+                  "properties": {
+                    "*": {
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configTeamsApi"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "configTeamsApi": {
+                  "properties": {
+                    "*": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configTeamsApi"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configTeamsApi": {
+            "additionalProperties": {
+              "additionalProperties": {}
+            },
+            "description": "automate creation of human users with teams API service",
+            "items": {
+              "additionalProperties": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configTeamsApi": {
+            "additionalProperties": {},
+            "description": "automate creation of human users with teams API service"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
+            ]
+          }
+        },
+        "required": [
+          "configTarget"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configTeamsApi": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "automate creation of human users with teams API service"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "configTimeouts": {
+                  "properties": {
+                    "*": {
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configTimeouts"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "configTimeouts": {
+                  "properties": {
+                    "*": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configTimeouts"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configTimeouts": {
+            "additionalProperties": {
+              "additionalProperties": {}
+            },
+            "description": "timeouts related to some operator actions",
+            "items": {
+              "additionalProperties": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configTimeouts": {
+            "additionalProperties": {},
+            "description": "timeouts related to some operator actions"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
+            ]
+          }
+        },
+        "required": [
+          "configTarget"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configTimeouts": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "timeouts related to some operator actions"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "configUsers": {
+                  "properties": {
+                    "*": {
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configUsers"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "configUsers": {
+                  "properties": {
+                    "*": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "*"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "configUsers"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configUsers": {
+            "additionalProperties": {
+              "additionalProperties": {}
+            },
+            "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin",
+            "items": {
+              "additionalProperties": {}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configUsers": {
+            "additionalProperties": {},
+            "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
+            ]
+          }
+        },
+        "required": [
+          "configTarget"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configUsers": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "default": "postgresql-operator",
+                "type": "string"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "createAggregateClusterRoles": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createAggregateClusterRoles"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
     },
     {
       "if": {
@@ -742,6 +2374,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
             "anyOf": [
@@ -753,8 +2386,136 @@
               }
             ]
           }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
+        "required": [
+          "nameOverride"
+        ],
         "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podPriorityClassName": {
+            "additionalProperties": {},
+            "description": "priority class for database pods",
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "If not set a name is generated using the fullname template and \"-pod\" suffix"
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -841,25 +2602,73 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "podPriorityClassName": {
+            "additionalProperties": {},
             "description": "priority class for database pods",
             "properties": {
               "name": {
                 "description": "If not set a name is generated using the fullname template and \"-pod\" suffix",
                 "type": "string"
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "configTarget": {}
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "OperatorConfigurationCRD"
+                ]
+              }
             },
+            "required": [
+              "configTarget"
+            ],
             "type": "object"
           }
-        },
-        "type": "object"
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podServiceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "default": "postgres-pod",
+                    "type": "string"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix"
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -906,19 +2715,17 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "podServiceAccount": {
+            "additionalProperties": {},
             "properties": {
               "name": {
                 "anyOf": [
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   },
                   {
                     "type": "string"
@@ -926,31 +2733,113 @@
                 ],
                 "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix"
               }
-            },
-            "type": "object"
-          },
-          "serviceAccount": {
-            "properties": {
-              "name": {
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "type": "object"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "configTarget": {
+            "enum": [
+              "ConfigMap"
+            ]
           }
         },
+        "required": [
+          "configTarget"
+        ],
         "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podServiceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix",
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     },
     {
       "if": {
         "anyOf": [
           {
+            "not": {
+              "properties": {
+                "readinessProbe": {}
+              },
+              "required": [
+                "readinessProbe"
+              ],
+              "type": "object"
+            }
+          },
+          {
             "properties": {
-              "controllerID": {
+              "readinessProbe": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "readinessProbe"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "readinessProbe": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ],
+            "description": "Allow to setup operator Deployment readiness probe"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbac"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbac": {
                 "properties": {
                   "create": {
                     "$ref": "#/$defs/helm-truthy"
@@ -963,183 +2852,34 @@
               }
             },
             "required": [
-              "controllerID"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "podPriorityClassName": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "podPriorityClassName"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "podPriorityClassName": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "podPriorityClassName"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "rbac": {
-                "properties": {
-                  "createAggregateClusterRoles": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "createAggregateClusterRoles"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
               "rbac"
             ],
             "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "properties": {
-                        "create": {}
-                      },
-                      "required": [
-                        "create"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "configTarget": {}
-                  },
-                  "required": [
-                    "configTarget"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "configTarget": {
-                    "not": {
-                      "enum": [
-                        "ConfigMap"
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "configTarget"
-                ],
-                "type": "object"
-              }
-            ]
           }
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
+          "serviceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
               }
-            ]
+            }
           }
-        },
-        "type": "object"
+        }
       }
     }
   ],
@@ -1201,6 +2941,11 @@
           ]
         },
         {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
           "type": "string"
         }
       ]
@@ -1221,8 +2966,17 @@
       "additionalProperties": {},
       "properties": {
         "create": {
-          "description": "Specifies whether a controller ID should be defined for the operator\nNote, all postgres manifest must then contain the following annotation to be found by this operator\n\"acid.zalan.do/controller\": <controller-ID-of-the-operator>",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Specifies whether a controller ID should be defined for the operator\nNote, all postgres manifest must then contain the following annotation to be found by this operator\n\"acid.zalan.do/controller\": <controller-ID-of-the-operator>"
         },
         "name": {
           "description": "The name of the controller ID to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -1245,19 +2999,18 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "configure extra environment variables\nExtra environment variables are writen in kubernetes format and added \"as is\" to the pod's env variables\nhttps://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/\nhttps://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#environment-variables"
     },
     "fullnameOverride": {
-      "type": [
-        "string",
-        "null"
-      ]
+      "type": "string"
     },
     "image": {
       "additionalProperties": {},
@@ -1300,26 +3053,42 @@
     "podAnnotations": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ]
     },
     "podLabels": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ]
     },
@@ -1354,31 +3123,75 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "name": {
                 "anyOf": [
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   },
                   {
                     "type": "string"
                   }
                 ],
                 "description": "If not set a name is generated using the fullname template and \"-pod\" suffix"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
               },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "priority": {
                 "type": "integer"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "description": "priority class for database pods",
       "properties": {
         "create": {
-          "description": "If create is false with no name set, no podPriorityClassName is specified.\nHence, the pod priorityClass is the one with globalDefault set.\nIf there is no PriorityClass with globalDefault set, the priority of Pods with no priorityClassName is zero.",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "If create is false with no name set, no podPriorityClassName is specified.\nHence, the pod priorityClass is the one with globalDefault set.\nIf there is no PriorityClass with globalDefault set, the priority of Pods with no priorityClassName is zero."
         },
         "name": {
           "description": "If not set a name is generated using the fullname template and \"-pod\" suffix"
@@ -1397,28 +3210,51 @@
       "type": "object"
     },
     "priorityClassName": {
-      "description": "priority class for operator pod",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "priority class for operator pod"
     },
     "rbac": {
       "additionalProperties": {},
       "properties": {
         "create": {
-          "description": "Specifies whether RBAC resources should be created",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Specifies whether RBAC resources should be created"
         },
         "createAggregateClusterRoles": {
-          "description": "Specifies whether ClusterRoles that are aggregated into the K8s default roles should be created. (https://kubernetes.io/docs/reference/access-authn-authz/rbac/#default-roles-and-role-bindings)",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Specifies whether ClusterRoles that are aggregated into the K8s default roles should be created. (https://kubernetes.io/docs/reference/access-authn-authz/rbac/#default-roles-and-role-bindings)"
         }
       },
       "type": "object"
     },
     "readinessProbe": {
-      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1432,24 +3268,51 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "initialDelaySeconds": {
                 "type": "integer"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "type": "object"
               },
+              {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "periodSeconds": {
                 "type": "integer"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
-      "description": "Allow to setup operator Deployment readiness probe",
-      "properties": {
-        "initialDelaySeconds": {},
-        "periodSeconds": {}
-      },
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "initialDelaySeconds": {},
+            "periodSeconds": {}
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        }
+      ],
+      "description": "Allow to setup operator Deployment readiness probe"
     },
     "resources": {
       "additionalProperties": {},
@@ -1530,36 +3393,40 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "name": {
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
         "create": {
-          "description": "Specifies whether a ServiceAccount should be created",
-          "type": "boolean"
-        },
-        "name": {
           "anyOf": [
             {
-              "const": null
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "null"
-            },
-            {
-              "type": "string"
+              "type": "boolean"
             }
           ],
+          "description": "Specifies whether a ServiceAccount should be created"
+        },
+        "name": {
           "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
         }
       },
@@ -1573,9 +3440,6 @@
         },
         {
           "type": "null"
-        },
-        {
-          "type": "string"
         }
       ],
       "description": "Tolerations for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"

@@ -30,119 +30,44 @@
   "additionalProperties": false,
   "allOf": [
     {
-      "if": {
-        "properties": {
-          "jetstream": {
-            "properties": {
-              "additionalArgs": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "additionalArgs"
-            ],
-            "type": "object"
+      "additionalProperties": {},
+      "properties": {
+        "jetstream": {
+          "additionalProperties": {},
+          "properties": {
+            "additionalArgs": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Additional arguments to pass to the controller process"
+            }
           }
-        },
-        "required": [
-          "jetstream"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "jetstream": {
-            "properties": {
-              "additionalArgs": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Additional arguments to pass to the controller process"
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
+        }
       }
     },
     {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "jetstream": {
-                  "properties": {
-                    "image": {}
-                  },
-                  "required": [
-                    "image"
-                  ],
+      "additionalProperties": {},
+      "properties": {
+        "jetstream": {
+          "additionalProperties": {},
+          "properties": {
+            "image": {
+              "anyOf": [
+                {
                   "type": "object"
-                }
-              },
-              "required": [
-                "jetstream"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "jetstream": {
-                "properties": {
-                  "image": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
-                  }
                 },
-                "required": [
-                  "image"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "jetstream"
-            ],
-            "type": "object"
+                {
+                  "type": "string"
+                }
+              ]
+            }
           }
-        ]
-      },
-      "then": {
-        "properties": {
-          "jetstream": {
-            "properties": {
-              "image": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -174,30 +99,135 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "additionalProperties": {},
+                "description": "NATS URL",
+                "properties": {
+                  "credentials": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "secret": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "jetstream": {
             "properties": {
               "nats": {
+                "properties": {
+                  "credentials": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "credentials"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nats"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "jetstream"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "additionalProperties": {},
                 "description": "NATS URL",
                 "properties": {
                   "credentials": {
                     "anyOf": [
                       {
                         "type": "object"
-                      },
-                      {
-                        "type": "null"
                       }
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "nats": {
+                "properties": {
+                  "credentials": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 },
+                "required": [
+                  "credentials"
+                ],
                 "type": "object"
               }
             },
+            "required": [
+              "nats"
+            ],
             "type": "object"
           }
         },
+        "required": [
+          "jetstream"
+        ],
         "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "additionalProperties": {},
+                "description": "NATS URL",
+                "properties": {
+                  "credentials": {
+                    "required": [
+                      "secret"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -229,46 +259,250 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "additionalProperties": {},
+                "description": "NATS URL",
+                "properties": {
+                  "nkey": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "secret": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "jetstream": {
             "properties": {
               "nats": {
+                "properties": {
+                  "nkey": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "nkey"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nats"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "jetstream"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "additionalProperties": {},
                 "description": "NATS URL",
                 "properties": {
                   "nkey": {
                     "anyOf": [
                       {
                         "type": "object"
-                      },
-                      {
-                        "type": "null"
                       }
                     ]
                   }
-                },
-                "type": "object"
+                }
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
-      "properties": {
-        "nameOverride": {
-          "anyOf": [
-            {
-              "type": "null"
+      "if": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "nats": {
+                "properties": {
+                  "nkey": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "nkey"
+                ],
+                "type": "object"
+              }
             },
-            {
-              "type": "string"
-            }
-          ]
-        }
+            "required": [
+              "nats"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "jetstream"
+        ],
+        "type": "object"
       },
-      "type": "object"
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "additionalProperties": {},
+                "description": "NATS URL",
+                "properties": {
+                  "nkey": {
+                    "required": [
+                      "secret"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "nats": {
+                "properties": {
+                  "credentials": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "credentials"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nats"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "jetstream"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "description": "NATS URL",
+                "required": [
+                  "credentials"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "nats": {
+                "properties": {
+                  "nkey": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "nkey"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nats"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "jetstream"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "nats": {
+                "description": "NATS URL",
+                "required": [
+                  "nkey"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "jetstream": {
+          "additionalProperties": {},
+          "properties": {
+            "tls": {
+              "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "jetstream": {
+          "type": "object"
+        }
+      }
     },
     {
       "if": {
@@ -283,6 +517,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "nameOverride": {
             "anyOf": [
@@ -294,8 +529,15 @@
               }
             ]
           }
-        },
-        "type": "object"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "nameOverride": {
+          "type": "string"
+        }
       }
     },
     {
@@ -311,17 +553,20 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "namespaceOverride": {
             "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
               {
                 "type": "boolean"
               },
               {
                 "type": "integer"
-              },
-              {
-                "type": "null"
               },
               {
                 "type": "number"
@@ -331,8 +576,7 @@
               }
             ]
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -348,6 +592,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "namespaceOverride": {
             "anyOf": [
@@ -359,8 +604,7 @@
               }
             ]
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -376,6 +620,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "serviceAccountName": {
             "anyOf": [
@@ -388,9 +633,18 @@
             ],
             "description": "Toggle whether to automatically mount Service Account token in the pod\nnot set means default value, boolean true/false overrides default value\nautomountServiceAccountToken: true"
           }
-        },
-        "type": "object"
+        }
       }
+    },
+    {
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
     }
   ],
   "properties": {
@@ -401,10 +655,12 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "additionalVolumeMounts are the additional volume mounts to add"
@@ -416,10 +672,12 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "additionalVolumes are the additional volumes to add"
@@ -437,13 +695,21 @@
         "labels": {
           "anyOf": [
             {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ],
           "description": "global labels will be applied to all resources deployed by the chart"
@@ -458,15 +724,260 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ]
     },
     "jetstream": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "nats": {
+              "additionalProperties": {},
+              "description": "NATS URL",
+              "properties": {
+                "credentials": {
+                  "allOf": [
+                    {
+                      "if": {
+                        "$ref": "#/$defs/helm-truthy"
+                      },
+                      "then": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "secret": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "key": {
+                                "type": [
+                                  "boolean",
+                                  "integer",
+                                  "number",
+                                  "string"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "nats": {
+              "additionalProperties": {},
+              "description": "NATS URL",
+              "properties": {
+                "nkey": {
+                  "allOf": [
+                    {
+                      "if": {
+                        "$ref": "#/$defs/helm-truthy"
+                      },
+                      "then": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "secret": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "key": {
+                                "type": [
+                                  "boolean",
+                                  "integer",
+                                  "number",
+                                  "string"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "tls": {
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "settings": {
+                        "additionalProperties": {},
+                        "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
+                        "properties": {
+                          "client_ca": {
+                            "anyOf": [
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "integer"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ],
+              "description": "TLS\nEnabled must be true, and a secret name specified for this to work"
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "tls": {
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "settings": {
+                        "additionalProperties": {},
+                        "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
+                        "properties": {
+                          "client_cert": {
+                            "anyOf": [
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "integer"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ],
+              "description": "TLS\nEnabled must be true, and a secret name specified for this to work"
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "tls": {
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "settings": {
+                        "additionalProperties": {},
+                        "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
+                        "properties": {
+                          "client_key": {
+                            "anyOf": [
+                              {
+                                "not": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "integer"
+                              },
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ],
+              "description": "TLS\nEnabled must be true, and a secret name specified for this to work"
+            }
+          }
+        }
+      ],
       "properties": {
         "additionalArgs": {
           "anyOf": [
@@ -475,10 +986,12 @@
               "type": "array"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "string"
+              "type": "null"
             }
           ],
           "description": "Additional arguments to pass to the controller process"
@@ -496,13 +1009,15 @@
         "klogLevel": {
           "anyOf": [
             {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
               "type": "boolean"
             },
             {
               "type": "integer"
-            },
-            {
-              "type": "null"
             },
             {
               "type": "number"
@@ -513,164 +1028,98 @@
           ]
         },
         "nats": {
-          "additionalProperties": {},
-          "description": "NATS URL",
-          "properties": {
-            "credentials": {
+          "anyOf": [
+            {
               "additionalProperties": {},
               "properties": {
-                "secret": {
+                "credentials": {
                   "additionalProperties": {},
                   "properties": {
-                    "key": {
-                      "type": [
-                        "boolean",
-                        "integer",
-                        "number",
-                        "string"
+                    "secret": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": {},
+                          "properties": {
+                            "key": {}
+                          }
+                        },
+                        {
+                          "additionalProperties": {},
+                          "properties": {
+                            "name": {}
+                          },
+                          "type": "object"
+                        }
                       ]
-                    },
-                    "name": {}
-                  },
-                  "type": "object"
+                    }
+                  }
                 }
               }
             },
-            "nkey": {
+            {
               "additionalProperties": {},
               "properties": {
-                "secret": {
+                "nkey": {
                   "additionalProperties": {},
                   "properties": {
-                    "key": {
-                      "type": [
-                        "boolean",
-                        "integer",
-                        "number",
-                        "string"
-                      ]
-                    },
-                    "name": {}
+                    "secret": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "key": {},
+                        "name": {}
+                      },
+                      "type": "object"
+                    }
                   },
                   "type": "object"
+                },
+                "url": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
                 }
-              }
-            },
-            "url": {
-              "anyOf": [
-                {
-                  "const": null
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+              },
+              "type": "object"
             }
-          },
+          ],
+          "description": "NATS URL",
           "type": "object"
         },
         "pullPolicy": {},
         "tls": {
           "additionalProperties": {},
-          "allOf": [
-            {
-              "if": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              "then": {
-                "properties": {
-                  "settings": {
-                    "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
-                    "properties": {
-                      "client_ca": {
-                        "anyOf": [
-                          {
-                            "type": "boolean"
-                          },
-                          {
-                            "type": "integer"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "number"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "client_cert": {
-                        "anyOf": [
-                          {
-                            "type": "boolean"
-                          },
-                          {
-                            "type": "integer"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "number"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      },
-                      "client_key": {
-                        "anyOf": [
-                          {
-                            "type": "boolean"
-                          },
-                          {
-                            "type": "integer"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "number"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ]
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          ],
           "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
           "properties": {
             "enabled": {
-              "type": "boolean"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
             },
             "secretName": {
               "description": "the secret containing the client ca.crt, tls.crt, and tls.key for NATS"
@@ -691,13 +1140,15 @@
             "tlsFirst": {
               "anyOf": [
                 {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
                   "type": "boolean"
                 },
                 {
                   "type": "integer"
-                },
-                {
-                  "type": "null"
                 },
                 {
                   "type": "number"
@@ -713,17 +1164,30 @@
       },
       "type": "object"
     },
-    "nameOverride": {},
+    "nameOverride": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
     "namespaceOverride": {
       "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
         {
           "type": "boolean"
         },
         {
           "type": "integer"
-        },
-        {
-          "type": "null"
         },
         {
           "type": "number"
@@ -734,8 +1198,17 @@
       ]
     },
     "namespaced": {
-      "description": "restrict the controller to only watch resources in it's current namespace",
-      "type": "boolean"
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "restrict the controller to only watch resources in it's current namespace"
     },
     "nodeSelector": {
       "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
@@ -743,13 +1216,21 @@
     "podAnnotations": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ]
     },
@@ -763,13 +1244,15 @@
     "readOnly": {
       "anyOf": [
         {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
           "type": "boolean"
         },
         {
           "type": "integer"
-        },
-        {
-          "type": "null"
         },
         {
           "type": "number"
@@ -789,13 +1272,15 @@
     "serviceAccountName": {
       "anyOf": [
         {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
           "type": "boolean"
         },
         {
           "type": "integer"
-        },
-        {
-          "type": "null"
         },
         {
           "type": "number"
@@ -813,17 +1298,28 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "Node tolerations for server scheduling to nodes with taints\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/\n- key: \"key\"\noperator: \"Equal|Exists\"\nvalue: \"value\"\neffect: \"NoSchedule|PreferNoSchedule|NoExecute(1.6 only)\""
     },
     "useLegacyNames": {
-      "description": "Use legacy naming and labels for backwards compatibility with existing installations.\nWhen true: uses .Release.Name for resource names and simple labels (app, chart)\nWhen false: uses .Chart.Name for resource names and modern Kubernetes labels (app.kubernetes.io/*)\nSet to false when using NACK as a subchart to avoid naming collisions and use standard labels.",
-      "type": "boolean"
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "boolean"
+        }
+      ],
+      "description": "Use legacy naming and labels for backwards compatibility with existing installations.\nWhen true: uses .Release.Name for resource names and simple labels (app, chart)\nWhen false: uses .Chart.Name for resource names and modern Kubernetes labels (app.kubernetes.io/*)\nSet to false when using NACK as a subchart to avoid naming collisions and use standard labels."
     }
   },
   "type": "object"

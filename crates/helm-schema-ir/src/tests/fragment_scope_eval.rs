@@ -167,3 +167,38 @@ fn local_set_mutation_uses_shared_expression_eval_for_computed_key() {
         })
     );
 }
+
+#[test]
+fn local_set_mutation_resolves_computed_key_from_literal_local() {
+    let mut locals = HashMap::from([
+        (
+            "patch".to_string(),
+            AbstractValue::JsonDecodedPath("patch.*".to_string()),
+        ),
+        (
+            "opPathKey".to_string(),
+            AbstractValue::StringSet(BTreeSet::from(["path".to_string()])),
+        ),
+    ]);
+    let defines = DefineIndex::new();
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = empty_context(&analysis_db);
+    let mut seen = HashSet::new();
+
+    assert!(apply_local_set_mutations(
+        r#"{{- $_ := set $patch (printf "%sKey" $opPathKey) "derived" -}}"#,
+        &mut locals,
+        None,
+        context,
+        &mut seen,
+    ));
+
+    sim_assert_eq!(
+        have: locals
+            .get("patch")
+            .and_then(|patch| patch.apply_to_path(&["pathKey".to_string()])),
+        want: Some(AbstractValue::StringSet(BTreeSet::from([
+            "derived".to_string()
+        ])))
+    );
+}

@@ -113,6 +113,7 @@ fn fmt_splice(splice: &Splice) -> String {
         ValueKind::PartialScalar => "partial",
         ValueKind::Fragment => "fragment",
         ValueKind::Serialized => "serialized",
+        ValueKind::YamlSerialized => "yaml-serialized",
     };
     let mut rendered = format!("splice {} {kind}", splice.values_path);
     if splice.meta.defaulted {
@@ -128,6 +129,12 @@ fn fmt_condition(condition: &Predicate) -> String {
     match condition {
         Predicate::True => "always".to_string(),
         Predicate::False => "never".to_string(),
+        Predicate::Approximate { paths, .. } => {
+            format!(
+                "approximate({})",
+                paths.iter().cloned().collect::<Vec<_>>().join(", ")
+            )
+        }
         Predicate::Guard(guard) => fmt_guard(guard),
         Predicate::Not(inner) => format!("!({})", fmt_condition(inner)),
         Predicate::And(parts) => {

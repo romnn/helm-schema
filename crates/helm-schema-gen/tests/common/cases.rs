@@ -597,9 +597,34 @@ pub const NATS_SERVICE_BEHAVIOR: SchemaBehaviorCase<'static> = SchemaBehaviorCas
             message: "nameOverride must stay string-like when the Service is rendered by default",
         },
         SchemaExpectation {
-            instance: r#"{"service":{"enabled":false,"name":7},"nameOverride":7}"#,
+            instance: r#"{"service":{"enabled":false,"name":7}}"#,
             accepted: true,
-            message: "service-only name inputs should remain unconstrained when the Service is disabled",
+            message: "service.name should remain unconstrained when the Service is disabled",
+        },
+        SchemaExpectation {
+            instance: r#"{"service":{"enabled":false},"nameOverride":7}"#,
+            accepted: false,
+            message: "defaultValues computes the fullname before the Service guard and always string-consumes nameOverride",
+        },
+        SchemaExpectation {
+            instance: r#"{"natsBox":{"contexts":{"audit":7}}}"#,
+            accepted: false,
+            message: "every named NATS context must be an object before defaultValues calls get on it",
+        },
+        SchemaExpectation {
+            instance: r#"{"natsBox":{"contexts":0}}"#,
+            accepted: false,
+            message: "a JSON-decoded numeric context collection cannot be ranged",
+        },
+        SchemaExpectation {
+            instance: r#"{"natsBox":{"contexts":{"audit":{}}}}"#,
+            accepted: true,
+            message: "an arbitrary named context may omit all optional secret sections",
+        },
+        SchemaExpectation {
+            instance: r#"{"natsBox":{"contexts":0}}"#,
+            accepted: false,
+            message: "JSON decoding leaves zero non-iterable for the destructured contexts range",
         },
     ],
 };

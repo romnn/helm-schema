@@ -76,7 +76,7 @@ fn dispatch_arms(
     node: tree_sitter::Node<'_>,
     header: Option<TemplateHeader>,
 ) -> Option<Vec<LiteralDispatchArm>> {
-    // An unparseable `if` or `else if` header disqualifies the chain: the
+    // An unparsable `if` or `else if` header disqualifies the chain: the
     // arm negations below would be built over the wrong conditions.
     let mut arms = vec![(Some(header?), children_with_field(node, "consequence"))];
     for (arm_header, children) in else_if_pairs(node, source) {

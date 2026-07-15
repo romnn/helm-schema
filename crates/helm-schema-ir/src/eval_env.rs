@@ -2,16 +2,21 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::BoundValueContext;
+use crate::eval_effect::MemberHostConversion;
 use crate::helper_meta::HelperOutputMeta;
+use helm_schema_core::Predicate;
 
 /// Abstract interpreter environment for Helm expression evaluation.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct EvalEnv {
     pub(crate) dot: Option<AbstractValue>,
     pub(crate) root_fields: HashMap<String, AbstractValue>,
+    pub(crate) root_truthy_predicates: HashMap<String, Predicate>,
     pub(crate) locals: HashMap<String, AbstractValue>,
     pub(crate) local_default_paths: HashMap<String, BTreeSet<String>>,
     pub(crate) local_output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    pub(crate) member_host_conversions: BTreeSet<MemberHostConversion>,
+    pub(crate) active_predicates: Vec<Predicate>,
     pub(crate) bound_values: BoundValueContext,
     pub(crate) allow_field_root_lookup: bool,
     pub(crate) skip_helper_call_args: bool,

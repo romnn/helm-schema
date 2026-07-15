@@ -6,6 +6,9 @@ use helm_schema_core::{
 };
 use serde_yaml::Value as YamlValue;
 
+use crate::condition_encoding::{
+    HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
+};
 use crate::foreign_schema::ForeignSchemaRestriction;
 use crate::merge::{merge_schema_list, merge_two_schemas, union_schema_list};
 use crate::path_schema::{
@@ -20,8 +23,8 @@ use crate::schema_model::{
 };
 use crate::schema_node::SchemaNode;
 use crate::schema_node::is_placeholder_fragment_object_schema;
+use crate::values_yaml::ValuesYamlPathFacts;
 use crate::values_yaml::yaml_value_at_path;
-use crate::values_yaml::{FalsyDefault, ValuesYamlPathFacts};
 
 /// Generator-side policy for lowering semantic value uses into schema evidence.
 ///
@@ -89,6 +92,7 @@ impl ValuePathSchemaFacts {
             && !self.contract.used_as_serialized
             && (self.contract.is_ranged_source
                 || self.contract.has_self_range_guard_render_use
+                || self.contract.used_as_yaml_serialized
                 || (schema_allows_type(provider_schema, "object")
                     && (self.contract.used_as_fragment
                         || (self.contract.has_render_use
@@ -119,7 +123,7 @@ impl ResolvePolicy {
         use_: &ProviderSchemaUse,
     ) -> Option<Value> {
         match use_.kind {
-            ValueKind::Fragment => {
+            ValueKind::Fragment | ValueKind::YamlSerialized => {
                 // `toYaml` is TOTAL in a lone mapping-value slot: scalars,
                 // sequences, and maps all render, so an object-typed
                 // provider position must not bound the INPUT. Only a
@@ -258,12 +262,16 @@ impl ResolvePolicy {
         } else {
             merged
         };
-        let merged = if let Some(default) = facts.values_yaml.falsy_default
-            && facts.contract.has_self_guarded_render_use
+        let merged = if !is_empty_schema(&merged)
+            && facts.contract.has_render_use
+            && facts.contract.all_render_uses_self_guarded
             && !facts.contract.has_unconditional_render_use
-            && rejects_declared_falsy_default(&merged, facts.values_yaml)
+            && !facts.contract.is_direct_ranged_source
         {
-            union_schema_list(vec![merged, falsy_default_schema(default)])
+            // Every Helm-falsy value skips a self-guarded consumer. Keeping only the
+            // declared falsy default made schema validity depend on which off-state the
+            // chart happened to ship.
+            union_schema_list(vec![merged, helm_falsy_schema()])
         } else {
             merged
         };
@@ -321,14 +329,13 @@ impl ResolvePolicy {
         // structure in the loop body) integer counts, regardless of the
         // declared default's shape. Guarded member implications below
         // still narrow the live states.
-        if facts.contract.is_direct_ranged_source && !facts.contract.used_as_serialized {
-            // A serialized sibling use (`join "," x | quote`) renders ANY
-            // input, so the iterable domain must not close the base for
-            // states where the range's branch never runs.
+        if facts.contract.is_direct_ranged_source {
+            // A serialized sibling use renders any input at its own site,
+            // but cannot erase the runtime domain of an independently
+            // executing direct range.
             let iterable = crate::runtime_iterable_schema(
-                !facts.contract.has_structured_item_descendants
-                    && !facts.contract.has_destructured_range_use
-                    && !facts.contract.has_string_contract_items,
+                !facts.contract.has_destructured_range_use
+                    && !facts.contract.has_json_decoded_range_use,
             );
             if is_empty_schema(&resolved) {
                 // The direct range is the only evidence: its runtime
@@ -466,8 +473,8 @@ impl ResolvePolicy {
         {
             // A fragment-only path with no shape evidence (undeclared, or a
             // declared-`{}` placeholder) splices whatever the user supplies
-            // and `toYaml` is TOTAL: scalars, sequences, and maps all
-            // render in a mapping-value slot (F56). The splice claims no
+            // and `toYaml` is total: scalars, sequences, and maps all
+            // render in a mapping-value slot. The splice claims no
             // shape; independent consumers narrow through their own
             // guarded lanes.
             empty_schema()
@@ -491,30 +498,12 @@ impl ResolvePolicy {
     }
 }
 
-fn rejects_declared_falsy_default(schema: &Value, facts: ValuesYamlPathFacts) -> bool {
-    let Some(default) = facts.falsy_default else {
-        return false;
-    };
-    !schema_accepts_json_value(schema, &falsy_default_json(default))
-}
-
-fn falsy_default_schema(default: FalsyDefault) -> Value {
-    Value::Object(
-        [("const".to_string(), falsy_default_json(default))]
-            .into_iter()
-            .collect(),
-    )
-}
-
-fn falsy_default_json(default: FalsyDefault) -> Value {
-    match default {
-        FalsyDefault::Null => Value::Null,
-        FalsyDefault::False => Value::Bool(false),
-        FalsyDefault::Zero => Value::Number(0.into()),
-        FalsyDefault::EmptyString => Value::String(String::new()),
-        FalsyDefault::EmptySequence => Value::Array(Vec::new()),
-        FalsyDefault::EmptyMapping => Value::Object(serde_json::Map::new()),
-    }
+fn helm_falsy_schema() -> Value {
+    serde_json::json!({
+        "not": {
+            "$ref": format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}")
+        }
+    })
 }
 
 /// The branch schema is the strongest available evidence schema that is not a
@@ -539,28 +528,43 @@ pub(crate) fn conditional_target_schema(
             .is_some_and(|default_value| !schema_accepts_json_value(schema, default_value))
     };
 
-    // INVARIANT (F54): a branch keyed on the path's own positive type
-    // partition must stay satisfiable for that type — the arm EXECUTES for
+    // A branch keyed on the path's own positive type partition must stay
+    // satisfiable for that type — the arm executes for
     // it. A branch resolve that contradicts its partition (an object-guess
     // for a `kindIs "slice"` arm) merges WITH the partition instead.
     let branch_schema = {
         let mut branch_schema = branch_schema;
+        let mut positive_self_types = std::collections::BTreeSet::new();
         for guard in &overlay.guards {
-            if let helm_schema_core::ConditionalGuard::TypeIs { path, schema_type } = guard
-                && path == target_value_path
-                && !schema_allows_type(&branch_schema, schema_type)
-                && !is_empty_schema(&branch_schema)
-            {
-                branch_schema = union_schema_list(vec![branch_schema, type_schema(schema_type)]);
+            collect_positive_self_types(guard, target_value_path, false, &mut positive_self_types);
+        }
+        for schema_type in positive_self_types {
+            if !schema_allows_non_falsy_type(&branch_schema, &schema_type) {
+                branch_schema = union_schema_list(vec![branch_schema, type_schema(&schema_type)]);
             }
         }
         branch_schema
     };
 
+    // A serialized catch-all branch still needs the declared structural
+    // shape: unlike a positive type arm, the complement executes for every
+    // unhandled kind.
+    let self_type_complement = overlay.guards.iter().any(|guard| {
+        matches!(
+            guard,
+            ConditionalGuard::Not(inner)
+                if matches!(
+                    inner.as_ref(),
+                    ConditionalGuard::TypeIs { path, .. } if path == target_value_path
+                )
+        )
+    });
     let branch_schema = if active_by_defaults.is_some()
-        && !overlay.evidence.facts.used_as_serialized
+        && (!(overlay.evidence.facts.used_as_serialized
+            || overlay.evidence.facts.used_as_yaml_serialized)
+            || self_type_complement)
         // A declared-`{}` placeholder claims no input shape for a fragment
-        // branch: `toYaml` is total there (F56), so the placeholder's
+        // branch: `toYaml` is total there, so the placeholder's
         // object typing must not narrow the branch.
         && !(overlay.evidence.facts.used_as_fragment
             && is_placeholder_fragment_object_schema(&values_yaml_schema))
@@ -639,6 +643,55 @@ pub(crate) fn conditional_target_schema(
     } else {
         branch_schema
     }
+}
+
+fn collect_positive_self_types(
+    guard: &helm_schema_core::ConditionalGuard,
+    target_value_path: &str,
+    negated: bool,
+    out: &mut std::collections::BTreeSet<String>,
+) {
+    match guard {
+        helm_schema_core::ConditionalGuard::TypeIs { path, schema_type }
+            if !negated && path == target_value_path =>
+        {
+            out.insert(schema_type.clone());
+        }
+        helm_schema_core::ConditionalGuard::Not(inner) => {
+            collect_positive_self_types(inner, target_value_path, !negated, out);
+        }
+        helm_schema_core::ConditionalGuard::AllOf(guards)
+        | helm_schema_core::ConditionalGuard::AnyOf(guards) => {
+            for guard in guards {
+                collect_positive_self_types(guard, target_value_path, negated, out);
+            }
+        }
+        helm_schema_core::ConditionalGuard::Truthy { .. }
+        | helm_schema_core::ConditionalGuard::With { .. }
+        | helm_schema_core::ConditionalGuard::Eq { .. }
+        | helm_schema_core::ConditionalGuard::NotEq { .. }
+        | helm_schema_core::ConditionalGuard::Absent { .. }
+        | helm_schema_core::ConditionalGuard::TypeIs { .. } => {}
+    }
+}
+
+fn schema_allows_non_falsy_type(schema: &Value, schema_type: &str) -> bool {
+    if schema
+        .get("not")
+        .and_then(|not| not.get("$ref"))
+        .and_then(Value::as_str)
+        == Some(&format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}"))
+    {
+        return false;
+    }
+    for keyword in ["anyOf", "oneOf"] {
+        if let Some(arms) = schema.get(keyword).and_then(Value::as_array) {
+            return arms
+                .iter()
+                .any(|arm| schema_allows_non_falsy_type(arm, schema_type));
+        }
+    }
+    schema_allows_type(schema, schema_type)
 }
 
 pub(crate) fn open_objects_rejecting_declared_members(schema: Value, declared: &Value) -> Value {
@@ -733,7 +786,15 @@ fn should_merge_values_yaml_into_conditional_branch(
 }
 
 fn schema_accepts_json_value(schema: &Value, instance: &Value) -> bool {
-    jsonschema::validator_for(schema)
+    let document = value_references_helm_truthy(schema).then(|| {
+        serde_json::json!({
+            "$defs": {
+                HELM_TRUTHY_DEFINITION_NAME: helm_truthy_definition_schema()
+            },
+            "allOf": [schema]
+        })
+    });
+    jsonschema::validator_for(document.as_ref().unwrap_or(schema))
         .map(|validator| validator.is_valid(instance))
         .unwrap_or(false)
 }

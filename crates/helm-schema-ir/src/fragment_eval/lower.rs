@@ -65,9 +65,12 @@ pub(crate) const MAX_SCALAR_ARM_FANOUT: usize = 64;
 pub(crate) struct LowerScope<'a> {
     pub(crate) defaulted_paths: &'a BTreeSet<String>,
     pub(crate) encoded_paths: &'a BTreeSet<String>,
+    pub(crate) yaml_serialized_paths: &'a BTreeSet<String>,
     pub(crate) shape_erased_paths: &'a BTreeSet<String>,
     pub(crate) string_contract_paths: &'a BTreeSet<String>,
+    pub(crate) json_serialized_paths: &'a BTreeSet<String>,
     pub(crate) chart_value_defaults: &'a BTreeSet<String>,
+    pub(crate) local_source_paths: &'a BTreeSet<String>,
     pub(crate) local_output_meta: &'a std::collections::BTreeMap<String, HelperOutputMeta>,
 }
 
@@ -89,8 +92,13 @@ impl LowerScope<'_> {
                 encoded: path_is_encoded(path, self.encoded_paths),
                 shape_erased: helper_meta.is_some_and(|meta| meta.shape_erased)
                     || path_is_encoded(path, self.shape_erased_paths),
+                yaml_serialized: helper_meta.is_some_and(|meta| meta.yaml_serialized)
+                    || path_is_encoded(path, self.yaml_serialized_paths),
                 string_contract: helper_meta.is_some_and(|meta| meta.string_contract)
                     || path_is_encoded(path, self.string_contract_paths),
+                json_serialized: helper_meta.is_some_and(|meta| meta.json_serialized)
+                    || path_is_encoded(path, self.json_serialized_paths),
+                json_decoded: helper_meta.is_some_and(|meta| meta.json_decoded),
                 provenance: helper_meta
                     .map(|meta| meta.provenance.clone())
                     .unwrap_or_default(),
@@ -142,7 +150,10 @@ pub(crate) fn lower_value(
     scope: &LowerScope<'_>,
 ) -> Guarded<AbstractFragment> {
     match value {
-        AbstractValue::Top | AbstractValue::Unknown | AbstractValue::RootContext => {
+        AbstractValue::Top
+        | AbstractValue::Unknown
+        | AbstractValue::RangeKey(_)
+        | AbstractValue::RootContext => {
             Guarded::unconditional(AbstractFragment::Opaque(Opaque::default()))
         }
         AbstractValue::ValuesPath(path) => {
@@ -156,7 +167,25 @@ pub(crate) fn lower_value(
                 out
             }
         }
+        AbstractValue::JsonDecodedPath(path) => {
+            if path.is_empty() {
+                Guarded::unconditional(AbstractFragment::Opaque(Opaque::default()))
+            } else {
+                let mut out = Guarded::empty();
+                for (condition, mut splice) in scope.path_splice_arms(path, kind) {
+                    splice.meta.json_decoded = true;
+                    out.arms.push((condition, AbstractFragment::Splice(splice)));
+                }
+                out
+            }
+        }
         AbstractValue::OutputPath(path, meta) => {
+            let meta = scope
+                .local_source_paths
+                .contains(path)
+                .then(|| scope.local_output_meta.get(path))
+                .flatten()
+                .unwrap_or(meta);
             let mut out = Guarded::empty();
             for condition in helper_meta_conditions(meta) {
                 out.arms.push((
@@ -172,10 +201,13 @@ pub(crate) fn lower_value(
                 suppressed: false,
             }))
         }
-        AbstractValue::Dict(entries) => {
+        AbstractValue::Dict(entries) => json_serialized_scalar(value, scope).unwrap_or_else(|| {
             Guarded::unconditional(AbstractFragment::Mapping(lower_entries(entries, scope)))
-        }
+        }),
         AbstractValue::List(items) => {
+            if let Some(serialized) = json_serialized_scalar(value, scope) {
+                return serialized;
+            }
             let items = items
                 .iter()
                 .map(|item| lower_value(item, structure_child_kind(item), scope))
@@ -183,6 +215,9 @@ pub(crate) fn lower_value(
             Guarded::unconditional(AbstractFragment::Sequence(Sequence { items }))
         }
         AbstractValue::Overlay { entries, fallback } => {
+            if let Some(serialized) = json_serialized_scalar(value, scope) {
+                return serialized;
+            }
             let mut out =
                 Guarded::unconditional(AbstractFragment::Mapping(lower_entries(entries, scope)));
             out.extend(lower_value(fallback, kind, scope));
@@ -296,7 +331,10 @@ pub(crate) fn lower_value_scalar_arms(
     scope: &LowerScope<'_>,
 ) -> Vec<(PathCondition, Vec<StringPart>)> {
     match value {
-        AbstractValue::Top | AbstractValue::Unknown | AbstractValue::RootContext => Vec::new(),
+        AbstractValue::Top
+        | AbstractValue::Unknown
+        | AbstractValue::RangeKey(_)
+        | AbstractValue::RootContext => Vec::new(),
         AbstractValue::ValuesPath(path) => {
             if path.is_empty() {
                 Vec::new()
@@ -308,24 +346,44 @@ pub(crate) fn lower_value_scalar_arms(
                     .collect()
             }
         }
-        AbstractValue::OutputPath(path, meta) => helper_meta_conditions(meta)
-            .into_iter()
-            .map(|condition| {
-                (
-                    condition,
-                    vec![StringPart::Splice(scope.splice(path, kind, Some(meta)))],
-                )
-            })
-            .collect(),
+        AbstractValue::JsonDecodedPath(path) => {
+            if path.is_empty() {
+                Vec::new()
+            } else {
+                scope
+                    .path_splice_arms(path, kind)
+                    .into_iter()
+                    .map(|(condition, mut splice)| {
+                        splice.meta.json_decoded = true;
+                        (condition, vec![StringPart::Splice(splice)])
+                    })
+                    .collect()
+            }
+        }
+        AbstractValue::OutputPath(path, meta) => {
+            let meta = scope
+                .local_source_paths
+                .contains(path)
+                .then(|| scope.local_output_meta.get(path))
+                .flatten()
+                .unwrap_or(meta);
+            helper_meta_conditions(meta)
+                .into_iter()
+                .map(|condition| {
+                    (
+                        condition,
+                        vec![StringPart::Splice(scope.splice(path, kind, Some(meta)))],
+                    )
+                })
+                .collect()
+        }
         AbstractValue::StringSet(strings) => {
             vec![(Predicate::True, vec![StringPart::Text(strings.clone())])]
         }
         AbstractValue::Dict(_) | AbstractValue::List(_) | AbstractValue::Overlay { .. } => {
-            let taint = value.fragment_rendered_paths();
-            vec![(
-                Predicate::True,
-                vec![StringPart::Taint(TaintPart::new(taint))],
-            )]
+            let taint = json_serialized_taint(value, scope)
+                .unwrap_or_else(|| TaintPart::new(value.fragment_rendered_paths()));
+            vec![(Predicate::True, vec![StringPart::Taint(taint)])]
         }
         AbstractValue::Choice(choices) => {
             let mut base_parts = Vec::new();
@@ -374,4 +432,31 @@ pub(crate) fn lower_value_scalar_arms(
             arms
         }
     }
+}
+
+fn json_serialized_taint(value: &AbstractValue, scope: &LowerScope<'_>) -> Option<TaintPart> {
+    let paths = value.paths();
+    if paths.is_empty()
+        || !paths
+            .iter()
+            .all(|path| path_is_encoded(path, scope.json_serialized_paths))
+    {
+        return None;
+    }
+
+    let root_structure = value.values_root_structure()?;
+    Some(TaintPart::from_json_serialized(root_structure))
+}
+
+fn json_serialized_scalar(
+    value: &AbstractValue,
+    scope: &LowerScope<'_>,
+) -> Option<Guarded<AbstractFragment>> {
+    let taint = json_serialized_taint(value, scope)?;
+    Some(Guarded::unconditional(AbstractFragment::Scalar(
+        AbstractString {
+            parts: vec![StringPart::Taint(taint)],
+            suppressed: false,
+        },
+    )))
 }

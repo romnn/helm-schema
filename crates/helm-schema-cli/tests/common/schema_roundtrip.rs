@@ -19,6 +19,10 @@ fn chart_dir(chart_relative_path: &str) -> VfsPath {
     VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str))
 }
 
+#[allow(
+    dead_code,
+    reason = "shared integration-test helper; not every test binary reads values.yaml"
+)]
 pub(crate) fn read_values_yaml_for_path(
     chart_relative_path: &str,
 ) -> std::result::Result<String, Report> {

@@ -61,10 +61,25 @@ pub(crate) struct FragmentSummary {
     pub(crate) shape_erased_paths: BTreeSet<String>,
     /// Paths carrying a real runtime string contract in the body.
     pub(crate) string_contract_paths: BTreeSet<String>,
+    /// Values paths ranged directly by the helper body after bound-context
+    /// resolution. Callers need this identity to project the runtime domain.
+    pub(crate) direct_range_source_paths: BTreeSet<String>,
+    /// Direct helper range sources whose runtime identity came through JSON decoding.
+    pub(crate) json_decoded_range_source_paths: BTreeSet<String>,
+    /// Direct helper range sources iterated with key and value variables.
+    pub(crate) destructured_range_source_paths: BTreeSet<String>,
     /// `fail` captures of the body, helper-internal state only.
     pub(crate) fail_conditions: Vec<crate::eval_effect::FailCapture>,
+    /// Object-producing value mutations observed in source order.
+    pub(crate) member_host_conversions: BTreeSet<crate::eval_effect::MemberHostConversion>,
     /// Chart-level `set … default` normalizations the body applies.
     pub(crate) chart_defaults: BTreeSet<String>,
+    /// Root-context fields replaced while the helper executes.
+    pub(crate) root_set_mutations: BTreeMap<String, AbstractValue>,
+    /// Truth predicates for root-context fields replaced by the helper.
+    pub(crate) root_set_predicates: BTreeMap<String, Predicate>,
+    /// Chart value subtrees supplying defaults to a replaced effective values tree.
+    pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
     /// The value projection (see module docs), computed once.
     pub(crate) value: Option<AbstractValue>,
     /// Rendered splice/taint rows flattened from the tree: per-path branch
@@ -136,8 +151,15 @@ pub(crate) fn eval_bound_helper_fragment(
         yaml_serialized_paths: interpreter.yaml_serialized_paths,
         shape_erased_paths: interpreter.shape_erased_paths,
         string_contract_paths: interpreter.string_contract_paths,
+        direct_range_source_paths: interpreter.direct_range_source_paths,
+        json_decoded_range_source_paths: interpreter.json_decoded_range_source_paths,
+        destructured_range_source_paths: interpreter.destructured_range_source_paths,
         fail_conditions: interpreter.fail_conditions,
+        member_host_conversions: interpreter.member_host_conversions,
         chart_defaults: interpreter.chart_defaults_observed,
+        root_set_mutations: interpreter.root_set_mutations_observed,
+        root_set_predicates: interpreter.root_set_predicates_observed,
+        values_default_sources: interpreter.values_default_sources_observed,
     };
     // Render-suppressed splices (block-scalar bodies) influence the text
     // without rendering a sink-typed value; value-position consumers see
@@ -268,6 +290,8 @@ fn splice_row_meta(splice: &Splice, conditions: &[PathCondition]) -> HelperOutpu
         defaulted: splice.meta.defaulted,
         shape_erased: splice.meta.shape_erased,
         string_contract: splice.meta.string_contract,
+        json_serialized: splice.meta.json_serialized,
+        json_decoded: splice.meta.json_decoded,
         provenance,
         ..HelperOutputMeta::default()
     };
@@ -297,6 +321,106 @@ fn taint_row_meta(
         meta.predicates.insert(branch);
     }
     meta
+}
+
+fn scalar_taint_row_meta(
+    taint: &super::domain::TaintPart,
+    conditions: &[PathCondition],
+) -> HelperOutputMeta {
+    let mut meta = taint_row_meta(taint.site.as_deref(), &taint.provenance, conditions);
+    meta.json_serialized = taint.json_serialized;
+    meta
+}
+
+fn project_structured_taint_value(
+    value: &AbstractValue,
+    outer_meta: &HelperOutputMeta,
+) -> AbstractValue {
+    match value {
+        AbstractValue::ValuesPath(path) => {
+            AbstractValue::OutputPath(path.clone(), outer_meta.clone())
+        }
+        AbstractValue::JsonDecodedPath(path) => {
+            let mut meta = outer_meta.clone();
+            meta.json_decoded = true;
+            AbstractValue::OutputPath(path.clone(), meta)
+        }
+        AbstractValue::OutputPath(path, inner_meta) => {
+            AbstractValue::OutputPath(path.clone(), conjoin_output_meta(inner_meta, outer_meta))
+        }
+        AbstractValue::Dict(entries) => AbstractValue::Dict(
+            entries
+                .iter()
+                .map(|(key, value)| {
+                    (
+                        key.clone(),
+                        project_structured_taint_value(value, outer_meta),
+                    )
+                })
+                .collect(),
+        ),
+        AbstractValue::List(items) => AbstractValue::List(
+            items
+                .iter()
+                .map(|item| project_structured_taint_value(item, outer_meta))
+                .collect(),
+        ),
+        AbstractValue::Overlay { entries, fallback } => AbstractValue::Overlay {
+            entries: entries
+                .iter()
+                .map(|(key, value)| {
+                    (
+                        key.clone(),
+                        project_structured_taint_value(value, outer_meta),
+                    )
+                })
+                .collect(),
+            fallback: Box::new(project_structured_taint_value(fallback, outer_meta)),
+        },
+        AbstractValue::Choice(choices) => AbstractValue::Choice(
+            choices
+                .iter()
+                .map(|choice| project_structured_taint_value(choice, outer_meta))
+                .collect(),
+        ),
+        AbstractValue::Top
+        | AbstractValue::Unknown
+        | AbstractValue::RangeKey(_)
+        | AbstractValue::RootContext
+        | AbstractValue::StringSet(_)
+        | AbstractValue::Widened(_) => value.clone(),
+    }
+}
+
+fn conjoin_output_meta(inner: &HelperOutputMeta, outer: &HelperOutputMeta) -> HelperOutputMeta {
+    let inner_branches = if inner.predicates.is_empty() {
+        vec![BTreeSet::new()]
+    } else {
+        inner.predicates.iter().cloned().collect()
+    };
+    let outer_branches = if outer.predicates.is_empty() {
+        vec![BTreeSet::new()]
+    } else {
+        outer.predicates.iter().cloned().collect()
+    };
+    let predicates = inner_branches
+        .into_iter()
+        .flat_map(|inner| {
+            outer_branches.iter().map(move |outer| {
+                let mut branch = inner.clone();
+                branch.extend(outer.iter().cloned());
+                branch
+            })
+        })
+        .filter(|branch| !branch.is_empty())
+        .collect();
+    let mut combined = inner.clone();
+    combined.predicates.clear();
+    let mut outer = outer.clone();
+    outer.predicates.clear();
+    combined.merge(&outer);
+    combined.predicates = predicates;
+    combined
 }
 
 /// The documented value projection (module docs). Arms of one guarded value
@@ -388,10 +512,13 @@ fn project_node(
                     }
                     StringPart::Taint(taint) => {
                         has_non_text = true;
-                        let meta =
-                            taint_row_meta(taint.site.as_deref(), &taint.provenance, conditions);
-                        for path in &taint.paths {
-                            values.push(AbstractValue::OutputPath(path.clone(), meta.clone()));
+                        let meta = scalar_taint_row_meta(taint, conditions);
+                        if let Some(value) = &taint.structured_value {
+                            values.push(project_structured_taint_value(value, &meta));
+                        } else {
+                            for path in &taint.paths {
+                                values.push(AbstractValue::OutputPath(path.clone(), meta.clone()));
+                            }
                         }
                     }
                 }
@@ -505,8 +632,7 @@ fn collect_rendered_node(
                         splice_row_meta(splice, conditions),
                     ),
                     StringPart::Taint(taint) => {
-                        let meta =
-                            taint_row_meta(taint.site.as_deref(), &taint.provenance, conditions);
+                        let meta = scalar_taint_row_meta(taint, conditions);
                         for path in &taint.paths {
                             push_rendered_row(
                                 rows,
@@ -655,9 +781,7 @@ fn append_suppressed_node_reads(
                     let read = ValueRead {
                         values_path: path.clone(),
                         kind: ValueKind::Scalar,
-                        condition: GuardDnf::from_contract_predicate_conjunction(
-                            conditions.iter().cloned(),
-                        ),
+                        condition: GuardDnf::from_conjunction(conditions.iter().cloned()),
                         resource: None,
                         provenance: meta.provenance.clone(),
                         dependency: true,

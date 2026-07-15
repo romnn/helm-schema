@@ -98,6 +98,27 @@ fn into_eyre(err: helm_schema_cli::CliError) -> Report {
     err.into()
 }
 
+fn schema_contains_property(schema: &serde_json::Value, property: &str) -> bool {
+    schema
+        .get("properties")
+        .and_then(serde_json::Value::as_object)
+        .is_some_and(|properties| properties.contains_key(property))
+        || ["allOf", "anyOf", "oneOf"].into_iter().any(|keyword| {
+            schema
+                .get(keyword)
+                .and_then(serde_json::Value::as_array)
+                .is_some_and(|arms| {
+                    arms.iter()
+                        .any(|arm| schema_contains_property(arm, property))
+                })
+        })
+        || ["then", "else"].into_iter().any(|keyword| {
+            schema
+                .get(keyword)
+                .is_some_and(|arm| schema_contains_property(arm, property))
+        })
+}
+
 fn append_dir_entry<W: io::Write>(
     builder: &mut tar::Builder<W>,
     path: &str,
@@ -195,16 +216,16 @@ fn packaged_library_common_ingress_helper_propagates_schema() -> color_eyre::eyr
 
     let has_ingress_property = |property: &str| {
         schema
-            .pointer(&format!("/properties/ingress/properties/{property}"))
-            .is_some()
+            .pointer("/properties/ingress")
+            .is_some_and(|ingress| schema_contains_property(ingress, property))
             || schema
                 .get("allOf")
                 .and_then(serde_json::Value::as_array)
                 .is_some_and(|entries| {
                     entries.iter().any(|entry| {
                         entry
-                            .pointer(&format!("/then/properties/ingress/properties/{property}"))
-                            .is_some()
+                            .pointer("/then/properties/ingress")
+                            .is_some_and(|ingress| schema_contains_property(ingress, property))
                     })
                 })
     };

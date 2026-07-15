@@ -6,6 +6,14 @@ use crate::Guard;
 pub enum Predicate {
     True,
     False,
+    /// A control condition whose exact relation could not be lowered.
+    ///
+    /// The paths remain available for diagnostics and conservative attribution, but consumers
+    /// must not turn this marker into a narrowing schema condition.
+    Approximate {
+        marker: String,
+        paths: BTreeSet<String>,
+    },
     Guard(Guard),
     Not(Box<Predicate>),
     And(Vec<Predicate>),
@@ -36,6 +44,14 @@ impl Predicate {
         Self::Guard(Guard::Truthy { path: path.into() })
     }
 
+    /// Marks an unlowerable condition without inventing a relation between its paths.
+    pub fn approximate(marker: impl Into<String>, paths: BTreeSet<String>) -> Self {
+        Self::Approximate {
+            marker: marker.into(),
+            paths,
+        }
+    }
+
     pub fn all(predicates: Vec<Self>) -> Self {
         match predicates.as_slice() {
             [] => Self::True,
@@ -57,6 +73,19 @@ impl Predicate {
         matches!(self, Self::True | Self::False)
     }
 
+    /// Whether this predicate contains a condition that could not be lowered exactly.
+    #[must_use]
+    pub fn contains_approximation(&self) -> bool {
+        match self {
+            Self::Approximate { .. } => true,
+            Self::Not(inner) => inner.contains_approximation(),
+            Self::And(predicates) | Self::Or(predicates) => {
+                predicates.iter().any(Self::contains_approximation)
+            }
+            Self::True | Self::False | Self::Guard(_) => false,
+        }
+    }
+
     pub fn value_paths(&self) -> BTreeSet<String> {
         let mut paths = BTreeSet::new();
         self.collect_value_paths(&mut paths);
@@ -67,6 +96,7 @@ impl Predicate {
         match self {
             Self::True => Vec::new(),
             Self::False => vec![Self::False],
+            Self::Approximate { .. } => vec![self],
             Self::And(predicates) => predicates
                 .into_iter()
                 .flat_map(Self::with_context_predicates)
@@ -127,7 +157,7 @@ impl Predicate {
 
     pub fn contract_guards(&self) -> Vec<Guard> {
         match self {
-            Self::True | Self::False => Vec::new(),
+            Self::True | Self::False | Self::Approximate { .. } => Vec::new(),
             Self::Guard(guard) => vec![guard.clone()],
             Self::Not(inner) => negated_contract_guards(inner),
             Self::And(predicates) => predicates.iter().flat_map(Self::contract_guards).collect(),
@@ -145,7 +175,7 @@ impl Predicate {
     pub fn contract_guards_are_exact(&self) -> bool {
         match self {
             Self::True | Self::Guard(_) => true,
-            Self::False => false,
+            Self::False | Self::Approximate { .. } => false,
             Self::Not(inner) => match inner.as_ref() {
                 Self::Guard(
                     Guard::Truthy { .. }
@@ -166,6 +196,7 @@ impl Predicate {
     fn collect_value_paths(&self, out: &mut BTreeSet<String>) {
         match self {
             Self::True | Self::False => {}
+            Self::Approximate { paths, .. } => out.extend(paths.iter().cloned()),
             Self::Guard(guard) => {
                 for path in guard.value_paths() {
                     out.insert(path.to_string());
@@ -203,6 +234,7 @@ impl Predicate {
             }
             Self::True
             | Self::False
+            | Self::Approximate { .. }
             | Self::Guard(
                 Guard::Truthy { .. }
                 | Guard::Eq { .. }
@@ -238,6 +270,10 @@ impl Predicate {
         match self {
             Self::True => Self::True,
             Self::False => Self::False,
+            Self::Approximate { marker, paths } => Self::Approximate {
+                marker,
+                paths: paths.into_iter().map(|path| map(&path)).collect(),
+            },
             Self::Guard(guard) => Self::Guard(guard.map_value_paths(map)),
             Self::Not(inner) => Self::Not(Box::new(inner.map_value_paths(map))),
             Self::And(predicates) => Self::And(

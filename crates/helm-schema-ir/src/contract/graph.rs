@@ -30,6 +30,10 @@ pub struct ContractIr {
     /// Paths a `range` iterates DIRECTLY (`range .Values.x`): only these
     /// carry an iterable input domain.
     direct_range_source_paths: BTreeSet<String>,
+    /// Direct range sources whose runtime values were decoded from JSON.
+    json_decoded_range_source_paths: BTreeSet<String>,
+    /// Chart value subtrees supplying defaults to effective values subtrees.
+    values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
     /// The subset of direct range sources iterated with TWO variables:
     /// integers iterate single-variable ranges only.
     destructured_range_source_paths: BTreeSet<String>,
@@ -105,6 +109,10 @@ impl ContractIr {
             .append(&mut other.string_contract_value_paths);
         self.direct_range_source_paths
             .append(&mut other.direct_range_source_paths);
+        self.json_decoded_range_source_paths
+            .append(&mut other.json_decoded_range_source_paths);
+        self.values_default_sources
+            .append(&mut other.values_default_sources);
         self.destructured_range_source_paths
             .append(&mut other.destructured_range_source_paths);
         for condition in std::mem::take(&mut other.fail_conditions) {
@@ -136,6 +144,12 @@ impl ContractIr {
                     .cloned()
                     .map(helm_schema_core::Predicate::from),
             );
+        }
+        // A conditionally active chart cannot contribute unconditional
+        // effective defaults. Conditional default overlays are not yet part
+        // of the schema-signal vocabulary, so abstain instead of leaking them.
+        if !guards.is_empty() {
+            self.values_default_sources.clear();
         }
     }
 
@@ -183,6 +197,13 @@ impl ContractIr {
         self.direct_range_source_paths = std::mem::take(&mut self.direct_range_source_paths)
             .into_iter()
             .map(|path| map(&path))
+            .collect();
+        self.values_default_sources = std::mem::take(&mut self.values_default_sources)
+            .into_iter()
+            .map(|source| crate::ValuesDefaultSource {
+                target_path: map(&source.target_path),
+                source_path: map(&source.source_path),
+            })
             .collect();
         self.destructured_range_source_paths =
             std::mem::take(&mut self.destructured_range_source_paths)
@@ -292,6 +313,21 @@ impl ContractIr {
             .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
     }
 
+    pub(crate) fn extend_json_decoded_range_source_paths(
+        &mut self,
+        paths: impl IntoIterator<Item = String>,
+    ) {
+        self.json_decoded_range_source_paths
+            .extend(paths.into_iter().filter(|path| !path.trim().is_empty()));
+    }
+
+    pub(crate) fn extend_values_default_sources(
+        &mut self,
+        sources: impl IntoIterator<Item = crate::ValuesDefaultSource>,
+    ) {
+        self.values_default_sources.extend(sources);
+    }
+
     pub(crate) fn extend_destructured_range_source_paths(
         &mut self,
         paths: impl IntoIterator<Item = String>,
@@ -324,6 +360,8 @@ impl ContractIr {
             shape_erased_value_paths,
             string_contract_value_paths,
             direct_range_source_paths,
+            json_decoded_range_source_paths,
+            values_default_sources,
             destructured_range_source_paths,
             mut fail_conditions,
             dependency_values_root_fragments,
@@ -353,6 +391,8 @@ impl ContractIr {
             shape_erased_value_paths,
             string_contract_value_paths,
             direct_range_source_paths,
+            json_decoded_range_source_paths,
+            values_default_sources,
             destructured_range_source_paths,
             fail_conditions,
             dependency_values_root_fragments,

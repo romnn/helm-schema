@@ -51,6 +51,19 @@ fn context_local() -> HashMap<String, AbstractValue> {
     )])
 }
 
+#[test]
+fn printf_resolves_literal_fragment_local() {
+    let strings = ["path".to_string()].into_iter().collect();
+    let locals = HashMap::from([("opPathKey".to_string(), AbstractValue::StringSet(strings))]);
+
+    sim_assert_eq!(
+        have: helper_value_from_fragment_locals(r#"printf "%sKey" $opPathKey"#, &locals),
+        want: Some(AbstractValue::StringSet(
+            ["pathKey".to_string()].into_iter().collect()
+        ))
+    );
+}
+
 fn helper_context<'a>(analysis_db: &'a IrAnalysisDb) -> FragmentEvalContext<'a> {
     empty_context(analysis_db)
 }
@@ -228,4 +241,66 @@ fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
             },
         )),
     );
+}
+
+#[test]
+fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        r#"{{- define "json.roundtrip" -}}
+{{- $params := fromJson (toJson .) -}}
+{{- $doc := pick $params "doc" -}}
+{{- toJson $doc -}}
+{{- end -}}"#,
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let expr = single_expr(r#"include "json.roundtrip" (dict "doc" $values) | fromJson"#);
+    let mut seen = HashSet::new();
+    let locals = HashMap::from([("values".to_string(), AbstractValue::values_root())]);
+    sim_assert_eq!(
+        have: context_value_from_outer_expr(
+            &single_expr(r#"dict "doc" $values"#),
+            Some(&locals),
+            None,
+            None,
+        ),
+        want: Some(AbstractValue::Dict(BTreeMap::from([(
+            "doc".to_string(),
+            AbstractValue::values_root(),
+        )]))),
+    );
+    let include = single_expr(r#"include "json.roundtrip" (dict "doc" $values)"#);
+    let TemplateExpr::Call { args, .. } = &include else {
+        panic!("include expression");
+    };
+    let mut summary_seen = HashSet::new();
+    let call = analysis_db.summarize_bound_helper_call(
+        "json.roundtrip",
+        args.get(1),
+        None,
+        None,
+        &locals,
+        context,
+        &mut summary_seen,
+    );
+    assert!(
+        call.summary.value.is_some(),
+        "root JSON summary should retain a value: {:#?}",
+        call.summary.root
+    );
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr, &locals, None, None, context, &mut seen,
+    );
+    let value = result.value.as_ref().expect("helper output value");
+    let doc = value
+        .apply_to_path(&["doc".to_string()])
+        .unwrap_or_else(|| {
+            panic!("decoded helper output should retain its doc member: {value:#?}")
+        });
+
+    sim_assert_eq!(have: doc.unique_path(), want: Some(String::new()));
+    sim_assert_eq!(have: doc.unique_json_decoded_path(), want: Some(String::new()));
 }

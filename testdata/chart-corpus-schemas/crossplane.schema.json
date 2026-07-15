@@ -33,6 +33,199 @@
       "if": {
         "anyOf": [
           {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbacManager": {
+                      "properties": {
+                        "deploy": {}
+                      },
+                      "required": [
+                        "deploy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbacManager"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbacManager": {
+                    "properties": {
+                      "deploy": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "deploy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbacManager"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhooks": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhooks"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhooks": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhooks"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "customLabels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ],
+            "description": "Add custom `labels` to the Crossplane pod deployment."
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "extraEnvVarsCrossplane": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "maxItems": 0,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "extraEnvVarsCrossplaneInit": {
+          "anyOf": [
+            {
+              "type": "object"
+            },
+            {
+              "maxItems": 0,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "not": {
               "properties": {
                 "rbacManager": {
@@ -73,131 +266,23 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "customLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Add custom `labels` to the Crossplane pod deployment."
-          },
-          "deploymentStrategy": {
-            "description": "The deployment strategy for the Crossplane and RBAC Manager pods.",
-            "type": "string"
-          },
           "extraEnvVarsRBACManager": {
             "anyOf": [
               {
-                "additionalProperties": {},
-                "properties": {},
-                "type": "object"
+                "type": "array"
               },
               {
-                "type": "array"
+                "type": "object"
               },
               {
                 "type": "null"
               }
             ],
             "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
-          },
-          "image": {
-            "properties": {
-              "pullPolicy": {
-                "description": "The image pull policy used for Crossplane and RBAC Manager pods.",
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          "imagePullSecrets": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "The imagePullSecret names to add to the Crossplane ServiceAccount."
-          },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "resourcesRBACManager": {
-            "additionalProperties": {},
-            "properties": {
-              "limits": {
-                "additionalProperties": {},
-                "properties": {
-                  "cpu": {
-                    "description": "CPU resource limits for the RBAC Manager pod.",
-                    "type": "string"
-                  },
-                  "memory": {
-                    "description": "Memory resource limits for the RBAC Manager pod.",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "requests": {
-                "additionalProperties": {},
-                "properties": {
-                  "cpu": {
-                    "description": "CPU resource requests for the RBAC Manager pod.",
-                    "type": "string"
-                  },
-                  "memory": {
-                    "description": "Memory resource requests for the RBAC Manager pod.",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
-          "securityContextRBACManager": {
-            "additionalProperties": {},
-            "properties": {
-              "allowPrivilegeEscalation": {
-                "description": "Enable `allowPrivilegeEscalation` for the RBAC Manager pod.",
-                "type": "boolean"
-              },
-              "readOnlyRootFilesystem": {
-                "description": "Set the RBAC Manager pod root file system as read-only.",
-                "type": "boolean"
-              },
-              "runAsGroup": {
-                "description": "The group ID used by the RBAC Manager pod.",
-                "type": "integer"
-              },
-              "runAsUser": {
-                "description": "The user ID used by the RBAC Manager pod.",
-                "type": "integer"
-              }
-            },
-            "type": "object"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -206,84 +291,449 @@
           {
             "not": {
               "properties": {
-                "serviceAccount": {
+                "rbacManager": {
                   "properties": {
-                    "create": {}
+                    "deploy": {}
                   },
                   "required": [
-                    "create"
+                    "deploy"
                   ],
                   "type": "object"
                 }
               },
               "required": [
-                "serviceAccount"
+                "rbacManager"
               ],
               "type": "object"
             }
           },
           {
             "properties": {
-              "serviceAccount": {
+              "rbacManager": {
                 "properties": {
-                  "create": {
+                  "deploy": {
                     "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "create"
+                  "deploy"
                 ],
                 "type": "object"
               }
             },
             "required": [
-              "serviceAccount"
+              "rbacManager"
             ],
             "type": "object"
           }
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "customLabels": {
+          "extraEnvVarsRBACManager": {
             "anyOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
                 "type": "object"
               },
               {
-                "type": "null"
-              }
-            ],
-            "description": "Add custom `labels` to the Crossplane pod deployment."
-          },
-          "imagePullSecrets": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {},
-                "type": "object"
-              },
-              {
-                "items": {},
+                "maxItems": 0,
                 "type": "array"
               },
               {
                 "type": "null"
               }
             ],
-            "description": "The imagePullSecret names to add to the Crossplane ServiceAccount."
+            "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "rbacManager": {
+                          "properties": {
+                            "deploy": {}
+                          },
+                          "required": [
+                            "deploy"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "rbacManager"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "rbacManager": {
+                        "properties": {
+                          "deploy": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "deploy"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbacManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "imagePullSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "imagePullSecrets"
+                ],
+                "type": "object"
+              }
+            ]
           },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "serviceAccount": {
+                          "properties": {
+                            "create": {}
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "serviceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "imagePullSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "imagePullSecrets"
+                ],
+                "type": "object"
+              }
             ]
           }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "imagePullSecrets": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The imagePullSecret names to add to the Crossplane ServiceAccount."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbacManager": {
+                      "properties": {
+                        "deploy": {}
+                      },
+                      "required": [
+                        "deploy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbacManager"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbacManager": {
+                    "properties": {
+                      "deploy": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "deploy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbacManager"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "webhooks": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhooks"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "webhooks": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhooks"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
+        "required": [
+          "nameOverride"
+        ],
         "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "rbacManager": {
+                  "properties": {
+                    "deploy": {}
+                  },
+                  "required": [
+                    "deploy"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rbacManager"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "rbacManager": {
+                "properties": {
+                  "deploy": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "deploy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbacManager"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "rbacManager": {
+            "additionalProperties": {},
+            "properties": {
+              "args": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Add custom arguments to the RBAC Manager pod."
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -330,28 +780,10 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "customLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Add custom `labels` to the Crossplane pod deployment."
-          },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "service": {
+            "additionalProperties": {},
             "properties": {
               "customAnnotations": {
                 "anyOf": [
@@ -362,19 +794,16 @@
                     "type": "object"
                   },
                   {
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ],
                 "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true"
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -385,118 +814,87 @@
               {
                 "not": {
                   "properties": {
-                    "rbacManager": {
+                    "webhooks": {
                       "properties": {
-                        "deploy": {}
+                        "enabled": {}
                       },
                       "required": [
-                        "deploy"
+                        "enabled"
                       ],
                       "type": "object"
                     }
                   },
                   "required": [
-                    "rbacManager"
+                    "webhooks"
                   ],
                   "type": "object"
                 }
               },
               {
                 "properties": {
-                  "rbacManager": {
+                  "webhooks": {
                     "properties": {
-                      "deploy": {
+                      "enabled": {
                         "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "deploy"
+                      "enabled"
                     ],
                     "type": "object"
                   }
                 },
                 "required": [
-                  "rbacManager"
+                  "webhooks"
                 ],
                 "type": "object"
               }
             ]
           },
           {
-            "not": {
-              "properties": {
-                "rbacManager": {
-                  "properties": {
-                    "skipAggregatedClusterRoles": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "skipAggregatedClusterRoles"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbacManager"
-              ],
-              "type": "object"
-            }
+            "properties": {
+              "service": {
+                "properties": {
+                  "customAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "customAnnotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
           }
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "customLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "customAnnotations": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true"
               }
-            ],
-            "description": "Add custom `labels` to the Crossplane pod deployment."
-          },
-          "nameOverride": {
-            "type": [
-              "string",
-              "null"
-            ]
+            }
           }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object"
+        }
       }
     }
   ],
@@ -533,11 +931,25 @@
         "packages": {
           "anyOf": [
             {
-              "items": {},
+              "items": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
               "type": "array"
             },
             {
-              "items": {},
+              "items": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
               "type": "array"
             },
             {
@@ -547,7 +959,14 @@
               "type": "null"
             },
             {
-              "additionalProperties": {},
+              "additionalProperties": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
               "type": "object"
             }
           ],
@@ -559,13 +978,21 @@
     "customAnnotations": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Add custom `annotations` to the Crossplane pod deployment."
@@ -573,13 +1000,21 @@
     "customLabels": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Add custom `labels` to the Crossplane pod deployment."
@@ -589,14 +1024,24 @@
       "type": "string"
     },
     "dnsPolicy": {
-      "description": "Specify the `dnsPolicy` to be used by the Crossplane pod.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Specify the `dnsPolicy` to be used by the Crossplane pod."
     },
     "extraEnvVarsCrossplane": {
       "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
         {
           "items": {},
           "type": "array"
@@ -613,6 +1058,10 @@
     },
     "extraEnvVarsCrossplaneInit": {
       "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
         {
           "items": {},
           "type": "array"
@@ -663,11 +1112,25 @@
         "packages": {
           "anyOf": [
             {
-              "items": {},
+              "items": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
               "type": "array"
             },
             {
-              "items": {},
+              "items": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
               "type": "array"
             },
             {
@@ -677,7 +1140,14 @@
               "type": "null"
             },
             {
-              "additionalProperties": {},
+              "additionalProperties": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
               "type": "object"
             }
           ],
@@ -704,17 +1174,37 @@
             }
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "medium": {
                 "description": "Set to `Memory` to hold the function cache in a RAM backed file system. Useful for Crossplane development.",
                 "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "properties": {
+                "pvc": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
               },
+              "required": [
+                "pvc"
+              ],
+              "type": "object"
+            }
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "sizeLimit": {
                 "description": "The size limit for the function cache. If medium is `Memory` the `sizeLimit` can't exceed Node memory.",
                 "type": "string"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
@@ -723,11 +1213,17 @@
           "description": "Set to `Memory` to hold the function cache in a RAM backed file system. Useful for Crossplane development."
         },
         "pvc": {
-          "description": "The name of a PersistentVolumeClaim to use as the function cache. Disables the default function cache `emptyDir` Volume.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The name of a PersistentVolumeClaim to use as the function cache. Disables the default function cache `emptyDir` Volume."
         },
         "sizeLimit": {
           "description": "The size limit for the function cache. If medium is `Memory` the `sizeLimit` can't exceed Node memory."
@@ -744,19 +1240,50 @@
       "allOf": [
         {
           "if": {
-            "not": {
-              "properties": {
-                "ignoreTag": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
+            "anyOf": [
+              {
+                "properties": {
+                  "ignoreTag": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "ignoreTag"
+                ],
+                "type": "object"
               },
-              "required": [
-                "ignoreTag"
-              ],
-              "type": "object"
-            }
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "tag": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tag"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "ignoreTag": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "ignoreTag"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "repository": {
                 "anyOf": [
@@ -774,17 +1301,39 @@
                   }
                 ],
                 "description": "Repository for the Crossplane pod image."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "properties": {
+                "ignoreTag": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
               },
+              "required": [
+                "ignoreTag"
+              ],
+              "type": "object"
+            }
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "tag": {
                 "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
                   {
                     "type": "boolean"
                   },
                   {
                     "type": "integer"
-                  },
-                  {
-                    "type": "null"
                   },
                   {
                     "type": "number"
@@ -795,37 +1344,23 @@
                 ],
                 "description": "The Crossplane image tag. Defaults to the value of `appVersion` in `Chart.yaml`."
               }
-            },
-            "type": "object"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "ignoreTag": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "ignoreTag"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "repository": {
-                "description": "Repository for the Crossplane pod image.",
-                "type": "string"
-              }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
         "ignoreTag": {
-          "description": "Do not use the {{ .image.tag }} value to compute the image uri.",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Do not use the {{ .image.tag }} value to compute the image uri."
         },
         "pullPolicy": {
           "description": "The image pull policy used for Crossplane and RBAC Manager pods.",
@@ -845,7 +1380,12 @@
     },
     "leaderElection": {
       "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the Crossplane pod.",
-      "type": "boolean"
+      "type": [
+        "boolean",
+        "integer",
+        "number",
+        "string"
+      ]
     },
     "metrics": {
       "additionalProperties": {},
@@ -863,30 +1403,38 @@
             "type": "object"
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "port": {
                 "anyOf": [
                   {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
                     "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "The port the metrics server listens on."
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
         "enabled": {
-          "description": "Enable Prometheus path, port and scrape annotations and expose port 8080 for both the Crossplane and RBAC Manager pods.",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Enable Prometheus path, port and scrape annotations and expose port 8080 for both the Crossplane and RBAC Manager pods."
         },
         "port": {
           "description": "The port the metrics server listens on."
@@ -895,9 +1443,15 @@
       "type": "object"
     },
     "nameOverride": {
-      "type": [
-        "string",
-        "null"
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
       ]
     },
     "nodeSelector": {
@@ -921,13 +1475,13 @@
             }
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "configMap": {
                 "description": "The name of a ConfigMap to use as the package cache. Disables the default package cache `emptyDir` Volume.",
                 "type": "string"
               }
-            },
-            "type": "object"
+            }
           }
         },
         {
@@ -962,17 +1516,54 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "medium": {
                 "description": "Set to `Memory` to hold the package cache in a RAM backed file system. Useful for Crossplane development.",
                 "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "configMap": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "configMap"
+                  ],
+                  "type": "object"
+                }
               },
+              {
+                "not": {
+                  "properties": {
+                    "pvc": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "pvc"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "sizeLimit": {
                 "description": "The size limit for the package cache. If medium is `Memory` the `sizeLimit` can't exceed Node memory.",
                 "type": "string"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
@@ -984,11 +1575,17 @@
           "description": "Set to `Memory` to hold the package cache in a RAM backed file system. Useful for Crossplane development."
         },
         "pvc": {
-          "description": "The name of a PersistentVolumeClaim to use as the package cache. Disables the default package cache `emptyDir` Volume.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The name of a PersistentVolumeClaim to use as the package cache. Disables the default package cache `emptyDir` Volume."
         },
         "sizeLimit": {
           "description": "The size limit for the package cache. If medium is `Memory` the `sizeLimit` can't exceed Node memory."
@@ -1012,13 +1609,23 @@
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
               },
               "type": "array"
             },
             {
               "items": {
-                "type": "string"
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
               },
               "type": "array"
             },
@@ -1030,7 +1637,12 @@
             },
             {
               "additionalProperties": {
-                "type": "string"
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
               },
               "type": "object"
             }
@@ -1040,11 +1652,25 @@
         "packages": {
           "anyOf": [
             {
-              "items": {},
+              "items": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
               "type": "array"
             },
             {
-              "items": {},
+              "items": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
               "type": "array"
             },
             {
@@ -1054,7 +1680,14 @@
               "type": "null"
             },
             {
-              "additionalProperties": {},
+              "additionalProperties": {
+                "type": [
+                  "boolean",
+                  "integer",
+                  "number",
+                  "string"
+                ]
+              },
               "type": "object"
             }
           ],
@@ -1094,45 +1727,113 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "args": {
                 "anyOf": [
                   {
-                    "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "object"
                   },
                   {
                     "type": "integer"
                   },
                   {
                     "type": "null"
-                  },
-                  {
-                    "type": "object"
                   }
                 ],
                 "description": "Add custom arguments to the RBAC Manager pod."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "deploy": {}
+                  },
+                  "required": [
+                    "deploy"
+                  ],
+                  "type": "object"
+                }
               },
+              {
+                "properties": {
+                  "deploy": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "deploy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "leaderElection": {
-                "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the RBAC Manager pod.",
-                "type": "boolean"
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the RBAC Manager pod."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "deploy": {}
+                  },
+                  "required": [
+                    "deploy"
+                  ],
+                  "type": "object"
+                }
               },
+              {
+                "properties": {
+                  "deploy": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "deploy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "replicas": {
                 "description": "The number of RBAC Manager pod `replicas` to deploy.",
                 "type": "integer"
-              },
-              "tolerations": {
-                "description": "Add `tolerations` to the RBAC Manager pod deployment.",
-                "items": {},
-                "type": "array"
-              },
-              "topologySpreadConstraints": {
-                "description": "Add `topologySpreadConstraints` to the RBAC Manager pod deployment.",
-                "items": {},
-                "type": "array"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
@@ -1144,8 +1845,17 @@
           "description": "Add custom arguments to the RBAC Manager pod."
         },
         "deploy": {
-          "description": "Deploy the RBAC Manager pod and its required roles.",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Deploy the RBAC Manager pod and its required roles."
         },
         "leaderElection": {
           "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the RBAC Manager pod."
@@ -1164,33 +1874,9 @@
           "type": "boolean"
         },
         "tolerations": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Add `tolerations` to the RBAC Manager pod deployment."
         },
         "topologySpreadConstraints": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Add `topologySpreadConstraints` to the RBAC Manager pod deployment."
         }
       },
@@ -1202,10 +1888,18 @@
         "port": {
           "anyOf": [
             {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            },
+            {
               "type": "integer"
             },
             {
-              "type": "null"
+              "type": "number"
             },
             {
               "type": "string"
@@ -1232,13 +1926,13 @@
             "type": "object"
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "key": {
                 "description": "The ConfigMap key containing a custom CA bundle to enable fetching packages from registries with unknown or untrusted certificates.",
                 "type": "string"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
@@ -1253,11 +1947,17 @@
           ]
         },
         "name": {
-          "description": "The ConfigMap name containing a custom CA bundle to enable fetching packages from registries with unknown or untrusted certificates.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The ConfigMap name containing a custom CA bundle to enable fetching packages from registries with unknown or untrusted certificates."
         }
       },
       "type": "object"
@@ -1300,10 +2000,7 @@
       },
       "type": "object"
     },
-    "resourcesRBACManager": {
-      "additionalProperties": {},
-      "type": "object"
-    },
+    "resourcesRBACManager": {},
     "revisionHistoryLimit": {
       "description": "The number of Crossplane ReplicaSets to retain."
     },
@@ -1316,13 +2013,21 @@
         "customAnnotations": {
           "anyOf": [
             {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ],
           "description": "Add custom annotations to Crossplane Secret resources."
@@ -1355,38 +2060,17 @@
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ]
     },
-    "securityContextRBACManager": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
+    "securityContextRBACManager": {},
     "service": {
       "additionalProperties": {},
       "properties": {
         "customAnnotations": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
           "description": "Configure annotations on the service object. Only enabled when webhooks.enabled = true"
         }
       },
@@ -1423,6 +2107,7 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "customAnnotations": {
                 "anyOf": [
@@ -1433,13 +2118,14 @@
                     "type": "object"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ],
                 "description": "Add custom `annotations` to the Crossplane ServiceAccount."
               }
-            },
-            "type": "object"
+            }
           }
         },
         {
@@ -1472,31 +2158,31 @@
             }
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "name": {
                 "description": "Provide the name of an already created Crossplane ServiceAccount. Required when `serviceAccount.create` is `false`",
                 "type": "string"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
         "create": {
-          "description": "Specifies whether Crossplane ServiceAccount should be created",
-          "type": "boolean"
-        },
-        "customAnnotations": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "type": "object"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "null"
+              "type": "boolean"
             }
           ],
+          "description": "Specifies whether Crossplane ServiceAccount should be created"
+        },
+        "customAnnotations": {
           "description": "Add custom `annotations` to the Crossplane ServiceAccount."
         },
         "name": {
@@ -1515,10 +2201,12 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "Add `tolerations` to the Crossplane pod deployment."
@@ -1530,10 +2218,12 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "Add `topologySpreadConstraints` to the Crossplane pod deployment."
@@ -1569,30 +2259,38 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "port": {
                 "anyOf": [
                   {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
                     "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "The port the webhook server listens on."
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
         "enabled": {
-          "description": "Enable webhooks for Crossplane and installed Provider packages.",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Enable webhooks for Crossplane and installed Provider packages."
         },
         "port": {
           "description": "The port the webhook server listens on."

@@ -132,16 +132,21 @@ impl GuardDnf {
 
     #[must_use]
     pub fn guard_conjunctions(&self) -> Vec<Vec<Guard>> {
-        self.0
-            .iter()
-            .map(|conjunction| {
-                let mut guards = Predicate::contract_guard_stack(
-                    &conjunction.iter().cloned().collect::<Vec<_>>(),
-                );
-                Guard::canonicalize_all(&mut guards);
-                guards
-            })
-            .collect()
+        let mut seen = BTreeSet::new();
+        let mut projected = Vec::new();
+        for conjunction in &self.0 {
+            // Approximate predicates remain in the in-memory DNF consumed by
+            // schema inference, where they force abstention. The serialized
+            // inspection format cannot represent them, but it can retain the
+            // exact ambient guards that still explain where the row lives.
+            let mut guards =
+                Predicate::contract_guard_stack(&conjunction.iter().cloned().collect::<Vec<_>>());
+            Guard::canonicalize_all(&mut guards);
+            if seen.insert(guards.clone()) {
+                projected.push(guards);
+            }
+        }
+        projected
     }
 
     #[must_use]
@@ -171,6 +176,11 @@ impl GuardDnf {
         // Rows are combined before downstream evidence payloads are known to
         // be equal, so absorption here could discard a more precise payload.
         self.0.extend(other.0);
+    }
+
+    /// Union conditions after their evidence payloads are known to be equal.
+    pub fn union(&mut self, other: Self) {
+        *self = Self::from_disjunction(std::mem::take(&mut self.0).into_iter().chain(other.0));
     }
 
     pub fn map_value_paths<F>(&mut self, map: &mut F)

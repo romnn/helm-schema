@@ -42,19 +42,6 @@
       "condition": [
         [
           {
-            "path": "commonAnnotations",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "commonAnnotations",
-              "service.annotations"
-            ],
-            "type": "or"
-          }
-        ],
-        [
-          {
             "paths": [
               "commonAnnotations",
               "service.annotations"
@@ -346,10 +333,6 @@
       "condition": [
         [
           {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
             "path": "fullnameOverride",
             "type": "not"
           }
@@ -375,6 +358,10 @@
     {
       "condition": [
         [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
           {
             "path": "nameOverride",
             "type": "default"
@@ -419,11 +406,11 @@
       "condition": [
         [
           {
-            "path": "fullnameOverride",
-            "type": "not"
+            "path": "nameOverride",
+            "type": "truthy"
           },
           {
-            "path": "nameOverride",
+            "path": "fullnameOverride",
             "type": "not"
           },
           {
@@ -458,6 +445,10 @@
     {
       "condition": [
         [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
           {
             "path": "nameOverride",
             "type": "default"
@@ -596,19 +587,6 @@
     },
     {
       "condition": [
-        [
-          {
-            "path": "service.annotations",
-            "type": "truthy"
-          },
-          {
-            "paths": [
-              "commonAnnotations",
-              "service.annotations"
-            ],
-            "type": "or"
-          }
-        ],
         [
           {
             "paths": [
@@ -1455,31 +1433,6 @@
         ],
         [
           {
-            "path": "tls.client.enabled",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "service.type",
-                  "type": "eq",
-                  "value": "LoadBalancer"
-                }
-              ],
-              [
-                {
-                  "path": "service.type",
-                  "type": "eq",
-                  "value": "NodePort"
-                }
-              ]
-            ],
-            "type": "any_of"
-          }
-        ],
-        [
-          {
             "path": "service.disableBaseClientPort",
             "type": "not"
           },
@@ -1494,31 +1447,6 @@
             "path": "service.type",
             "type": "eq",
             "value": "LoadBalancer"
-          }
-        ],
-        [
-          {
-            "path": "service.disableBaseClientPort",
-            "type": "not"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "service.type",
-                  "type": "eq",
-                  "value": "LoadBalancer"
-                }
-              ],
-              [
-                {
-                  "path": "service.type",
-                  "type": "eq",
-                  "value": "NodePort"
-                }
-              ]
-            ],
-            "type": "any_of"
           }
         ],
         [

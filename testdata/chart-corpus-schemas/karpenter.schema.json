@@ -31,196 +31,84 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "serviceMonitor": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceMonitor"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "additionalAnnotations": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Additional annotations to add into metadata."
-          },
-          "additionalLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Additional labels to add into metadata.\napp: karpenter"
-          },
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Overrides the chart's computed fullname."
-          },
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Overrides the chart's name."
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
-            "properties": {
-              "additionalAnnotations": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "additionalAnnotations"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "service": {
-                "properties": {
-                  "annotations": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "annotations"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "additionalAnnotations": {
-            "anyOf": [
+            "allOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Additional annotations to add into metadata."
-          },
-          "service": {
-            "properties": {
-              "annotations": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Additional annotations for the Service."
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
+                    "not": {
                       "properties": {
-                        "create": {}
+                        "serviceAccount": {
+                          "properties": {
+                            "create": {}
+                          },
+                          "required": [
+                            "create"
+                          ],
+                          "type": "object"
+                        }
                       },
                       "required": [
-                        "create"
+                        "serviceAccount"
                       ],
                       "type": "object"
                     }
                   },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  }
+                ]
               },
               {
-                "properties": {
-                  "serviceAccount": {
+                "anyOf": [
+                  {
                     "properties": {
-                      "create": {
+                      "additionalAnnotations": {
                         "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "create"
+                      "additionalAnnotations"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "properties": {
+                          "annotations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "annotations"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
+                ]
               }
             ]
           },
@@ -239,7 +127,7 @@
               },
               {
                 "properties": {
-                  "serviceAccount": {
+                  "service": {
                     "properties": {
                       "annotations": {
                         "$ref": "#/$defs/helm-truthy"
@@ -252,7 +140,7 @@
                   }
                 },
                 "required": [
-                  "serviceAccount"
+                  "service"
                 ],
                 "type": "object"
               }
@@ -261,6 +149,7 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "additionalAnnotations": {
             "anyOf": [
@@ -271,32 +160,14 @@
                 "type": "object"
               },
               {
-                "type": "null"
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
               }
             ],
             "description": "Additional annotations to add into metadata."
-          },
-          "serviceAccount": {
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Additional annotations for the ServiceAccount."
-              }
-            },
-            "type": "object"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -343,6 +214,7 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "additionalLabels": {
             "anyOf": [
@@ -353,67 +225,225 @@
                 "type": "object"
               },
               {
-                "type": "null"
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
               }
             ],
             "description": "Additional labels to add into metadata.\napp: karpenter"
-          },
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Overrides the chart's computed fullname."
-          },
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Overrides the chart's name."
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
         "allOf": [
           {
-            "properties": {
-              "affinity": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "affinity": {}
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
                 "properties": {
-                  "podAffinity": {
-                    "properties": {
-                      "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "affinity": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
                         "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "affinity"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "affinity": {
+                        "properties": {
+                          "podAffinity": {}
+                        },
+                        "required": [
+                          "podAffinity"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "requiredDuringSchedulingIgnoredDuringExecution"
+                      "affinity"
                     ],
                     "type": "object"
                   }
                 },
-                "required": [
-                  "podAffinity"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "affinity"
-            ],
-            "type": "object"
+                {
+                  "properties": {
+                    "affinity": {
+                      "properties": {
+                        "podAffinity": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "podAffinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "affinity": {
+                        "properties": {
+                          "podAffinity": {
+                            "properties": {
+                              "preferredDuringSchedulingIgnoredDuringExecution": {}
+                            },
+                            "required": [
+                              "preferredDuringSchedulingIgnoredDuringExecution"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "podAffinity"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "affinity"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "affinity": {
+                      "properties": {
+                        "podAffinity": {
+                          "properties": {
+                            "preferredDuringSchedulingIgnoredDuringExecution": {
+                              "enum": [
+                                null
+                              ]
+                            }
+                          },
+                          "required": [
+                            "preferredDuringSchedulingIgnoredDuringExecution"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "podAffinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAffinity": {
+                "additionalProperties": {},
+                "properties": {
+                  "preferredDuringSchedulingIgnoredDuringExecution": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "podAffinityTerm": {
+                              "additionalProperties": {},
+                              "properties": {
+                                "labelSelector": {}
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "podAffinityTerm": {
+                              "additionalProperties": {},
+                              "properties": {
+                                "labelSelector": {}
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
           {
             "properties": {
               "nameOverride": {
@@ -597,34 +627,57 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "affinity": {
+            "additionalProperties": {},
             "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAffinity": {
+                "additionalProperties": {},
                 "properties": {
                   "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "additionalProperties": {
-                      "required": [
-                        "labelSelector"
-                      ],
-                      "type": "object"
-                    },
-                    "items": {
-                      "required": [
-                        "labelSelector"
-                      ],
-                      "type": "object"
-                    }
+                    "anyOf": [
+                      {
+                        "items": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "labelSelector": {}
+                          },
+                          "required": [
+                            "labelSelector"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "labelSelector": {}
+                          },
+                          "required": [
+                            "labelSelector"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
-                },
-                "type": "object"
+                }
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -635,14 +688,401 @@
               {
                 "not": {
                   "properties": {
+                    "affinity": {}
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "affinity": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "affinity"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "affinity": {
+                        "properties": {
+                          "podAffinity": {}
+                        },
+                        "required": [
+                          "podAffinity"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "affinity"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "affinity": {
+                      "properties": {
+                        "podAffinity": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "podAffinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "affinity": {
+                        "properties": {
+                          "podAffinity": {
+                            "properties": {
+                              "requiredDuringSchedulingIgnoredDuringExecution": {}
+                            },
+                            "required": [
+                              "requiredDuringSchedulingIgnoredDuringExecution"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "podAffinity"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "affinity"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "affinity": {
+                      "properties": {
+                        "podAffinity": {
+                          "properties": {
+                            "requiredDuringSchedulingIgnoredDuringExecution": {
+                              "enum": [
+                                null
+                              ]
+                            }
+                          },
+                          "required": [
+                            "requiredDuringSchedulingIgnoredDuringExecution"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "podAffinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAffinity": {
+                "additionalProperties": {},
+                "properties": {
+                  "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "labelSelector": {}
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "labelSelector": {}
+                          },
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "affinity": {}
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "affinity": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "affinity"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "affinity": {
+                        "properties": {
+                          "podAffinity": {}
+                        },
+                        "required": [
+                          "podAffinity"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "affinity"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "affinity": {
+                      "properties": {
+                        "podAffinity": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "podAffinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAffinity": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "affinity": {}
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "affinity": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "affinity"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "podAntiAffinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "affinity"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "affinity": {
+                        "properties": {
+                          "podAntiAffinity": {
+                            "properties": {
+                              "preferredDuringSchedulingIgnoredDuringExecution": {}
+                            },
+                            "required": [
+                              "preferredDuringSchedulingIgnoredDuringExecution"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "podAntiAffinity"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "affinity"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
                     "affinity": {
                       "properties": {
                         "podAntiAffinity": {
                           "properties": {
-                            "requiredDuringSchedulingIgnoredDuringExecution": {}
+                            "preferredDuringSchedulingIgnoredDuringExecution": {
+                              "enum": [
+                                null
+                              ]
+                            }
                           },
                           "required": [
-                            "requiredDuringSchedulingIgnoredDuringExecution"
+                            "preferredDuringSchedulingIgnoredDuringExecution"
                           ],
                           "type": "object"
                         }
@@ -658,36 +1098,74 @@
                   ],
                   "type": "object"
                 }
-              },
-              {
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAntiAffinity": {
+                "additionalProperties": {},
                 "properties": {
-                  "affinity": {
-                    "properties": {
-                      "podAntiAffinity": {
-                        "properties": {
-                          "requiredDuringSchedulingIgnoredDuringExecution": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
+                  "preferredDuringSchedulingIgnoredDuringExecution": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "podAffinityTerm": {
+                              "additionalProperties": {},
+                              "properties": {
+                                "labelSelector": {}
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
                         },
-                        "required": [
-                          "requiredDuringSchedulingIgnoredDuringExecution"
-                        ],
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "podAffinityTerm": {
+                              "additionalProperties": {},
+                              "properties": {
+                                "labelSelector": {}
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
+                        },
                         "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
                       }
-                    },
-                    "required": [
-                      "podAntiAffinity"
-                    ],
-                    "type": "object"
+                    ]
                   }
-                },
-                "required": [
-                  "affinity"
-                ],
-                "type": "object"
+                }
               }
-            ]
-          },
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
           {
             "properties": {
               "nameOverride": {
@@ -817,34 +1295,493 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "affinity": {
+            "additionalProperties": {},
             "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAntiAffinity": {
+                "additionalProperties": {},
                 "properties": {
                   "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "labelSelector": {}
+                          },
+                          "required": [
+                            "labelSelector"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "labelSelector": {}
+                          },
+                          "required": [
+                            "labelSelector"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "affinity": {}
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "affinity": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "affinity"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "podAntiAffinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "affinity"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "requiredDuringSchedulingIgnoredDuringExecution": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
                       "required": [
-                        "labelSelector"
-                      ],
-                      "type": "object"
-                    },
-                    "items": {
-                      "required": [
-                        "labelSelector"
+                        "requiredDuringSchedulingIgnoredDuringExecution"
                       ],
                       "type": "object"
                     }
+                  },
+                  "required": [
+                    "podAntiAffinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "affinity"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAntiAffinity": {
+                "additionalProperties": {},
+                "properties": {
+                  "requiredDuringSchedulingIgnoredDuringExecution": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "labelSelector": {}
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "labelSelector": {}
+                          },
+                          "type": "object"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "affinity": {}
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "affinity": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
                   }
                 },
+                "required": [
+                  "affinity"
+                ],
                 "type": "object"
               }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "podAntiAffinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "affinity"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAntiAffinity": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "affinity": {}
+              },
+              "required": [
+                "affinity"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "affinity": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
             },
+            "required": [
+              "affinity"
+            ],
             "type": "object"
           }
-        },
-        "type": "object"
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "affinity": {}
+                      },
+                      "required": [
+                        "affinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "affinity": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "affinity"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "affinity": {
+                            "properties": {
+                              "podAffinity": {}
+                            },
+                            "required": [
+                              "podAffinity"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "affinity"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "affinity": {
+                          "properties": {
+                            "podAffinity": {
+                              "enum": [
+                                null
+                              ]
+                            }
+                          },
+                          "required": [
+                            "podAffinity"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "affinity"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "affinity": {}
+                      },
+                      "required": [
+                        "affinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "affinity": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "affinity"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "affinity": {
+                      "properties": {
+                        "podAntiAffinity": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "podAntiAffinity"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ],
+            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels."
+          }
+        }
       }
     },
     {
@@ -898,25 +1835,299 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "controller": {
+            "additionalProperties": {},
             "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
             "properties": {
               "securityContext": {
                 "anyOf": [
                   {
                     "type": "object"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "extraVolumeMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumeMounts"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "extraVolumeMounts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "extraVolumeMounts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "sidecarVolumeMounts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "sidecarVolumeMounts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "sidecarVolumeMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "sidecarVolumeMounts"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "extraVolumeMounts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "extraVolumeMounts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "sidecarVolumeMounts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "sidecarVolumeMounts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "extraVolumeMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumeMounts"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "controller": {
+                    "properties": {
+                      "sidecarVolumeMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "sidecarVolumeMounts"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "controller"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "controller": {
+            "additionalProperties": {},
+            "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
+            "properties": {
+              "sidecarContainer": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
                   },
                   {
                     "type": "null"
                   }
-                ]
+                ],
+                "description": "Additional sidecarContainer config"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "controller": {
+          "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
+          "type": "object"
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "serviceAccount": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "serviceAccount"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "serviceAccount": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
               }
             },
+            "required": [
+              "serviceAccount"
+            ],
             "type": "object"
           }
-        },
-        "type": "object"
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Overrides the chart's computed fullname."
+          }
+        }
       }
     },
     {
@@ -932,6 +2143,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
             "anyOf": [
@@ -944,8 +2156,7 @@
             ],
             "description": "Overrides the chart's computed fullname."
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -961,6 +2172,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "nameOverride": {
             "anyOf": [
@@ -973,35 +2185,186 @@
             ],
             "description": "Overrides the chart's name."
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
-        "not": {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/helm-truthy"
-            }
+        "anyOf": [
+          {
+            "properties": {
+              "additionalAnnotations": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "additionalAnnotations"
+            ],
+            "type": "object"
           },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
-        }
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "annotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "nameOverride": {
-            "description": "Overrides the chart's name.",
-            "type": [
-              "string",
-              "null"
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "Additional annotations for the Service."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "additionalAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "additionalAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "annotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "annotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
             ]
           }
-        },
-        "type": "object"
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "Additional annotations for the ServiceAccount."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "settings": {
+          "description": "Global Settings to configure Karpenter",
+          "type": "object"
+        }
       }
     },
     {
@@ -1017,32 +2380,6 @@
               "nameOverride"
             ],
             "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "topologySpreadConstraints": {}
-                  },
-                  "required": [
-                    "topologySpreadConstraints"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "topologySpreadConstraints": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "topologySpreadConstraints"
-                ],
-                "type": "object"
-              }
-            ]
           },
           {
             "anyOf": [
@@ -1101,24 +2438,112 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "topologySpreadConstraints": {
-            "additionalProperties": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "labelSelector": {}
+                  },
+                  "required": [
+                    "labelSelector"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "labelSelector": {}
+                  },
+                  "required": [
+                    "labelSelector"
+                  ],
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Topology spread constraints to increase the controller resilience by distributing pods across the cluster zones. If an explicit label selector is not provided one will be created from the pod selector labels."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "topologySpreadConstraints": {}
+              },
               "required": [
-                "labelSelector"
-              ],
-              "type": "object"
-            },
-            "description": "Topology spread constraints to increase the controller resilience by distributing pods across the cluster zones. If an explicit label selector is not provided one will be created from the pod selector labels.",
-            "items": {
-              "required": [
-                "labelSelector"
+                "topologySpreadConstraints"
               ],
               "type": "object"
             }
+          },
+          {
+            "properties": {
+              "topologySpreadConstraints": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "topologySpreadConstraints"
+            ],
+            "type": "object"
           }
-        },
-        "type": "object"
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "topologySpreadConstraints": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "labelSelector": {}
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "labelSelector": {}
+                  },
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Topology spread constraints to increase the controller resilience by distributing pods across the cluster zones. If an explicit label selector is not provided one will be created from the pod selector labels."
+          }
+        }
       }
     },
     {
@@ -1219,13 +2644,21 @@
     "additionalAnnotations": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Additional annotations to add into metadata."
@@ -1237,10 +2670,12 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "Specifies additional rules for the core ClusterRole."
@@ -1248,13 +2683,21 @@
     "additionalLabels": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Additional labels to add into metadata.\napp: karpenter"
@@ -1305,82 +2748,42 @@
                 {
                   "additionalProperties": {},
                   "properties": {
-                    "preferredDuringSchedulingIgnoredDuringExecution": {
-                      "items": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "podAffinityTerm": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "labelSelector": {}
-                            },
-                            "type": "object"
-                          }
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
+                    "preferredDuringSchedulingIgnoredDuringExecution": {}
                   }
                 },
                 {
                   "additionalProperties": {},
                   "properties": {
-                    "requiredDuringSchedulingIgnoredDuringExecution": {
-                      "items": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "labelSelector": {}
-                        },
-                        "type": "object"
-                      },
-                      "type": "array"
-                    }
+                    "requiredDuringSchedulingIgnoredDuringExecution": {}
                   },
                   "type": "object"
                 }
               ]
             },
             "podAntiAffinity": {
-              "additionalProperties": {},
-              "properties": {
-                "preferredDuringSchedulingIgnoredDuringExecution": {
-                  "items": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "podAffinityTerm": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "labelSelector": {}
-                        },
-                        "type": "object"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "type": "array"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "properties": {
+                    "preferredDuringSchedulingIgnoredDuringExecution": {}
+                  }
                 },
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "items": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "labelSelector": {},
-                      "topologyKey": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
+                {
+                  "additionalProperties": {},
+                  "properties": {
+                    "requiredDuringSchedulingIgnoredDuringExecution": {}
                   },
-                  "type": "array"
+                  "type": "object"
                 }
-              },
-              "type": "object"
+              ]
             }
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels."
@@ -1392,62 +2795,153 @@
           "if": {
             "anyOf": [
               {
-                "properties": {
-                  "extraVolumeMounts": {
-                    "$ref": "#/$defs/helm-truthy"
+                "allOf": [
+                  {
+                    "properties": {
+                      "extraVolumeMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumeMounts"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "extraVolumeMounts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "extraVolumeMounts"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "sidecarVolumeMounts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "sidecarVolumeMounts"
+                        ],
+                        "type": "object"
+                      }
+                    ]
                   }
-                },
-                "required": [
-                  "extraVolumeMounts"
-                ],
-                "type": "object"
+                ]
               },
               {
-                "properties": {
-                  "sidecarVolumeMounts": {
-                    "$ref": "#/$defs/helm-truthy"
+                "allOf": [
+                  {
+                    "properties": {
+                      "sidecarVolumeMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "sidecarVolumeMounts"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "extraVolumeMounts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "extraVolumeMounts"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "sidecarVolumeMounts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "sidecarVolumeMounts"
+                        ],
+                        "type": "object"
+                      }
+                    ]
                   }
-                },
-                "required": [
-                  "sidecarVolumeMounts"
-                ],
-                "type": "object"
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "extraVolumeMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumeMounts"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "sidecarVolumeMounts": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "sidecarVolumeMounts"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "sidecarContainer": {
                 "anyOf": [
                   {
-                    "items": {},
                     "type": "array"
+                  },
+                  {
+                    "type": "object"
                   },
                   {
                     "type": "integer"
                   },
                   {
                     "type": "null"
-                  },
-                  {
-                    "type": "object"
                   }
                 ],
                 "description": "Additional sidecarContainer config"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
       "properties": {
         "containerName": {
-          "description": "Distinguishing container name (containerName: karpenter-controller).",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Distinguishing container name (containerName: karpenter-controller)."
         },
         "env": {
           "anyOf": [
@@ -1456,10 +2950,12 @@
               "type": "array"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "string"
+              "type": "null"
             }
           ],
           "description": "Additional environment variables for the controller pod."
@@ -1471,10 +2967,12 @@
               "type": "array"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "string"
+              "type": "null"
             }
           ],
           "description": "- name: AWS_REGION\nvalue: eu-west-1"
@@ -1486,10 +2984,12 @@
               "type": "array"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "string"
+              "type": "null"
             }
           ],
           "description": "Additional volumeMounts for the controller container.\n- name: aws-iam-token\nmountPath: /var/run/secrets/eks.amazonaws.com/serviceaccount\nreadOnly: true"
@@ -1499,7 +2999,12 @@
           "properties": {
             "port": {
               "description": "The container port to use for http health probe.",
-              "type": "integer"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             }
           },
           "type": "object"
@@ -1524,7 +3029,12 @@
           "properties": {
             "port": {
               "description": "The container port to use for metrics.",
-              "type": "integer"
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
             }
           },
           "type": "object"
@@ -1533,19 +3043,28 @@
           "description": "Resources for the controller container.\nWe usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nrequests:\ncpu: 1\nmemory: 1Gi\nlimits:\ncpu: 1\nmemory: 1Gi"
         },
         "securityContext": {
-          "additionalProperties": {},
-          "properties": {
-            "appArmorProfile": {
-              "description": "AppArmor profile for the controller container."
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "appArmorProfile": {
+                  "description": "AppArmor profile for the controller container."
+                },
+                "seLinuxOptions": {
+                  "description": "SELinux options for the controller container."
+                },
+                "seccompProfile": {
+                  "description": "Seccomp profile for the controller container."
+                }
+              },
+              "type": "object"
             },
-            "seLinuxOptions": {
-              "description": "SELinux options for the controller container."
-            },
-            "seccompProfile": {
-              "description": "Seccomp profile for the controller container."
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
-          },
-          "type": "object"
+          ]
         },
         "sidecarContainer": {
           "description": "Additional sidecarContainer config"
@@ -1557,10 +3076,9 @@
               "type": "array"
             },
             {
-              "type": "null"
-            },
-            {
-              "type": "string"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ],
           "description": "Additional volumeMounts for the sidecar - this will be added to the volume mounts on top of extraVolumeMounts"
@@ -1572,11 +3090,17 @@
       "description": "Configure DNS Config for the pod\noptions:\n- name: ndots\nvalue: \"1\""
     },
     "dnsPolicy": {
-      "description": "Configure the DNS Policy for the pod",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Configure the DNS Policy for the pod"
     },
     "extraVolumes": {
       "anyOf": [
@@ -1585,10 +3109,12 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "Additional volumes for the pod."
@@ -1596,13 +3122,15 @@
     "fullnameOverride": {
       "anyOf": [
         {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
           "type": "boolean"
         },
         {
           "type": "integer"
-        },
-        {
-          "type": "null"
         },
         {
           "type": "number"
@@ -1628,10 +3156,12 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "Image pull secrets for Docker images."
@@ -1643,21 +3173,42 @@
       "description": "Log errorOutputPaths - defaults to stderr only"
     },
     "logLevel": {
-      "description": "Global log level, defaults to 'info'",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "number"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Global log level, defaults to 'info'"
     },
     "logOutputPaths": {
       "description": "Log outputPaths - defaults to stdout only"
     },
     "nameOverride": {
-      "description": "Overrides the chart's name.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Overrides the chart's name."
     },
     "nodeSelector": {
       "anyOf": [
@@ -1671,7 +3222,9 @@
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Node selectors to schedule the pod to nodes with labels."
@@ -1679,13 +3232,21 @@
     "podAnnotations": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Additional annotations for the pod."
@@ -1705,13 +3266,21 @@
     "podLabels": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Additional labels for the pod."
@@ -1737,7 +3306,9 @@
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "SecurityContext for the pod."
@@ -1760,15 +3331,6 @@
       "additionalProperties": {},
       "properties": {
         "annotations": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
           "description": "Additional annotations for the Service."
         }
       },
@@ -1778,40 +3340,80 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "properties": {
-            "name": {
-              "anyOf": [
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
                 }
-              ],
-              "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template."
-            }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
           },
-          "type": "object"
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template."
+              }
+            }
+          }
         }
       ],
       "properties": {
         "annotations": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
           "description": "Additional annotations for the ServiceAccount."
         },
         "create": {
-          "description": "Specifies if a ServiceAccount should be created.",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Specifies if a ServiceAccount should be created."
         },
         "name": {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
           "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template."
         }
       },
@@ -1819,99 +3421,30 @@
     },
     "serviceMonitor": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "additionalLabels": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Additional labels for the ServiceMonitor."
-              },
-              "metricRelabelings": {
-                "description": "Metric relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on metric relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs",
-                "items": {},
-                "type": "array"
-              },
-              "relabelings": {
-                "description": "Relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
-                "items": {},
-                "type": "array"
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "properties": {
         "additionalLabels": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Additional labels for the ServiceMonitor."
+          "additionalProperties": {},
+          "description": "Additional labels for the ServiceMonitor.",
+          "type": "object"
         },
         "enabled": {
           "description": "Specifies whether a ServiceMonitor should be created.",
           "type": "boolean"
         },
         "endpointConfig": {
-          "description": "Configuration on `http-metrics` endpoint for the ServiceMonitor.\nNot to be used to add additional endpoints.\nSee the Prometheus operator documentation for configurable fields https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint"
+          "additionalProperties": {},
+          "description": "Configuration on `http-metrics` endpoint for the ServiceMonitor.\nNot to be used to add additional endpoints.\nSee the Prometheus operator documentation for configurable fields https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#endpoint",
+          "type": "object"
         },
         "metricRelabelings": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
-          "description": "Metric relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on metric relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs"
+          "description": "Metric relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on metric relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs",
+          "items": {},
+          "type": "array"
         },
         "relabelings": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
-          "description": "Relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
+          "description": "Relabelings for the `http-metrics` endpoint on the ServiceMonitor.\nFor more details on relabelings, see: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
+          "items": {},
+          "type": "array"
         },
         "sampleLimit": {
           "description": "Specifies the sampleLimit for prometheus scrapes.\nPer-scrape limit on the number of scraped samples that will be accepted.\nIf more than this number of samples are present after metric relabeling\nthe entire scrape will be treated as failed. 0 means no limit."
@@ -1936,8 +3469,21 @@
           "description": "Cluster endpoint. If not set, will be discovered during startup (EKS only)."
         },
         "clusterName": {
-          "description": "Cluster name.",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Cluster name."
         },
         "disableClusterStateObservability": {
           "description": "Disable cluster state metrics and events."
@@ -2010,18 +3556,48 @@
           "description": "If true then assume we can't reach AWS services which don't have a VPC endpoint.\nThis also has the effect of disabling look-ups to the AWS pricing endpoint."
         },
         "minValuesPolicy": {
-          "description": "How the Karpenter scheduler treats min values. Options include 'Strict' (fails scheduling when min values can't be met) and 'BestEffort' (relaxes min values when they can't be met).",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "How the Karpenter scheduler treats min values. Options include 'Strict' (fails scheduling when min values can't be met) and 'BestEffort' (relaxes min values when they can't be met)."
         },
         "preferencePolicy": {
-          "description": "How the Karpenter scheduler should treat preferences. Preferences include preferredDuringSchedulingIgnoreDuringExecution\nnode and pod affinities/anti-affinities and ScheduleAnyways topologySpreadConstraints. Can be one of 'Ignore' and 'Respect'",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "How the Karpenter scheduler should treat preferences. Preferences include preferredDuringSchedulingIgnoreDuringExecution\nnode and pod affinities/anti-affinities and ScheduleAnyways topologySpreadConstraints. Can be one of 'Ignore' and 'Respect'"
         },
         "reservedENIs": {
           "description": "Reserved ENIs are not included in the calculations for max-pods or kube-reserved.\nThis is most often used in the VPC CNI custom networking setup https://docs.aws.amazon.com/eks/latest/userguide/cni-custom-network.html."
@@ -2050,7 +3626,9 @@
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Strategy for updating the pod."
@@ -2076,10 +3654,12 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "Tolerations to allow the pod to be scheduled to nodes with taints."
@@ -2106,10 +3686,12 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "Topology spread constraints to increase the controller resilience by distributing pods across the cluster zones. If an explicit label selector is not provided one will be created from the pod selector labels."

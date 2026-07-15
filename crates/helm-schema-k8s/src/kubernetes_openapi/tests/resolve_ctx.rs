@@ -35,13 +35,7 @@ fn descend_one<'a>(schema: &'a Value, segment: &str) -> Option<&'a Value> {
         .or_else(|| {
             schema
                 .get("additionalProperties")
-                .and_then(|additional_properties| {
-                    if additional_properties.is_boolean() {
-                        None
-                    } else {
-                        Some(additional_properties)
-                    }
-                })
+                .filter(|&additional_properties| !additional_properties.is_boolean())
         })?;
 
     if is_array_item {

@@ -19,14 +19,16 @@ pub use capability::{ApiPresenceQuery, CapabilityGuard, HelperBranch, HelperBran
 pub use capability_liveness::{CapabilityOracle, live_literals};
 pub use contract_signals::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay, ContractFailImplication,
-    ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractSchemaSignals,
-    ContractValuePathFacts, FailValueRequirement, MetadataFieldKind,
+    ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractRequirementTarget,
+    ContractSchemaSignals, ContractValuePathFacts, FailValueRequirement, MetadataFieldKind,
+    ValuesDefaultSource,
 };
 pub use contract_use::ContractUse;
 pub use guard::{Guard, GuardValue};
 pub use guard_dnf::GuardDnf;
 pub use output_path::{
-    append_relative_path, sequence_item_path, values_path_has_descendant, values_path_is_descendant,
+    DYNAMIC_MAPPING_VALUE_SEGMENT, append_relative_path, dynamic_mapping_value_path,
+    sequence_item_path, values_path_has_descendant, values_path_is_descendant,
 };
 pub use predicate::Predicate;
 pub use provenance::{ContractProvenance, SourceSpan};

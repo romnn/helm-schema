@@ -1,9 +1,11 @@
 //! Semantic assertions for the velero chart: the storage-location paths are
-//! guarded by `typeIs "[]interface {}"` before being ranged, so a non-list
-//! value skips the branch and renders nothing (valid), while list items are
-//! consumed with field access and must be objects. Values validation and
-//! the full-schema pin live in `chart_corpus.rs`.
+//! guarded by `typeIs "[]interface {}"` before being ranged. Strings skip
+//! those branches, legacy maps terminate in `NOTES.txt`, and list items are
+//! consumed with field access and must be objects. Values validation and the
+//! full-schema pin live in `chart_corpus.rs`.
 
+#[path = "common/chart_instances.rs"]
+mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
 
@@ -13,20 +15,28 @@ fn velero_storage_locations_type_dispatch_holds() -> color_eyre::eyre::Result<()
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     for path in ["backupStorageLocation", "volumeSnapshotLocation"] {
-        let instance =
-            |value: serde_json::Value| serde_json::json!({ "configuration": { path: value } });
+        let instance = |value: serde_json::Value| {
+            chart_instances::with_override(
+                "velero",
+                serde_json::json!({ "configuration": { path: value } }),
+            )
+        };
         assert!(
             validator.is_valid(&instance(serde_json::json!([
                 { "name": "default", "bucket": "b" }
-            ]))),
+            ]))?),
             "a valid location list renders ({path})"
         );
         assert!(
-            validator.is_valid(&instance(serde_json::json!("ignored"))),
-            "a non-list skips the typeIs guard and renders nothing ({path})"
+            validator.is_valid(&instance(serde_json::json!("ignored"))?),
+            "a string skips both the list renderer and map migration check ({path})"
         );
         assert!(
-            !validator.is_valid(&instance(serde_json::json!([7]))),
+            !validator.is_valid(&instance(serde_json::json!({ "name": "legacy" }))?),
+            "the notes migration accumulator rejects the legacy map form ({path})"
+        );
+        assert!(
+            !validator.is_valid(&instance(serde_json::json!([7]))?),
             "a scalar item fails field access inside the range ({path})"
         );
     }

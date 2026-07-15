@@ -1,11 +1,10 @@
-//! Regression test for F52: Helm executes `templates/NOTES.txt`, so
-//! consumers and terminal effects inside it are schema evidence like any
-//! other template — while its prose must not feed YAML resource
-//! detection.
+//! Helm executes `templates/NOTES.txt`, so consumers and terminal effects
+//! inside it are schema evidence like any other template, while its prose
+//! must not feed YAML resource detection.
 //!
 //! Shapes mirror the audited charts: trivy-operator's notes `tpl` a
-//! values string (a runtime string contract), and velero's notes carry an
-//! explicit migration `fail` validator.
+//! values string, while velero accumulates migration errors in a local and
+//! fails after all checks have run.
 
 use color_eyre::eyre::{Report, WrapErr};
 use helm_schema::AnalysisSession;
@@ -28,8 +27,12 @@ Thank you for installing {{ .Chart.Name }}.
 
 Scanning namespaces: {{ tpl .Values.targetNamespaces . }}
 
+{{- $breaking := \"\" }}
 {{- if kindIs \"map\" .Values.backupStorageLocation }}
-{{- fail \"backupStorageLocation moved to the list form; see the migration guide\" }}
+{{- $breaking = print $breaking \"backupStorageLocation moved to the list form\" }}
+{{- end }}
+{{- if $breaking }}
+{{- fail $breaking }}
 {{- end }}
 ";
 

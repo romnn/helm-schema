@@ -183,53 +183,74 @@ fn deep_field_chain_collapses_to_single_field() {
 }
 
 #[test]
-fn parens_around_field_prefix_collapse_into_path() {
-    // `(.Values.image).tag` — Helm charts use this form so a `nil`
-    // value of `.Values.image` doesn't blow up the surrounding
-    // expression (the parens defer `.tag` access until the outer
-    // pipeline runs). Semantically identical to `.Values.image.tag`
-    // and should produce the same Field path so downstream IR sees
-    // the full `.Values.image.tag` reference instead of just
-    // `.Values.image`.
+fn parens_around_field_prefix_preserve_nil_safe_receiver() {
+    // The receiver boundary is semantically meaningful: a missing
+    // `.Values.image` is tolerated, while a present non-map still fails the
+    // `.tag` lookup. The selector retains that boundary and downstream
+    // analysis can still derive the complete values path from both nodes.
     let exprs = parse_action_expressions(r#"{{ (.Values.image).tag }}"#);
     sim_assert_eq!(
         have: first(&exprs),
-        want: &TemplateExpr::Field(vec!["Values".into(), "image".into(), "tag".into()]),
+        want: &TemplateExpr::Selector {
+            operand: Box::new(TemplateExpr::Parenthesized(Box::new(TemplateExpr::Field(vec![
+                "Values".into(),
+                "image".into(),
+            ])))),
+            path: vec!["tag".into()],
+        },
     );
 }
 
 #[test]
-fn nested_parens_around_field_prefix_collapse_into_path() {
-    // `((.Values.image)).tag` — double parens, still a pure path
-    // prefix, still must collapse into a single Field.
+fn nested_parens_around_field_prefix_preserve_every_boundary() {
     let exprs = parse_action_expressions(r#"{{ ((.Values.image)).tag }}"#);
     sim_assert_eq!(
         have: first(&exprs),
-        want: &TemplateExpr::Field(vec!["Values".into(), "image".into(), "tag".into()]),
+        want: &TemplateExpr::Selector {
+            operand: Box::new(TemplateExpr::Parenthesized(Box::new(
+                TemplateExpr::Parenthesized(Box::new(TemplateExpr::Field(vec![
+                    "Values".into(),
+                    "image".into(),
+                ]))),
+            ))),
+            path: vec!["tag".into()],
+        },
     );
 }
 
 #[test]
-fn arbitrary_depth_parens_around_field_collapse_into_path() {
-    // `(((.Values.image))).tag` — three nested parens. Parens are
-    // syntactic grouping; depth doesn't change semantics. Same
-    // outcome as the un-parenthesised form.
+fn arbitrary_depth_parens_around_field_remain_structural() {
     let exprs = parse_action_expressions(r#"{{ (((.Values.image))).tag }}"#);
+    let TemplateExpr::Selector { operand, path } = first(&exprs) else {
+        panic!("expected selector");
+    };
+    sim_assert_eq!(have: path, want: &vec!["tag".to_string()]);
+    let mut receiver = operand.as_ref();
+    for _ in 0..3 {
+        let TemplateExpr::Parenthesized(inner) = receiver else {
+            panic!("expected three preserved parenthesis layers, got {operand:?}");
+        };
+        receiver = inner;
+    }
     sim_assert_eq!(
-        have: first(&exprs),
-        want: &TemplateExpr::Field(vec!["Values".into(), "image".into(), "tag".into()]),
+        have: receiver,
+        want: &TemplateExpr::Field(vec!["Values".into(), "image".into()]),
     );
 }
 
 #[test]
-fn parens_around_partial_path_chain_collapses_at_each_layer() {
-    // `(.Values).image.tag` — outer parens wrap just `.Values`, then
-    // `.image.tag` is appended. Also `.Values.(image).tag` isn't a
-    // legal grammar form so we focus on the prefix case here.
+fn selectors_after_grouped_receiver_still_merge() {
+    // The grouping boundary stays on the receiver, while adjacent suffix
+    // selectors remain one path.
     let exprs = parse_action_expressions(r#"{{ (.Values).image.tag }}"#);
     sim_assert_eq!(
         have: first(&exprs),
-        want: &TemplateExpr::Field(vec!["Values".into(), "image".into(), "tag".into()]),
+        want: &TemplateExpr::Selector {
+            operand: Box::new(TemplateExpr::Parenthesized(Box::new(TemplateExpr::Field(vec![
+                "Values".into(),
+            ])))),
+            path: vec!["image".into(), "tag".into()],
+        },
     );
 }
 

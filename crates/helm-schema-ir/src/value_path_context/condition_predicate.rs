@@ -5,10 +5,6 @@ use helm_schema_ast::{Literal, TemplateExpr};
 use crate::abstract_value::AbstractValue;
 use crate::{Guard, GuardValue};
 use helm_schema_ast::type_is_schema_type;
-use helm_schema_ast::{
-    is_string_predicate_function, is_string_transform_function, is_total_numeric_cast_function,
-    is_total_stringification_function,
-};
 use helm_schema_core::Predicate;
 
 use super::ValuePathContext;
@@ -60,153 +56,7 @@ fn single_string_verb_split(format: &str) -> Option<(&str, &str)> {
     (!prefix.contains('%') && !suffix.contains('%')).then_some((prefix, suffix))
 }
 
-/// Runtime transform facts a condition expression binds on its direct
-/// `.Values` subjects: unconditional string contracts, `default`-guarded
-/// string contracts (the raw path is consumed only when truthy), and
-/// total-conversion shape erasure.
-#[derive(Debug, Default)]
-pub(crate) struct ConditionTransformFacts {
-    pub(crate) string_contracts: BTreeSet<String>,
-    pub(crate) defaulted_string_contracts: BTreeSet<String>,
-    pub(crate) shape_erased: BTreeSet<String>,
-}
-
 impl ValuePathContext<'_> {
-    /// Transform facts a condition expression binds on its DIRECT selector
-    /// subjects (anything that went through another call is derived text
-    /// and claims nothing about the raw path):
-    /// - string-consuming calls (`regexMatch "…" .Values.name`,
-    ///   `gt (len (.Values.name | replace "-" "")) 32`) fail template
-    ///   evaluation for non-string values — a runtime string contract;
-    /// - total conversions (`eq (.Values.x | toString) "true"`,
-    ///   `int .Values.x`) render ANY input — shape erasure, exactly like
-    ///   the same conversion at a render site or in a `set` expression.
-    pub(crate) fn condition_transform_facts(&self, expr: &TemplateExpr) -> ConditionTransformFacts {
-        fn is_string_consumer(function: &str) -> bool {
-            (is_string_transform_function(function) && !is_total_stringification_function(function))
-                || is_string_predicate_function(function)
-                || helm_schema_ast::is_string_splitting_function(function)
-        }
-        fn is_total_conversion(function: &str) -> bool {
-            is_total_stringification_function(function) || is_total_numeric_cast_function(function)
-        }
-        fn subject_paths(
-            context: &ValuePathContext<'_>,
-            subject: &TemplateExpr,
-        ) -> Option<BTreeSet<String>> {
-            matches!(
-                subject.deparen(),
-                TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
-            )
-            .then(|| context.paths_for_expr(subject))
-        }
-        /// A subject of the form `<selector> | default <fallback>` (any
-        /// argument order for the prefix form): the raw path is consumed
-        /// only when TRUTHY, so its contract is conditional.
-        fn defaulted_subject_paths(
-            context: &ValuePathContext<'_>,
-            subject: &TemplateExpr,
-        ) -> Option<BTreeSet<String>> {
-            match subject.deparen() {
-                TemplateExpr::Pipeline(stages) if stages.len() == 2 => {
-                    let is_default = matches!(
-                        stages[1].deparen(),
-                        TemplateExpr::Call { function, .. } if function == "default"
-                    );
-                    is_default
-                        .then(|| subject_paths(context, &stages[0]))
-                        .flatten()
-                }
-                TemplateExpr::Call { function, args }
-                    if function == "default" && args.len() == 2 =>
-                {
-                    subject_paths(context, &args[1])
-                }
-                _ => None,
-            }
-        }
-        fn walk(
-            context: &ValuePathContext<'_>,
-            expr: &TemplateExpr,
-            facts: &mut ConditionTransformFacts,
-        ) {
-            match expr.deparen() {
-                TemplateExpr::Call { function, args } => {
-                    if let Some(subject) = args.last() {
-                        if let Some(paths) = subject_paths(context, subject) {
-                            if is_string_consumer(function) {
-                                facts.string_contracts.extend(paths);
-                            } else if is_total_conversion(function) {
-                                facts.shape_erased.extend(paths);
-                            }
-                        } else if is_string_consumer(function)
-                            && let Some(paths) = defaulted_subject_paths(context, subject)
-                        {
-                            facts.defaulted_string_contracts.extend(paths);
-                        }
-                    }
-                    for arg in args {
-                        walk(context, arg, facts);
-                    }
-                }
-                TemplateExpr::Pipeline(stages) => {
-                    if let Some(first) = stages.first()
-                        && let Some(paths) = subject_paths(context, first)
-                    {
-                        // Stages run left-to-right: the FIRST classifying
-                        // stage decides the raw value's fate. A consumer
-                        // after a total conversion (`x | toString | trim`)
-                        // operates on the converted text and claims nothing
-                        // about the raw input; a consumer after `default`
-                        // sees the raw value only when it is truthy.
-                        let first_classifier = stages.iter().skip(1).find_map(|stage| match stage
-                            .deparen()
-                        {
-                            TemplateExpr::Call { function, .. }
-                                if is_string_consumer(function)
-                                    || is_total_conversion(function)
-                                    || function == "default" =>
-                            {
-                                Some(function.as_str())
-                            }
-                            _ => None,
-                        });
-                        match first_classifier {
-                            Some(function) if is_string_consumer(function) => {
-                                facts.string_contracts.extend(paths.iter().cloned());
-                            }
-                            Some("default") => {
-                                let consumes = stages.iter().skip(1).any(|stage| {
-                                    matches!(
-                                        stage.deparen(),
-                                        TemplateExpr::Call { function, .. }
-                                            if is_string_consumer(function)
-                                    )
-                                });
-                                if consumes {
-                                    facts
-                                        .defaulted_string_contracts
-                                        .extend(paths.iter().cloned());
-                                }
-                            }
-                            Some(_) => {
-                                facts.shape_erased.extend(paths);
-                            }
-                            None => {}
-                        }
-                    }
-                    for stage in stages {
-                        walk(context, stage, facts);
-                    }
-                }
-                _ => {}
-            }
-        }
-        let mut facts = ConditionTransformFacts::default();
-        walk(self, expr, &mut facts);
-        facts
-    }
-
     /// Whether `condition_predicate_expr` represents this expression
     /// EXACTLY, with no truthy fallback and no silently dropped conjunct.
     /// Rows tolerate approximate (wider) conditions; fail-branch NEGATION
@@ -214,14 +64,25 @@ impl ValuePathContext<'_> {
     pub(crate) fn condition_lowering_is_faithful(&self, expr: &TemplateExpr) -> bool {
         match expr.deparen() {
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => {
-                !self.paths_for_expr(expr).is_empty()
+                self.root_field_truthy_predicate(expr).is_some()
+                    || !self.paths_for_expr(expr).is_empty()
             }
+            TemplateExpr::Literal(_) => true,
             // A local bound to DERIVED TEXT (`$message := join "\n"
             // $messages`) is falsy when the derivation produced nothing,
             // not when its input identities are falsy: a truthy stand-in
             // over the flowing paths would let negation fire on states the
             // branch never reaches (bitnami `validateValues` aggregators).
             TemplateExpr::Variable(name) => {
+                if let Some(predicate) = self.template_truthy_reductions.get(name).or_else(|| {
+                    self.template_truthy_reductions
+                        .get(name.trim_start_matches('$'))
+                }) {
+                    return !matches!(predicate, Predicate::False);
+                }
+                if self.get_binding_truthy_predicate(name).is_some() {
+                    return true;
+                }
                 let paths = self.paths_for_expr(expr);
                 if paths.is_empty() {
                     return false;
@@ -247,15 +108,21 @@ impl ValuePathContext<'_> {
                 }
                 "eq" => self.value_comparison_predicate(args, false).is_some(),
                 "ne" => self.value_comparison_predicate(args, true).is_some(),
+                "gt" | "lt" => self.positive_len_predicate(function, args).is_some(),
                 "typeIs" | "kindIs" => self.type_is_predicate(args).is_some(),
                 "hasKey" => self.has_key_predicate(args).is_some(),
+                "has" => self.helper_literal_membership_predicate(args).is_some(),
                 "empty" => self.empty_predicate(args).is_some(),
                 "coalesce" => self.coalesce_truthy_predicate(args).is_some(),
+                "default" => self.default_truthy_predicate(args).is_some(),
                 function if is_files_get_function(function) => {
                     self.files_get_printf_predicate(args).is_some()
                 }
                 _ => false,
             },
+            TemplateExpr::Pipeline(stages) => {
+                self.default_pipeline_truthy_predicate(stages).is_some()
+            }
             _ => false,
         }
     }
@@ -270,6 +137,34 @@ impl ValuePathContext<'_> {
         self.truthy_predicate(expr).unwrap_or(Predicate::True)
     }
 
+    pub(crate) fn approximate_condition_predicate_expr(
+        &self,
+        expr: &TemplateExpr,
+        marker: &str,
+    ) -> Predicate {
+        let TemplateExpr::Call { function, args } = expr.deparen() else {
+            return Predicate::approximate(marker, self.resolved_values_paths_from_expr(expr));
+        };
+        if function != "or" {
+            return Predicate::approximate(marker, self.resolved_values_paths_from_expr(expr));
+        }
+        let alternatives = args
+            .iter()
+            .enumerate()
+            .map(|(index, arg)| {
+                if self.condition_lowering_is_faithful(arg) {
+                    self.condition_predicate_expr(arg)
+                } else {
+                    Predicate::approximate(
+                        format!("{marker}:{index}"),
+                        self.resolved_values_paths_from_expr(arg),
+                    )
+                }
+            })
+            .collect();
+        predicate_any(alternatives)
+    }
+
     pub(crate) fn with_condition_predicate_expr(&self, expr: &TemplateExpr) -> Predicate {
         Predicate::all(
             self.condition_predicate_expr(expr)
@@ -278,6 +173,9 @@ impl ValuePathContext<'_> {
     }
 
     fn condition_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
+        if let TemplateExpr::Pipeline(stages) = expr.deparen() {
+            return self.default_pipeline_truthy_predicate(stages);
+        }
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             return self.truthy_predicate(expr);
         };
@@ -286,16 +184,84 @@ impl ValuePathContext<'_> {
             "not" => self.not_predicate(args),
             "empty" => self.empty_predicate(args),
             "hasKey" => self.has_key_predicate(args),
+            "has" => self
+                .helper_literal_membership_predicate(args)
+                .or_else(|| self.truthy_predicate(expr)),
             "or" => self.or_predicate(args),
             "eq" => self.value_comparison_predicate(args, false),
             "ne" => self.value_comparison_predicate(args, true),
+            "gt" | "lt" => self.positive_len_predicate(function, args),
             "typeIs" | "kindIs" => self.type_is_predicate(args),
             "coalesce" => self.coalesce_truthy_predicate(args),
+            "default" => self.default_truthy_predicate(args),
             function if is_files_get_function(function) => self
                 .files_get_printf_predicate(args)
                 .or_else(|| self.truthy_predicate(expr)),
             _ => self.truthy_predicate(expr),
         }
+    }
+
+    fn positive_len_predicate(&self, function: &str, args: &[TemplateExpr]) -> Option<Predicate> {
+        let [left, right] = args else {
+            return None;
+        };
+        let subject = match (function, left.deparen(), right.deparen()) {
+            (
+                "gt",
+                TemplateExpr::Call {
+                    function,
+                    args: len_args,
+                },
+                TemplateExpr::Literal(Literal::Int(0)),
+            ) if function == "len" => len_args.as_slice(),
+            (
+                "lt",
+                TemplateExpr::Literal(Literal::Int(0)),
+                TemplateExpr::Call {
+                    function,
+                    args: len_args,
+                },
+            ) if function == "len" => len_args.as_slice(),
+            _ => return None,
+        };
+        let [subject] = subject else {
+            return None;
+        };
+        self.single_truthy_predicate(subject)
+    }
+
+    fn default_truthy_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let [fallback, primary] = args else {
+            return None;
+        };
+        Some(predicate_any(vec![
+            self.exact_truthy_predicate(primary)?,
+            self.exact_truthy_predicate(fallback)?,
+        ]))
+    }
+
+    fn default_pipeline_truthy_predicate(&self, stages: &[TemplateExpr]) -> Option<Predicate> {
+        let [primary, stage] = stages else {
+            return None;
+        };
+        let TemplateExpr::Call { function, args } = stage.deparen() else {
+            return None;
+        };
+        let [fallback] = args.as_slice() else {
+            return None;
+        };
+        if function != "default" {
+            return None;
+        }
+        Some(predicate_any(vec![
+            self.exact_truthy_predicate(primary)?,
+            self.exact_truthy_predicate(fallback)?,
+        ]))
+    }
+
+    fn exact_truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
+        self.condition_lowering_is_faithful(expr)
+            .then(|| self.condition_predicate_expr(expr))
     }
 
     /// `coalesce` returns its first non-empty argument, so the RESULT is
@@ -410,10 +376,20 @@ impl ValuePathContext<'_> {
             TemplateExpr::Call { function, args } if function == "hasKey" => {
                 self.has_key_predicate(args).map(|p| p.negated())
             }
+            TemplateExpr::Call { function, args } if function == "has" => self
+                .helper_literal_membership_predicate(args)
+                .map(|predicate| predicate.negated())
+                .or_else(|| {
+                    self.single_truthy_predicate(arg)
+                        .map(|predicate| predicate.negated())
+                }),
             TemplateExpr::Call { function, args } if function == "and" => {
                 self.and_predicate(args).map(|p| p.negated())
             }
             _ => {
+                if let Some(predicate) = self.root_field_truthy_predicate(arg) {
+                    return Some(predicate.negated());
+                }
                 let paths = self.paths_for_expr(arg);
                 if paths.len() == 1 {
                     return paths
@@ -542,6 +518,94 @@ impl ValuePathContext<'_> {
         })
     }
 
+    fn helper_literal_membership_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let [needle, haystack] = args else {
+            return None;
+        };
+        let targets: Vec<String> = match haystack.deparen() {
+            TemplateExpr::Call { function, args } if function == "list" && !args.is_empty() => args
+                .iter()
+                .map(literal_string)
+                .collect::<Option<Vec<_>>>()?
+                .into_iter()
+                .map(str::to_string)
+                .collect(),
+            TemplateExpr::Variable(name) => {
+                let AbstractValue::List(items) = self
+                    .template_bindings
+                    .get(name)
+                    .or_else(|| self.template_bindings.get(name.trim_start_matches('$')))?
+                else {
+                    return None;
+                };
+                let mut targets = Vec::new();
+                for item in items {
+                    let strings = item.strings();
+                    if strings.is_empty() {
+                        return None;
+                    }
+                    targets.extend(strings);
+                }
+                targets
+            }
+            _ => return None,
+        };
+        if targets.is_empty() {
+            return Some(Predicate::False);
+        }
+
+        if helper_root_call(needle).is_none() {
+            if !matches!(
+                needle.deparen(),
+                TemplateExpr::Field(_) | TemplateExpr::Selector { .. } | TemplateExpr::Variable(_)
+            ) {
+                return None;
+            }
+            let mut paths = self.paths_for_expr(needle).into_iter();
+            let path = paths.next()?;
+            if paths.next().is_some() {
+                return None;
+            }
+            let predicates = targets
+                .into_iter()
+                .map(|target| {
+                    Predicate::from(Guard::Eq {
+                        path: path.clone(),
+                        value: GuardValue::string(target),
+                    })
+                })
+                .collect();
+            return Some(predicate_any(predicates));
+        }
+
+        let name = helper_root_call(needle)?;
+        if !self
+            .current_dot_binding
+            .as_ref()
+            .is_none_or(|dot| matches!(dot, AbstractValue::RootContext))
+            || HELPER_DISPATCH_DEPTH.with(std::cell::Cell::get) >= MAX_HELPER_DISPATCH_DEPTH
+        {
+            return None;
+        }
+        let arms = crate::helper_literal_dispatch::helper_literal_dispatch(
+            self.fragment_context.analysis_db,
+            name,
+        )?;
+        HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() + 1));
+        let predicates = targets
+            .into_iter()
+            .map(|target| self.literal_dispatch_arms_predicate(&arms, &target))
+            .collect::<Option<Vec<_>>>();
+        HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() - 1));
+        let mut predicates = predicates?;
+        predicates.retain(|predicate| !matches!(predicate, Predicate::False));
+        match predicates.as_slice() {
+            [] => Some(Predicate::False),
+            [predicate] => Some(predicate.clone()),
+            _ => Some(Predicate::Or(predicates)),
+        }
+    }
+
     fn literal_dispatch_arms_predicate(
         &self,
         arms: &[crate::helper_literal_dispatch::LiteralDispatchArm],
@@ -583,12 +647,102 @@ impl ValuePathContext<'_> {
     }
 
     fn truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
+        if let TemplateExpr::Literal(literal) = expr.deparen() {
+            return Some(bool_predicate(literal_is_truthy(literal)));
+        }
+        if let Some(predicate) = self.root_field_truthy_predicate(expr) {
+            return Some(predicate);
+        }
+        if let TemplateExpr::Variable(name) = expr.deparen()
+            && let Some(predicate) = self.template_truthy_reductions.get(name).or_else(|| {
+                self.template_truthy_reductions
+                    .get(name.trim_start_matches('$'))
+            })
+        {
+            return Some(predicate.clone());
+        }
+        if let TemplateExpr::Variable(name) = expr.deparen()
+            && let Some(predicate) = self.get_binding_truthy_predicate(name)
+        {
+            return Some(predicate);
+        }
         let paths = self.paths_for_expr(expr);
-        (!paths.is_empty())
-            .then(|| Predicate::all(paths.into_iter().map(Predicate::truthy_path).collect()))
+        if paths.is_empty() {
+            return None;
+        }
+        Some(Predicate::all(
+            paths.into_iter().map(Predicate::truthy_path).collect(),
+        ))
+    }
+
+    fn root_field_truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
+        let explicit_root = matches!(self.current_dot_binding, Some(AbstractValue::RootContext));
+        if !self
+            .current_dot_binding
+            .as_ref()
+            .is_none_or(|dot| matches!(dot, AbstractValue::RootContext))
+        {
+            return None;
+        }
+        let field = match expr.deparen() {
+            TemplateExpr::Field(path) => path.as_slice(),
+            TemplateExpr::Selector { operand, path } if matches!(operand.as_ref(), TemplateExpr::Variable(variable) if variable.is_empty()) => {
+                path.as_slice()
+            }
+            _ => return None,
+        };
+        let [field] = field else {
+            return None;
+        };
+        if let Some(predicate) = self.root_truthy_predicates.get(field) {
+            return Some(predicate.clone());
+        }
+        if self.root_bindings.contains_key(field)
+            || matches!(
+                field.as_str(),
+                "Capabilities"
+                    | "Chart"
+                    | "Files"
+                    | "Release"
+                    | "Subcharts"
+                    | "Template"
+                    | "Values"
+            )
+        {
+            return None;
+        }
+
+        // Helm's explicit root context has a fixed set of built-in fields. A
+        // custom field is absent until a tracked `set` mutation creates it.
+        // An unresolved dot is not proof of root identity and must abstain.
+        explicit_root.then_some(Predicate::False)
+    }
+
+    fn get_binding_truthy_predicate(&self, name: &str) -> Option<Predicate> {
+        let binding = self.get_bindings.get(name.trim_start_matches('$'))?;
+        let keys = self.range_domains.get(&binding.key_var)?;
+        let predicates = keys
+            .iter()
+            .map(|key| {
+                Predicate::truthy_path(helm_schema_core::append_value_path(&binding.base, key))
+            })
+            .collect::<Vec<_>>();
+        match predicates.as_slice() {
+            [] => None,
+            [predicate] => Some(predicate.clone()),
+            _ => Some(Predicate::Or(predicates)),
+        }
     }
 
     fn single_truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
+        if let TemplateExpr::Variable(name) = expr.deparen()
+            && let Some(predicate) = self.template_truthy_reductions.get(name).or_else(|| {
+                self.template_truthy_reductions
+                    .get(name.trim_start_matches('$'))
+            })
+        {
+            return Some(predicate.clone());
+        }
         let mut paths = self.paths_for_expr(expr).into_iter();
         let path = paths.next()?;
         paths.next().is_none().then(|| Predicate::truthy_path(path))
@@ -732,6 +886,34 @@ impl ValuePathContext<'_> {
     }
 }
 
+fn predicate_any(predicates: Vec<Predicate>) -> Predicate {
+    if predicates
+        .iter()
+        .any(|predicate| matches!(predicate, Predicate::True))
+    {
+        return Predicate::True;
+    }
+    let mut predicates = predicates
+        .into_iter()
+        .filter(|predicate| !matches!(predicate, Predicate::False))
+        .collect::<Vec<_>>();
+    match predicates.len() {
+        0 => Predicate::False,
+        1 => predicates.remove(0),
+        _ => Predicate::Or(predicates),
+    }
+}
+
+fn literal_is_truthy(literal: &Literal) -> bool {
+    match literal {
+        Literal::Bool(value) => *value,
+        Literal::Int(value) => *value != 0,
+        Literal::Float(value) => *value != 0.0,
+        Literal::String(value) | Literal::RawString(value) => !value.is_empty(),
+        Literal::Nil => false,
+    }
+}
+
 fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
     match value {
         AbstractValue::Dict(entries) => Some(bool_predicate(entries.contains_key(key))),
@@ -751,7 +933,7 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
                 _ => None,
             }
         }
-        AbstractValue::ValuesPath(path) => Some(
+        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => Some(
             Predicate::from(Guard::Absent {
                 path: helm_schema_core::append_value_path(path, key),
             })
@@ -759,6 +941,7 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
         ),
         AbstractValue::Top
         | AbstractValue::Unknown
+        | AbstractValue::RangeKey(_)
         | AbstractValue::OutputPath(_, _)
         | AbstractValue::RootContext
         | AbstractValue::StringSet(_)

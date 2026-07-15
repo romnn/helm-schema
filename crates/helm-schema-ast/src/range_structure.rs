@@ -73,7 +73,8 @@ fn destructured_range_variables(node: tree_sitter::Node<'_>) -> Vec<tree_sitter:
     };
     let mut definition_walker = definition.walk();
     definition
-        .named_children(&mut definition_walker)
+        .children(&mut definition_walker)
+        .take_while(|child| !matches!(child.kind(), ":=" | "="))
         .filter(|child| child.kind() == "variable")
         .collect()
 }

@@ -27,6 +27,8 @@ impl FinalizedContract {
         shape_erased_value_paths: BTreeSet<String>,
         string_contract_value_paths: BTreeSet<String>,
         direct_range_source_paths: BTreeSet<String>,
+        json_decoded_range_source_paths: BTreeSet<String>,
+        values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
         destructured_range_source_paths: BTreeSet<String>,
         fail_conditions: Vec<crate::eval_effect::FailCapture>,
         dependency_values_root_fragments: BTreeSet<String>,
@@ -38,10 +40,12 @@ impl FinalizedContract {
             &shape_erased_value_paths,
             &string_contract_value_paths,
             &direct_range_source_paths,
+            &json_decoded_range_source_paths,
             &destructured_range_source_paths,
             &fail_conditions,
             &dependency_values_root_fragments,
-        );
+        )
+        .with_values_default_sources(values_default_sources);
 
         Self {
             uses: normalized_uses,

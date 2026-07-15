@@ -33,21 +33,38 @@
       "if": {
         "anyOf": [
           {
-            "not": {
-              "properties": {
-                "kind": {}
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "kind": {}
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object"
+                }
               },
-              "required": [
-                "kind"
-              ],
-              "type": "object"
-            }
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "DaemonSet"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            ]
           },
           {
             "properties": {
               "kind": {
                 "enum": [
-                  "DaemonSet"
+                  "Deployment"
                 ]
               }
             },
@@ -59,6 +76,7 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "annotations": {
             "anyOf": [
@@ -69,519 +87,13 @@
                 "type": "object"
               },
               {
-                "type": "null"
-              }
-            ]
-          },
-          "command": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "daemonSetVolumeMounts": {
-            "items": {
-              "additionalProperties": {},
-              "properties": {
-                "mountPath": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "readOnly": {
-                  "type": "boolean"
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
                 }
-              },
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "daemonSetVolumes": {
-            "items": {
-              "additionalProperties": {},
-              "properties": {
-                "hostPath": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "path": {
-                      "type": "string"
-                    },
-                    "type": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "name": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "dnsPolicy": {
-            "type": "string"
-          },
-          "envFrom": {
-            "items": {},
-            "type": "array"
-          },
-          "existingConfigMap": {
-            "description": "Make use of a pre-defined configmap instead of the one templated here",
-            "type": "string"
-          },
-          "extraVolumeMounts": {
-            "items": {},
-            "type": "array"
-          },
-          "extraVolumes": {
-            "items": {},
-            "type": "array"
-          },
-          "hostAliases": {
-            "description": "- ip: \"1.2.3.4\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\"",
-            "items": {},
-            "type": "array"
-          },
-          "hostNetwork": {
-            "type": "boolean"
-          },
-          "image": {
-            "properties": {
-              "pullPolicy": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          "imagePullSecrets": {
-            "items": {},
-            "type": "array"
-          },
-          "kind": {
-            "description": "kind -- DaemonSet or Deployment",
-            "not": {
-              "type": "array"
-            }
-          },
-          "labels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "livenessProbe": {
-            "additionalProperties": {},
-            "properties": {
-              "httpGet": {
-                "additionalProperties": {},
-                "properties": {
-                  "path": {
-                    "type": "string"
-                  },
-                  "port": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
-          "metricsPort": {
-            "type": "integer"
-          },
-          "podLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "priorityClassName": {
-            "type": "string"
-          },
-          "readinessProbe": {
-            "additionalProperties": {},
-            "properties": {
-              "httpGet": {
-                "additionalProperties": {},
-                "properties": {
-                  "path": {
-                    "type": "string"
-                  },
-                  "port": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
-          "serviceAccount": {
-            "properties": {
-              "name": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "type": "object"
-          },
-          "tolerations": {
-            "items": {},
-            "type": "array"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "kind": {
-            "enum": [
-              "Deployment"
-            ]
-          }
-        },
-        "required": [
-          "kind"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "annotations": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "command": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "dnsPolicy": {
-            "type": "string"
-          },
-          "envFrom": {
-            "items": {},
-            "type": "array"
-          },
-          "existingConfigMap": {
-            "description": "Make use of a pre-defined configmap instead of the one templated here",
-            "type": "string"
-          },
-          "extraVolumeMounts": {
-            "items": {},
-            "type": "array"
-          },
-          "extraVolumes": {
-            "items": {},
-            "type": "array"
-          },
-          "hostAliases": {
-            "description": "- ip: \"1.2.3.4\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\"",
-            "items": {},
-            "type": "array"
-          },
-          "hostNetwork": {
-            "type": "boolean"
-          },
-          "image": {
-            "properties": {
-              "pullPolicy": {
-                "type": "string"
-              }
-            },
-            "type": "object"
-          },
-          "imagePullSecrets": {
-            "items": {},
-            "type": "array"
-          },
-          "kind": {
-            "description": "kind -- DaemonSet or Deployment",
-            "not": {
-              "type": "array"
-            }
-          },
-          "labels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "livenessProbe": {
-            "additionalProperties": {},
-            "properties": {
-              "httpGet": {
-                "additionalProperties": {},
-                "properties": {
-                  "path": {
-                    "type": "string"
-                  },
-                  "port": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
-          "metricsPort": {
-            "type": "integer"
-          },
-          "podLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "priorityClassName": {
-            "type": "string"
-          },
-          "readinessProbe": {
-            "additionalProperties": {},
-            "properties": {
-              "httpGet": {
-                "additionalProperties": {},
-                "properties": {
-                  "path": {
-                    "type": "string"
-                  },
-                  "port": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          },
-          "serviceAccount": {
-            "properties": {
-              "name": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "type": "object"
-          },
-          "tolerations": {
-            "items": {},
-            "type": "array"
-          }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "kind": {}
-                      },
-                      "required": [
-                        "kind"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "DaemonSet"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "kind"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "args": {}
-                          },
-                          "required": [
-                            "args"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "args": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "args"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "hotReload": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "hotReload"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "kind": {
-                    "enum": [
-                      "Deployment"
-                    ]
-                  }
-                },
-                "required": [
-                  "kind"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "args": {}
-                          },
-                          "required": [
-                            "args"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "args": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "args"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "properties": {
-                      "hotReload": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "hotReload"
-                    ],
-                    "type": "object"
-                  }
-                ]
               }
             ]
           }
-        ]
-      },
-      "then": {
-        "properties": {
-          "args": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -622,29 +134,131 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "autoscaling": {
+            "additionalProperties": {},
             "description": "only available if kind is Deployment",
             "properties": {
-              "customRules": {
-                "description": "targetMemoryUtilizationPercentage: 75\nsee https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/#autoscaling-on-multiple-metrics-and-custom-metrics",
-                "items": {},
-                "type": "array"
-              },
               "maxReplicas": {
                 "type": "integer"
-              },
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "autoscaling": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "autoscaling"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "autoscaling": {
+            "additionalProperties": {},
+            "description": "only available if kind is Deployment",
+            "properties": {
               "minReplicas": {
                 "type": "integer"
-              },
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "autoscaling": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "autoscaling"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "autoscaling": {
+            "additionalProperties": {},
+            "description": "only available if kind is Deployment",
+            "properties": {
               "targetCPUUtilizationPercentage": {
                 "type": "integer"
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "autoscaling": {
+          "description": "only available if kind is Deployment",
+          "type": "object"
+        }
       }
     },
     {
@@ -708,8 +322,10 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "config": {
+            "additionalProperties": {},
             "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file",
             "properties": {
               "customParsers": {
@@ -723,11 +339,9 @@
                 ],
                 "description": "https://docs.fluentbit.io/manual/pipeline/parsers"
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -745,45 +359,35 @@
         }
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "config": {
+            "additionalProperties": {},
             "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file",
             "properties": {
               "extraFiles": {
                 "anyOf": [
                   {
-                    "properties": {},
-                    "type": "object"
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
                   },
                   {
-                    "type": "array"
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
                   },
                   {
                     "type": "null"
                   }
                 ],
                 "description": "This allows adding more files with arbitrary filenames to /fluent-bit/etc/conf by providing key/value pairs.\nThe key becomes the filename, the value becomes the file content.\nupstream.conf: |\n[UPSTREAM]\nupstream1\n[NODE]\nname       node-1\nhost       127.0.0.1\nport       43000\nexample.conf: |\n[OUTPUT]\nName example\nMatch foo.*\nHost bar"
-              },
-              "upstream": {
-                "anyOf": [
-                  {
-                    "properties": {},
-                    "type": "object"
-                  },
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/upstream-servers\nThis configuration is deprecated, please use `extraFiles` instead."
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -847,8 +451,10 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "config": {
+            "additionalProperties": {},
             "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file",
             "properties": {
               "filters": {
@@ -862,11 +468,9 @@
                 ],
                 "description": "https://docs.fluentbit.io/manual/pipeline/filters"
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -930,8 +534,10 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "config": {
+            "additionalProperties": {},
             "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file",
             "properties": {
               "inputs": {
@@ -945,11 +551,9 @@
                 ],
                 "description": "https://docs.fluentbit.io/manual/pipeline/inputs"
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -1013,8 +617,10 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "config": {
+            "additionalProperties": {},
             "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file",
             "properties": {
               "outputs": {
@@ -1028,11 +634,9 @@
                 ],
                 "description": "https://docs.fluentbit.io/manual/pipeline/outputs"
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -1096,8 +700,10 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "config": {
+            "additionalProperties": {},
             "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file",
             "properties": {
               "service": {
@@ -1110,16 +716,60 @@
                   }
                 ]
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
-        "allOf": [
+        "not": {
+          "properties": {
+            "existingConfigMap": {
+              "$ref": "#/$defs/helm-truthy"
+            }
+          },
+          "required": [
+            "existingConfigMap"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "additionalProperties": {},
+            "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file",
+            "properties": {
+              "upstream": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/upstream-servers\nThis configuration is deprecated, please use `extraFiles` instead."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
           {
             "anyOf": [
               {
@@ -1164,51 +814,12 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "daemonSetVolumeMounts": {
-            "items": {
-              "additionalProperties": {},
-              "properties": {
-                "mountPath": {
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                },
-                "readOnly": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "daemonSetVolumes": {
-            "items": {
-              "additionalProperties": {},
-              "properties": {
-                "hostPath": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "path": {
-                      "type": "string"
-                    },
-                    "type": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "name": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "type": "array"
+          "dnsPolicy": {
+            "type": "string"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -1318,57 +929,728 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "env": {
-            "description": "- name: FOO\nvalue: \"bar\"",
-            "items": {},
-            "type": "array"
+          "envWithTpl": {
+            "additionalProperties": {
+              "additionalProperties": {},
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "The envWithTpl array below has the same usage as \"env\", but is using the tpl function to support templatable string.\nThis can be useful when you want to pass dynamic values to the Chart using the helm argument \"--set <variable>=<value>\"\nhttps://helm.sh/docs/howto/charts_tips_and_tricks/#using-the-tpl-function\n- name: FOO_2\nvalue: \"{{ .Values.foo2 }}\"\nfoo2: bar2",
+            "items": {
+              "additionalProperties": {},
+              "properties": {
+                "value": {
+                  "type": "string"
+                }
+              }
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "kind": {}
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "DaemonSet"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "env": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "envWithTpl": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "envWithTpl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "Deployment"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "env": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "envWithTpl": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "envWithTpl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
         "properties": {
-          "service": {
+          "envWithTpl": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "name": {},
+                    "value": {}
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "name": {},
+                    "value": {}
+                  },
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The envWithTpl array below has the same usage as \"env\", but is using the tpl function to support templatable string.\nThis can be useful when you want to pass dynamic values to the Chart using the helm argument \"--set <variable>=<value>\"\nhttps://helm.sh/docs/howto/charts_tips_and_tricks/#using-the-tpl-function\n- name: FOO_2\nvalue: \"{{ .Values.foo2 }}\"\nfoo2: bar2"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "kind": {}
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "DaemonSet"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "env": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "envWithTpl": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "envWithTpl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "Deployment"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "env": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "envWithTpl": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "envWithTpl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "envWithTpl": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The envWithTpl array below has the same usage as \"env\", but is using the tpl function to support templatable string.\nThis can be useful when you want to pass dynamic values to the Chart using the helm argument \"--set <variable>=<value>\"\nhttps://helm.sh/docs/howto/charts_tips_and_tricks/#using-the-tpl-function\n- name: FOO_2\nvalue: \"{{ .Values.foo2 }}\"\nfoo2: bar2"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "kind": {}
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "DaemonSet"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "env": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "envWithTpl": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "envWithTpl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "Deployment"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "env": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "envWithTpl": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "envWithTpl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "envWithTpl": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The envWithTpl array below has the same usage as \"env\", but is using the tpl function to support templatable string.\nThis can be useful when you want to pass dynamic values to the Chart using the helm argument \"--set <variable>=<value>\"\nhttps://helm.sh/docs/howto/charts_tips_and_tricks/#using-the-tpl-function\n- name: FOO_2\nvalue: \"{{ .Values.foo2 }}\"\nfoo2: bar2"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "kind": {}
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "DaemonSet"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
             "properties": {
-              "type": {
+              "kind": {
                 "enum": [
-                  "NodePort"
+                  "Deployment"
                 ]
               }
             },
             "required": [
-              "type"
+              "kind"
             ],
             "type": "object"
           }
-        },
-        "required": [
-          "service"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "extraPorts": {
+          "existingConfigMap": {
+            "description": "Make use of a pre-defined configmap instead of the one templated here",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "kind": {}
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "DaemonSet"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "extraContainers": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "extraContainers"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "Deployment"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "extraContainers": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "extraContainers"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraContainers": {
             "anyOf": [
               {
                 "items": {},
                 "type": "array"
               },
               {
-                "type": "null"
+                "type": "string"
+              }
+            ],
+            "description": "This supports either a structured array or a templatable string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "kind": {}
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "DaemonSet"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  }
+                ]
               },
               {
+                "not": {
+                  "properties": {
+                    "extraContainers": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "extraContainers"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "Deployment"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
                 "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "extraContainers": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "extraContainers"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraContainers": {
+            "description": "This supports either a structured array or a templatable string",
+            "items": {},
+            "type": "array"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "extraPorts": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "extraPorts"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraPorts": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "containerPort": {},
+                    "name": {},
+                    "nodePort": {},
+                    "port": {},
+                    "protocol": {}
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "containerPort": {},
+                    "name": {},
+                    "nodePort": {},
+                    "port": {},
+                    "protocol": {}
+                  },
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
               }
             ],
             "description": "- port: 5170\ncontainerPort: 5170\nprotocol: TCP\nname: tcp\nnodePort: 30517"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -1384,6 +1666,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
             "anyOf": [
@@ -1395,37 +1678,62 @@
               }
             ]
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
-        "properties": {
-          "podSecurityPolicy": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "kind": {}
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "DaemonSet"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
             "properties": {
-              "create": {
-                "$ref": "#/$defs/helm-truthy"
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
               }
             },
             "required": [
-              "create"
+              "kind"
             ],
             "type": "object"
           }
-        },
-        "required": [
-          "podSecurityPolicy"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "hostNetwork": {
             "type": "boolean"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -1521,64 +1829,615 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "hotReload": {
+            "additionalProperties": {},
             "properties": {
               "extraWatchVolumes": {
                 "anyOf": [
                   {
-                    "items": {},
                     "type": "array"
                   },
                   {
-                    "type": "null"
+                    "type": "object"
                   },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "hotReload": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hotReload"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "kind": {}
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "DaemonSet"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "hotReload": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hotReload"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "Deployment"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "hotReload": {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "anyOf": [
                   {
                     "type": "object"
                   }
                 ]
-              },
-              "securityContext": {
-                "additionalProperties": {},
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "properties": {
-                  "allowPrivilegeEscalation": {
-                    "type": "boolean"
-                  },
-                  "capabilities": {
-                    "additionalProperties": {},
+                  "hotReload": {
                     "properties": {
-                      "drop": {
-                        "items": {
-                          "type": "string"
-                        },
-                        "type": "array"
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
+                    "required": [
+                      "enabled"
+                    ],
                     "type": "object"
-                  },
-                  "privileged": {
-                    "type": "boolean"
-                  },
-                  "readOnlyRootFilesystem": {
-                    "type": "boolean"
-                  },
-                  "runAsGroup": {
-                    "type": "integer"
-                  },
-                  "runAsNonRoot": {
-                    "type": "boolean"
-                  },
-                  "runAsUser": {
-                    "type": "integer"
                   }
                 },
+                "required": [
+                  "hotReload"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "kind": {}
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "DaemonSet"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "hotReload": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hotReload"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "Deployment"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "hotReload": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "kind": {}
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "DaemonSet"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "pullPolicy": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "kind": {}
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "DaemonSet"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
                 "type": "object"
               }
             },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "annotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
             "type": "object"
           }
-        },
-        "type": "object"
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "only available if kind is Deployment",
+            "properties": {
+              "annotations": {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "items": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "annotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "only available if kind is Deployment",
+            "properties": {
+              "annotations": {
+                "additionalProperties": {},
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "annotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "only available if kind is Deployment",
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -1619,121 +2478,34 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "ingress": {
+            "additionalProperties": {},
             "description": "only available if kind is Deployment",
             "properties": {
-              "annotations": {
+              "extraHosts": {
                 "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "properties": {},
-                    "type": "object"
-                  },
                   {
                     "type": "array"
                   },
                   {
                     "type": "null"
-                  }
-                ]
-              },
-              "ingressClassName": {
-                "type": "string"
-              },
-              "tls": {
-                "anyOf": [
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "object"
                   }
                 ],
-                "description": "- host: fluent-bit-extra.example.tld\nspecify extraPort number\nport: 5170\n- secretName: fluent-bit-example-tld\nhosts:\n- fluent-bit.example.tld"
+                "description": "- host: fluent-bit.example.tld"
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
-      "properties": {
-        "kind": {
-          "description": "kind -- DaemonSet or Deployment",
-          "not": {
-            "type": "array"
-          }
-        },
-        "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "type": "array"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "kind": {
-          "description": "kind -- DaemonSet or Deployment",
-          "not": {
-            "type": "boolean"
-          }
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "kind": {
-          "description": "kind -- DaemonSet or Deployment",
-          "not": {
-            "type": "integer"
-          }
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "kind": {
-          "description": "kind -- DaemonSet or Deployment",
-          "not": {
-            "type": "number"
-          }
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "kind": {
-          "description": "kind -- DaemonSet or Deployment",
-          "not": {
-            "type": "object"
-          }
-        }
-      },
-      "type": "object"
-    },
-    {
       "if": {
-        "properties": {
-          "autoscaling": {
+        "allOf": [
+          {
             "properties": {
-              "vpa": {
+              "ingress": {
                 "properties": {
                   "enabled": {
                     "$ref": "#/$defs/helm-truthy"
@@ -1746,24 +2518,584 @@
               }
             },
             "required": [
-              "vpa"
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
             ],
             "type": "object"
           }
-        },
-        "required": [
-          "autoscaling"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "kind": {
-            "description": "kind -- DaemonSet or Deployment",
-            "type": "string"
+          "ingress": {
+            "additionalProperties": {},
+            "description": "only available if kind is Deployment",
+            "properties": {
+              "hosts": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
+              }
+            }
           }
-        },
-        "type": "object"
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "only available if kind is Deployment",
+            "properties": {
+              "ingressClassName": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "only available if kind is Deployment",
+            "properties": {
+              "tls": {
+                "additionalProperties": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "hosts": {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "description": "- host: fluent-bit-extra.example.tld\nspecify extraPort number\nport: 5170\n- secretName: fluent-bit-example-tld\nhosts:\n- fluent-bit.example.tld",
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "hosts": {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "tls": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "only available if kind is Deployment",
+            "properties": {
+              "tls": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "hosts": {
+                          "anyOf": [
+                            {
+                              "items": {},
+                              "type": "array"
+                            },
+                            {
+                              "additionalProperties": {},
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "secretName": {}
+                      },
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "additionalProperties": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "hosts": {
+                          "anyOf": [
+                            {
+                              "items": {},
+                              "type": "array"
+                            },
+                            {
+                              "additionalProperties": {},
+                              "type": "object"
+                            }
+                          ]
+                        },
+                        "secretName": {}
+                      },
+                      "type": "object"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "- host: fluent-bit-extra.example.tld\nspecify extraPort number\nport: 5170\n- secretName: fluent-bit-example-tld\nhosts:\n- fluent-bit.example.tld"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "kind": {}
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "DaemonSet"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "initContainers": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "initContainers"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "Deployment"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "initContainers": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "initContainers"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "initContainers": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "This supports either a structured array or a templatable string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "kind": {}
+                      },
+                      "required": [
+                        "kind"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "kind": {
+                        "enum": [
+                          "DaemonSet"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "initContainers": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "initContainers"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "Deployment"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "initContainers": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "initContainers"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "initContainers": {
+            "description": "This supports either a structured array or a templatable string",
+            "items": {},
+            "type": "array"
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "kind -- DaemonSet or Deployment"
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "kind": {}
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "DaemonSet"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ]
+          }
+        }
       }
     },
     {
@@ -1802,15 +3134,71 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
+        "properties": {
+          "luaScripts": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "See Lua script configuration example in README.md",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "hotReload": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "hotReload"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "luaScripts": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "luaScripts"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
         "properties": {
           "luaScripts": {
             "anyOf": [
               {
-                "properties": {},
-                "type": "object"
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
               },
               {
-                "type": "array"
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
               },
               {
                 "type": "null"
@@ -1818,8 +3206,117 @@
             ],
             "description": "See Lua script configuration example in README.md"
           }
-        },
-        "type": "object"
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "hotReload": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "hotReload"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "luaScripts": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "luaScripts"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "luaScripts": {
+            "anyOf": [
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "See Lua script configuration example in README.md"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "kind": {}
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "DaemonSet"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "metricsPort": {
+            "type": "integer"
+          }
+        }
       }
     },
     {
@@ -1835,6 +3332,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "nameOverride": {
             "anyOf": [
@@ -1846,8 +3344,312 @@
               }
             ]
           }
-        },
-        "type": "object"
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "dashboards": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "dashboards"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "openShift": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "openShift"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "openShift": {
+                          "properties": {
+                            "securityContextConstraints": {
+                              "properties": {
+                                "create": {}
+                              },
+                              "required": [
+                                "create"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "securityContextConstraints"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "openShift"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "openShift": {
+                        "properties": {
+                          "securityContextConstraints": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "securityContextConstraints"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "openShift"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "kind": {}
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "DaemonSet"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "existingConfigMap": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "existingConfigMap"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "hotReload": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hotReload"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "luaScripts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "luaScripts"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "type": "string"
+          }
+        }
       }
     },
     {
@@ -1894,24 +3696,85 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "networkPolicy": {
+            "additionalProperties": {},
             "properties": {
               "ingress": {
                 "anyOf": [
                   {
                     "type": "object"
-                  },
-                  {
-                    "type": "null"
                   }
                 ]
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
             },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "ingress": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
             "type": "object"
           }
-        },
-        "type": "object"
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "networkPolicy": {
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "openShift": {
+          "description": "OpenShift-specific configuration",
+          "type": "object"
+        }
       }
     },
     {
@@ -1950,17 +3813,6 @@
               {
                 "anyOf": [
                   {
-                    "properties": {
-                      "podAnnotations": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "podAnnotations"
-                    ],
-                    "type": "object"
-                  },
-                  {
                     "not": {
                       "properties": {
                         "hotReload": {
@@ -1980,6 +3832,17 @@
                       ],
                       "type": "object"
                     }
+                  },
+                  {
+                    "properties": {
+                      "podAnnotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "podAnnotations"
+                    ],
+                    "type": "object"
                   }
                 ]
               }
@@ -2003,17 +3866,6 @@
               {
                 "anyOf": [
                   {
-                    "properties": {
-                      "podAnnotations": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "podAnnotations"
-                    ],
-                    "type": "object"
-                  },
-                  {
                     "not": {
                       "properties": {
                         "hotReload": {
@@ -2033,6 +3885,17 @@
                       ],
                       "type": "object"
                     }
+                  },
+                  {
+                    "properties": {
+                      "podAnnotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "podAnnotations"
+                    ],
+                    "type": "object"
                   }
                 ]
               }
@@ -2041,6 +3904,7 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "podAnnotations": {
             "anyOf": [
@@ -2051,12 +3915,13 @@
                 "type": "object"
               },
               {
-                "type": "null"
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
               }
             ]
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -2097,8 +3962,10 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "podDisruptionBudget": {
+            "additionalProperties": {},
             "description": "only available if kind is Deployment",
             "properties": {
               "annotations": {
@@ -2110,18 +3977,189 @@
                     "type": "object"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ]
-              },
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podDisruptionBudget": {
+            "additionalProperties": {},
+            "description": "only available if kind is Deployment",
+            "properties": {
               "maxUnavailable": {
                 "type": "string"
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "kind": {}
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "DaemonSet"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
             },
+            "required": [
+              "kind"
+            ],
             "type": "object"
           }
-        },
-        "type": "object"
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podLabels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "kind": {}
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "DaemonSet"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "priorityClassName": {
+            "type": "string"
+          }
+        }
       }
     },
     {
@@ -2164,197 +4202,21 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "replicaCount": {
             "description": "replicaCount -- Only applicable if kind=Deployment",
             "type": "integer"
           }
-        },
-        "type": "object"
+        }
       }
-    },
-    {
-      "properties": {
-        "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "type": "boolean"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "type": "integer"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "type": "number"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "type": "object"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "rbac": {
-                  "properties": {
-                    "create": {}
-                  },
-                  "required": [
-                    "create"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "rbac"
-              ],
-              "type": "object"
-            }
-          },
+        "allOf": [
           {
             "properties": {
-              "rbac": {
-                "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "properties": {
-          "serviceAccount": {
-            "properties": {
-              "name": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "type": "object"
-          }
-        },
-        "type": "object"
-      }
-    }
-  ],
-  "properties": {
-    "affinity": {},
-    "annotations": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "args": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "autoscaling": {
-      "additionalProperties": {},
-      "description": "only available if kind is Deployment",
-      "properties": {
-        "behavior": {
-          "description": "- type: Pods\npods:\nmetric:\nname: packets-per-second\ntarget:\ntype: AverageValue\naverageValue: 1k\nsee https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#support-for-configurable-scaling-behavior\nscaleDown:\npolicies:\n- type: Pods\nvalue: 4\nperiodSeconds: 60\n- type: Percent\nvalue: 10\nperiodSeconds: 60"
-        },
-        "customRules": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
-          "description": "targetMemoryUtilizationPercentage: 75\nsee https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/#autoscaling-on-multiple-metrics-and-custom-metrics"
-        },
-        "enabled": {
-          "type": "boolean"
-        },
-        "maxReplicas": {},
-        "minReplicas": {},
-        "targetCPUUtilizationPercentage": {},
-        "targetMemoryUtilizationPercentage": {},
-        "vpa": {
-          "additionalProperties": {},
-          "allOf": [
-            {
-              "if": {
+              "networkPolicy": {
                 "properties": {
                   "enabled": {
                     "$ref": "#/$defs/helm-truthy"
@@ -2364,126 +4226,221 @@
                   "enabled"
                 ],
                 "type": "object"
-              },
-              "then": {
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "networkPolicy": {
                 "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "controlledResources": {
-                    "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory",
-                    "items": {},
-                    "type": "array"
-                  },
-                  "recommender": {
-                    "description": "Name of the VPA recommender that will provide recommendations for vertical scaling.",
-                    "type": "string"
+                  "ingress": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
+                "required": [
+                  "ingress"
+                ],
                 "type": "object"
               }
             },
-            {
-              "if": {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "updatePolicy": {}
-                          },
-                          "required": [
-                            "updatePolicy"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "updatePolicy": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "updatePolicy"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              },
-              "then": {
-                "properties": {
-                  "updatePolicy": {
-                    "properties": {
-                      "updateMode": {
-                        "description": "Specifies whether recommended updates are applied when a Pod is started and whether recommended updates\nare applied during the life of a Pod. Possible values are \"Off\", \"Initial\", \"Recreate\", and \"Auto\".",
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "port": {
+                "type": "integer"
               }
             }
-          ],
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "service": {
+          "additionalProperties": {},
           "properties": {
-            "annotations": {
+            "type": {
               "anyOf": [
                 {
-                  "additionalProperties": {},
-                  "type": "object"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "rbac": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "rbac"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "kind": {}
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "DaemonSet"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "Deployment"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "affinity": {},
+    "annotations": {},
+    "args": {},
+    "autoscaling": {
+      "additionalProperties": {},
+      "description": "only available if kind is Deployment",
+      "properties": {
+        "behavior": {
+          "description": "- type: Pods\npods:\nmetric:\nname: packets-per-second\ntarget:\ntype: AverageValue\naverageValue: 1k\nsee https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#support-for-configurable-scaling-behavior\nscaleDown:\npolicies:\n- type: Pods\nvalue: 4\nperiodSeconds: 60\n- type: Percent\nvalue: 10\nperiodSeconds: 60"
+        },
+        "customRules": {
+          "description": "targetMemoryUtilizationPercentage: 75\nsee https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale-walkthrough/#autoscaling-on-multiple-metrics-and-custom-metrics"
+        },
+        "enabled": {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "maxReplicas": {},
+        "minReplicas": {},
+        "targetCPUUtilizationPercentage": {},
+        "targetMemoryUtilizationPercentage": {},
+        "vpa": {
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {
+              "additionalProperties": {},
+              "type": "object"
             },
             "controlledResources": {
-              "anyOf": [
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
-              "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory"
+              "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory",
+              "items": {},
+              "type": "array"
             },
             "controlledValues": {
               "description": "Values that the vertical pod autoscaler can control. Allowed values are RequestsAndLimits and RequestsOnly. Default is RequestsAndLimits."
@@ -2492,19 +4449,25 @@
               "type": "boolean"
             },
             "maxAllowed": {
-              "description": "Define the max allowed resources for the pod"
+              "additionalProperties": {},
+              "description": "Define the max allowed resources for the pod",
+              "type": "object"
             },
             "minAllowed": {
-              "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi"
+              "additionalProperties": {},
+              "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi",
+              "type": "object"
             },
             "recommender": {
-              "description": "Name of the VPA recommender that will provide recommendations for vertical scaling."
+              "description": "Name of the VPA recommender that will provide recommendations for vertical scaling.",
+              "type": "string"
             },
             "updatePolicy": {
               "additionalProperties": {},
               "properties": {
                 "updateMode": {
-                  "description": "Specifies whether recommended updates are applied when a Pod is started and whether recommended updates\nare applied during the life of a Pod. Possible values are \"Off\", \"Initial\", \"Recreate\", and \"Auto\"."
+                  "description": "Specifies whether recommended updates are applied when a Pod is started and whether recommended updates\nare applied during the life of a Pod. Possible values are \"Off\", \"Initial\", \"Recreate\", and \"Auto\".",
+                  "type": "string"
                 }
               },
               "type": "object"
@@ -2515,20 +4478,7 @@
       },
       "type": "object"
     },
-    "command": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "command": {},
     "config": {
       "additionalProperties": {},
       "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file",
@@ -2545,19 +4495,6 @@
           "description": "https://docs.fluentbit.io/manual/pipeline/parsers"
         },
         "extraFiles": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
           "description": "This allows adding more files with arbitrary filenames to /fluent-bit/etc/conf by providing key/value pairs.\nThe key becomes the filename, the value becomes the file content.\nupstream.conf: |\n[UPSTREAM]\nupstream1\n[NODE]\nname       node-1\nhost       127.0.0.1\nport       43000\nexample.conf: |\n[OUTPUT]\nName example\nMatch foo.*\nHost bar"
         },
         "filters": {
@@ -2604,52 +4541,13 @@
           ]
         },
         "upstream": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ],
           "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/upstream-servers\nThis configuration is deprecated, please use `extraFiles` instead."
         }
       },
       "type": "object"
     },
-    "daemonSetVolumeMounts": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "daemonSetVolumes": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "daemonSetVolumeMounts": {},
+    "daemonSetVolumes": {},
     "dashboards": {
       "additionalProperties": {},
       "allOf": [
@@ -2666,6 +4564,7 @@
             "type": "object"
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "annotations": {
                 "anyOf": [
@@ -2676,42 +4575,62 @@
                     "type": "object"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ]
-              },
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "namespace": {
                 "anyOf": [
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   },
                   {
                     "type": "string"
                   }
                 ]
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
-        "annotations": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
+        "annotations": {},
         "deterministicUid": {
           "type": "boolean"
         },
         "enabled": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "labelKey": {
           "type": "string"
@@ -2726,45 +4645,11 @@
     },
     "dnsPolicy": {},
     "env": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "- name: FOO\nvalue: \"bar\""
     },
-    "envFrom": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "envFrom": {},
     "envWithTpl": {
-      "description": "The envWithTpl array below has the same usage as \"env\", but is using the tpl function to support templatable string.\nThis can be useful when you want to pass dynamic values to the Chart using the helm argument \"--set <variable>=<value>\"\nhttps://helm.sh/docs/howto/charts_tips_and_tricks/#using-the-tpl-function\n- name: FOO_2\nvalue: \"{{ .Values.foo2 }}\"\nfoo2: bar2",
-      "items": {
-        "additionalProperties": {},
-        "properties": {
-          "name": {},
-          "value": {}
-        },
-        "type": "object"
-      },
-      "type": "array"
+      "description": "The envWithTpl array below has the same usage as \"env\", but is using the tpl function to support templatable string.\nThis can be useful when you want to pass dynamic values to the Chart using the helm argument \"--set <variable>=<value>\"\nhttps://helm.sh/docs/howto/charts_tips_and_tricks/#using-the-tpl-function\n- name: FOO_2\nvalue: \"{{ .Values.foo2 }}\"\nfoo2: bar2"
     },
     "existingConfigMap": {
       "description": "Make use of a pre-defined configmap instead of the one templated here"
@@ -2773,71 +4658,28 @@
       "description": "This supports either a structured array or a templatable string"
     },
     "extraPorts": {
+      "allOf": [
+        {
+          "if": {
+            "$ref": "#/$defs/helm-truthy"
+          },
+          "then": {
+            "items": {},
+            "type": "array"
+          }
+        }
+      ],
       "description": "- port: 5170\ncontainerPort: 5170\nprotocol: TCP\nname: tcp\nnodePort: 30517"
     },
-    "extraVolumeMounts": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "extraVolumes": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "extraVolumeMounts": {},
+    "extraVolumes": {},
     "flush": {
       "type": "integer"
     },
     "fullnameOverride": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ]
+      "type": "string"
     },
     "hostAliases": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "- ip: \"1.2.3.4\"\nhostnames:\n- \"foo.local\"\n- \"bar.local\""
     },
     "hostNetwork": {},
@@ -2845,33 +4687,38 @@
       "additionalProperties": {},
       "properties": {
         "enabled": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "extraWatchVolumes": {},
         "image": {
-          "additionalProperties": {},
-          "properties": {
-            "digest": {},
-            "pullPolicy": {
-              "type": "string"
-            },
-            "repository": {},
-            "tag": {}
-          },
-          "type": "object"
-        },
-        "resources": {},
-        "securityContext": {
           "anyOf": [
             {
               "additionalProperties": {},
-              "type": "object"
+              "properties": {
+                "digest": {}
+              }
             },
             {
-              "type": "null"
+              "additionalProperties": {},
+              "properties": {
+                "repository": {},
+                "tag": {}
+              },
+              "type": "object"
             }
           ]
-        }
+        },
+        "resources": {},
+        "securityContext": {}
       },
       "type": "object"
     },
@@ -2884,30 +4731,25 @@
         "tag": {
           "description": "Overrides the image tag whose default is {{ .Chart.AppVersion }}\nSet to \"-\" to not use the default value"
         }
-      },
-      "type": "object"
+      }
     },
-    "imagePullSecrets": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "imagePullSecrets": {},
     "ingress": {
       "additionalProperties": {},
       "description": "only available if kind is Deployment",
       "properties": {
         "annotations": {},
         "enabled": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "extraHosts": {
           "anyOf": [
@@ -2916,7 +4758,9 @@
               "type": "array"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ],
           "description": "- host: fluent-bit.example.tld"
@@ -2928,13 +4772,42 @@
               "type": "array"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ],
           "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
         },
         "ingressClassName": {},
         "tls": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "hosts": {}
+                    }
+                  },
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "secretName": {}
+                    },
+                    "type": "object"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            }
+          ],
           "description": "- host: fluent-bit-extra.example.tld\nspecify extraPort number\nport: 5170\n- secretName: fluent-bit-example-tld\nhosts:\n- fluent-bit.example.tld"
         }
       },
@@ -2944,43 +4817,37 @@
       "description": "This supports either a structured array or a templatable string"
     },
     "kind": {
-      "description": "kind -- DaemonSet or Deployment"
-    },
-    "labels": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "type": "object"
+          "enum": [
+            "DaemonSet"
+          ]
         },
         {
-          "type": "null"
+          "enum": [
+            "Deployment"
+          ]
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
         }
-      ]
+      ],
+      "description": "kind -- DaemonSet or Deployment"
     },
+    "labels": {},
     "lifecycle": {
       "description": "preStop:\nexec:\ncommand: [\"/bin/sh\", \"-c\", \"sleep 20\"]"
     },
-    "livenessProbe": {
-      "additionalProperties": {},
-      "type": "object"
-    },
+    "livenessProbe": {},
     "logLevel": {
       "type": "string"
     },
     "luaScripts": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        }
-      ],
       "description": "See Lua script configuration example in README.md"
     },
     "metricsPort": {},
@@ -2992,8 +4859,17 @@
       "additionalProperties": {},
       "properties": {
         "enabled": {
-          "description": "ingress:\nfrom: []",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "ingress:\nfrom: []"
         },
         "ingress": {
           "additionalProperties": {},
@@ -3067,8 +4943,10 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "securityContextConstraints": {
+                "additionalProperties": {},
                 "properties": {
                   "annotations": {
                     "anyOf": [
@@ -3079,229 +4957,116 @@
                         "type": "object"
                       },
                       {
-                        "type": "null"
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       }
                     ]
-                  },
-                  "runAsUser": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "seLinuxContext": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "type": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
                   }
-                },
-                "type": "object"
+                }
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "description": "OpenShift-specific configuration",
       "properties": {
         "enabled": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "securityContextConstraints": {
           "additionalProperties": {},
           "properties": {
-            "annotations": {
+            "annotations": {},
+            "create": {
               "anyOf": [
                 {
-                  "additionalProperties": {},
-                  "type": "object"
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 },
                 {
-                  "type": "null"
+                  "type": "boolean"
                 }
-              ]
-            },
-            "create": {
-              "description": "Create SCC for Fluent-bit and allow use it",
-              "type": "boolean"
+              ],
+              "description": "Create SCC for Fluent-bit and allow use it"
             },
             "existingName": {
               "description": "Use existing SCC in cluster, rather then create new one"
             },
             "name": {},
-            "runAsUser": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            },
-            "seLinuxContext": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            }
+            "runAsUser": {},
+            "seLinuxContext": {}
           },
           "type": "object"
         }
       },
       "type": "object"
     },
-    "podAnnotations": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
+    "podAnnotations": {},
     "podDisruptionBudget": {
       "additionalProperties": {},
       "description": "only available if kind is Deployment",
       "properties": {
-        "annotations": {
+        "annotations": {},
+        "enabled": {
           "anyOf": [
             {
-              "additionalProperties": {},
-              "type": "object"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "null"
+              "type": "boolean"
             }
           ]
-        },
-        "enabled": {
-          "type": "boolean"
         },
         "maxUnavailable": {}
       },
       "type": "object"
     },
-    "podLabels": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
+    "podLabels": {},
     "podSecurityContext": {
       "description": "fsGroup: 2000"
     },
     "podSecurityPolicy": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "create": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "annotations": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "runAsUser": {
-                "additionalProperties": {},
-                "properties": {
-                  "rule": {
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              "seLinux": {
-                "additionalProperties": {},
-                "properties": {
-                  "rule": {
-                    "description": "This policy assumes the nodes are using AppArmor rather than SELinux.",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "description": "Configure podsecuritypolicy\nRef: https://kubernetes.io/docs/concepts/policy/pod-security-policy/\nfrom Kubernetes 1.25, PSP is deprecated\nSee: https://kubernetes.io/blog/2022/08/23/kubernetes-v1-25-release/#pod-security-changes\nWe automatically disable PSP if Kubernetes version is 1.25 or higher",
       "properties": {
         "annotations": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "additionalProperties": {},
+          "type": "object"
         },
         "create": {
           "type": "boolean"
         },
         "runAsUser": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
+          "additionalProperties": {},
+          "properties": {
+            "rule": {
+              "type": "string"
             }
-          ]
+          },
+          "type": "object"
         },
         "seLinux": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
+          "additionalProperties": {},
+          "properties": {
+            "rule": {
+              "description": "This policy assumes the nodes are using AppArmor rather than SELinux.",
+              "type": "string"
             }
-          ]
+          },
+          "type": "object"
         }
       },
       "type": "object"
@@ -3309,63 +5074,11 @@
     "priorityClassName": {},
     "prometheusRule": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "additionalLabels": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              },
-              "namespace": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "properties": {
-        "additionalLabels": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
         "enabled": {
           "description": "namespace: \"\"\nadditionalLabels: {}\nrules:\n- alert: NoOutputBytesProcessed\nexpr: rate(fluentbit_output_proc_bytes_total[5m]) == 0\nannotations:\nmessage: |\nFluent Bit instance {{ $labels.instance }}'s output plugin {{ $labels.name }} has not processed any\nbytes for at least 15 minutes.\nsummary: No Output Bytes Processed\nfor: 15m\nlabels:\nseverity: critical",
           "type": "boolean"
-        },
-        "namespace": {},
-        "rules": {}
+        }
       },
       "type": "object"
     },
@@ -3373,7 +5086,16 @@
       "additionalProperties": {},
       "properties": {
         "create": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "eventsAccess": {
           "type": "boolean"
@@ -3384,10 +5106,7 @@
       },
       "type": "object"
     },
-    "readinessProbe": {
-      "additionalProperties": {},
-      "type": "object"
-    },
+    "readinessProbe": {},
     "replicaCount": {
       "description": "replicaCount -- Only applicable if kind=Deployment"
     },
@@ -3399,35 +5118,15 @@
     },
     "service": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "enum": [
-                  "LoadBalancer"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "loadBalancerSourceRanges": {
-                "items": {},
-                "type": "array"
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "properties": {
         "annotations": {
           "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
             {
               "additionalProperties": {
                 "type": "string"
@@ -3435,7 +5134,9 @@
               "type": "object"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ],
           "description": "nodePort: 30020\nclusterIP: 172.16.10.1"
@@ -3448,10 +5149,12 @@
               "type": "array"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "string"
+              "type": "null"
             }
           ],
           "description": "prometheus.io/path: \"/api/v2/metrics/prometheus\"\nprometheus.io/port: \"2020\"\nprometheus.io/scrape: \"true\"\nexternalIPs:\n- 2.2.2.2"
@@ -3460,32 +5163,27 @@
         "labels": {
           "anyOf": [
             {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ]
         },
         "loadBalancerClass": {},
         "loadBalancerIP": {},
-        "loadBalancerSourceRanges": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "loadBalancerSourceRanges": {},
         "nodePort": {},
         "port": {
           "type": "integer"
@@ -3546,6 +5244,7 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "annotations": {
                 "anyOf": [
@@ -3556,36 +5255,75 @@
                     "type": "object"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
               },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "name": {
-                "type": [
-                  "string",
-                  "null"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
                 ]
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
-        "annotations": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
+        "annotations": {},
         "automountServiceAccountToken": {},
         "create": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "name": {}
       },
@@ -3593,95 +5331,17 @@
     },
     "serviceMonitor": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "properties": {
-              "additionalEndpoints": {
-                "description": "Bear in mind if you want to collect metrics from a different port\nyou will need to configure the new ports on the extraPorts property.\n- port: metrics\npath: /metrics\ninterval: 10s\nscrapeTimeout: 10s\nscheme: \"\"\ntlsConfig: {}\nmetric relabel configs to apply to samples before ingestion.\nmetricRelabelings:\n- sourceLabels: [__meta_kubernetes_service_label_cluster]\ntargetLabel: cluster\nregex: (.*)\nreplacement: ${1}\naction: replace\nrelabel configs to apply to samples after ingestion.\nrelabelings:\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace",
-                "items": {},
-                "type": "array"
-              },
-              "namespace": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "path": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "selector": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
-              }
-            },
-            "type": "object"
-          }
-        }
-      ],
       "properties": {
         "additionalEndpoints": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
-          "description": "Bear in mind if you want to collect metrics from a different port\nyou will need to configure the new ports on the extraPorts property.\n- port: metrics\npath: /metrics\ninterval: 10s\nscrapeTimeout: 10s\nscheme: \"\"\ntlsConfig: {}\nmetric relabel configs to apply to samples before ingestion.\nmetricRelabelings:\n- sourceLabels: [__meta_kubernetes_service_label_cluster]\ntargetLabel: cluster\nregex: (.*)\nreplacement: ${1}\naction: replace\nrelabel configs to apply to samples after ingestion.\nrelabelings:\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
+          "description": "Bear in mind if you want to collect metrics from a different port\nyou will need to configure the new ports on the extraPorts property.\n- port: metrics\npath: /metrics\ninterval: 10s\nscrapeTimeout: 10s\nscheme: \"\"\ntlsConfig: {}\nmetric relabel configs to apply to samples before ingestion.\nmetricRelabelings:\n- sourceLabels: [__meta_kubernetes_service_label_cluster]\ntargetLabel: cluster\nregex: (.*)\nreplacement: ${1}\naction: replace\nrelabel configs to apply to samples after ingestion.\nrelabelings:\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace",
+          "items": {},
+          "type": "array"
         },
         "enabled": {
           "description": "namespace: monitoring\ninterval: 10s\nscrapeTimeout: 10s\nselector:\nprometheus: my-prometheus\nmetric relabel configs to apply to samples before ingestion.\nmetricRelabelings:\n- sourceLabels: [__meta_kubernetes_service_label_cluster]\ntargetLabel: cluster\nregex: (.*)\nreplacement: ${1}\naction: replace\nrelabel configs to apply to samples after ingestion.\nrelabelings:\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace\nscheme: \"\"\ntlsConfig: {}",
           "type": "boolean"
         },
-        "interval": {},
-        "metricRelabelings": {},
-        "namespace": {},
-        "path": {},
-        "relabelings": {},
-        "scheme": {},
-        "scrapeTimeout": {},
-        "selector": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "tlsConfig": {}
+        "path": {}
       },
       "type": "object"
     },
@@ -3714,20 +5374,7 @@
       },
       "type": "object"
     },
-    "tolerations": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "tolerations": {},
     "updateStrategy": {
       "description": "type: RollingUpdate\nrollingUpdate:\nmaxUnavailable: 1"
     },

@@ -69,16 +69,18 @@ data:
     })?;
 
     sim_assert_eq!(
-        have: schema
-            .pointer("/properties/enabled/type")
-            .and_then(serde_json::Value::as_str),
-        want: Some("boolean")
-    );
-    sim_assert_eq!(
-        have: schema
-            .pointer("/properties/enabled/description")
-            .and_then(serde_json::Value::as_str),
-        want: Some("Whether the config map is enabled")
+        have: schema,
+        want: json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+                "enabled": {
+                    "description": "Whether the config map is enabled",
+                    "type": ["boolean", "integer", "number", "string"]
+                }
+            },
+            "type": "object"
+        })
     );
 
     Ok(())
@@ -222,10 +224,13 @@ fn deployment_security_context_fragments_keep_nested_provider_paths() -> eyre::R
     });
 
     let contract = session.contract_document()?;
+    // A direct `toYaml . | nindent` splice renders any input kind, so the
+    // placed row keeps its structural attachment (which the provider types)
+    // without a structured-input shape claim.
     assert!(
         contract.uses.iter().any(|use_| {
             use_.source_expr == "web.containerSecurityContext"
-                && use_.kind == ValueKind::Fragment
+                && use_.kind == ValueKind::YamlSerialized
                 && use_.path.0
                     == [
                         "spec".to_string(),
@@ -438,46 +443,71 @@ data:
     });
 
     let resolved = session.resolved_contract()?;
-    assert!(
-        resolved.schema.pointer("/properties/mode/enum").is_none(),
-        "resolved contract must not ingest sibling values.schema.json as inference evidence: {}",
-        resolved.schema
-    );
-    assert!(
-        resolved
-            .schema
-            .pointer("/allOf")
-            .and_then(serde_json::Value::as_array)
-            .is_some_and(|branches| branches.iter().any(|branch| branch
-                .pointer("/then/properties/mode/type")
-                .and_then(serde_json::Value::as_str)
-                == Some("string"))),
-        "resolved contract should keep guarded render evidence in a branch: {}",
-        resolved.schema
-    );
-    assert!(
-        resolved
-            .schema
-            .pointer("/properties/serviceAccount/required")
-            .is_none(),
-        "resolved contract should stay pre-heuristic: {}",
-        resolved.schema
+    sim_assert_eq!(
+        have: &resolved.schema,
+        want: &json!({
+            "$defs": {
+                "helm-truthy": {
+                    "anyOf": [
+                        { "const": true },
+                        { "not": { "const": 0 }, "type": "number" },
+                        { "minLength": 1, "type": "string" },
+                        { "minItems": 1, "type": "array" },
+                        { "minProperties": 1, "type": "object" }
+                    ]
+                }
+            },
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "allOf": [{
+                "if": {
+                    "properties": {
+                        "serviceAccount": {
+                            "properties": {
+                                "create": { "$ref": "#/$defs/helm-truthy" }
+                            },
+                            "required": ["create"],
+                            "type": "object"
+                        }
+                    },
+                    "required": ["serviceAccount"],
+                    "type": "object"
+                },
+                "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                        "mode": {
+                            "anyOf": [
+                                { "type": "boolean" },
+                                { "type": "integer" },
+                                { "type": "number" },
+                                { "type": "string" }
+                            ]
+                        }
+                    }
+                }
+            }],
+            "properties": {
+                "mode": {},
+                "serviceAccount": {
+                    "additionalProperties": {},
+                    "properties": {
+                        "create": {
+                            "anyOf": [
+                                { "not": { "$ref": "#/$defs/helm-truthy" } },
+                                { "type": "boolean" }
+                            ]
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        })
     );
 
     let generated = session.generated_schema()?;
-    assert!(
-        generated
-            .schema
-            .pointer("/properties/serviceAccount/required")
-            .is_none(),
-        "guard-only toggles stay optional even under --infer-required: {}",
-        generated.schema
-    );
-    assert!(
-        generated.schema.pointer("/properties/mode/enum").is_none(),
-        "generated schema must not ingest sibling values.schema.json as inference evidence: {}",
-        generated.schema
-    );
+    sim_assert_eq!(have: generated.schema, want: resolved.schema);
 
     Ok(())
 }
@@ -930,15 +960,18 @@ data:
         },
     })?;
 
-    assert!(
-        schema.pointer("/properties/mode/enum").is_none(),
-        "inference must ignore sibling values.schema.json and use render evidence only: {schema}"
-    );
     sim_assert_eq!(
-        have: schema
-            .pointer("/properties/mode/type")
-            .and_then(serde_json::Value::as_str),
-        want: Some("string")
+        have: &schema,
+        want: &json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+                "mode": {
+                    "type": ["boolean", "integer", "number", "string"]
+                }
+            },
+            "type": "object"
+        })
     );
 
     let validator = jsonschema::validator_for(&schema)?;

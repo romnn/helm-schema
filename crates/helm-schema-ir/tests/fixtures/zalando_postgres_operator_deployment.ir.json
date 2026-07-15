@@ -4,7 +4,7 @@
       "condition": [
         []
       ],
-      "kind": "Fragment",
+      "kind": "YamlSerialized",
       "path": [
         "spec",
         "template",
@@ -86,6 +86,10 @@
           },
           {
             "path": "controllerID.name",
+            "type": "truthy"
+          },
+          {
+            "path": "controllerID.name",
             "type": "default"
           }
         ]
@@ -160,7 +164,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "YamlSerialized",
       "path": [
         "spec",
         "template",
@@ -173,48 +177,6 @@
         "kind": "Deployment"
       },
       "source_expr": "extraEnvs"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "configTarget",
-            "type": "eq",
-            "value": "ConfigMap"
-          }
-        ],
-        [
-          {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "configTarget",
-            "type": "not_eq",
-            "value": "ConfigMap"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 844,
-            "start": 479
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "fullnameOverride"
     },
     {
       "condition": [
@@ -245,36 +207,6 @@
           "span": {
             "end": 1035,
             "start": 953
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "controllerID.create",
-            "type": "truthy"
-          },
-          {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 844,
-            "start": 479
           },
           "template_path": "<inline:0>"
         },
@@ -328,63 +260,6 @@
     {
       "condition": [
         [
-          {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "configTarget",
-            "type": "eq",
-            "value": "ConfigMap"
-          }
-        ],
-        [
-          {
-            "path": "fullnameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "configTarget",
-            "type": "not_eq",
-            "value": "ConfigMap"
-          }
-        ]
-      ],
-      "has_string_contract": true,
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 575,
-            "start": 515
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "fullnameOverride"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "controllerID.create",
-            "type": "truthy"
-          },
           {
             "path": "fullnameOverride",
             "type": "truthy"
@@ -572,7 +447,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "YamlSerialized",
       "path": [
         "spec",
         "template",
@@ -588,60 +463,6 @@
     {
       "condition": [
         [
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "fullnameOverride",
-            "type": "not"
-          },
-          {
-            "path": "configTarget",
-            "type": "eq",
-            "value": "ConfigMap"
-          }
-        ],
-        [
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "fullnameOverride",
-            "type": "not"
-          },
-          {
-            "path": "configTarget",
-            "type": "not_eq",
-            "value": "ConfigMap"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 832,
-            "start": 647
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "nameOverride"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
           {
             "path": "fullnameOverride",
             "type": "not"
@@ -670,40 +491,6 @@
             "start": 953
           },
           "template_path": "<inline:0>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "nameOverride"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "controllerID.create",
-            "type": "truthy"
-          },
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          },
-          {
-            "path": "fullnameOverride",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 832,
-            "start": 647
-          },
-          "template_path": "<inline:0>"
         },
         {
           "helper_chain": [
@@ -722,6 +509,10 @@
     {
       "condition": [
         [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
           {
             "path": "nameOverride",
             "type": "default"
@@ -756,11 +547,11 @@
       "condition": [
         [
           {
-            "path": "fullnameOverride",
-            "type": "not"
+            "path": "nameOverride",
+            "type": "truthy"
           },
           {
-            "path": "nameOverride",
+            "path": "fullnameOverride",
             "type": "not"
           },
           {
@@ -797,6 +588,10 @@
         [
           {
             "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
             "type": "default"
           }
         ]
@@ -829,6 +624,10 @@
     {
       "condition": [
         [
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
           {
             "path": "nameOverride",
             "type": "default"
@@ -865,83 +664,11 @@
       "condition": [
         [
           {
-            "path": "fullnameOverride",
-            "type": "not"
-          },
-          {
             "path": "nameOverride",
-            "type": "not"
-          },
-          {
-            "path": "configTarget",
-            "type": "eq",
-            "value": "ConfigMap"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ],
-        [
-          {
-            "path": "fullnameOverride",
-            "type": "not"
-          },
-          {
-            "path": "nameOverride",
-            "type": "not"
-          },
-          {
-            "path": "configTarget",
-            "type": "not_eq",
-            "value": "ConfigMap"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Serialized",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "provenance": [
-        {
-          "helper_chain": [
-            "postgres-operator.fullname"
-          ],
-          "span": {
-            "end": 820,
-            "start": 750
-          },
-          "template_path": "<inline:0>"
-        }
-      ],
-      "resource": {
-        "api_version": "apps/v1",
-        "kind": "Deployment"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "controllerID.create",
             "type": "truthy"
           },
           {
             "path": "fullnameOverride",
-            "type": "not"
-          },
-          {
-            "path": "nameOverride",
             "type": "not"
           },
           {
@@ -991,11 +718,11 @@
       "condition": [
         [
           {
-            "path": "fullnameOverride",
-            "type": "not"
+            "path": "nameOverride",
+            "type": "truthy"
           },
           {
-            "path": "nameOverride",
+            "path": "fullnameOverride",
             "type": "not"
           },
           {
@@ -1043,7 +770,7 @@
       "condition": [
         []
       ],
-      "kind": "Fragment",
+      "kind": "YamlSerialized",
       "path": [
         "spec",
         "template",
@@ -1082,7 +809,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "YamlSerialized",
       "path": [
         "spec",
         "template",
@@ -1121,7 +848,7 @@
           }
         ]
       ],
-      "kind": "Fragment",
+      "kind": "YamlSerialized",
       "path": [
         "spec",
         "template",
@@ -1242,7 +969,7 @@
       "condition": [
         []
       ],
-      "kind": "Fragment",
+      "kind": "YamlSerialized",
       "path": [
         "spec",
         "template",
@@ -1260,7 +987,7 @@
       "condition": [
         []
       ],
-      "kind": "Fragment",
+      "kind": "YamlSerialized",
       "path": [
         "spec",
         "template",
@@ -1277,6 +1004,10 @@
     {
       "condition": [
         [
+          {
+            "path": "serviceAccount.name",
+            "type": "truthy"
+          },
           {
             "path": "serviceAccount.name",
             "type": "default"
@@ -1312,7 +1043,7 @@
       "condition": [
         []
       ],
-      "kind": "Fragment",
+      "kind": "YamlSerialized",
       "path": [
         "spec",
         "template",

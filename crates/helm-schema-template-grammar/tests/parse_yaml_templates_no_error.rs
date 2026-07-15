@@ -355,7 +355,7 @@ fn sanitize_yaml_for_parse_from_gotmpl_tree(gotmpl_tree: &tree_sitter::Tree, src
         let prefix_is_item_dash = prefix
             .iter()
             .filter(|b| !b.is_ascii_whitespace())
-            .eq([b'-'].iter());
+            .eq(b"-".iter());
 
         let mut j = end;
         while j < line_end && out[j].is_ascii_whitespace() {

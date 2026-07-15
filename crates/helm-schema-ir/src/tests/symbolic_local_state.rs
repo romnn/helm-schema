@@ -5,6 +5,7 @@ use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
 use crate::fragment_assignment::AssignmentKind;
 use crate::helper_meta::HelperOutputMeta;
 use crate::symbolic_local_state::SymbolicLocalState;
+use helm_schema_core::Predicate;
 use test_util::prelude::sim_assert_eq;
 
 #[test]
@@ -194,7 +195,10 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
         "name".to_string(),
         Some(AbstractValue::ValuesPath("outer".to_string())),
     );
-    state.set_default_paths("name", BTreeSet::from(["outer.default".to_string()]));
+    state.default_paths.insert(
+        "name".to_string(),
+        BTreeSet::from(["outer.default".to_string()]),
+    );
 
     state.enter_local_scope();
     state.bind_fragment_value(
@@ -202,7 +206,10 @@ fn local_scope_restores_default_paths_for_shadowed_declaration() {
         "name".to_string(),
         Some(AbstractValue::ValuesPath("inner".to_string())),
     );
-    state.set_default_paths("name", BTreeSet::from(["inner.default".to_string()]));
+    state.default_paths.insert(
+        "name".to_string(),
+        BTreeSet::from(["inner.default".to_string()]),
+    );
     state.exit_local_scope();
 
     sim_assert_eq!(
@@ -219,7 +226,10 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
         "name".to_string(),
         Some(AbstractValue::ValuesPath("outer".to_string())),
     );
-    state.set_default_paths("name", BTreeSet::from(["outer.default".to_string()]));
+    state.default_paths.insert(
+        "name".to_string(),
+        BTreeSet::from(["outer.default".to_string()]),
+    );
 
     state.enter_local_scope();
     state.bind_fragment_value(
@@ -227,7 +237,10 @@ fn local_scope_keeps_default_paths_for_outer_assignment() {
         "name".to_string(),
         Some(AbstractValue::ValuesPath("assigned".to_string())),
     );
-    state.set_default_paths("name", BTreeSet::from(["assigned.default".to_string()]));
+    state.default_paths.insert(
+        "name".to_string(),
+        BTreeSet::from(["assigned.default".to_string()]),
+    );
     state.exit_local_scope();
 
     sim_assert_eq!(
@@ -244,7 +257,9 @@ fn local_scope_restores_output_meta_for_shadowed_declaration() {
         "name".to_string(),
         Some(AbstractValue::ValuesPath("outer".to_string())),
     );
-    state.set_output_meta("name".to_string(), output_meta("outer.output"));
+    state
+        .output_meta
+        .insert("name".to_string(), output_meta("outer.output"));
 
     state.enter_local_scope();
     state.bind_fragment_value(
@@ -252,7 +267,9 @@ fn local_scope_restores_output_meta_for_shadowed_declaration() {
         "name".to_string(),
         Some(AbstractValue::ValuesPath("inner".to_string())),
     );
-    state.set_output_meta("name".to_string(), output_meta("inner.output"));
+    state
+        .output_meta
+        .insert("name".to_string(), output_meta("inner.output"));
     state.exit_local_scope();
 
     sim_assert_eq!(
@@ -269,7 +286,9 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
         "name".to_string(),
         Some(AbstractValue::ValuesPath("outer".to_string())),
     );
-    state.set_output_meta("name".to_string(), output_meta("outer.output"));
+    state
+        .output_meta
+        .insert("name".to_string(), output_meta("outer.output"));
 
     state.enter_local_scope();
     state.bind_fragment_value(
@@ -277,12 +296,40 @@ fn local_scope_keeps_output_meta_for_outer_assignment() {
         "name".to_string(),
         Some(AbstractValue::ValuesPath("assigned".to_string())),
     );
-    state.set_output_meta("name".to_string(), output_meta("assigned.output"));
+    state
+        .output_meta
+        .insert("name".to_string(), output_meta("assigned.output"));
     state.exit_local_scope();
 
     sim_assert_eq!(
         have: state.output_meta.get("name"),
         want: Some(&output_meta("assigned.output"))
+    );
+}
+
+#[test]
+fn local_scope_restores_truthy_reduction_for_shadowed_declaration() {
+    let mut state = SymbolicLocalState::default();
+    state
+        .truthy_reductions
+        .insert("message".to_string(), Predicate::truthy_path("outer"));
+
+    state.enter_local_scope();
+    state.bind_fragment_value(
+        AssignmentKind::Declaration,
+        "message".to_string(),
+        Some(AbstractValue::StringSet(
+            [String::new()].into_iter().collect(),
+        )),
+    );
+    state
+        .truthy_reductions
+        .insert("message".to_string(), Predicate::False);
+    state.exit_local_scope();
+
+    sim_assert_eq!(
+        have: state.truthy_reductions.get("message"),
+        want: Some(&Predicate::truthy_path("outer"))
     );
 }
 
@@ -322,6 +369,28 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
             .into_iter()
             .collect()
         ))
+    );
+}
+
+#[test]
+fn branch_join_unions_truthy_reductions_across_outcomes() {
+    let mut entry = SymbolicLocalState::default();
+    entry
+        .truthy_reductions
+        .insert("message".to_string(), Predicate::False);
+    let entry_snapshot = entry.clone();
+
+    let mut populated = entry.clone();
+    populated
+        .truthy_reductions
+        .insert("message".to_string(), Predicate::truthy_path("legacy"));
+
+    let mut joined = entry;
+    joined.join_branch_outcomes(&entry_snapshot, vec![populated, entry_snapshot.clone()]);
+
+    sim_assert_eq!(
+        have: joined.truthy_reductions.get("message"),
+        want: Some(&Predicate::truthy_path("legacy"))
     );
 }
 

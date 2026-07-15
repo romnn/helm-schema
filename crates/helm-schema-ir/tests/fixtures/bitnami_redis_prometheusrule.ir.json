@@ -54,7 +54,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "YamlSerialized",
       "path": [
         "metadata",
         "annotations"
@@ -79,6 +79,16 @@
             "start": 748
           },
           "template_path": "<inline:2>"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 817,
+            "start": 804
+          },
+          "template_path": "<inline:2>"
         }
       ],
       "resource": {
@@ -90,10 +100,6 @@
     {
       "condition": [
         [
-          {
-            "path": "commonLabels",
-            "type": "truthy"
-          },
           {
             "path": "metrics.enabled",
             "type": "truthy"
@@ -152,6 +158,16 @@
             "common.tplvalues.merge"
           ],
           "span": {
+            "end": 1375,
+            "start": 1216
+          },
+          "template_path": "<inline:2>"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.merge"
+          ],
+          "span": {
             "end": 1363,
             "start": 1238
           },
@@ -184,55 +200,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1375,
-            "start": 1216
-          },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 830,
-            "start": 726
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": null,
-      "source_expr": "commonLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "commonLabels",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "nameOverride",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Fragment",
+      "kind": "YamlSerialized",
       "path": [
         "metadata",
         "labels"
@@ -258,52 +226,6 @@
           },
           "template_path": "<inline:2>"
         },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1395,
-            "start": 1376
-          },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 830,
-            "start": 726
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "commonLabels"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.enabled",
-            "type": "truthy"
-          }
-        ]
-      ],
-      "kind": "Fragment",
-      "path": [
-        "metadata",
-        "labels"
-      ],
-      "provenance": [
         {
           "helper_chain": [
             "common.tplvalues.render"
@@ -529,7 +451,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "YamlSerialized",
       "path": [
         "metadata",
         "labels"
@@ -552,6 +474,16 @@
           "span": {
             "end": 774,
             "start": 748
+          },
+          "template_path": "<inline:2>"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 817,
+            "start": 804
           },
           "template_path": "<inline:2>"
         }
@@ -596,6 +528,10 @@
           },
           {
             "path": "metrics.prometheusRule.namespace",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.namespace",
             "type": "default"
           }
         ]
@@ -620,10 +556,6 @@
           },
           {
             "path": "metrics.prometheusRule.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.rules",
             "type": "truthy"
           }
         ]
@@ -655,14 +587,10 @@
           {
             "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.rules",
-            "type": "truthy"
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "YamlSerialized",
       "path": [
         "spec",
         "groups[*]",
@@ -688,38 +616,7 @@
             "start": 748
           },
           "template_path": "<inline:2>"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "metrics.prometheusRule.rules"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.rules",
-            "type": "not"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "groups[*]",
-        "rules"
-      ],
-      "provenance": [
+        },
         {
           "helper_chain": [
             "common.tplvalues.render"
@@ -816,6 +713,16 @@
             "common.labels.standard"
           ],
           "span": {
+            "end": 617,
+            "start": 366
+          },
+          "template_path": "<inline:8>"
+        },
+        {
+          "helper_chain": [
+            "common.labels.standard"
+          ],
+          "span": {
             "end": 830,
             "start": 726
           },
@@ -838,12 +745,20 @@
           },
           {
             "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
             "type": "default"
           }
         ]
       ],
       "kind": "Scalar",
-      "path": [],
+      "path": [
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
       "provenance": [
         {
           "helper_chain": [
@@ -860,22 +775,21 @@
             "common.labels.standard"
           ],
           "span": {
-            "end": 617,
-            "start": 366
+            "end": 903,
+            "start": 868
           },
           "template_path": "<inline:8>"
         }
       ],
-      "resource": null,
+      "resource": {
+        "api_version": "monitoring.coreos.com/v1",
+        "kind": "PrometheusRule"
+      },
       "source_expr": "nameOverride"
     },
     {
       "condition": [
         [
-          {
-            "path": "commonLabels",
-            "type": "truthy"
-          },
           {
             "path": "metrics.enabled",
             "type": "truthy"
@@ -894,7 +808,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "YamlSerialized",
       "path": [
         "metadata",
         "labels",
@@ -921,67 +835,6 @@
           },
           "template_path": "<inline:2>"
         },
-        {
-          "helper_chain": [
-            "common.tplvalues.merge"
-          ],
-          "span": {
-            "end": 1395,
-            "start": 1376
-          },
-          "template_path": "<inline:2>"
-        },
-        {
-          "helper_chain": [
-            "common.names.name"
-          ],
-          "span": {
-            "end": 282,
-            "start": 206
-          },
-          "template_path": "<inline:6>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 830,
-            "start": 726
-          },
-          "template_path": "<inline:8>"
-        }
-      ],
-      "resource": {
-        "api_version": "monitoring.coreos.com/v1",
-        "kind": "PrometheusRule"
-      },
-      "source_expr": "nameOverride"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "metrics.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "metrics.prometheusRule.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "nameOverride",
-            "type": "default"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [
-        "metadata",
-        "labels",
-        "app.kubernetes.io/name"
-      ],
-      "provenance": [
         {
           "helper_chain": [
             "common.tplvalues.render"
@@ -1021,16 +874,6 @@
             "start": 726
           },
           "template_path": "<inline:8>"
-        },
-        {
-          "helper_chain": [
-            "common.labels.standard"
-          ],
-          "span": {
-            "end": 903,
-            "start": 868
-          },
-          "template_path": "<inline:8>"
         }
       ],
       "resource": {
@@ -1051,11 +894,11 @@
             "type": "truthy"
           },
           {
-            "path": "fullnameOverride",
-            "type": "not"
+            "path": "nameOverride",
+            "type": "truthy"
           },
           {
-            "path": "nameOverride",
+            "path": "fullnameOverride",
             "type": "not"
           },
           {
@@ -1099,11 +942,11 @@
             "type": "truthy"
           },
           {
-            "path": "fullnameOverride",
-            "type": "not"
+            "path": "nameOverride",
+            "type": "truthy"
           },
           {
-            "path": "nameOverride",
+            "path": "fullnameOverride",
             "type": "not"
           },
           {
@@ -1145,6 +988,10 @@
           },
           {
             "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "namespaceOverride",
             "type": "truthy"
           },
           {

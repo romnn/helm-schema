@@ -50,6 +50,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "annotations": {
             "anyOf": [
@@ -60,73 +61,38 @@
                 "type": "object"
               },
               {
-                "type": "null"
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
               }
             ],
             "description": "Annotations for the StatefulSet"
-          },
-          "extraLabels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Apply extra labels to common labels."
-          },
-          "global": {
-            "properties": {
-              "commonLabels": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Common labels for all object directly managed by this chart."
-              }
-            },
-            "type": "object"
-          },
-          "labels": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "labels for tempo"
-          },
-          "tempo": {
-            "properties": {
-              "tag": {
-                "type": "string"
-              }
-            },
-            "type": "object"
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
       "if": {
         "anyOf": [
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
           {
             "anyOf": [
               {
@@ -173,6 +139,89 @@
             "properties": {
               "tempoQuery": {
                 "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempoQuery"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraLabels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ],
+            "description": "Apply extra labels to common labels."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "fullnameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "fullnameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Overrides the chart's computed fullname"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
                   "enabled": {
                     "$ref": "#/$defs/helm-truthy"
                   }
@@ -184,7 +233,298 @@
               }
             },
             "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "tempoQuery": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
               "tempoQuery"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "properties": {
+              "commonLabels": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "Common labels for all object directly managed by this chart."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "networkPolicy"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ],
+            "description": "labels for tempo"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tempoQuery": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tempoQuery"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Overrides the chart's name"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Overrides the chart's name"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "serviceAccount"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
             ],
             "type": "object"
           },
@@ -218,108 +558,190 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "extraLabels": {
-            "anyOf": [
+          "nameOverride": {
+            "description": "Overrides the chart's name",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
               {
-                "additionalProperties": {
-                  "type": "string"
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "egress": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "egress"
+                    ],
+                    "type": "object"
+                  }
                 },
+                "required": [
+                  "networkPolicy"
+                ],
                 "type": "object"
               },
               {
-                "type": "null"
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
               }
-            ],
-            "description": "Apply extra labels to common labels."
+            ]
           },
-          "global": {
+          {
             "properties": {
-              "commonLabels": {
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicy"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "networkPolicy": {
+            "additionalProperties": {},
+            "description": "- ip: 1.2.3.4\nhostnames:\n- domain.tld",
+            "properties": {
+              "egress": {
                 "anyOf": [
                   {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
                     "type": "object"
-                  },
-                  {
-                    "type": "null"
                   }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "egress": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "egress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
                 ],
-                "description": "Common labels for all object directly managed by this chart."
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
               }
-            },
-            "type": "object"
+            ]
           },
-          "tempo": {
+          {
             "properties": {
-              "tag": {
-                "type": "string"
+              "networkPolicy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               }
             },
+            "required": [
+              "networkPolicy"
+            ],
             "type": "object"
           }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Overrides the chart's computed fullname"
+          "networkPolicy": {
+            "description": "- ip: 1.2.3.4\nhostnames:\n- domain.tld",
+            "type": "object"
           }
-        },
-        "type": "object"
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Overrides the chart's name"
-          }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -391,8 +813,10 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "service": {
+            "additionalProperties": {},
             "properties": {
               "protocol": {
                 "anyOf": [
@@ -405,11 +829,9 @@
                 ],
                 "description": "If service type is LoadBalancer, the exposed protocol can either be \"UDP\", \"TCP\" or \"UDP,TCP\""
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -479,93 +901,38 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "service": {
+            "additionalProperties": {},
             "properties": {
               "targetPort": {
                 "type": "string"
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
+      "additionalProperties": {},
       "properties": {
         "service": {
+          "additionalProperties": {},
           "properties": {
             "type": {
-              "not": {
-                "type": "array"
-              }
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
-          },
-          "type": "object"
+          }
         }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "type": "boolean"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "type": "integer"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "type": "number"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "type": "object"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
+      }
     },
     {
       "if": {
@@ -574,7 +941,7 @@
             "allOf": [
               {
                 "properties": {
-                  "networkPolicy": {
+                  "tempoQuery": {
                     "properties": {
                       "enabled": {
                         "$ref": "#/$defs/helm-truthy"
@@ -587,7 +954,2350 @@
                   }
                 },
                 "required": [
-                  "networkPolicy"
+                  "tempoQuery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tempoQuery": {
+                    "properties": {
+                      "pullSecrets": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "pullSecrets"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempoQuery"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "tempo": {
+                "properties": {
+                  "pullSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "pullSecrets"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempo"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "pullSecrets": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "jaeger": {
+                              "properties": {
+                                "protocols": {
+                                  "properties": {
+                                    "grpc": {
+                                      "properties": {
+                                        "endpoint": {}
+                                      },
+                                      "required": [
+                                        "endpoint"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "grpc"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "protocols"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "jaeger"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "jaeger": {
+                            "properties": {
+                              "protocols": {
+                                "properties": {
+                                  "grpc": {
+                                    "properties": {
+                                      "endpoint": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "endpoint"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "grpc"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "protocols"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "jaeger"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "LoadBalancer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "grpc": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "endpoint": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "grpc": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "jaeger": {
+                              "properties": {
+                                "protocols": {
+                                  "properties": {
+                                    "thrift_binary": {
+                                      "properties": {
+                                        "endpoint": {}
+                                      },
+                                      "required": [
+                                        "endpoint"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "thrift_binary"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "protocols"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "jaeger"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "jaeger": {
+                            "properties": {
+                              "protocols": {
+                                "properties": {
+                                  "thrift_binary": {
+                                    "properties": {
+                                      "endpoint": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "endpoint"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "thrift_binary"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "protocols"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "jaeger"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "LoadBalancer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "thrift_binary": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "endpoint": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "thrift_binary": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "jaeger": {
+                              "properties": {
+                                "protocols": {
+                                  "properties": {
+                                    "thrift_compact": {
+                                      "properties": {
+                                        "endpoint": {}
+                                      },
+                                      "required": [
+                                        "endpoint"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "thrift_compact"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "protocols"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "jaeger"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "jaeger": {
+                            "properties": {
+                              "protocols": {
+                                "properties": {
+                                  "thrift_compact": {
+                                    "properties": {
+                                      "endpoint": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "endpoint"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "thrift_compact"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "protocols"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "jaeger"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "LoadBalancer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "thrift_compact": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "endpoint": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "thrift_compact": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "jaeger": {
+                              "properties": {
+                                "protocols": {
+                                  "properties": {
+                                    "thrift_http": {
+                                      "properties": {
+                                        "endpoint": {}
+                                      },
+                                      "required": [
+                                        "endpoint"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "thrift_http"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "protocols"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "jaeger"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "jaeger": {
+                            "properties": {
+                              "protocols": {
+                                "properties": {
+                                  "thrift_http": {
+                                    "properties": {
+                                      "endpoint": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "endpoint"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "thrift_http"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "protocols"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "jaeger"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "LoadBalancer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "thrift_http": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "endpoint": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "thrift_http": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "jaeger": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "otlp": {
+                              "properties": {
+                                "protocols": {
+                                  "properties": {
+                                    "grpc": {
+                                      "properties": {
+                                        "endpoint": {}
+                                      },
+                                      "required": [
+                                        "endpoint"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "grpc"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "protocols"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "otlp"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "otlp": {
+                            "properties": {
+                              "protocols": {
+                                "properties": {
+                                  "grpc": {
+                                    "properties": {
+                                      "endpoint": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "endpoint"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "grpc"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "protocols"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "otlp"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "LoadBalancer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "otlp": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "grpc": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "endpoint": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "otlp": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "grpc": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempo": {
+                      "properties": {
+                        "receivers": {
+                          "properties": {
+                            "otlp": {
+                              "properties": {
+                                "protocols": {
+                                  "properties": {
+                                    "http": {
+                                      "properties": {
+                                        "endpoint": {}
+                                      },
+                                      "required": [
+                                        "endpoint"
+                                      ],
+                                      "type": "object"
+                                    }
+                                  },
+                                  "required": [
+                                    "http"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "protocols"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "otlp"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "receivers"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempo"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "receivers": {
+                        "properties": {
+                          "otlp": {
+                            "properties": {
+                              "protocols": {
+                                "properties": {
+                                  "http": {
+                                    "properties": {
+                                      "endpoint": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "endpoint"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "http"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "protocols"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "otlp"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "receivers"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "LoadBalancer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "otlp": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "http": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "endpoint": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "otlp": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "http": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "otlp": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "otlp": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "protocols": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "otlp": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "additionalProperties": {},
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "properties": {
+                  "otlp": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "receivers": {
+                "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tempoQuery": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tempoQuery"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "server": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "Tempo server configuration.\nRefers to: https://grafana.com/docs/tempo/latest/configuration/#server"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tempo": {
+            "properties": {
+              "tag": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "tag"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tempo"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempo": {
+            "additionalProperties": {},
+            "properties": {
+              "tag": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "tempo": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tempoQuery": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tempoQuery"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempoQuery": {
+            "additionalProperties": {},
+            "properties": {
+              "extraArgs": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional container arguments"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "tempoQuery": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempoQuery"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "tempoQuery": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "annotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "annotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempoQuery"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempoQuery": {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "tempoQuery": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempoQuery"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tempoQuery": {
+                      "properties": {
+                        "ingress": {
+                          "properties": {
+                            "hosts": {}
+                          },
+                          "required": [
+                            "hosts"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tempoQuery"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "tempoQuery": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "hosts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "hosts"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempoQuery"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempoQuery": {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "maximum": 0,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "fullnameOverride": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "fullnameOverride"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tempoQuery": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempoQuery"
                 ],
                 "type": "object"
               },
@@ -596,9 +3306,17 @@
                   {
                     "not": {
                       "properties": {
-                        "networkPolicy": {
+                        "tempoQuery": {
                           "properties": {
-                            "ingress": {}
+                            "ingress": {
+                              "properties": {
+                                "hosts": {}
+                              },
+                              "required": [
+                                "hosts"
+                              ],
+                              "type": "object"
+                            }
                           },
                           "required": [
                             "ingress"
@@ -607,17 +3325,25 @@
                         }
                       },
                       "required": [
-                        "networkPolicy"
+                        "tempoQuery"
                       ],
                       "type": "object"
                     }
                   },
                   {
                     "properties": {
-                      "networkPolicy": {
+                      "tempoQuery": {
                         "properties": {
                           "ingress": {
-                            "$ref": "#/$defs/helm-truthy"
+                            "properties": {
+                              "hosts": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "hosts"
+                            ],
+                            "type": "object"
                           }
                         },
                         "required": [
@@ -627,61 +3353,170 @@
                       }
                     },
                     "required": [
-                      "networkPolicy"
+                      "tempoQuery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "tempoQuery": {
+                    "properties": {
+                      "ingress": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempoQuery"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "tempoQuery": {
+                          "properties": {
+                            "ingress": {
+                              "properties": {
+                                "hosts": {}
+                              },
+                              "required": [
+                                "hosts"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "ingress"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tempoQuery"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "tempoQuery": {
+                        "properties": {
+                          "ingress": {
+                            "properties": {
+                              "hosts": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "hosts"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "ingress"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempoQuery"
                     ],
                     "type": "object"
                   }
                 ]
               },
               {
-                "not": {
-                  "anyOf": [
-                    {
-                      "not": {
+                "properties": {
+                  "tempoQuery": {
+                    "properties": {
+                      "ingress": {
                         "properties": {
-                          "networkPolicy": {
-                            "properties": {
-                              "allowExternal": {}
-                            },
-                            "required": [
-                              "allowExternal"
-                            ],
-                            "type": "object"
+                          "extraPaths": {
+                            "$ref": "#/$defs/helm-truthy"
                           }
                         },
                         "required": [
-                          "networkPolicy"
+                          "extraPaths"
                         ],
                         "type": "object"
                       }
                     },
-                    {
-                      "properties": {
-                        "networkPolicy": {
-                          "properties": {
-                            "allowExternal": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "allowExternal"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "networkPolicy"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
+                    "required": [
+                      "ingress"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempoQuery"
+                ],
+                "type": "object"
               }
             ]
-          },
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempoQuery": {
+            "additionalProperties": {},
+            "properties": {
+              "ingress": {
+                "additionalProperties": {},
+                "properties": {
+                  "hosts": {
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
           {
             "properties": {
-              "serviceMonitor": {
+              "tempoQuery": {
                 "properties": {
                   "enabled": {
                     "$ref": "#/$defs/helm-truthy"
@@ -694,24 +3529,225 @@
               }
             },
             "required": [
-              "serviceMonitor"
+              "tempoQuery"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "tempoQuery": {
+                "properties": {
+                  "pullSecrets": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "pullSecrets"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempoQuery"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "tempoQuery": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempoQuery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "tempoQuery": {
+                        "properties": {
+                          "pullSecrets": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "pullSecrets"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tempoQuery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "tempo": {
+                    "properties": {
+                      "pullSecrets": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "pullSecrets"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempo"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempoQuery": {
+            "additionalProperties": {},
+            "properties": {
+              "pullSecrets": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "tempoQuery": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tempoQuery"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "LoadBalancer"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "properties": {
+              "tempoQuery": {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tempoQuery"
             ],
             "type": "object"
           }
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "tempo": {
+          "tempoQuery": {
+            "additionalProperties": {},
             "properties": {
-              "tag": {
-                "type": "string"
+              "service": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ]
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "tempoQuery": {
+          "type": "object"
+        }
       }
     }
   ],
@@ -722,13 +3758,21 @@
     "annotations": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Annotations for the StatefulSet"
@@ -747,13 +3791,21 @@
     "extraLabels": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Apply extra labels to common labels."
@@ -765,10 +3817,12 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "Volumes to add"
@@ -776,13 +3830,15 @@
     "fullnameOverride": {
       "anyOf": [
         {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
           "type": "boolean"
         },
         {
           "type": "integer"
-        },
-        {
-          "type": "null"
         },
         {
           "type": "number"
@@ -799,13 +3855,21 @@
         "commonLabels": {
           "anyOf": [
             {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ],
           "description": "Common labels for all object directly managed by this chart."
@@ -820,27 +3884,30 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "hostAliases to add"
     },
     "labels": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ],
       "description": "labels for tempo"
     },
     "nameOverride": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ],
       "description": "Overrides the chart's name"
     },
     "networkPolicy": {
@@ -882,75 +3949,103 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "egress": {
+                "additionalProperties": {},
                 "properties": {
                   "ports": {
                     "description": "Add individual ports to be allowed by the egress\nAdd ports to the egress by specifying - port: <port number>\nE.X.\n- port: 80\n- port: 443",
                     "items": {},
                     "type": "array"
-                  },
-                  "to": {
-                    "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [tempo]}",
-                    "items": {},
-                    "type": "array"
                   }
-                },
-                "type": "object"
+                }
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "description": "- ip: 1.2.3.4\nhostnames:\n- domain.tld",
       "properties": {
         "allowExternal": {
-          "description": "Don't require client label for connections\nan ingress network policy",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Don't require client label for connections\nan ingress network policy"
         },
         "egress": {
-          "additionalProperties": {},
-          "properties": {
-            "blockDNSResolution": {
-              "description": "When enabled, DNS resolution will be blocked\nfor all pods in the tempo namespace.",
-              "type": "boolean"
-            },
-            "enabled": {
-              "description": "When enabled, an egress network policy will be\ncreated allowing tempo to connect to external data sources from kubernetes cluster.",
-              "type": "boolean"
-            },
-            "ports": {
-              "description": "Add individual ports to be allowed by the egress\nAdd ports to the egress by specifying - port: <port number>\nE.X.\n- port: 80\n- port: 443"
-            },
-            "to": {
-              "anyOf": [
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "blockDNSResolution": {
+                  "description": "When enabled, DNS resolution will be blocked\nfor all pods in the tempo namespace.",
+                  "type": "boolean"
                 }
-              ],
-              "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [tempo]}"
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ],
+                  "description": "When enabled, an egress network policy will be\ncreated allowing tempo to connect to external data sources from kubernetes cluster."
+                },
+                "ports": {
+                  "description": "Add individual ports to be allowed by the egress\nAdd ports to the egress by specifying - port: <port number>\nE.X.\n- port: 80\n- port: 443"
+                },
+                "to": {
+                  "description": "Allow egress traffic to specific destinations\nAdd destinations to the egress by specifying - ipBlock: <CIDR>\nE.X.\nto:\n- namespaceSelector:\nmatchExpressions:\n- {key: role, operator: In, values: [tempo]}"
+                }
+              },
+              "type": "object"
             }
-          },
-          "type": "object"
+          ]
         },
         "enabled": {
-          "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now.",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Enable creation of NetworkPolicy resources. Only Ingress traffic is filtered for now."
         },
         "explicitNamespacesSelector": {
           "description": "A Kubernetes LabelSelector to explicitly select namespaces from which traffic could be allowed\nIf explicitNamespacesSelector is missing or set to {}, only client Pods that are in the networkPolicy's namespace\nand that match other criteria, the ones that have the good label, can reach the tempo.\nBut sometimes, we want the tempo to be accessible to clients from other namespaces, in this case, we can use this\nLabelSelector to select these namespaces, note that the networkPolicy's namespace should also be explicitly added.\nExample:\nexplicitNamespacesSelector:\nmatchLabels:\nrole: frontend\nmatchExpressions:\n- {key: role, operator: In, values: [frontend]}"
         },
         "ingress": {
-          "description": "The Policy model to apply. When set to false, only pods with the correct\nclient label will have network access to  tempo port defined.\nWhen true, tempo will accept connections from any source\n(with the correct destination port).\nWhen true enables the creation",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "The Policy model to apply. When set to false, only pods with the correct\nclient label will have network access to  tempo port defined.\nWhen true, tempo will accept connections from any source\n(with the correct destination port).\nWhen true enables the creation"
         }
       },
       "type": "object"
@@ -974,51 +4069,38 @@
             "type": "object"
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
-              "accessModes": {
-                "description": "storageClassName: local-path",
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
               "annotations": {
                 "additionalProperties": {
                   "type": "string"
                 },
                 "type": "object"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
         "accessModes": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "storageClassName: local-path"
         },
-        "annotations": {
-          "additionalProperties": {},
-          "type": "object"
-        },
+        "annotations": {},
         "enableStatefulSetAutoDeletePVC": {
           "description": "Enable StatefulSetAutoDeletePVC feature",
           "type": "boolean"
         },
         "enabled": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "selector": {},
         "size": {},
@@ -1029,13 +4111,21 @@
     "podAnnotations": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Pod Annotations"
@@ -1043,13 +4133,21 @@
     "podLabels": {
       "anyOf": [
         {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
           "additionalProperties": {
             "type": "string"
           },
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "Pod (extra) Labels"
@@ -1083,7 +4181,9 @@
           "type": "object"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
       ],
       "description": "securityContext for container"
@@ -1153,12 +4253,12 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "clusterIP": {
                 "type": "string"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
@@ -1166,13 +4266,21 @@
         "annotations": {
           "anyOf": [
             {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ]
         },
@@ -1181,13 +4289,21 @@
         "labels": {
           "anyOf": [
             {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
               "additionalProperties": {
                 "type": "string"
               },
               "type": "object"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ]
         },
@@ -1203,18 +4319,7 @@
           ]
         },
         "targetPort": {},
-        "type": {
-          "anyOf": [
-            {
-              "enum": [
-                "LoadBalancer"
-              ]
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "type": {}
       },
       "type": "object"
     },
@@ -1249,6 +4354,7 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "annotations": {
                 "anyOf": [
@@ -1259,19 +4365,82 @@
                     "type": "object"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ],
                 "description": "Annotations for the service account"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
               },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "automountServiceAccountToken": {
                 "type": "boolean"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
               },
-              "imagePullSecrets": {
-                "description": "Image pull secrets for the service account",
-                "items": {},
-                "type": "array"
-              },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "labels": {
                 "anyOf": [
                   {
@@ -1281,90 +4450,95 @@
                     "type": "object"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ],
                 "description": "Labels for the service account"
-              },
-              "name": {
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                "type": [
-                  "string",
-                  "null"
-                ]
               }
-            },
-            "type": "object"
+            }
           }
         },
         {
           "if": {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "create": {}
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
+            "anyOf": [
+              {
+                "not": {
                   "properties": {
-                    "create": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "create": {}
                   },
                   "required": [
                     "create"
                   ],
                   "type": "object"
                 }
-              ]
-            }
+              },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "name": {
-                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template",
-                "type": [
-                  "string",
-                  "null"
-                ]
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
         "annotations": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
           "description": "Annotations for the service account"
         },
         "automountServiceAccountToken": {
           "type": "boolean"
         },
         "create": {
-          "description": "Specifies whether a ServiceAccount should be created",
-          "type": "boolean"
-        },
-        "imagePullSecrets": {
           "anyOf": [
             {
-              "items": {},
-              "type": "array"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Specifies whether a ServiceAccount should be created"
+        },
+        "imagePullSecrets": {
+          "description": "Image pull secrets for the service account"
+        },
+        "labels": {
+          "description": "Labels for the service account"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
               "type": "null"
@@ -1373,21 +4547,6 @@
               "type": "string"
             }
           ],
-          "description": "Image pull secrets for the service account"
-        },
-        "labels": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Labels for the service account"
-        },
-        "name": {
           "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
         }
       },
@@ -1409,6 +4568,7 @@
             "type": "object"
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "additionalLabels": {
                 "anyOf": [
@@ -1419,10 +4579,30 @@
                     "type": "object"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ]
-              },
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "annotations": {
                 "anyOf": [
                   {
@@ -1432,45 +4612,54 @@
                     "type": "object"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ],
                 "description": "scrapeTimeout: 10s"
-              },
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "interval": {
                 "type": "string"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
-        "additionalLabels": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
+        "additionalLabels": {},
         "annotations": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
           "description": "scrapeTimeout: 10s"
         },
         "enabled": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "interval": {},
         "scrapeTimeout": {}
@@ -1479,11 +4668,23 @@
     },
     "tempo": {
       "additionalProperties": {},
-      "properties": {
-        "extraArgs": {
-          "anyOf": [
-            {
-              "items": {
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "tag": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "tag"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "registry": {
                 "anyOf": [
                   {
                     "type": "boolean"
@@ -1492,7 +4693,91 @@
                     "type": "integer"
                   },
                   {
-                    "type": "null"
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tag": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "tag"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "repository": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "extraArgs": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "integer"
                   },
                   {
                     "type": "number"
@@ -1511,13 +4796,15 @@
               "additionalProperties": {
                 "anyOf": [
                   {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
                     "type": "boolean"
                   },
                   {
                     "type": "integer"
-                  },
-                  {
-                    "type": "null"
                   },
                   {
                     "type": "number"
@@ -1539,10 +4826,12 @@
               "type": "array"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "string"
+              "type": "null"
             }
           ],
           "description": "Environment variables to add"
@@ -1554,10 +4843,12 @@
               "type": "array"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "string"
+              "type": "null"
             }
           ],
           "description": "Environment variables from secrets or configmaps to add to the ingester pods"
@@ -1569,10 +4860,12 @@
               "type": "array"
             },
             {
-              "type": "null"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             },
             {
-              "type": "string"
+              "type": "null"
             }
           ],
           "description": "Volume mounts to add\n- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim"
@@ -1700,24 +4993,7 @@
           "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistryKeySecretName",
           "type": "string"
         },
-        "pullSecrets": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
+        "pullSecrets": {},
         "querier": {
           "additionalProperties": {},
           "description": "Configuration options for the querier.\nRefers to: https://grafana.com/docs/tempo/latest/configuration/#querier\nmax_concurrent_queries: 20",
@@ -1762,78 +5038,81 @@
           "type": "object"
         },
         "receivers": {
-          "additionalProperties": {},
-          "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
-          "properties": {
-            "jaeger": {
+          "anyOf": [
+            {
               "additionalProperties": {},
               "properties": {
-                "protocols": {
+                "jaeger": {
                   "additionalProperties": {},
                   "properties": {
-                    "grpc": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "endpoint": {
-                          "type": "string"
+                    "protocols": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": {},
+                          "properties": {
+                            "grpc": {
+                              "additionalProperties": {},
+                              "properties": {
+                                "endpoint": {}
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "additionalProperties": {},
+                          "properties": {
+                            "thrift_binary": {
+                              "additionalProperties": {},
+                              "properties": {
+                                "endpoint": {}
+                              },
+                              "type": "object"
+                            },
+                            "thrift_compact": {
+                              "additionalProperties": {},
+                              "properties": {
+                                "endpoint": {}
+                              },
+                              "type": "object"
+                            },
+                            "thrift_http": {
+                              "additionalProperties": {},
+                              "properties": {
+                                "endpoint": {}
+                              },
+                              "type": "object"
+                            }
+                          },
+                          "type": "object"
                         }
-                      },
-                      "type": "object"
-                    },
-                    "thrift_binary": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "endpoint": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "thrift_compact": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "endpoint": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "thrift_http": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "endpoint": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
+                      ]
                     }
-                  },
-                  "type": "object"
+                  }
                 }
-              },
-              "type": "object"
+              }
             },
-            "opencensus": {},
-            "otlp": {
+            {
               "additionalProperties": {},
               "properties": {
-                "protocols": {
+                "otlp": {
                   "additionalProperties": {},
                   "properties": {
-                    "grpc": {
+                    "protocols": {
                       "additionalProperties": {},
                       "properties": {
-                        "endpoint": {
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "http": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "endpoint": {
-                          "type": "string"
+                        "grpc": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "endpoint": {}
+                          },
+                          "type": "object"
+                        },
+                        "http": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "endpoint": {}
+                          },
+                          "type": "object"
                         }
                       },
                       "type": "object"
@@ -1844,29 +5123,15 @@
               },
               "type": "object"
             }
-          },
-          "type": "object"
+          ],
+          "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver"
         },
-        "registry": {
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
-        },
+        "registry": {},
         "reportingEnabled": {
           "description": "If true, Tempo will report anonymous usage data about the shape of a deployment to Grafana Labs",
           "type": "boolean"
         },
-        "repository": {
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
-        },
+        "repository": {},
         "resources": {
           "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi"
         },
@@ -1883,8 +5148,7 @@
               "description": "HTTP server listen port",
               "type": "integer"
             }
-          },
-          "type": "object"
+          }
         },
         "storage": {
           "additionalProperties": {},
@@ -1923,13 +5187,15 @@
         "tag": {
           "anyOf": [
             {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
               "type": "boolean"
             },
             {
               "type": "integer"
-            },
-            {
-              "type": "null"
             },
             {
               "type": "number"
@@ -1964,36 +5230,140 @@
             "type": "object"
           },
           "then": {
+            "additionalProperties": {},
+            "properties": {
+              "extraArgs": {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "description": "Additional container arguments",
+                "items": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
             "properties": {
               "extraArgs": {
                 "anyOf": [
                   {
-                    "properties": {},
-                    "type": "object"
+                    "type": "array"
                   },
                   {
-                    "type": "array"
+                    "type": "object"
                   },
                   {
                     "type": "null"
                   }
                 ],
                 "description": "Additional container arguments"
-              },
-              "extraEnv": {
-                "description": "Environment variables to add",
-                "items": {},
-                "type": "array"
-              },
-              "extraVolumeMounts": {
-                "description": "Volume mounts to add",
-                "items": {},
-                "type": "array"
-              },
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "pullPolicy": {
                 "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nRefers to: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistryKeySecretName",
                 "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
               },
+              {
+                "properties": {
+                  "tag": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "tag"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "repository": {
                 "anyOf": [
                   {
@@ -2009,17 +5379,37 @@
                     "type": "string"
                   }
                 ]
-              },
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "tag": {
                 "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
                   {
                     "type": "boolean"
                   },
                   {
                     "type": "integer"
-                  },
-                  {
-                    "type": "null"
                   },
                   {
                     "type": "number"
@@ -2029,170 +5419,335 @@
                   }
                 ]
               }
-            },
-            "type": "object"
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "ingress": {
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "annotations": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "annotations"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "annotations": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "ingress": {
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "annotations": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          }
+                        ],
+                        "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "ingress": {
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "hosts": {}
+                              },
+                              "required": [
+                                "hosts"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "hosts": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "hosts"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "hosts": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "ingress": {
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "not": {
+                              "properties": {
+                                "hosts": {}
+                              },
+                              "required": [
+                                "hosts"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          {
+                            "properties": {
+                              "hosts": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "hosts"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "hosts": {
+                        "items": {},
+                        "type": "array"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "ingress": {
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "labels": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          }
+                        ],
+                        "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
+                      }
+                    }
+                  }
+                }
+              ]
+            }
           }
         }
       ],
       "properties": {
         "enabled": {
-          "description": "if False the tempo-query container is not deployed",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "if False the tempo-query container is not deployed"
         },
         "extraArgs": {
           "description": "Additional container arguments"
         },
         "extraEnv": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Environment variables to add"
         },
         "extraVolumeMounts": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Volume mounts to add"
         },
         "ingress": {
           "additionalProperties": {},
-          "allOf": [
-            {
-              "if": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              "then": {
-                "properties": {
-                  "annotations": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated"
-                  },
-                  "hosts": {
-                    "anyOf": [
-                      {
-                        "items": {},
-                        "type": "array"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  "labels": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {
-                          "type": "string"
-                        },
-                        "type": "object"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
-                  }
-                },
-                "type": "object"
-              }
-            }
-          ],
           "properties": {
             "annotations": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                }
-              ],
               "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx\nValues can be templated"
             },
             "enabled": {
-              "type": "boolean"
-            },
-            "extraPaths": {
               "anyOf": [
                 {
-                  "items": {},
-                  "type": "array"
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 },
                 {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
+                  "type": "boolean"
                 }
-              ],
-              "description": "Extra paths to prepend to every host configuration. This is useful when working with annotation based services.\n- path: /*\nbackend:\nserviceName: ssl-redirect\nservicePort: use-annotation\nOr for k8s > 1.19\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation"
+              ]
+            },
+            "extraPaths": {
+              "description": "Extra paths to prepend to every host configuration. This is useful when working with annotation based services.\n- path: /*\nbackend:\nserviceName: ssl-redirect\nservicePort: use-annotation\nOr for k8s > 1.19\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation",
+              "items": {},
+              "type": "array"
             },
             "hosts": {},
             "ingressClassName": {},
             "labels": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                {
-                  "type": "null"
-                }
-              ],
               "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
             },
             "path": {
-              "type": "string"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ]
             },
             "pathType": {
               "description": "pathType is only for k8s >= 1.1=",
@@ -2207,24 +5762,7 @@
         "pullPolicy": {
           "description": "Optionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nRefers to: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\npullSecrets:\n- myRegistryKeySecretName"
         },
-        "pullSecrets": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
+        "pullSecrets": {},
         "repository": {},
         "resources": {
           "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi"
@@ -2238,8 +5776,7 @@
             "port": {
               "type": "integer"
             }
-          },
-          "type": "object"
+          }
         },
         "tag": {}
       },
@@ -2252,10 +5789,12 @@
           "type": "array"
         },
         {
-          "type": "null"
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         },
         {
-          "type": "string"
+          "type": "null"
         }
       ],
       "description": "Tolerations for pod assignment. See: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"

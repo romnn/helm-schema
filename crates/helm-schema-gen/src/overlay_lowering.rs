@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{
     ConditionalGuard, ConditionalPathOverlay, ContractSchemaSignals, GuardValue,
@@ -26,7 +26,7 @@ pub(crate) struct ConditionalResolvedSchema {
     pub(crate) target_schema: Value,
     pub(crate) provider_schema_candidate: Option<ProviderSchemaCandidate>,
     pub(crate) preserve_base_schema: bool,
-    pub(crate) target_is_fragment: bool,
+    fold_unconditional_object_host_into_base: bool,
     /// The conditional is a pure `allOf` arm (fail implication): it adds a
     /// requirement without owning the path's shape, so base classification
     /// must ignore it entirely — an implication must never flip an
@@ -45,12 +45,32 @@ pub(crate) fn collect_conditional_schemas(
         .iter()
         .map(|resolved| (resolved.value_path.as_str(), resolved))
         .collect::<BTreeMap<_, _>>();
+    // Member-arm grafting looks up the resolved descendants under `<target>.*`
+    // per Members implication; index them by the segments before the first
+    // `*` once instead of rescanning every resolved path per implication.
+    let mut member_descendants: BTreeMap<&[String], Vec<&ResolvedPathSchema>> = BTreeMap::new();
+    for resolved in resolved_paths {
+        if let Some(star) = resolved
+            .path_segments
+            .iter()
+            .position(|segment| segment == "*")
+        {
+            member_descendants
+                .entry(&resolved.path_segments[..star])
+                .or_default()
+                .push(resolved);
+        }
+    }
     let mut conditionals = Vec::new();
 
     for (target_value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
         let Some(resolved_target) = resolved_by_path.get(target_value_path.as_str()) else {
             continue;
         };
+        let has_unconditional_self_presence_contract = evidence
+            .conditional_overlays
+            .iter()
+            .any(|overlay| is_unconditional_self_presence_overlay(target_value_path, overlay));
 
         // `fail` implications: wherever the outer guards hold, the failing
         // test's negation must hold. Runtime-hard, so the requirement
@@ -59,12 +79,19 @@ pub(crate) fn collect_conditional_schemas(
         // bypass it. An empty guard set means the requirement is
         // unconditional and the arm's condition is trivially true.
         for implication in &evidence.fail_implications {
-            // Member-access requirements: the schema tree already types
-            // interior nodes materialized by member reads as objects, so
-            // the bypass-proof arm is needed only when a union lane can
-            // widen the base past that typing (a serialized, fragment,
-            // render, ranged, or partial-scalar use, or a type-dispatch
-            // arm) or the declared default is not a mapping.
+            if is_bare_iterable_implication(implication)
+                && member_implication_covers_range_domain(
+                    &evidence.fail_implications,
+                    &implication.outer_guards,
+                )
+            {
+                continue;
+            }
+            // Member-access requirements already enforced by the resolved
+            // base need no duplicate arm unless another use widens that base.
+            // A mapping default alone is insufficient: requirement-only
+            // parent paths deliberately do not import recursive values.yaml
+            // evidence, so their resolved base can still be unconstrained.
             let member_host_only = !implication.requirements.is_empty()
                 && implication.requirements.iter().all(|requirement| {
                     matches!(
@@ -81,16 +108,17 @@ pub(crate) fn collect_conditional_schemas(
                     )
                 });
                 let widened = evidence.facts.used_as_serialized
+                    || evidence.facts.used_as_yaml_serialized
                     || evidence.facts.used_as_fragment
                     || evidence.facts.has_render_use
                     || evidence.facts.is_ranged_source
                     || evidence.facts.is_partial_scalar_value_path
                     || dispatched;
-                let declared_mapping = matches!(
-                    yaml_value_at_path(values_yaml_doc, target_value_path),
-                    Some(YamlValue::Mapping(_))
-                );
-                if declared_mapping && !widened {
+                let requirement_domain = fail_requirement_runtime_types(implication);
+                let resolved_domain = schema_runtime_types(&resolved_target.schema);
+                let base_enforces_requirement =
+                    !resolved_domain.is_empty() && resolved_domain.is_subset(&requirement_domain);
+                if base_enforces_requirement && !widened {
                     continue;
                 }
             }
@@ -103,17 +131,51 @@ pub(crate) fn collect_conditional_schemas(
             {
                 continue;
             }
-            let target_schema =
+            let mut target_schema =
                 crate::path_resolver::fail_requirement_schema(std::iter::once(implication));
             if crate::schema_model::is_empty_schema(&target_schema) {
                 continue;
             }
+            if matches!(
+                implication.target,
+                helm_schema_core::ContractRequirementTarget::Value
+            ) && let Some(default) = yaml_value_at_path(values_yaml_doc, target_value_path)
+            {
+                relax_required_members_supplied_by_default(&mut target_schema, default);
+            }
             let target_segments = split_value_path(target_value_path);
+            if matches!(
+                implication.target,
+                helm_schema_core::ContractRequirementTarget::Members { .. }
+            ) {
+                for descendant in member_descendants
+                    .get(target_segments.as_slice())
+                    .into_iter()
+                    .flatten()
+                {
+                    let Some(relative_segments) = descendant
+                        .path_segments
+                        .strip_prefix(target_segments.as_slice())
+                    else {
+                        continue;
+                    };
+                    target_schema = crate::schema_tree::insert_path_schema_value(
+                        target_schema,
+                        relative_segments,
+                        descendant.schema.clone(),
+                    );
+                }
+            }
             // Anchor at the ROOT: an arm appended at (or under) the target
             // node lands inside one union alternative, letting the other
             // alternatives bypass the requirement — and union lanes can
             // appear at ANY ancestor, so only the root is bypass-proof.
             let ancestor_segments: Vec<String> = Vec::new();
+            let preserve_base_schema = implication.outer_guards.is_empty()
+                || resolved_schema_admits_fail_requirement_domain(
+                    &resolved_target.schema,
+                    implication,
+                );
             conditionals.push(ConditionalResolvedSchema {
                 target_value_path: target_value_path.clone(),
                 relative_target_segments: target_segments[ancestor_segments.len()..].to_vec(),
@@ -121,13 +183,16 @@ pub(crate) fn collect_conditional_schemas(
                 guards: implication.outer_guards.clone(),
                 target_schema,
                 provider_schema_candidate: None,
-                preserve_base_schema: true,
-                target_is_fragment: false,
+                preserve_base_schema,
+                fold_unconditional_object_host_into_base: member_host_only,
                 arm_only: true,
             });
         }
 
         for overlay in &evidence.conditional_overlays {
+            if is_unconditional_self_presence_overlay(target_value_path, overlay) {
+                continue;
+            }
             if !guards_supported_for_conditional_lowering(
                 &overlay.guards,
                 &resolved_by_path,
@@ -142,22 +207,22 @@ pub(crate) fn collect_conditional_schemas(
             let active_by_defaults = evaluate_guard_set_on_values(&overlay.guards, values_yaml_doc);
             let resolved_overlay =
                 resolve_overlay_target_schema(target_value_path, overlay, provider);
-            let target_schema = conditional_target_schema(
-                target_value_path,
-                overlay,
-                values_yaml_doc,
-                resolved_overlay.schema,
-                resolved_target.values_yaml_schema.clone(),
-                resolved_target.schema.clone(),
-                active_by_defaults,
-            );
-            // A branch that RANGES the path binds the runtime iterable
-            // domain on top of whatever else it claims; integer counts
-            // drop out when the loop body reads member structure the
-            // int64 iteration values cannot provide.
-            let target_schema = if overlay.evidence.facts.is_ranged_source {
+            // A ranged branch's runtime domain is structural evidence, not
+            // a declared-default placeholder. Add it before conditional
+            // policy so a fixed map default cannot reintroduce literal
+            // member typing that the loop body erased (for example through
+            // `quote`).
+            let member_implication_owns_range_domain = overlay.evidence.facts.is_ranged_source
+                && crate::schema_model::is_empty_schema(&resolved_overlay.schema)
+                && member_implication_covers_range_domain(
+                    &evidence.fail_implications,
+                    &overlay.guards,
+                );
+            let branch_schema = if overlay.evidence.facts.is_ranged_source
+                && !member_implication_owns_range_domain
+            {
                 crate::merge::merge_schema_list(vec![
-                    target_schema,
+                    resolved_overlay.schema,
                     crate::runtime_iterable_schema(
                         !overlay.evidence.facts.has_structured_item_descendants
                             && !overlay.evidence.facts.has_destructured_range_use
@@ -165,8 +230,17 @@ pub(crate) fn collect_conditional_schemas(
                     ),
                 ])
             } else {
-                target_schema
+                resolved_overlay.schema
             };
+            let target_schema = conditional_target_schema(
+                target_value_path,
+                overlay,
+                values_yaml_doc,
+                branch_schema,
+                resolved_target.values_yaml_schema.clone(),
+                resolved_target.schema.clone(),
+                active_by_defaults,
+            );
             if crate::schema_model::is_empty_schema(&target_schema) {
                 // A branch whose renders are all serialized proves the wider
                 // contract inside that branch, so it carries no schema; it
@@ -175,7 +249,9 @@ pub(crate) fn collect_conditional_schemas(
                 // demand. Mixed branches resolve their own evidence above,
                 // so a stringified occurrence never erases an independent
                 // stricter sibling.
-                if overlay.evidence.facts.used_as_serialized {
+                if overlay.evidence.facts.used_as_serialized
+                    || overlay.evidence.facts.used_as_yaml_serialized
+                {
                     conditionals.push(ConditionalResolvedSchema {
                         target_value_path: target_value_path.clone(),
                         relative_target_segments: target_segments[ancestor_segments.len()..]
@@ -184,8 +260,9 @@ pub(crate) fn collect_conditional_schemas(
                         guards: overlay.guards.clone(),
                         target_schema,
                         provider_schema_candidate: None,
-                        preserve_base_schema: overlay.preserve_base_schema,
-                        target_is_fragment: overlay.evidence.facts.used_as_fragment,
+                        preserve_base_schema: overlay.preserve_base_schema
+                            || has_unconditional_self_presence_contract,
+                        fold_unconditional_object_host_into_base: false,
                         arm_only: false,
                     });
                 }
@@ -202,14 +279,213 @@ pub(crate) fn collect_conditional_schemas(
                 guards: overlay.guards.clone(),
                 target_schema,
                 provider_schema_candidate,
-                preserve_base_schema: overlay.preserve_base_schema,
-                target_is_fragment: overlay.evidence.facts.used_as_fragment,
+                preserve_base_schema: overlay.preserve_base_schema
+                    || has_unconditional_self_presence_contract,
+                fold_unconditional_object_host_into_base: false,
                 arm_only: false,
             });
         }
     }
 
     conditionals
+}
+
+fn is_unconditional_self_presence_overlay(
+    target_value_path: &str,
+    overlay: &ConditionalPathOverlay,
+) -> bool {
+    matches!(
+        overlay.guards.as_slice(),
+        [ConditionalGuard::Not(inner)]
+            if matches!(
+                inner.as_ref(),
+                ConditionalGuard::Absent { path } if path == target_value_path
+            )
+    )
+}
+
+fn is_bare_iterable_implication(implication: &helm_schema_core::ContractFailImplication) -> bool {
+    matches!(
+        implication.target,
+        helm_schema_core::ContractRequirementTarget::Value
+    ) && matches!(
+        implication.requirements.as_slice(),
+        [helm_schema_core::FailValueRequirement::Iterable { .. }]
+    )
+}
+
+fn member_implication_covers_range_domain(
+    implications: &[helm_schema_core::ContractFailImplication],
+    guards: &[ConditionalGuard],
+) -> bool {
+    implications.iter().any(|implication| {
+        implication.outer_guards == guards
+            && matches!(
+                implication.target,
+                helm_schema_core::ContractRequirementTarget::Members { .. }
+            )
+    })
+}
+
+fn resolved_schema_admits_fail_requirement_domain(
+    resolved_schema: &Value,
+    implication: &helm_schema_core::ContractFailImplication,
+) -> bool {
+    !crate::schema_model::is_empty_schema(resolved_schema)
+        && fail_requirement_runtime_types(implication)
+            .is_subset(&schema_runtime_types(resolved_schema))
+}
+
+fn fail_requirement_runtime_types(
+    implication: &helm_schema_core::ContractFailImplication,
+) -> BTreeSet<&'static str> {
+    use helm_schema_core::{ContractRequirementTarget, FailValueRequirement};
+
+    let all_types = || {
+        BTreeSet::from([
+            "array", "boolean", "integer", "null", "number", "object", "string",
+        ])
+    };
+    match implication.target {
+        ContractRequirementTarget::Members { allow_integer } => {
+            let mut types = BTreeSet::from(["array", "null", "object"]);
+            if allow_integer {
+                types.insert("integer");
+            }
+            types
+        }
+        ContractRequirementTarget::Keys => BTreeSet::from(["array", "null", "object"]),
+        ContractRequirementTarget::Value => {
+            let mut types = all_types();
+            for requirement in &implication.requirements {
+                types.retain(|runtime_type| match requirement {
+                    FailValueRequirement::SchemaType(required) => {
+                        *runtime_type == "null"
+                            || *runtime_type == required
+                            || required == "number" && *runtime_type == "integer"
+                    }
+                    FailValueRequirement::NotSchemaType(rejected) => {
+                        *runtime_type != rejected
+                            && !(rejected == "number" && *runtime_type == "integer")
+                    }
+                    FailValueRequirement::HasMember(_) => *runtime_type == "object",
+                    FailValueRequirement::MemberHost { handled_kinds } => {
+                        *runtime_type == "object"
+                            || handled_kinds.iter().any(|handled| handled == runtime_type)
+                    }
+                    FailValueRequirement::Iterable { allow_integer } => {
+                        matches!(*runtime_type, "array" | "null" | "object")
+                            || *allow_integer && *runtime_type == "integer"
+                    }
+                });
+            }
+            types
+        }
+    }
+}
+
+fn schema_runtime_types(schema: &Value) -> BTreeSet<&'static str> {
+    let all_types = || {
+        BTreeSet::from([
+            "array", "boolean", "integer", "null", "number", "object", "string",
+        ])
+    };
+    let Some(object) = schema.as_object() else {
+        return if schema.as_bool() == Some(false) {
+            BTreeSet::new()
+        } else {
+            all_types()
+        };
+    };
+
+    let mut types = match object.get("type") {
+        Some(Value::String(schema_type)) => runtime_types_for_declared_type(schema_type),
+        Some(Value::Array(schema_types)) => schema_types
+            .iter()
+            .filter_map(Value::as_str)
+            .flat_map(runtime_types_for_declared_type)
+            .collect(),
+        _ => all_types(),
+    };
+    if let Some(value) = object.get("const") {
+        let const_types = BTreeSet::from([runtime_type_for_value(value)]);
+        types = types.intersection(&const_types).copied().collect();
+    }
+    if let Some(values) = object.get("enum").and_then(Value::as_array) {
+        let enum_types = values.iter().map(runtime_type_for_value).collect();
+        types = types.intersection(&enum_types).copied().collect();
+    }
+
+    for keyword in ["anyOf", "oneOf"] {
+        if let Some(arms) = object.get(keyword).and_then(Value::as_array) {
+            let arm_types = arms.iter().flat_map(schema_runtime_types).collect();
+            types = types.intersection(&arm_types).copied().collect();
+        }
+    }
+    if let Some(arms) = object.get("allOf").and_then(Value::as_array) {
+        for arm in arms {
+            let arm_types = schema_runtime_types(arm);
+            types = types.intersection(&arm_types).copied().collect();
+        }
+    }
+
+    types
+}
+
+fn runtime_type_for_value(value: &Value) -> &'static str {
+    match value {
+        Value::Array(_) => "array",
+        Value::Bool(_) => "boolean",
+        Value::Null => "null",
+        Value::Number(number) if number.is_i64() || number.is_u64() => "integer",
+        Value::Number(_) => "number",
+        Value::Object(_) => "object",
+        Value::String(_) => "string",
+    }
+}
+
+fn runtime_types_for_declared_type(schema_type: &str) -> BTreeSet<&'static str> {
+    match schema_type {
+        "array" => BTreeSet::from(["array"]),
+        "boolean" => BTreeSet::from(["boolean"]),
+        "integer" => BTreeSet::from(["integer"]),
+        "null" => BTreeSet::from(["null"]),
+        "number" => BTreeSet::from(["integer", "number"]),
+        "object" => BTreeSet::from(["object"]),
+        "string" => BTreeSet::from(["string"]),
+        _ => BTreeSet::new(),
+    }
+}
+
+fn relax_required_members_supplied_by_default(schema: &mut Value, default: &YamlValue) {
+    let (Some(schema), YamlValue::Mapping(defaults)) = (schema.as_object_mut(), default) else {
+        return;
+    };
+    if let Some(required) = schema.get_mut("required").and_then(Value::as_array_mut) {
+        required.retain(|member| {
+            member
+                .as_str()
+                .is_none_or(|member| !defaults.contains_key(YamlValue::String(member.to_string())))
+        });
+        if required.is_empty() {
+            schema.remove("required");
+        }
+    }
+    if let Some(properties) = schema.get_mut("properties").and_then(Value::as_object_mut) {
+        for (member, member_schema) in properties {
+            if let Some(member_default) = defaults.get(YamlValue::String(member.clone())) {
+                relax_required_members_supplied_by_default(member_schema, member_default);
+            }
+        }
+    }
+    for keyword in ["allOf", "anyOf", "oneOf"] {
+        let Some(branches) = schema.get_mut(keyword).and_then(Value::as_array_mut) else {
+            continue;
+        };
+        for branch in branches {
+            relax_required_members_supplied_by_default(branch, default);
+        }
+    }
 }
 
 pub(crate) fn resolve_overlay_target_schema(
@@ -288,17 +564,14 @@ fn guards_supported_with_self_path(
     !guards.is_empty()
         && guards.iter().all(|guard| match guard {
             // The truthiness condition encoding is type-generic (const true,
-            // non-zero number, non-empty string/array/object), so a guard
-            // path declared by the chart lowers whatever its type. Undeclared
-            // paths still lower only as boolean-like flags: every guard path
-            // gets an accumulator entry, so mere resolution would also admit
-            // paths fabricated by imprecise lookups (`index $vals $a $b`).
+            // non-zero number, non-empty string/array/object). Approximate
+            // lookups never reach conditional overlays, so every resolved
+            // guard path here is structural evidence even when values.yaml
+            // does not declare the finite member (literal-dict range keys).
             ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
                 self_path == Some(path.as_str())
                     || yaml_value_at_path(values_yaml_doc, path).is_some()
-                    || resolved_by_path
-                        .get(path.as_str())
-                        .is_some_and(|resolved| schema_is_boolean_like(&resolved.schema))
+                    || resolved_by_path.contains_key(path.as_str())
             }
             ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
@@ -321,15 +594,6 @@ fn guards_supported_with_self_path(
         })
 }
 
-fn schema_is_boolean_like(schema: &Value) -> bool {
-    crate::schema_model::schema_allows_type(schema, "boolean")
-        && !crate::schema_model::schema_allows_type(schema, "string")
-        && !crate::schema_model::schema_allows_type(schema, "integer")
-        && !crate::schema_model::schema_allows_type(schema, "number")
-        && !crate::schema_model::schema_allows_type(schema, "object")
-        && !crate::schema_model::schema_allows_type(schema, "array")
-}
-
 #[tracing::instrument(skip_all)]
 /// Lower terminating validator formulas: for each clause, no valid values
 /// document satisfies ALL its guards, so the document gets
@@ -347,7 +611,7 @@ pub(crate) fn append_terminal_clauses(
         // `if` nested under `properties.<ancestor>` never fires for
         // documents missing the ancestor — exactly a state such a clause
         // covers (a helper's `required global.version` rejects a document
-        // with no `global` at all, F51).
+        // with no `global` at all).
         let ancestor_segments = if guards.iter().all(guard_holds_vacuously) {
             Vec::new()
         } else {
@@ -412,9 +676,18 @@ fn shared_guard_ancestor_segments(guards: &[ConditionalGuard]) -> Vec<String> {
 
 pub(crate) fn append_conditional_schemas(
     root_schema: &mut SchemaDocument,
-    conditionals: Vec<ConditionalResolvedSchema>,
+    mut conditionals: Vec<ConditionalResolvedSchema>,
     values_yaml_doc: &YamlValue,
 ) {
+    conditionals.retain(|conditional| {
+        let folds_into_base = conditional.fold_unconditional_object_host_into_base
+            && conditional.arm_only
+            && conditional.guards.is_empty()
+            && conditional.ancestor_segments.is_empty()
+            && is_object_domain_only(&conditional.target_schema)
+            && root_schema.constrain_existing_path_to_object(&conditional.relative_target_segments);
+        !folds_into_base
+    });
     // Conditionals sharing one guard set and scope conjoin into one if/then:
     // `allOf [{if G then A}, {if G then B}]` is `{if G then A ∧ B}`, and the
     // repeated `if` blocks dominate emitted size on charts with many guarded
@@ -511,6 +784,32 @@ pub(crate) fn append_conditional_schemas(
     }
 }
 
+fn is_object_domain_only(schema: &Value) -> bool {
+    let Some(object) = schema.as_object() else {
+        return false;
+    };
+    if object.len() != 1 {
+        return false;
+    }
+    match object.get("type") {
+        Some(Value::String(schema_type)) => schema_type == "object",
+        Some(Value::Array(schema_types)) => {
+            !schema_types.is_empty()
+                && schema_types
+                    .iter()
+                    .all(|schema_type| schema_type.as_str() == Some("object"))
+        }
+        _ => ["anyOf", "oneOf"].into_iter().any(|keyword| {
+            object
+                .get(keyword)
+                .and_then(Value::as_array)
+                .is_some_and(|branches| {
+                    !branches.is_empty() && branches.iter().all(is_object_domain_only)
+                })
+        }),
+    }
+}
+
 /// Merge `incoming` into `target` when both are plain `properties` object
 /// fragments whose leaves do not collide; returns false (leaving `target`
 /// unchanged) when they do.
@@ -577,5 +876,16 @@ fn build_target_fragment(path_segments: &[String], leaf_schema: SchemaNode) -> S
     } else {
         build_target_fragment(tail, leaf_schema)
     };
-    SchemaNode::object().property(head.clone(), child)
+    if head == "*" {
+        return SchemaNode::foreign(serde_json::json!({
+            "additionalProperties": child.clone().into_value(),
+            "items": child.into_value(),
+        }));
+    }
+    // The carrier must claim nothing about the ancestor values themselves: a
+    // `with`-chain skips falsy ancestors entirely, so the arm has to hold
+    // vacuously there. `properties` descent alone already encodes "when this
+    // member exists on an object, the leaf requirement applies"; asserting
+    // `type: object` on the carrier would reject the skipped falsy states.
+    SchemaNode::untyped_member_host().property(head.clone(), child)
 }

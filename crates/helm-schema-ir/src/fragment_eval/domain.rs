@@ -165,10 +165,9 @@ pub enum EntryKey {
     /// A plain literal key (unquoted).
     Literal(String),
     /// A templated key. Projections attribute the entry's value at the
-    /// *parent* path (no invented segment), mirroring the line model's
-    /// refusal to guess a segment for templated keys; the key's own splices
-    /// are recorded as pathless reads at the eval site, where the ambient
-    /// range/branch predicates are still known.
+    /// structural dynamic-member path without guessing its rendered key; the
+    /// key's own splices are recorded as pathless reads at the eval site,
+    /// where the ambient range/branch predicates are still known.
     Dynamic(AbstractString),
 }
 
@@ -225,6 +224,11 @@ pub enum StringPart {
 pub struct TaintPart {
     /// The `.Values` paths that flowed into the unknown text.
     pub paths: BTreeSet<String>,
+    /// Exact structure serialized into this text, retained so a later
+    /// `fromJson` can recover the value shape across a helper boundary.
+    pub(crate) structured_value: Option<crate::abstract_value::AbstractValue>,
+    /// Whether `structured_value` was serialized as JSON at this boundary.
+    pub(crate) json_serialized: bool,
     /// The render site the taint was observed at.
     pub site: Option<Rc<SiteFacts>>,
     /// Helper-body source sites the taint was derived through (spliced
@@ -238,6 +242,18 @@ impl TaintPart {
     pub fn new(paths: BTreeSet<String>) -> Self {
         Self {
             paths,
+            structured_value: None,
+            json_serialized: false,
+            site: None,
+            provenance: Vec::new(),
+        }
+    }
+
+    pub(crate) fn from_json_serialized(value: crate::abstract_value::AbstractValue) -> Self {
+        Self {
+            paths: value.fragment_rendered_paths(),
+            structured_value: Some(value),
+            json_serialized: true,
             site: None,
             provenance: Vec::new(),
         }
@@ -281,14 +297,21 @@ pub struct SpliceMeta {
     /// so the sink schema does not constrain the value's shape.
     pub encoded: bool,
     /// The rendered text is a total stringification of the value (`quote`,
-    /// `squote`, `toString`, `join`): any input type renders, so the sink
-    /// neither constrains nor reveals the input shape.
+    /// `toString`, `join`): any input type renders, so the sink neither
+    /// constrains nor reveals the input shape.
     pub shape_erased: bool,
+    /// The rendered fragment is the result of `toYaml`: every input kind can
+    /// be serialized, but its placement can still require sequence shape.
+    pub yaml_serialized: bool,
     /// A string-consuming transform (`trunc`, `b64enc`, a dynamic `printf`
     /// format) shaped the rendered text: rendering fails for non-string
     /// values, so this splice's row binds a string contract under its own
     /// conditions.
     pub string_contract: bool,
+    /// The splice renders JSON text whose decoded value preserves this input identity.
+    pub json_serialized: bool,
+    /// The splice's runtime identity was recovered through JSON decoding.
+    pub json_decoded: bool,
     /// Helper-body source sites this splice was derived through.
     pub provenance: Vec<ContractProvenance>,
     /// The render site the splice materializes at.

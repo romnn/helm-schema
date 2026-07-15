@@ -42,7 +42,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
         if self.params.seen.contains(name) {
             return Some(EvalResult::none());
         }
-        let summary = self.params.context.analysis_db.summarize_bound_helper_call(
+        let call = self.params.context.analysis_db.summarize_bound_helper_call(
             name,
             arg,
             self.params.outer,
@@ -51,21 +51,34 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
             self.params.context,
             self.params.seen,
         );
+        let summary = &call.summary;
         // The resolver boundary is the one place summary facts enter
         // expression effects; collectors read the Effects fields only.
         // Encoded rows surface as encoded paths so value-lattice lowerings
         // keep the "sink does not constrain the value" semantics the row
         // recorded (the projected value's output paths carry no encoding
         // flag).
-        let effects = Effects {
+        let mut effects = Effects {
             chart_default_paths: summary.chart_defaults.clone(),
+            root_set_mutations: summary.root_set_mutations.clone(),
+            root_set_predicates: summary.root_set_predicates.clone(),
+            values_default_sources: summary.values_default_sources.clone(),
             type_hints: summary.type_hints.clone(),
             guarded_type_hints: summary.guarded_type_hints.clone(),
             parsed_yaml_input_paths: summary.parsed_yaml_input_paths.clone(),
             yaml_serialized_paths: summary.yaml_serialized_paths.clone(),
+            json_serialized_paths: summary
+                .rendered
+                .iter()
+                .filter(|row| row.meta.json_serialized)
+                .map(|row| row.path.clone())
+                .collect(),
             encoded_paths: summary.encoded_paths(),
             shape_erased_paths: summary.shape_erased_paths.clone(),
             string_contract_paths: summary.string_contract_paths.clone(),
+            direct_range_source_paths: summary.direct_range_source_paths.clone(),
+            json_decoded_range_source_paths: summary.json_decoded_range_source_paths.clone(),
+            destructured_range_source_paths: summary.destructured_range_source_paths.clone(),
             // An include renders its body to text, so every path the value
             // carries is derived text at the call site: a consuming stage
             // (`include … | trimAll`) must not claim contracts on the
@@ -79,8 +92,21 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
             helper_rendered: summary.rendered.clone(),
             helper_suppressed_paths: summary.suppress_predicate_paths.clone(),
             helper_fails: summary.fail_conditions.clone(),
+            member_host_conversions: summary.member_host_conversions.clone(),
             ..Effects::default()
         };
+        effects.merge(call.argument_effects);
+        // Helper arguments execute first, so a body mutation of the same root
+        // field is the value visible after the call returns.
+        for key in summary.root_set_mutations.keys() {
+            effects.root_set_predicates.remove(key);
+        }
+        effects
+            .root_set_mutations
+            .extend(summary.root_set_mutations.clone());
+        effects
+            .root_set_predicates
+            .extend(summary.root_set_predicates.clone());
         Some(EvalResult::with_effects(summary.value.clone(), effects))
     }
 }

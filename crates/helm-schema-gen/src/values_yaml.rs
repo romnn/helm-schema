@@ -7,6 +7,63 @@ use crate::merge::merge_schema_list;
 use crate::schema_model::{empty_schema, is_empty_schema};
 use crate::schema_node::SchemaNode;
 
+pub(crate) fn apply_values_default_sources(
+    doc: &mut YamlValue,
+    sources: &BTreeSet<helm_schema_core::ValuesDefaultSource>,
+) {
+    let mut by_target: BTreeMap<&str, Vec<&helm_schema_core::ValuesDefaultSource>> =
+        BTreeMap::new();
+    for source in sources {
+        by_target
+            .entry(&source.target_path)
+            .or_default()
+            .push(source);
+    }
+    for sources in by_target.values() {
+        // Multiple mutations of one target are order-sensitive. The signal
+        // bundle intentionally carries no guessed lexical order, so only a
+        // unique source is safe to apply.
+        let [source] = sources.as_slice() else {
+            continue;
+        };
+        let Some(defaults) = yaml_value_at_path(doc, &source.source_path).cloned() else {
+            continue;
+        };
+        let target_segments = crate::split_value_path(&source.target_path);
+        let Some(target) = yaml_value_at_segments_mut(doc, &target_segments) else {
+            continue;
+        };
+        merge_missing_yaml_values(target, defaults);
+    }
+}
+
+fn yaml_value_at_segments_mut<'a>(
+    doc: &'a mut YamlValue,
+    path_segments: &[String],
+) -> Option<&'a mut YamlValue> {
+    let mut current = doc;
+    for segment in path_segments {
+        let YamlValue::Mapping(mapping) = current else {
+            return None;
+        };
+        current = mapping.get_mut(YamlValue::String(segment.clone()))?;
+    }
+    Some(current)
+}
+
+fn merge_missing_yaml_values(target: &mut YamlValue, defaults: YamlValue) {
+    let (YamlValue::Mapping(target), YamlValue::Mapping(defaults)) = (target, defaults) else {
+        return;
+    };
+    for (key, default) in defaults {
+        if let Some(existing) = target.get_mut(&key) {
+            merge_missing_yaml_values(existing, default);
+        } else {
+            target.insert(key, default);
+        }
+    }
+}
+
 pub(crate) struct ValuesYamlPathInfo {
     pub(crate) schema: Value,
     pub(crate) declared_defaults: Vec<Value>,
@@ -14,17 +71,6 @@ pub(crate) struct ValuesYamlPathInfo {
     pub(crate) is_empty_string: bool,
     pub(crate) is_empty_map: bool,
     pub(crate) is_mapping: bool,
-    pub(crate) falsy_default: Option<FalsyDefault>,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum FalsyDefault {
-    Null,
-    False,
-    Zero,
-    EmptyString,
-    EmptySequence,
-    EmptyMapping,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -34,7 +80,6 @@ pub(crate) struct ValuesYamlPathFacts {
     pub(crate) is_empty_string: bool,
     pub(crate) is_empty_map: bool,
     pub(crate) is_mapping: bool,
-    pub(crate) falsy_default: Option<FalsyDefault>,
 }
 
 impl ValuesYamlPathFacts {
@@ -54,7 +99,6 @@ impl ValuesYamlPathInfo {
             is_empty_string: self.is_empty_string,
             is_empty_map: self.is_empty_map,
             is_mapping: self.is_mapping,
-            falsy_default: self.falsy_default,
         }
     }
 }
@@ -125,10 +169,6 @@ fn lookup_values_yaml_path_info(
     let is_mapping = values
         .iter()
         .all(|value| matches!(value, YamlValue::Mapping(_)));
-    let falsy_default = (values.len() == 1)
-        .then(|| falsy_default(values[0]))
-        .flatten();
-
     Some(ValuesYamlPathInfo {
         schema,
         declared_defaults,
@@ -136,26 +176,7 @@ fn lookup_values_yaml_path_info(
         is_empty_string,
         is_empty_map,
         is_mapping,
-        falsy_default,
     })
-}
-
-fn falsy_default(value: &YamlValue) -> Option<FalsyDefault> {
-    match value {
-        YamlValue::Null => Some(FalsyDefault::Null),
-        YamlValue::Bool(false) => Some(FalsyDefault::False),
-        YamlValue::Number(number)
-            if number.as_i64() == Some(0)
-                || number.as_u64() == Some(0)
-                || number.as_f64() == Some(0.0) =>
-        {
-            Some(FalsyDefault::Zero)
-        }
-        YamlValue::String(value) if value.is_empty() => Some(FalsyDefault::EmptyString),
-        YamlValue::Sequence(value) if value.is_empty() => Some(FalsyDefault::EmptySequence),
-        YamlValue::Mapping(value) if value.is_empty() => Some(FalsyDefault::EmptyMapping),
-        _ => None,
-    }
 }
 
 pub(crate) fn yaml_value_at_segments<'a>(

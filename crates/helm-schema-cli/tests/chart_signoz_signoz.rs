@@ -4,6 +4,8 @@
 //! these assertions state WHY the schema must look the way the fixture says,
 //! so a fixture regeneration cannot silently pin a regression.
 
+use std::collections::BTreeSet;
+
 use test_util::prelude::sim_assert_eq;
 #[path = "common/descriptions.rs"]
 mod descriptions;
@@ -561,10 +563,51 @@ fn schema_accepts_string_type(schema: &Value) -> bool {
         .any(schema_accepts_string_type)
 }
 
-fn assert_schema_description(schema: &serde_json::Value, pointer: &str, expected: &str) {
+fn assert_schema_description(schema: &Value, pointer: &str, expected: &str) {
+    let segments = pointer
+        .split('/')
+        .filter(|segment| !segment.is_empty())
+        .collect::<Vec<_>>();
+    let mut matches = Vec::new();
+    schema_values_at_pointer(schema, &segments, &mut matches);
+    let descriptions = matches
+        .into_iter()
+        .filter_map(Value::as_str)
+        .collect::<BTreeSet<_>>();
     sim_assert_eq!(
-        have: schema.pointer(pointer).and_then(serde_json::Value::as_str),
-        want: Some(expected),
+        have: descriptions,
+        want: BTreeSet::from([expected]),
         "schema description mismatch at {pointer}"
     );
+}
+
+fn schema_values_at_pointer<'schema>(
+    schema: &'schema Value,
+    segments: &[&str],
+    matches: &mut Vec<&'schema Value>,
+) {
+    if segments.is_empty() {
+        matches.push(schema);
+        return;
+    }
+    let Some(object) = schema.as_object() else {
+        return;
+    };
+
+    // A values path can live in a union arm or conditional overlay without a direct node.
+    for key in ["anyOf", "oneOf", "allOf"] {
+        if let Some(branches) = object.get(key).and_then(Value::as_array) {
+            for branch in branches {
+                schema_values_at_pointer(branch, segments, matches);
+            }
+        }
+    }
+    for key in ["then", "else"] {
+        if let Some(branch) = object.get(key) {
+            schema_values_at_pointer(branch, segments, matches);
+        }
+    }
+    if let Some(child) = object.get(segments[0]) {
+        schema_values_at_pointer(child, &segments[1..], matches);
+    }
 }

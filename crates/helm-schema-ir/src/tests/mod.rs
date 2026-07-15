@@ -8,7 +8,7 @@ mod resource_identity;
 mod symbolic_local_state;
 
 use crate::{Guard, SymbolicIrContext, ValueKind, YamlPath};
-use helm_schema_core::{GuardDnf, Predicate};
+use helm_schema_core::{DYNAMIC_MAPPING_VALUE_SEGMENT, GuardDnf, Predicate};
 
 /// The raw per-branch guard stacks of one helper meta (branch predicates in
 /// canonical guard order plus the defaulted marker), the same lowering the
@@ -62,6 +62,32 @@ foo: {{ .Values.name }}
             == vec![Guard::Truthy {
                 path: "enabled".to_string()
             }]));
+}
+
+#[test]
+fn dynamic_mapping_value_projects_structural_member_path() {
+    let src = r"
+apiVersion: v1
+kind: ConfigMap
+data:
+  {{- range $key, $value := .Values.entries }}
+  {{ $key }}: {{ $value }}
+  {{- end }}
+";
+    let idx = DefineIndex::new();
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(src)
+        .finalize();
+
+    assert!(ir.uses().iter().any(|use_| {
+        use_.source_expr == "entries.*"
+            && use_.path
+                == YamlPath(vec![
+                    "data".to_string(),
+                    DYNAMIC_MAPPING_VALUE_SEGMENT.to_string(),
+                ])
+            && use_.kind == ValueKind::Scalar
+    }));
 }
 
 #[test]
@@ -124,6 +150,184 @@ metadata:
     let resource = name_use.resource.as_ref().expect("resource claim");
     sim_assert_eq!(have: resource.api_version, want: "v1");
     sim_assert_eq!(have: resource.kind, want: "Service");
+}
+
+#[test]
+fn document_guard_survives_helper_sibling_claim_scoping() {
+    let helpers = r#"
+{{- define "guarded.port" -}}
+{{- if .enabled -}}
+{{- .port -}}
+{{- end -}}
+{{- end -}}
+"#;
+    let src = r#"
+{{- if .Values.enabled }}
+apiVersion: v1
+kind: Service
+spec:
+  value: {{ include "guarded.port" (dict "enabled" .Values.enabled "port" .Values.port) }}
+{{- end }}
+"#;
+    let mut index = DefineIndex::new();
+    index.add_file_source("<inline:0>", helpers);
+    let ir = SymbolicIrContext::new(&index)
+        .generate_contract_ir(src)
+        .finalize();
+
+    let port = ir
+        .uses()
+        .iter()
+        .find(|use_| use_.source_expr == "port" && !use_.path.0.is_empty())
+        .unwrap_or_else(|| panic!("expected rendered port use: {ir:#?}"));
+    assert!(
+        port.single_guard_conjunction().contains(&Guard::Truthy {
+            path: "enabled".to_string(),
+        }),
+        "the document guard executes outside the helper's sibling claims: {port:#?}"
+    );
+}
+
+#[test]
+fn document_branch_guard_survives_local_helper_reassignment() {
+    let helpers = r#"
+{{- define "selected.value" -}}
+{{- .Values.payload -}}
+{{- end -}}
+"#;
+    let src = r#"
+{{- $selected := "" -}}
+{{- if eq .Values.mode "active" -}}
+{{- $selected = include "selected.value" . -}}
+{{- end -}}
+{{- if $selected }}
+apiVersion: v1
+kind: ConfigMap
+data:
+  value: {{ $selected }}
+{{- end }}
+"#;
+    let mut index = DefineIndex::new();
+    index.add_file_source("<inline:0>", helpers);
+    let ir = SymbolicIrContext::new(&index)
+        .generate_contract_ir(src)
+        .finalize();
+
+    let payload = ir
+        .uses()
+        .iter()
+        .find(|use_| {
+            use_.source_expr == "payload"
+                && use_.path == YamlPath(vec!["data".to_string(), "value".to_string()])
+        })
+        .unwrap_or_else(|| panic!("expected rendered payload use: {ir:#?}"));
+    assert!(
+        payload.single_guard_conjunction().contains(&Guard::Eq {
+            path: "mode".to_string(),
+            value: helm_schema_core::GuardValue::string("active"),
+        }),
+        "the assignment branch must remain on the local's rendered value: {payload:#?}"
+    );
+}
+
+#[test]
+fn document_local_coalesce_preserves_ordered_candidate_selection() {
+    let src = r#"
+{{- $selected := coalesce .Values.primary .Values.fallback -}}
+apiVersion: v1
+kind: Secret
+data:
+  value: {{ $selected | b64enc | quote }}
+"#;
+    let ir = SymbolicIrContext::new(&DefineIndex::new())
+        .generate_contract_ir(src)
+        .finalize();
+
+    let primary = ir
+        .uses()
+        .iter()
+        .find(|use_| use_.source_expr == "primary" && !use_.path.0.is_empty())
+        .unwrap_or_else(|| panic!("expected rendered primary use: {ir:#?}"));
+    sim_assert_eq!(
+        have: primary.condition.guard_conjunctions(),
+        want: vec![vec![
+            Guard::Truthy {
+                path: "primary".to_string(),
+            },
+            Guard::Default {
+                path: "primary".to_string(),
+            },
+        ]]
+    );
+
+    let fallback = ir
+        .uses()
+        .iter()
+        .find(|use_| use_.source_expr == "fallback" && !use_.path.0.is_empty())
+        .unwrap_or_else(|| panic!("expected rendered fallback use: {ir:#?}"));
+    sim_assert_eq!(
+        have: fallback.condition.guard_conjunctions(),
+        want: vec![vec![
+            Guard::Truthy {
+                path: "fallback".to_string(),
+            },
+            Guard::Not {
+                path: "primary".to_string(),
+            },
+            Guard::Default {
+                path: "fallback".to_string(),
+            },
+        ]]
+    );
+}
+
+#[test]
+fn opaque_include_guard_abstains_from_provider_schema_evidence() {
+    let helpers = r#"
+{{- define "resource.enabled" -}}
+{{- if .Values.enabled -}}
+true
+{{- end -}}
+{{- end -}}
+"#;
+    let src = r#"
+{{- if include "resource.enabled" . }}
+apiVersion: v1
+kind: ConfigMap
+data:
+  value: {{ .Values.payload }}
+{{- end }}
+"#;
+    let mut index = DefineIndex::new();
+    index.add_file_source("<inline:0>", helpers);
+    let finalized = SymbolicIrContext::new(&index)
+        .generate_contract_ir(src)
+        .finalize();
+
+    let payload = finalized
+        .uses()
+        .iter()
+        .find(|use_| {
+            use_.source_expr == "payload"
+                && use_.path == YamlPath(vec!["data".to_string(), "value".to_string()])
+        })
+        .unwrap_or_else(|| panic!("expected rendered payload use: {finalized:#?}"));
+    assert!(
+        payload
+            .condition
+            .disjuncts()
+            .iter()
+            .all(|conjunction| conjunction.iter().any(Predicate::contains_approximation)),
+        "the unlowerable include result must remain approximate in memory: {payload:#?}"
+    );
+    assert!(
+        finalized
+            .schema_signals()
+            .schema_evidence_by_value_path()
+            .get("payload")
+            .is_none_or(|evidence| evidence.provider_schema_uses.is_empty()),
+        "an approximate resource guard must not leak provider constraints: {finalized:#?}"
+    );
 }
 
 #[test]
@@ -208,7 +412,7 @@ spec:
             .any(|guard| matches!(guard, Guard::Truthy { path } if path == "commonLabels"))),
         "commonLabels is the custom-label source, not a guard for the pathless common.names.name dependency: {pathless_name_override_uses:#?}"
     );
-    let own_default_branch = [
+    let selected_default_branch = [
         Guard::Truthy {
             path: "nameOverride".to_string(),
         },
@@ -226,9 +430,9 @@ spec:
                     .condition
                     .guard_conjunctions()
                     .iter()
-                    .any(|guards| guards == &own_default_branch)
+                    .any(|guards| guards == &selected_default_branch)
         }),
-        "expected pathless nameOverride dependency to keep its own branch guards: {name_override_uses:#?}"
+        "expected pathless nameOverride dependency to keep its selected default branch under the document execution guard: {name_override_uses:#?}"
     );
     let app_name_path = YamlPath(vec![
         "metadata".to_string(),
@@ -282,5 +486,35 @@ metadata:
         }),
         "expected transitive helper default to survive into rendered contract use, got {:?}",
         ir.uses()
+    );
+}
+
+#[test]
+fn nonempty_choice_list_range_preserves_computed_mutation() {
+    let helpers = r#"
+{{- define "mutate.patch" -}}
+{{- $patch := .Values.patch -}}
+{{- $keys := list "path" -}}
+{{- if .Values.copy -}}
+{{- $keys = append $keys "from" -}}
+{{- end -}}
+{{- range $key := $keys -}}
+{{- $_ := set $patch (printf "%sKey" $key) "derived" -}}
+{{- end -}}
+{{- $patch.pathKey -}}
+{{- end -}}
+"#;
+    let mut index = DefineIndex::new();
+    index.add_file_source("<inline:0>", helpers);
+
+    let ir = SymbolicIrContext::new(&index)
+        .generate_contract_ir(r#"{{ include "mutate.patch" . }}"#)
+        .finalize();
+
+    assert!(
+        ir.uses()
+            .iter()
+            .all(|use_| use_.source_expr != "patch.pathKey"),
+        "the guaranteed path iteration sets pathKey before its later read: {ir:#?}"
     );
 }

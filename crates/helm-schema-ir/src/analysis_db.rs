@@ -5,6 +5,7 @@ use std::rc::Rc;
 use helm_schema_ast::{DefineIndex, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
+use crate::eval_effect::Effects;
 use crate::expr_eval::bindings_for_helper_arg_with;
 use crate::fragment_eval::BodyEvalFacts;
 use crate::fragment_eval::summary::{FragmentSummary, eval_bound_helper_fragment};
@@ -31,6 +32,11 @@ pub(crate) struct IrAnalysisDb {
     /// resource spans), shared across memoized-summary misses.
     body_eval_facts: RefCell<HashMap<String, Rc<BodyEvalFacts>>>,
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallCacheKey, Rc<FragmentSummary>>>,
+}
+
+pub(crate) struct BoundHelperCallSummary {
+    pub(crate) summary: Rc<FragmentSummary>,
+    pub(crate) argument_effects: Effects,
 }
 
 impl IrAnalysisDb {
@@ -129,12 +135,15 @@ impl IrAnalysisDb {
         fragment_locals: &HashMap<String, AbstractValue>,
         context: FragmentEvalContext<'_>,
         seen: &mut HashSet<String>,
-    ) -> Rc<FragmentSummary> {
+    ) -> BoundHelperCallSummary {
         if !seen.insert(name.to_string()) {
-            return Rc::new(FragmentSummary::default());
+            return BoundHelperCallSummary {
+                summary: Rc::new(FragmentSummary::default()),
+                argument_effects: Effects::default(),
+            };
         }
 
-        let resolution = resolve_bound_helper_call(ResolveBoundHelperCallParams {
+        let resolved = resolve_bound_helper_call(ResolveBoundHelperCallParams {
             helper_name: name,
             arg,
             outer_bindings,
@@ -144,19 +153,30 @@ impl IrAnalysisDb {
             seen,
         });
         let seen_key = seen.iter().cloned().collect();
-        let key = BoundHelperCallCacheKey::from_resolution(name, &resolution, seen_key);
+        let key = BoundHelperCallCacheKey::from_resolution(name, &resolved.resolution, seen_key);
 
         if let Some(cached) = self.bound_helper_calls.borrow().get(&key) {
             seen.remove(name);
-            return Rc::clone(cached);
+            return BoundHelperCallSummary {
+                summary: Rc::clone(cached),
+                argument_effects: resolved.argument_effects,
+            };
         }
 
-        let summary = Rc::new(eval_bound_helper_fragment(name, &resolution, self, seen));
+        let summary = Rc::new(eval_bound_helper_fragment(
+            name,
+            &resolved.resolution,
+            self,
+            seen,
+        ));
         self.bound_helper_calls
             .borrow_mut()
             .insert(key, Rc::clone(&summary));
         seen.remove(name);
-        summary
+        BoundHelperCallSummary {
+            summary,
+            argument_effects: resolved.argument_effects,
+        }
     }
 }
 
@@ -176,6 +196,11 @@ pub(crate) struct BoundHelperCallResolution {
     pub(crate) dot: DotFrame,
 }
 
+struct ResolvedBoundHelperCall {
+    resolution: BoundHelperCallResolution,
+    argument_effects: Effects,
+}
+
 struct ResolveBoundHelperCallParams<'a, 'context> {
     helper_name: &'a str,
     arg: Option<&'a TemplateExpr>,
@@ -188,17 +213,19 @@ struct ResolveBoundHelperCallParams<'a, 'context> {
 
 fn resolve_bound_helper_call(
     params: ResolveBoundHelperCallParams<'_, '_>,
-) -> BoundHelperCallResolution {
-    let eval_arg_value = |expr: &TemplateExpr, seen: &mut HashSet<String>| {
-        helper_result_from_expr_with_fragment_locals(
+) -> ResolvedBoundHelperCall {
+    let mut argument_effects = Effects::default();
+    let mut eval_arg_value = |expr: &TemplateExpr, seen: &mut HashSet<String>| {
+        let result = helper_result_from_expr_with_fragment_locals(
             expr,
             params.fragment_locals,
             params.outer_bindings,
             params.current_dot,
             params.context,
             seen,
-        )
-        .value
+        );
+        argument_effects.merge(result.effects.execution_only());
+        result.value
     };
     let mut binding_seen = params.seen.clone();
     let arg_resolution = bindings_for_helper_arg_with(params.arg, params.outer_bindings, |expr| {
@@ -236,12 +263,15 @@ fn resolve_bound_helper_call(
         helper_fragment_dot = helper_fragment_dot.map(abstract_config_entry_in_binding);
     }
 
-    BoundHelperCallResolution {
-        bindings,
-        dot: DotFrame {
-            helper: helper_body_dot,
-            fragment: helper_fragment_dot,
+    ResolvedBoundHelperCall {
+        resolution: BoundHelperCallResolution {
+            bindings,
+            dot: DotFrame {
+                helper: helper_body_dot,
+                fragment: helper_fragment_dot,
+            },
         },
+        argument_effects,
     }
 }
 

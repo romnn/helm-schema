@@ -15,6 +15,9 @@ pub enum ValueKind {
     /// A serialization transform preserves dependency provenance without
     /// exposing input shape.
     Serialized = 3,
+    /// `toYaml` accepts any input shape, while the rendered YAML fragment's
+    /// structural placement can still constrain the resulting document.
+    YamlSerialized = 4,
 }
 
 /// Detected Kubernetes resource type (apiVersion + kind).

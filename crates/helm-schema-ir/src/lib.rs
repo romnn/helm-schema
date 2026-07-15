@@ -25,7 +25,7 @@ pub use helm_schema_core::{
     CapabilityGuard, ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence,
     ContractProvenance, ContractSchemaSignals, ContractValuePathFacts, Guard, GuardValue,
     HelperBranch, HelperBranchBody, MetadataFieldKind, ProviderSchemaUse, ResourceRef, SourceSpan,
-    ValueKind, YamlPath,
+    ValueKind, ValuesDefaultSource, YamlPath,
 };
 pub use symbolic::SymbolicIrContext;
 

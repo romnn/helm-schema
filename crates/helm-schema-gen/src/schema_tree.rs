@@ -50,6 +50,10 @@ impl SchemaDocument {
         append_conditional_at_parts(&mut self.root, ancestor_segments, condition, then_schema);
     }
 
+    pub(crate) fn constrain_existing_path_to_object(&mut self, path_segments: &[String]) -> bool {
+        constrain_existing_path_to_object(&mut self.root, path_segments)
+    }
+
     #[tracing::instrument(skip_all)]
     pub(crate) fn merge_missing_values_yaml_defaults_under_roots(
         &mut self,
@@ -80,6 +84,63 @@ impl SchemaDocument {
     }
 }
 
+fn constrain_existing_path_to_object(node: &mut SchemaNode, path_segments: &[String]) -> bool {
+    let Some((head, tail)) = path_segments.split_first() else {
+        return match node {
+            SchemaNode::Empty => {
+                *node = SchemaNode::unknown_object();
+                true
+            }
+            SchemaNode::Object { typed, .. } => {
+                *typed = true;
+                true
+            }
+            SchemaNode::Foreign(Value::Object(object)) => match object.get("type") {
+                None => {
+                    object.insert("type".to_string(), Value::String("object".to_string()));
+                    true
+                }
+                Some(Value::String(schema_type)) => schema_type == "object",
+                Some(Value::Array(schema_types))
+                    if schema_types
+                        .iter()
+                        .any(|schema_type| schema_type == "object") =>
+                {
+                    object.insert("type".to_string(), Value::String("object".to_string()));
+                    true
+                }
+                _ => false,
+            },
+            SchemaNode::Foreign(Value::Bool(false)) => true,
+            SchemaNode::Foreign(Value::Bool(true)) => {
+                *node = SchemaNode::unknown_object();
+                true
+            }
+            SchemaNode::Array { .. } | SchemaNode::Foreign(_) => false,
+        };
+    };
+
+    match node {
+        SchemaNode::Object { properties, .. } => properties
+            .get_mut(head)
+            .is_some_and(|child| constrain_existing_path_to_object(child, tail)),
+        SchemaNode::Foreign(Value::Object(object)) => {
+            let Some(child_value) = object
+                .get_mut("properties")
+                .and_then(Value::as_object_mut)
+                .and_then(|properties| properties.get_mut(head))
+            else {
+                return false;
+            };
+            let mut child = SchemaNode::foreign(std::mem::take(child_value));
+            let constrained = constrain_existing_path_to_object(&mut child, tail);
+            *child_value = child.into_value();
+            constrained
+        }
+        SchemaNode::Empty | SchemaNode::Array { .. } | SchemaNode::Foreign(_) => false,
+    }
+}
+
 pub(crate) fn draft07_root_document(root_schema: Value) -> Value {
     let mut out = Map::new();
     out.insert(
@@ -97,6 +158,16 @@ pub(crate) fn draft07_root_document(root_schema: Value) -> Value {
         out.insert("additionalProperties".to_string(), Value::Bool(false));
     }
     Value::Object(out)
+}
+
+pub(crate) fn insert_path_schema_value(
+    root_schema: Value,
+    path_segments: &[String],
+    schema: Value,
+) -> Value {
+    let mut root = SchemaNode::foreign(root_schema);
+    insert_schema_at_parts(&mut root, path_segments, SchemaNode::foreign(schema));
+    root.into_value()
 }
 
 fn conditional_entry(condition: SchemaNode, then_schema: SchemaNode) -> SchemaNode {
@@ -128,10 +199,22 @@ fn append_conditional_at_parts(
         return;
     }
 
+    // Pure navigation toward the conditional's anchor: a `with` chain skips
+    // falsy ancestors, so every carrier level must hold vacuously for them
+    // instead of asserting `type: object`.
+    if node.is_empty_slot() {
+        *node = SchemaNode::untyped_member_host();
+    }
     let properties = ensure_object_properties(node);
     let child = properties
         .entry(path_segments[0].clone())
-        .or_insert_with(SchemaNode::unknown_object);
+        .or_insert_with(|| {
+            if path_segments.len() == 1 {
+                SchemaNode::foreign(serde_json::json!({}))
+            } else {
+                SchemaNode::untyped_member_host()
+            }
+        });
     if path_segments.len() == 1 {
         push_conditional_entry(child, condition, then_schema, true);
     } else {
@@ -142,7 +225,10 @@ fn append_conditional_at_parts(
 fn merge_conditional_fragment_into_foreign_slot(node: &mut SchemaNode, fragment: SchemaNode) {
     reconcile_node_host_with_branch_schema(node, &fragment);
     open_host_descendants_extended_by_schema(node, &fragment);
-    merge_into_schema_slot(node, fragment);
+    // The fragment is a conditional constraint on the existing slot, not an
+    // alternative value lane. A union here lets the old slot bypass every
+    // descendant `if`/`then` carried by the fragment.
+    node.push_all_of(fragment);
 }
 
 fn push_conditional_entry(
@@ -240,6 +326,11 @@ fn collect_missing_yaml_default_insertions(
     skip_paths: &BTreeSet<Vec<String>>,
     insertions: &mut Vec<(Vec<String>, SchemaNode)>,
 ) {
+    if skip_paths.iter().any(|skip_path| {
+        skip_path.len() < current_path.len() && current_path.starts_with(skip_path)
+    }) {
+        return;
+    }
     if skip_paths.contains(current_path) {
         if !root_schema.path_exists(current_path) {
             insertions.push((current_path.to_vec(), SchemaNode::empty()));
@@ -492,7 +583,7 @@ fn insert_map_member_row(
         // in EVERY collection arm: `range` iterates arrays and maps alike,
         // so the member constrains array items and map values, while
         // scalar, null, and CLOSED-object arms (the exact-empty off state)
-        // stay untouched (F59). Array arms merge into their `items`
+        // stay untouched. Array arms merge into their `items`
         // directly so repeated member rows fold instead of wrapping.
         SchemaNode::Foreign(Value::Object(object)) if object.contains_key("anyOf") => {
             let Some(arms) = object.get_mut("anyOf").and_then(Value::as_array_mut) else {
@@ -583,7 +674,22 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
     }
 
     if path_segments[0] == "*" {
-        if !node.is_empty_slot() && !node.is_array_like() {
+        if node.is_empty_slot() {
+            // A bare `*` member row proves members exist, not which
+            // collection lane hosts them: `range` iterates arrays and maps
+            // alike, so a slot with no other shape evidence opens both lanes
+            // instead of inventing an array-only shape.
+            *node = SchemaNode::foreign(serde_json::json!({
+                "anyOf": [
+                    { "items": {}, "type": "array" },
+                    { "additionalProperties": {}, "type": "object" },
+                ]
+            }));
+            let hosted = insert_map_member_row(node, path_segments, &leaf);
+            debug_assert!(hosted, "two-lane member seed must host the row");
+            return;
+        }
+        if !node.is_array_like() {
             let existing = std::mem::replace(node, SchemaNode::empty());
             let mut array_variant = new_array_slot();
             insert_schema_at_parts(&mut array_variant, path_segments, leaf);
@@ -617,7 +723,9 @@ fn insert_schema_at_parts(node: &mut SchemaNode, path_segments: &[String], leaf:
     let properties = ensure_object_properties(node);
     let child = properties.entry(key).or_insert_with(|| {
         if next_is_array {
-            new_array_slot()
+            // Left empty so the `*` handling above seeds both collection
+            // lanes for the member row instead of an array-only slot.
+            SchemaNode::empty()
         } else {
             // An ancestor object materialized only because a DESCENDANT is
             // referenced: member reads prove keys exist, they do not bound

@@ -64,32 +64,47 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "ingress": {
             "anyOf": [
               {
                 "type": "object"
-              },
-              {
-                "type": "null"
               }
             ]
           }
-        },
-        "type": "object"
+        }
       }
     }
   ],
   "properties": {
     "ingress": {
-      "additionalProperties": {},
-      "properties": {
-        "className": {},
-        "enabled": {
-          "type": "boolean"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "className": {},
+            "enabled": {
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            }
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
         }
-      },
-      "type": "object"
+      ]
     },
     "podDisruptionBudget": {
       "additionalProperties": {},
@@ -107,18 +122,27 @@
             "type": "object"
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "minAvailable": {
                 "type": "integer"
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
         "enabled": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "maxUnavailable": {},
         "minAvailable": {}

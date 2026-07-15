@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
 use crate::helper_meta::HelperOutputMeta;
+use helm_schema_core::Predicate;
 
 use super::SymbolicLocalState;
 
@@ -19,6 +20,11 @@ pub(super) fn joined_branch_outcomes(
         fragment_values: join_map(&outcomes, |state| &state.fragment_values, join_value_choice),
         default_paths: join_map(&outcomes, |state| &state.default_paths, join_path_union),
         output_meta: join_map(&outcomes, |state| &state.output_meta, join_meta_by_path),
+        truthy_reductions: join_map(
+            &outcomes,
+            |state| &state.truthy_reductions,
+            join_predicate_union,
+        ),
         typeof_sources: join_map(&outcomes, |state| &state.typeof_sources, join_if_equal),
         range_member_values: join_map(
             &outcomes,
@@ -90,6 +96,25 @@ fn join_meta_by_path(
         }
     }
     Some(merged)
+}
+
+fn join_predicate_union(predicates: Vec<&Predicate>) -> Option<Predicate> {
+    let mut alternatives = BTreeSet::new();
+    for predicate in predicates {
+        match predicate {
+            Predicate::True => return Some(Predicate::True),
+            Predicate::False => {}
+            Predicate::Or(inner) => alternatives.extend(inner.iter().cloned()),
+            predicate => {
+                alternatives.insert(predicate.clone());
+            }
+        }
+    }
+    Some(match alternatives.len() {
+        0 => Predicate::False,
+        1 => alternatives.pop_first().unwrap_or(Predicate::False),
+        _ => Predicate::Or(alternatives.into_iter().collect()),
+    })
 }
 
 fn intersect_chart_defaults(outcomes: &[SymbolicLocalState]) -> BTreeSet<String> {

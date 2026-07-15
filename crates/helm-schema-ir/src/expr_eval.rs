@@ -50,47 +50,117 @@ pub(crate) fn direct_values_path(expr: &TemplateExpr) -> Option<String> {
 /// accessing the dict's keys says nothing about `x`'s shape.
 fn direct_values_identity(value: &AbstractValue) -> Option<String> {
     match value {
-        AbstractValue::ValuesPath(path) if !path.is_empty() => Some(path.clone()),
+        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)
+            if !path.is_empty() =>
+        {
+            Some(path.clone())
+        }
+        AbstractValue::OutputPath(path, meta) if meta.json_decoded && !path.is_empty() => {
+            Some(path.clone())
+        }
         _ => None,
     }
 }
 
-/// Record that `segments` was reached by Go field access: every
-/// nonterminal prefix at or past `accessed_from` segments must be an
-/// object when truthy — field access on a truthy scalar or list aborts
-/// rendering, while nil prefixes yield nil. The captures ride the shared
-/// fail channel so ambient guards join at absorption, and the signal
-/// builder folds them into one bypass-proof arm per path instead of one
-/// per read (the F57/F63 size-aware encoding).
-fn record_member_access_captures(segments: &[String], accessed_from: usize, effects: &mut Effects) {
+fn direct_values_identity_including_root(value: &AbstractValue) -> Option<String> {
+    match value {
+        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+            Some(path.clone())
+        }
+        AbstractValue::OutputPath(path, meta) if meta.json_decoded => Some(path.clone()),
+        _ => None,
+    }
+}
+
+/// Record that `segments` was reached by Go field access: every nonterminal
+/// prefix at or past `accessed_from` must exist and host members whenever
+/// the surrounding control flow executes the access. The captures ride the
+/// shared fail channel so ambient guards join at absorption, and the signal
+/// builder folds them into one bypass-proof arm per path instead of one per
+/// read.
+fn record_member_access_captures(
+    segments: &[String],
+    accessed_from: usize,
+    env: &EvalEnv,
+    effects: &mut Effects,
+) {
     if segments.len() < 2 {
         return;
     }
     for len in accessed_from.max(1)..segments.len() {
         let prefix = &segments[..len];
-        if prefix
-            .iter()
-            .any(|segment| segment == "*" || segment.is_empty())
-        {
+        if prefix.iter().any(String::is_empty) {
             continue;
         }
         let path = helm_schema_core::join_value_path(prefix.iter().cloned());
-        let capture = crate::eval_effect::FailCapture {
-            conjunction: vec![
-                Predicate::truthy_path(path.clone()),
-                Predicate::from(crate::Guard::TypeIs {
-                    path,
-                    schema_type: "object".to_string(),
-                })
-                .negated(),
-            ],
-            approximate_condition_paths: BTreeSet::new(),
-            direct_ranged_paths: BTreeSet::new(),
-            member_access: true,
-        };
-        if !effects.helper_fails.contains(&capture) {
-            effects.helper_fails.push(capture);
+        record_member_host_capture(&path, &[], env, effects);
+    }
+}
+
+fn record_grouped_member_access_captures(
+    receiver_path: &str,
+    selected_path: &[String],
+    env: &EvalEnv,
+    effects: &mut Effects,
+) {
+    let mut segments = helm_schema_core::split_value_path(receiver_path);
+    let receiver_len = segments.len();
+    segments.extend(selected_path.iter().cloned());
+    let receiver_guard = (!receiver_path.is_empty()).then(|| {
+        Predicate::from(crate::Guard::Absent {
+            path: receiver_path.to_string(),
+        })
+        .negated()
+    });
+
+    for len in receiver_len..segments.len() {
+        let target = helm_schema_core::join_value_path(segments[..len].iter().cloned());
+        if target.is_empty() {
+            continue;
         }
+        let outer = receiver_guard.as_slice();
+        record_member_host_capture(&target, outer, env, effects);
+    }
+}
+
+fn record_member_host_capture(
+    path: &str,
+    outer_predicates: &[Predicate],
+    env: &EvalEnv,
+    effects: &mut Effects,
+) {
+    let handled_kinds = env
+        .member_host_conversions
+        .iter()
+        .filter(|conversion| {
+            conversion.path == path
+                && conversion
+                    .outer_predicates
+                    .iter()
+                    .all(|predicate| env.active_predicates.contains(predicate))
+        })
+        .map(|conversion| conversion.input_kind.clone())
+        .collect();
+    let mut conjunction = outer_predicates.to_vec();
+    conjunction.push(
+        Predicate::from(crate::Guard::TypeIs {
+            path: path.to_string(),
+            schema_type: "object".to_string(),
+        })
+        .negated(),
+    );
+    let capture = crate::eval_effect::FailCapture {
+        conjunction,
+        approximate_condition_paths: BTreeSet::new(),
+        direct_ranged_paths: BTreeSet::new(),
+        json_decoded_ranged_paths: BTreeSet::new(),
+        destructured_ranged_paths: BTreeSet::new(),
+        member_access: true,
+        member_access_handled_kinds: handled_kinds,
+        range_key_string_paths: BTreeSet::new(),
+    };
+    if !effects.helper_fails.contains(&capture) {
+        effects.helper_fails.push(capture);
     }
 }
 
@@ -102,8 +172,8 @@ pub(crate) fn eval_expr_with_helper_calls(
     match expr {
         TemplateExpr::Parenthesized(inner) => eval_expr_with_helper_calls(inner, env, resolver),
         TemplateExpr::Field(path) if path.first().is_some_and(|segment| segment == "Values") => {
-            let mut result = EvalResult::from_value(values_path_value(path));
-            record_member_access_captures(&path[1..], 0, &mut result.effects);
+            let mut result = EvalResult::from_value(values_path_value(path, env));
+            record_member_access_captures(&path[1..], 0, env, &mut result.effects);
             result
         }
         TemplateExpr::Field(path) if path.is_empty() => {
@@ -128,7 +198,7 @@ pub(crate) fn eval_expr_with_helper_calls(
                 let mut segments = helm_schema_core::split_value_path(&base);
                 let accessed_from = segments.len();
                 segments.extend(path.iter().cloned());
-                record_member_access_captures(&segments, accessed_from, &mut result.effects);
+                record_member_access_captures(&segments, accessed_from, env, &mut result.effects);
             }
             result
         }
@@ -136,8 +206,8 @@ pub(crate) fn eval_expr_with_helper_calls(
             if matches!(operand.as_ref(), TemplateExpr::Variable(var) if var.is_empty())
                 && path.first().is_some_and(|segment| segment == "Values") =>
         {
-            let mut result = EvalResult::from_value(values_path_value(path));
-            record_member_access_captures(&path[1..], 0, &mut result.effects);
+            let mut result = EvalResult::from_value(values_path_value(path, env));
+            record_member_access_captures(&path[1..], 0, env, &mut result.effects);
             result
         }
         TemplateExpr::Variable(var) if var.is_empty() => {
@@ -164,7 +234,12 @@ pub(crate) fn eval_expr_with_helper_calls(
                     let mut segments = helm_schema_core::split_value_path(&base);
                     let accessed_from = segments.len();
                     segments.extend(path.iter().cloned());
-                    record_member_access_captures(&segments, accessed_from, &mut result.effects);
+                    record_member_access_captures(
+                        &segments,
+                        accessed_from,
+                        env,
+                        &mut result.effects,
+                    );
                 }
                 return with_bound_selector_paths(result, expr, env);
             }
@@ -172,8 +247,8 @@ pub(crate) fn eval_expr_with_helper_calls(
                 && !var.is_empty()
                 && path.first().is_some_and(|segment| segment == "Values")
             {
-                let mut result = EvalResult::from_value(values_path_value(path));
-                record_member_access_captures(&path[1..], 0, &mut result.effects);
+                let mut result = EvalResult::from_value(values_path_value(path, env));
+                record_member_access_captures(&path[1..], 0, env, &mut result.effects);
                 return with_bound_selector_paths(result, expr, env);
             }
             if let TemplateExpr::Variable(var) = operand.as_ref()
@@ -187,11 +262,21 @@ pub(crate) fn eval_expr_with_helper_calls(
                 return with_bound_selector_paths(EvalResult::from_value(value), expr, env);
             }
             let base = eval_expr_with_helper_calls(operand, env, resolver);
+            let grouped_receiver = matches!(operand.as_ref(), TemplateExpr::Parenthesized(_))
+                .then(|| {
+                    base.value
+                        .as_ref()
+                        .and_then(direct_values_identity_including_root)
+                })
+                .flatten();
             let value = base
                 .value
                 .as_ref()
                 .and_then(|value| value.apply_to_path(path));
             let mut effects = base.effects;
+            if let Some(receiver_path) = grouped_receiver {
+                record_grouped_member_access_captures(&receiver_path, path, env, &mut effects);
+            }
             effects.output_paths.clear();
             effects
                 .bound_output_paths
@@ -219,11 +304,17 @@ pub(crate) fn eval_expr_with_helper_calls(
     }
 }
 
-fn values_path_value(path: &[String]) -> AbstractValue {
-    if path.len() == 1 {
+fn values_path_value(path: &[String], env: &EvalEnv) -> AbstractValue {
+    let tail = &path[1..];
+    if let Some(root) = env.root_fields.get("Values")
+        && let Some(value) = root.apply_to_path(tail)
+    {
+        return value;
+    }
+    if tail.is_empty() {
         AbstractValue::values_root()
     } else {
-        AbstractValue::ValuesPath(helm_schema_core::join_value_path(&path[1..]))
+        AbstractValue::ValuesPath(helm_schema_core::join_value_path(tail))
     }
 }
 

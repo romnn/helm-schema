@@ -120,3 +120,16 @@ fn contract_guard_stack_dedupes_projected_guards() {
         }]
     );
 }
+
+#[test]
+fn approximate_predicate_keeps_an_opaque_complement_without_becoming_a_guard() {
+    let predicate =
+        Predicate::approximate("condition-1", ["version".to_string()].into_iter().collect());
+
+    sim_assert_eq!(
+        have: predicate.negated(),
+        want: Predicate::Not(Box::new(predicate.clone()))
+    );
+    sim_assert_eq!(have: predicate.contract_guards(), want: Vec::<Guard>::new());
+    assert!(predicate.contains_approximation());
+}

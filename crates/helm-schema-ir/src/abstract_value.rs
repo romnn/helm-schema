@@ -7,6 +7,10 @@ pub(crate) enum AbstractValue {
     Top,
     Unknown,
     ValuesPath(String),
+    /// Input identity whose runtime value came back through JSON decoding.
+    JsonDecodedPath(String),
+    /// Key produced by directly ranging a values-backed collection.
+    RangeKey(String),
     OutputPath(String, HelperOutputMeta),
     RootContext,
     StringSet(BTreeSet<String>),
@@ -36,6 +40,47 @@ impl AbstractValue {
         paths
     }
 
+    pub(crate) fn range_key_paths(&self) -> BTreeSet<String> {
+        let mut paths = BTreeSet::new();
+        self.collect_range_key_paths(&mut paths);
+        paths
+    }
+
+    fn collect_range_key_paths(&self, out: &mut BTreeSet<String>) {
+        match self {
+            Self::RangeKey(path) => {
+                out.insert(path.clone());
+            }
+            Self::Dict(map) => {
+                for value in map.values() {
+                    value.collect_range_key_paths(out);
+                }
+            }
+            Self::List(items) => {
+                for value in items {
+                    value.collect_range_key_paths(out);
+                }
+            }
+            Self::Overlay { entries, fallback } => entries
+                .values()
+                .chain(std::iter::once(fallback.as_ref()))
+                .for_each(|value| value.collect_range_key_paths(out)),
+            Self::Choice(choices) => {
+                for value in choices {
+                    value.collect_range_key_paths(out);
+                }
+            }
+            Self::Top
+            | Self::Unknown
+            | Self::ValuesPath(_)
+            | Self::JsonDecodedPath(_)
+            | Self::OutputPath(_, _)
+            | Self::RootContext
+            | Self::StringSet(_)
+            | Self::Widened(_) => {}
+        }
+    }
+
     fn collect_paths(
         &self,
         out: &mut BTreeSet<String>,
@@ -43,7 +88,7 @@ impl AbstractValue {
         suppress_values_root: bool,
     ) {
         match self {
-            Self::ValuesPath(path) => {
+            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => {
                 if !suppress_values_root || !path.is_empty() {
                     out.insert(path.clone());
                 }
@@ -82,6 +127,7 @@ impl AbstractValue {
             }
             Self::Top
             | Self::Unknown
+            | Self::RangeKey(_)
             | Self::RootContext
             | Self::StringSet(_)
             | Self::Dict(_)
@@ -100,6 +146,10 @@ impl AbstractValue {
     pub(crate) fn fragment_range_item(&self) -> Option<Self> {
         match self {
             Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
+            Self::JsonDecodedPath(path) => Some(Self::JsonDecodedPath(item_path(path))),
+            Self::OutputPath(path, meta) if meta.json_decoded => {
+                Some(Self::OutputPath(item_path(path), meta.clone()))
+            }
             Self::OutputPath(path, meta) => Some(Self::OutputPath(path.clone(), meta.clone())),
             Self::List(items) => Self::choice(items.clone()),
             Self::Choice(choices) => Self::choice(
@@ -110,6 +160,7 @@ impl AbstractValue {
             ),
             Self::Top
             | Self::Unknown
+            | Self::RangeKey(_)
             | Self::RootContext
             | Self::StringSet(_)
             | Self::Dict(_)
@@ -120,7 +171,9 @@ impl AbstractValue {
 
     pub(crate) fn definitely_nonempty_iterable(&self) -> bool {
         match self {
+            Self::Dict(entries) => !entries.is_empty(),
             Self::List(items) => !items.is_empty(),
+            Self::Overlay { entries, .. } => !entries.is_empty(),
             Self::Choice(choices) => {
                 !choices.is_empty() && choices.iter().all(Self::definitely_nonempty_iterable)
             }
@@ -157,6 +210,155 @@ impl AbstractValue {
                     .collect(),
             ),
             other => Some(other),
+        }
+    }
+
+    pub(crate) fn mark_json_decoded(self) -> Self {
+        match self {
+            Self::ValuesPath(path) => Self::JsonDecodedPath(path),
+            Self::JsonDecodedPath(_) => self,
+            Self::OutputPath(path, mut meta) => {
+                meta.json_decoded = true;
+                Self::OutputPath(path, meta)
+            }
+            Self::Dict(entries) => Self::Dict(
+                entries
+                    .into_iter()
+                    .map(|(key, value)| (key, value.mark_json_decoded()))
+                    .collect(),
+            ),
+            Self::List(items) => {
+                Self::List(items.into_iter().map(Self::mark_json_decoded).collect())
+            }
+            Self::Overlay { entries, fallback } => Self::Overlay {
+                entries: entries
+                    .into_iter()
+                    .map(|(key, value)| (key, value.mark_json_decoded()))
+                    .collect(),
+                fallback: Box::new(fallback.mark_json_decoded()),
+            },
+            Self::Choice(choices) => {
+                Self::Choice(choices.into_iter().map(Self::mark_json_decoded).collect())
+            }
+            Self::Widened(paths) => {
+                Self::choice(paths.into_iter().map(Self::JsonDecodedPath).collect())
+                    .unwrap_or(Self::Unknown)
+            }
+            Self::Top
+            | Self::Unknown
+            | Self::RangeKey(_)
+            | Self::RootContext
+            | Self::StringSet(_) => self,
+        }
+    }
+
+    /// Keep only identities that remain unambiguous across a JSON roundtrip.
+    /// Direct values paths retain their identity. A structured helper value
+    /// may retain the `.Values` root together with the literal wrapper keys
+    /// needed to select it, but mutable sibling structure stays opaque.
+    pub(crate) fn json_roundtrip_identity(&self) -> Option<Self> {
+        match self {
+            Self::ValuesPath(_) | Self::JsonDecodedPath(_) | Self::OutputPath(_, _) => {
+                Some(self.clone().mark_json_decoded())
+            }
+            _ => self.values_root_structure().map(Self::mark_json_decoded),
+        }
+    }
+
+    pub(crate) fn values_root_structure(&self) -> Option<Self> {
+        match self {
+            Self::ValuesPath(path) | Self::JsonDecodedPath(path) if path.is_empty() => {
+                Some(self.clone())
+            }
+            Self::OutputPath(path, _) if path.is_empty() => Some(self.clone()),
+            Self::Dict(entries) => {
+                let entries = entries
+                    .iter()
+                    .filter_map(|(key, value)| {
+                        value
+                            .values_root_structure()
+                            .map(|value| (key.clone(), value))
+                    })
+                    .collect::<BTreeMap<_, _>>();
+                (!entries.is_empty()).then_some(Self::Dict(entries))
+            }
+            Self::Overlay { entries, fallback } => {
+                if let Some(fallback) = fallback.values_root_structure() {
+                    return Some(fallback);
+                }
+                let entries = entries
+                    .iter()
+                    .filter_map(|(key, value)| {
+                        value
+                            .values_root_structure()
+                            .map(|value| (key.clone(), value))
+                    })
+                    .collect::<BTreeMap<_, _>>();
+                (!entries.is_empty()).then_some(Self::Dict(entries))
+            }
+            Self::Choice(choices) => Self::choice(
+                choices
+                    .iter()
+                    .filter_map(Self::values_root_structure)
+                    .collect(),
+            ),
+            Self::Top
+            | Self::Unknown
+            | Self::ValuesPath(_)
+            | Self::JsonDecodedPath(_)
+            | Self::RangeKey(_)
+            | Self::OutputPath(_, _)
+            | Self::RootContext
+            | Self::StringSet(_)
+            | Self::List(_)
+            | Self::Widened(_) => None,
+        }
+    }
+
+    pub(crate) fn unique_json_decoded_path(&self) -> Option<String> {
+        let path = match self {
+            Self::JsonDecodedPath(path) => path,
+            Self::OutputPath(path, meta) if meta.json_decoded => path,
+            Self::Choice(choices)
+                if !choices.is_empty()
+                    && choices
+                        .iter()
+                        .all(|choice| choice.unique_json_decoded_path().is_some()) =>
+            {
+                let mut paths = choices.iter().filter_map(Self::unique_json_decoded_path);
+                let first = paths.next()?;
+                return paths.all(|path| path == first).then_some(first);
+            }
+            _ => return None,
+        };
+        Some(path.clone())
+    }
+
+    pub(crate) fn is_definitely_json_serialized(&self) -> bool {
+        match self {
+            Self::OutputPath(_, meta) => meta.json_serialized,
+            Self::Dict(entries) => {
+                !entries.is_empty() && entries.values().all(Self::is_definitely_json_serialized)
+            }
+            Self::List(items) => {
+                !items.is_empty() && items.iter().all(Self::is_definitely_json_serialized)
+            }
+            Self::Overlay { entries, fallback } => {
+                !entries.is_empty()
+                    && entries.values().all(Self::is_definitely_json_serialized)
+                    && fallback.is_definitely_json_serialized()
+            }
+            Self::Choice(choices) => {
+                !choices.is_empty() && choices.iter().all(Self::is_definitely_json_serialized)
+            }
+            Self::Top
+            | Self::Unknown
+            | Self::ValuesPath(_)
+            | Self::JsonDecodedPath(_)
+            | Self::RangeKey(_)
+            | Self::RootContext
+            | Self::StringSet(_)
+            | Self::Widened(_) => false,
         }
     }
 
@@ -198,6 +400,21 @@ impl AbstractValue {
                     segments,
                 )))
             }
+            Self::JsonDecodedPath(prefix) => {
+                let mut segments = helm_schema_core::split_value_path(prefix);
+                segments.extend(rest.iter().cloned());
+                Some(Self::JsonDecodedPath(helm_schema_core::join_value_path(
+                    segments,
+                )))
+            }
+            Self::OutputPath(prefix, meta) if meta.json_decoded => {
+                let mut segments = helm_schema_core::split_value_path(prefix);
+                segments.extend(rest.iter().cloned());
+                Some(Self::OutputPath(
+                    helm_schema_core::join_value_path(segments),
+                    meta.clone(),
+                ))
+            }
             Self::OutputPath(prefix, meta) => Some(Self::OutputPath(prefix.clone(), meta.clone())),
             Self::RootContext => {
                 if rest.first().is_some_and(|segment| segment == "Values") {
@@ -216,7 +433,7 @@ impl AbstractValue {
             // Selecting into an unknown call result severs the influence:
             // the selected member is not derived from the recorded paths in
             // any way the projection could still attribute.
-            Self::Unknown | Self::Widened(_) => None,
+            Self::Unknown | Self::Widened(_) | Self::RangeKey(_) => None,
             Self::StringSet(_) => None,
             Self::Choice(choices) => {
                 let mut out = Vec::new();
@@ -356,8 +573,11 @@ impl AbstractValue {
 
         match self {
             Self::ValuesPath(path) if remove.contains(&path) => None,
+            Self::JsonDecodedPath(path) if remove.contains(&path) => None,
             Self::OutputPath(path, _) if remove.contains(&path) => None,
             Self::ValuesPath(_)
+            | Self::JsonDecodedPath(_)
+            | Self::RangeKey(_)
             | Self::OutputPath(_, _)
             | Self::RootContext
             | Self::Unknown
@@ -427,10 +647,12 @@ impl AbstractValue {
     pub(crate) fn to_current_dot_context_value(&self) -> Option<Self> {
         match self {
             Self::ValuesPath(path) => Some(Self::ValuesPath(path.clone())),
+            Self::JsonDecodedPath(path) => Some(Self::JsonDecodedPath(path.clone())),
             Self::OutputPath(path, meta) => Some(Self::OutputPath(path.clone(), meta.clone())),
             Self::RootContext => Some(Self::RootContext),
             Self::Top
             | Self::Unknown
+            | Self::RangeKey(_)
             | Self::Dict(_)
             | Self::List(_)
             | Self::Overlay { .. }

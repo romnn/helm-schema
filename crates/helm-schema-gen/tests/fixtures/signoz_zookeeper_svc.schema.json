@@ -24,18 +24,77 @@
           "type": "object"
         }
       ]
-    },
-    "providerSource_k8s_23d6e04ff28d": {
-      "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/",
-      "items": {
-        "type": "string"
-      },
-      "type": "array",
-      "x-kubernetes-list-type": "atomic"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "commonAnnotations": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "commonAnnotations"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "commonAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "commonAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "annotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "annotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "commonAnnotations": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
     {
       "if": {
         "properties": {
@@ -49,6 +108,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
             "anyOf": [
@@ -60,8 +120,7 @@
               }
             ]
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -77,6 +136,7 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "nameOverride": {
             "anyOf": [
@@ -88,8 +148,87 @@
               }
             ]
           }
-        },
-        "type": "object"
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "annotations": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "commonAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "commonAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "annotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "annotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -171,10 +310,13 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "service": {
+            "additionalProperties": {},
             "properties": {
               "nodePorts": {
+                "additionalProperties": {},
                 "properties": {
                   "tls": {
                     "anyOf": [
@@ -184,21 +326,290 @@
                         "type": "integer"
                       },
                       {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       }
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "nodePorts": {
+                        "properties": {
+                          "client": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "client"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "nodePorts"
+                    ],
+                    "type": "object"
+                  }
                 },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "disableBaseClientPort": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "disableBaseClientPort"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "LoadBalancer"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "NodePort"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "nodePorts": {
+                        "properties": {
+                          "tls": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "nodePorts"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "client": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "LoadBalancer"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "service": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "NodePort"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "service"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "tls": {
+                "properties": {
+                  "client": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "client"
+                ],
                 "type": "object"
               }
             },
+            "required": [
+              "tls"
+            ],
             "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "disableBaseClientPort": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "disableBaseClientPort"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
           }
-        },
-        "type": "object"
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "nodePorts": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          }
+        }
       }
     },
     {
@@ -230,123 +641,132 @@
         "type": "object"
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "service": {
+            "additionalProperties": {},
             "properties": {
               "ports": {
+                "additionalProperties": {},
                 "properties": {
                   "tls": {
                     "description": "The port that will be exposed by this service.",
                     "format": "int32",
                     "type": "integer"
                   }
-                },
-                "type": "object"
-              },
-              "type": {
-                "not": {
-                  "type": "array"
                 }
               }
-            },
-            "type": "object"
+            }
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
+      "additionalProperties": {},
       "properties": {
         "service": {
+          "additionalProperties": {},
           "properties": {
             "type": {
-              "not": {
-                "type": "array"
-              }
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
-          },
-          "type": "object"
+          }
         }
-      },
-      "type": "object"
+      }
     },
     {
+      "additionalProperties": {},
       "properties": {
         "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "type": "boolean"
-              }
-            }
-          },
           "type": "object"
         }
-      },
-      "type": "object"
+      }
     },
     {
+      "additionalProperties": {},
       "properties": {
-        "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "type": "integer"
-              }
-            }
-          },
+        "tls": {
           "type": "object"
         }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "type": "number"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    {
-      "properties": {
-        "service": {
-          "properties": {
-            "type": {
-              "not": {
-                "type": "object"
-              }
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
+      }
     }
   ],
   "properties": {
     "commonAnnotations": {},
-    "commonLabels": {},
-    "fullnameOverride": {
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": [
-        "string",
-        "null"
+    "commonLabels": {
+      "allOf": [
+        {
+          "if": {
+            "not": {
+              "type": "string"
+            }
+          },
+          "then": {
+            "additionalProperties": {},
+            "type": "object"
+          }
+        },
+        {
+          "if": {
+            "type": "string"
+          },
+          "then": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
       ]
     },
-    "nameOverride": {},
+    "fullnameOverride": {
+      "anyOf": [
+        {
+          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+          "type": "string"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        }
+      ]
+    },
+    "nameOverride": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
     "namespaceOverride": {
-      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-      "type": [
-        "string",
-        "null"
+      "anyOf": [
+        {
+          "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+          "type": "string"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        }
       ]
     },
     "service": {
@@ -382,6 +802,7 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "clusterIP": {
                 "anyOf": [
@@ -390,12 +811,13 @@
                     "type": "string"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ]
               }
-            },
-            "type": "object"
+            }
           }
         },
         {
@@ -413,6 +835,7 @@
             "type": "object"
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "loadBalancerIP": {
                 "anyOf": [
@@ -421,10 +844,32 @@
                     "type": "string"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ]
-              },
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "LoadBalancer"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "loadBalancerSourceRanges": {
                 "anyOf": [
                   {
@@ -436,12 +881,13 @@
                     "x-kubernetes-list-type": "atomic"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ]
               }
-            },
-            "type": "object"
+            }
           }
         },
         {
@@ -493,8 +939,10 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "nodePorts": {
+                "additionalProperties": {},
                 "properties": {
                   "client": {
                     "anyOf": [
@@ -504,18 +952,15 @@
                         "type": "integer"
                       },
                       {
-                        "type": "null"
-                      },
-                      {
-                        "type": "string"
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       }
                     ]
                   }
-                },
-                "type": "object"
+                }
               }
-            },
-            "type": "object"
+            }
           }
         },
         {
@@ -533,19 +978,19 @@
             }
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "ports": {
+                "additionalProperties": {},
                 "properties": {
                   "client": {
                     "description": "The port that will be exposed by this service.",
                     "format": "int32",
                     "type": "integer"
                   }
-                },
-                "type": "object"
+                }
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
@@ -553,10 +998,49 @@
         "annotations": {},
         "clusterIP": {},
         "disableBaseClientPort": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "externalTrafficPolicy": {},
-        "extraPorts": {},
+        "extraPorts": {
+          "allOf": [
+            {
+              "if": {
+                "type": "string"
+              },
+              "then": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            {
+              "if": {
+                "not": {
+                  "type": "string"
+                }
+              },
+              "then": {
+                "items": {},
+                "type": "array"
+              }
+            }
+          ]
+        },
         "loadBalancerIP": {},
         "loadBalancerSourceRanges": {},
         "nodePorts": {
@@ -564,8 +1048,7 @@
           "properties": {
             "client": {},
             "tls": {}
-          },
-          "type": "object"
+          }
         },
         "ports": {
           "additionalProperties": {},
@@ -586,36 +1069,51 @@
           "type": "object"
         },
         "sessionAffinity": {
-          "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "sessionAffinityConfig": {},
-        "type": {
           "anyOf": [
             {
-              "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+              "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
               "type": "string"
             },
             {
-              "enum": [
-                "ClusterIP"
-              ]
-            },
-            {
-              "enum": [
-                "LoadBalancer"
-              ]
-            },
-            {
-              "type": "string"
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
           ]
-        }
-      },
-      "type": "object"
+        },
+        "sessionAffinityConfig": {
+          "allOf": [
+            {
+              "if": {
+                "not": {
+                  "type": "string"
+                }
+              },
+              "then": {
+                "additionalProperties": {},
+                "type": "object"
+              }
+            },
+            {
+              "if": {
+                "type": "string"
+              },
+              "then": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "type": {}
+      }
     },
     "tls": {
       "additionalProperties": {},
@@ -624,7 +1122,16 @@
           "additionalProperties": {},
           "properties": {
             "enabled": {
-              "type": "boolean"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
             }
           },
           "type": "object"

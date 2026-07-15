@@ -49,9 +49,8 @@ pub(crate) fn canonicalize_contract_uses(uses: &mut Vec<ContractUse>) {
         if let Some(existing) = merged_sites.last_mut()
             && contract_use_render_site_cmp(existing, &contract_use).is_eq()
         {
-            existing
-                .condition
-                .union_preserving_disjuncts(contract_use.condition);
+            existing.condition.union(contract_use.condition);
+            merge_contract_use_provenance(existing, contract_use.provenance);
             continue;
         }
         merged_sites.push(contract_use);
@@ -161,12 +160,15 @@ pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) 
                     uses.get(other_index)
                         .zip(predicates_by_index.get(other_index))
                 })
+                // Cheapest discriminant first: a subsuming row must carry
+                // strictly MORE predicates, so length filters out most of the
+                // bucket before any set or provenance comparison runs.
+                .filter(|(_, other_predicates)| other_predicates.len() > predicates.len())
                 .any(|(other, other_predicates)| {
                     !other.provenance.is_empty()
                         && ((contract_use.provenance.is_empty()
                             && contract_use.resource.is_some())
                             || other.provenance == contract_use.provenance)
-                        && other_predicates.len() > predicates.len()
                         && predicates.is_subset(other_predicates)
                         && ((!has_self_truthy
                             && other_predicates.iter().any(|predicate| {
@@ -242,6 +244,12 @@ fn contract_predicates(contract_use: &ContractUse) -> BTreeSet<Predicate> {
 fn expand_condition_disjuncts(uses: &mut Vec<ContractUse>) {
     let mut expanded = Vec::new();
     for contract_use in std::mem::take(uses) {
+        // The single-disjunct row (the common case after the first expansion)
+        // moves through unchanged instead of being re-cloned per pass.
+        if contract_use.condition.disjuncts().len() <= 1 {
+            expanded.push(contract_use);
+            continue;
+        }
         for conjunction in contract_use.condition.disjuncts() {
             let mut branch = contract_use.clone();
             branch.condition =
@@ -259,7 +267,7 @@ fn contract_use_semantic_cmp(left: &ContractUse, right: &ContractUse) -> std::cm
 }
 
 fn contract_use_render_site_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::Ordering {
-    contract_use_base_cmp(left, right).then_with(|| left.provenance.cmp(&right.provenance))
+    contract_use_base_cmp(left, right)
 }
 
 fn contract_use_base_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::Ordering {
@@ -268,6 +276,7 @@ fn contract_use_base_cmp(left: &ContractUse, right: &ContractUse) -> std::cmp::O
         .then_with(|| left.path.0.cmp(&right.path.0))
         .then_with(|| (left.kind as u8).cmp(&(right.kind as u8)))
         .then_with(|| left.resource.cmp(&right.resource))
+        .then_with(|| left.has_string_contract.cmp(&right.has_string_contract))
 }
 
 fn merge_contract_use_provenance(

@@ -19,7 +19,7 @@ pub(crate) fn merge_explicit_empty_placeholder(
             // No merged shape evidence. When descendant rows describe the
             // collection elsewhere (a list-ranged source), the declared-empty
             // default is purely the off-state; a whole-value `toYaml` splice
-            // is TOTAL (F56), so the declared `{}` placeholder claims no
+            // is total, so the declared `{}` placeholder claims no
             // shape there; otherwise the chart iterates user-supplied
             // entries and the map stays open.
             return if collection_shape_known {
@@ -186,7 +186,7 @@ fn open_fragment_values_schema_inner(schema: Value, widen_self: bool) -> Value {
             };
 
             if widen_self && is_array {
-                union_schema_list(vec![schema, type_schema("null"), type_schema("string")])
+                union_schema_list(vec![schema, type_schema("null")])
             } else if widen_self && is_scalar {
                 add_null_schema(schema)
             } else {

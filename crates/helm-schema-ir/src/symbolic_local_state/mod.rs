@@ -4,6 +4,7 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
 use crate::fragment_assignment::AssignmentKind;
 use crate::helper_meta::HelperOutputMeta;
+use helm_schema_core::Predicate;
 
 mod branch_join;
 
@@ -16,6 +17,10 @@ pub(crate) struct SymbolicLocalState {
     pub(crate) fragment_values: HashMap<String, AbstractValue>,
     pub(crate) default_paths: HashMap<String, BTreeSet<String>>,
     pub(crate) output_meta: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    /// Sufficient conditions under which a monotone local accumulator is
+    /// nonempty. An explicit [`Predicate::False`] is the empty seed; a
+    /// missing entry means the local's truthiness is not structurally known.
+    pub(crate) truthy_reductions: HashMap<String, Predicate>,
     /// Values paths defaulted by structural `set X "K" (X.K | default V)`
     /// helper mutations that have already run in source order.
     pub(crate) chart_value_defaults: BTreeSet<String>,
@@ -43,6 +48,7 @@ struct VariableLocalState {
     fragment_value: Option<AbstractValue>,
     default_paths: Option<BTreeSet<String>>,
     output_meta: Option<BTreeMap<String, HelperOutputMeta>>,
+    truthy_reduction: Option<Predicate>,
     typeof_source: Option<String>,
     range_member_value: Option<AbstractValue>,
 }
@@ -78,26 +84,6 @@ impl SymbolicLocalState {
     ) {
         self.record_binding_shadow(kind, &variable);
         self.set_fragment_value(variable, binding);
-    }
-
-    pub(crate) fn set_default_paths(&mut self, variable: &str, paths: BTreeSet<String>) {
-        if paths.is_empty() {
-            self.default_paths.remove(variable);
-        } else {
-            self.default_paths.insert(variable.to_string(), paths);
-        }
-    }
-
-    pub(crate) fn set_output_meta(
-        &mut self,
-        variable: String,
-        meta: BTreeMap<String, HelperOutputMeta>,
-    ) {
-        if meta.is_empty() {
-            self.output_meta.remove(&variable);
-        } else {
-            self.output_meta.insert(variable, meta);
-        }
     }
 
     pub(crate) fn insert_range_domain(&mut self, variable: String, literals: Vec<String>) {
@@ -144,6 +130,7 @@ impl SymbolicLocalState {
             fragment_value: self.fragment_values.get(variable).cloned(),
             default_paths: self.default_paths.get(variable).cloned(),
             output_meta: self.output_meta.get(variable).cloned(),
+            truthy_reduction: self.truthy_reductions.get(variable).cloned(),
             typeof_source: self.typeof_sources.get(variable).cloned(),
             range_member_value: self.range_member_values.get(variable).cloned(),
         }
@@ -155,6 +142,7 @@ impl SymbolicLocalState {
             || self.fragment_values.contains_key(variable)
             || self.default_paths.contains_key(variable)
             || self.output_meta.contains_key(variable)
+            || self.truthy_reductions.contains_key(variable)
             || self.typeof_sources.contains_key(variable)
             || self.range_member_values.contains_key(variable)
     }
@@ -170,6 +158,11 @@ impl SymbolicLocalState {
         restore_map_entry(&mut self.fragment_values, variable, previous.fragment_value);
         restore_map_entry(&mut self.default_paths, variable, previous.default_paths);
         restore_map_entry(&mut self.output_meta, variable, previous.output_meta);
+        restore_map_entry(
+            &mut self.truthy_reductions,
+            variable,
+            previous.truthy_reduction,
+        );
         restore_map_entry(&mut self.typeof_sources, variable, previous.typeof_source);
         restore_map_entry(
             &mut self.range_member_values,
@@ -193,6 +186,7 @@ impl SymbolicLocalState {
         self.fragment_values.remove(variable);
         self.default_paths.remove(variable);
         self.output_meta.remove(variable);
+        self.truthy_reductions.remove(variable);
         self.typeof_sources.remove(variable);
         self.range_member_values.remove(variable);
     }

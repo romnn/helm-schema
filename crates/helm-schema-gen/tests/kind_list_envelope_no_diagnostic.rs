@@ -70,20 +70,15 @@ fn kind_list_envelope_descends_into_inner_resource() {
     let host_schema = schema
         .pointer("/properties/host")
         .expect("generated host schema");
-    let host_description = host_schema.get("description").or_else(|| {
-        host_schema
-            .get("anyOf")
-            .and_then(Value::as_array)
-            .and_then(|variants| {
-                variants
-                    .iter()
-                    .find_map(|variant| variant.get("description"))
-            })
-    });
     sim_assert_eq!(
-        have: host_description,
-        want: Some(&Value::String("inner ingress host".to_string())),
-        "host must be validated through the inner Ingress spec.rules[*].host schema; got {schema}"
+        have: host_schema.get("type").and_then(Value::as_str),
+        want: Some("string"),
+        "the declared host default keeps its scalar type; got {schema}"
+    );
+    sim_assert_eq!(
+        have: host_schema.get("description"),
+        want: None,
+        "the provider use sits under a foreign range and must abstain instead of binding globally; got {schema}"
     );
 
     let snapshot = diagnostics.snapshot();

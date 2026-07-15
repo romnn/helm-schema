@@ -87,6 +87,7 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
             "anyOf": [
@@ -98,8 +99,7 @@
               }
             ]
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -146,22 +146,21 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
-          "fullnameOverride": {
-            "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "nameOverride": {
-            "type": [
-              "string",
-              "null"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
             ]
           }
-        },
-        "type": "object"
+        }
       }
     },
     {
@@ -223,6 +222,7 @@
         ]
       },
       "then": {
+        "additionalProperties": {},
         "properties": {
           "nameOverride": {
             "anyOf": [
@@ -234,8 +234,7 @@
               }
             ]
           }
-        },
-        "type": "object"
+        }
       }
     }
   ],
@@ -273,6 +272,7 @@
             ]
           },
           "then": {
+            "additionalProperties": {},
             "properties": {
               "name": {
                 "anyOf": [
@@ -281,10 +281,45 @@
                     "type": "string"
                   },
                   {
-                    "type": "null"
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "create": {}
+                  },
+                  "required": [
+                    "create"
+                  ],
+                  "type": "object"
+                }
               },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "priority": {
                 "anyOf": [
                   {
@@ -297,14 +332,22 @@
                   }
                 ]
               }
-            },
-            "type": "object"
+            }
           }
         }
       ],
       "properties": {
         "create": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "name": {},
         "priority": {}

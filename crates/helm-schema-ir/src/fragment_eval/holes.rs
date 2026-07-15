@@ -11,7 +11,7 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{
     BoundValueContext, parse_get_binding_from_exprs, parse_literal_list_range_expr,
 };
-use crate::eval_effect::Effects;
+use crate::eval_effect::{Effects, MemberHostConversion};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::literal_helper_call_callee;
 use crate::fragment_assignment::parse_helper_assignment_from_exprs;
@@ -146,6 +146,103 @@ fn type_descriptor_source(expr: &TemplateExpr, interpreter: &Interpreter<'_>) ->
     (paths.len() == 1).then(|| paths.into_iter().next().unwrap_or_default())
 }
 
+fn static_value_truthiness(value: Option<&AbstractValue>) -> Option<bool> {
+    match value? {
+        AbstractValue::StringSet(strings) => {
+            let all_empty = strings.iter().all(String::is_empty);
+            let all_nonempty = strings.iter().all(|value| !value.is_empty());
+            match (all_empty, all_nonempty) {
+                (true, false) => Some(false),
+                (false, true) => Some(true),
+                _ => None,
+            }
+        }
+        AbstractValue::Dict(entries) => Some(!entries.is_empty()),
+        AbstractValue::List(items) => Some(!items.is_empty()),
+        AbstractValue::Choice(choices) => {
+            let mut truthiness = choices
+                .iter()
+                .map(|choice| static_value_truthiness(Some(choice)));
+            let first = truthiness.next()??;
+            truthiness
+                .all(|candidate| candidate == Some(first))
+                .then_some(first)
+        }
+        _ => None,
+    }
+}
+
+/// Whether the expression's produced VALUE is derived text (a
+/// stringification or string transform): the binding's runtime truthiness is
+/// then the text's emptiness, which a surviving input value cannot witness.
+fn rhs_produces_derived_text(expr: &TemplateExpr) -> bool {
+    let stage = match expr.deparen() {
+        TemplateExpr::Pipeline(stages) => match stages.last() {
+            Some(stage) => stage.deparen(),
+            None => return false,
+        },
+        stage => stage,
+    };
+    let TemplateExpr::Call { function, .. } = stage else {
+        return false;
+    };
+    helm_schema_ast::is_total_stringification_function(function)
+        || helm_schema_ast::is_string_transform_function(function)
+        || matches!(
+            function.as_str(),
+            "join" | "printf" | "print" | "println" | "cat"
+        )
+}
+
+fn self_preserving_nonempty_accumulation(expr: &TemplateExpr, variable: &str) -> bool {
+    let TemplateExpr::Call { function, args } = expr.deparen() else {
+        return false;
+    };
+    if args.len() < 2 {
+        return false;
+    }
+    let same_variable = matches!(
+        args[0].deparen(),
+        TemplateExpr::Variable(name) if name.trim_start_matches('$') == variable
+    );
+    same_variable
+        && (matches!(
+            function.as_str(),
+            "append" | "mustAppend" | "prepend" | "mustPrepend"
+        ) || function == "print"
+            && args[1..].iter().any(|arg| {
+                matches!(
+                    arg.deparen(),
+                    TemplateExpr::Literal(
+                        helm_schema_ast::Literal::String(text)
+                            | helm_schema_ast::Literal::RawString(text)
+                    ) if !text.is_empty()
+                )
+            }))
+}
+
+fn or_predicates(left: Predicate, right: Predicate) -> Predicate {
+    match (left, right) {
+        (Predicate::True, _) | (_, Predicate::True) => Predicate::True,
+        (Predicate::False, predicate) | (predicate, Predicate::False) => predicate,
+        (left, right) if left == right => left,
+        (Predicate::Or(mut left), Predicate::Or(right)) => {
+            left.extend(right);
+            left.sort();
+            left.dedup();
+            Predicate::Or(left)
+        }
+        (Predicate::Or(mut alternatives), predicate)
+        | (predicate, Predicate::Or(mut alternatives)) => {
+            alternatives.push(predicate);
+            alternatives.sort();
+            alternatives.dedup();
+            Predicate::Or(alternatives)
+        }
+        (left, right) => Predicate::Or(vec![left, right]),
+    }
+}
+
 /// One layout segment of a scalar run: literal text, a template hole, or a
 /// whole inline control region (grouping the region's holes and texts).
 enum Segment {
@@ -160,6 +257,62 @@ impl Interpreter<'_> {
     /// over helper calls).
     pub(super) fn eval_hole_exprs_for_condition(&mut self, expr: &TemplateExpr) -> HoleEval {
         self.eval_hole_exprs(std::slice::from_ref(expr))
+    }
+
+    /// Absorbs every runtime effect produced while evaluating a control header.
+    ///
+    /// Header values are not rendered, so their ordinary output paths remain owned by the
+    /// control evaluator. Strict call contracts, conversions, and called-helper effects still
+    /// execute before the header decides whether its body runs.
+    pub(super) fn absorb_header_execution_effects(
+        &mut self,
+        expr: &TemplateExpr,
+    ) -> std::collections::BTreeSet<String> {
+        let hole = self.eval_hole_exprs_for_condition(expr);
+        let mut effects = hole.effects;
+        effects.bound_output_paths.clear();
+        let strict_paths: std::collections::BTreeSet<String> = effects
+            .helper_fails
+            .iter()
+            .flat_map(|capture| capture.conjunction.iter())
+            .flat_map(Predicate::value_paths)
+            .collect();
+        // Derived booleans and counts erase output identity, but their operands remain strict.
+        // A header has no output slot to protect, so the hard operand contract wins over that
+        // placement-only erasure. Truly total calls such as `join` have no failure capture.
+        effects
+            .shape_erased_paths
+            .retain(|path| !strict_paths.contains(path));
+
+        for path in &effects.string_contract_paths {
+            let sink = if self.hint_scope_is_unconditional(path) {
+                &mut self.type_hints
+            } else {
+                &mut self.guarded_type_hints
+            };
+            sink.entry(path.clone())
+                .or_default()
+                .insert("string".to_string());
+        }
+
+        let has_helper_claims = !effects.helper_reads.is_empty()
+            || !effects.helper_rendered.is_empty()
+            || !effects.helper_dependency_rendered.is_empty();
+        let mut claims = if has_helper_claims {
+            helper_claim_paths(&effects)
+        } else {
+            std::collections::BTreeSet::new()
+        };
+        if has_helper_claims {
+            claims.extend(effects.type_hints.keys().cloned());
+        }
+        self.absorb_hole_effects(&effects, RenderedDemotion::None);
+
+        claims
+            .iter()
+            .filter(|path| !helm_schema_core::values_path_has_descendant(path, &claims))
+            .cloned()
+            .collect()
     }
 
     /// Record every `required(message, subject)` guardrail in the
@@ -177,7 +330,7 @@ impl Interpreter<'_> {
                     // `required "msg" nil` (and its `index (dict) …`
                     // spellings) is a pure validator: whenever control
                     // reaches it, rendering terminates, so the ambient
-                    // predicates form a terminal clause (F51).
+                    // predicates form a terminal clause.
                     if subject_is_statically_helm_empty(subject) {
                         statically_empty = true;
                         continue;
@@ -208,7 +361,7 @@ impl Interpreter<'_> {
         // same-named body local. Range VALUE variables resolve to member
         // identity (`$arg` in `range $arg := .Values.args` is `args.*`),
         // the same identity the range dot already carries, so member
-        // consumers (`tpl $arg`) bind their contracts per member (F59);
+        // consumers (`tpl $arg`) bind their contracts per member;
         // explicit fragment values shadow them where both exist.
         env.locals = self.locals.range_member_values.clone();
         env.locals.extend(
@@ -219,6 +372,9 @@ impl Interpreter<'_> {
         );
         env.local_default_paths = self.locals.default_paths.clone();
         env.local_output_meta = self.locals.output_meta.clone();
+        env.member_host_conversions = self.member_host_conversions.clone();
+        env.active_predicates = self.active_predicates.clone();
+        env.root_truthy_predicates = self.root_truthy_predicates.clone();
         env.bound_values =
             BoundValueContext::new(&self.locals.range_domains, &self.locals.get_bindings);
         let context = FragmentEvalContext::new(self.db);
@@ -229,7 +385,7 @@ impl Interpreter<'_> {
             let result = document_result_from_expr(
                 expr,
                 &env,
-                &self.locals.fragment_values,
+                &env.locals,
                 Some(&self.root_bindings),
                 current_dot.as_ref(),
                 context,
@@ -299,6 +455,7 @@ impl Interpreter<'_> {
         fn predicate_gates(predicate: &Predicate, path: &str) -> bool {
             match predicate {
                 Predicate::True | Predicate::False => false,
+                Predicate::Approximate { .. } => true,
                 Predicate::Guard(guard) => guard_gates(guard, path),
                 Predicate::Not(inner) => predicate_gates(inner, path),
                 Predicate::And(predicates) | Predicate::Or(predicates) => {
@@ -312,6 +469,10 @@ impl Interpreter<'_> {
     }
 
     fn absorb_hole_effects(&mut self, effects: &Effects, demotion: RenderedDemotion) {
+        self.absorb_member_host_conversions(&effects.member_host_conversions);
+        self.apply_root_set_mutations(&effects.root_set_mutations, &effects.root_set_predicates);
+        self.values_default_sources_observed
+            .extend(effects.values_default_sources.iter().cloned());
         self.chart_defaults_observed
             .extend(effects.chart_default_paths.iter().cloned());
         let mut chart_defaults = effects.chart_default_paths.clone();
@@ -352,12 +513,16 @@ impl Interpreter<'_> {
             .extend(effects.yaml_serialized_paths.iter().cloned());
         self.shape_erased_paths
             .extend(effects.shape_erased_paths.iter().cloned());
-        // An APPROXIMATELY-lowered enclosing condition (a semver guard the
-        // encoding cannot represent) may gate this site: binding the strict
-        // contract path-wide would narrow states where the branch never
-        // runs, so the flag abstains there — the guarded captures are
-        // already poisoned by the same approximation (F64).
-        if self.approximate_condition_paths.is_empty() {
+        self.direct_range_source_paths
+            .extend(effects.direct_range_source_paths.iter().cloned());
+        self.json_decoded_range_source_paths
+            .extend(effects.json_decoded_range_source_paths.iter().cloned());
+        self.destructured_range_source_paths
+            .extend(effects.destructured_range_source_paths.iter().cloned());
+        // Only an unconditional consumer contributes a path-wide contract.
+        // Conditional consumers travel through their placed rows and fail
+        // captures; promoting them here would reject values in dead arms.
+        if self.active_predicates.is_empty() && self.approximate_condition_paths.is_empty() {
             self.string_contract_paths
                 .extend(effects.string_contract_paths.iter().cloned());
         }
@@ -392,10 +557,24 @@ impl Interpreter<'_> {
             .helper_rendered
             .iter()
             .flat_map(|row| row.meta.suppress_predicate_paths.iter())
+            .chain(
+                effects
+                    .helper_dependency_rendered
+                    .iter()
+                    .flat_map(|row| row.meta.suppress_predicate_paths.iter()),
+            )
             .chain(effects.helper_suppressed_paths.iter())
             .collect();
         let claims = helper_claim_paths(effects);
         self.absorb_helper_reads_with_suppression(&effects.helper_reads, &suppressed, &claims);
+        for row in &effects.helper_dependency_rendered {
+            let kind = if row.encoded {
+                ValueKind::Scalar
+            } else {
+                row.kind
+            };
+            self.push_meta_reads(&row.path, kind, &row.meta, &claims, true);
+        }
         self.absorb_helper_fails(&effects.helper_fails);
         match demotion {
             RenderedDemotion::None => {}
@@ -416,6 +595,26 @@ impl Interpreter<'_> {
                 for row in &effects.helper_rendered {
                     self.push_meta_reads(&row.path, ValueKind::Scalar, &row.meta, &claims, true);
                 }
+            }
+        }
+    }
+
+    fn apply_root_set_mutations(
+        &mut self,
+        mutations: &std::collections::BTreeMap<String, AbstractValue>,
+        predicates: &std::collections::BTreeMap<String, Predicate>,
+    ) {
+        for (key, value) in mutations {
+            self.root_truthy_predicates.remove(key);
+            self.root_set_predicates_observed.remove(key);
+            self.root_bindings.insert(key.clone(), value.clone());
+            self.root_set_mutations_observed
+                .insert(key.clone(), value.clone());
+            if let Some(predicate) = predicates.get(key) {
+                self.root_truthy_predicates
+                    .insert(key.clone(), predicate.clone());
+                self.root_set_predicates_observed
+                    .insert(key.clone(), predicate.clone());
             }
         }
     }
@@ -523,7 +722,7 @@ impl Interpreter<'_> {
         // An APPROXIMATELY-lowered enclosing condition gates this hole:
         // its rows' branch keys stand in for a guard the encoding cannot
         // represent, so a string contract riding them would narrow states
-        // the real branch never reaches (F64).
+        // the real branch never reaches.
         let no_contracts = std::collections::BTreeSet::new();
         let row_string_contract_paths = if self.approximate_condition_paths.is_empty() {
             &hole.effects.string_contract_paths
@@ -533,9 +732,12 @@ impl Interpreter<'_> {
         let scope = LowerScope {
             defaulted_paths: &defaulted,
             encoded_paths: &hole.effects.encoded_paths,
+            yaml_serialized_paths: &hole.effects.yaml_serialized_paths,
             shape_erased_paths: &hole.effects.shape_erased_paths,
             string_contract_paths: row_string_contract_paths,
+            json_serialized_paths: &hole.effects.json_serialized_paths,
             chart_value_defaults: &self.locals.chart_value_defaults,
+            local_source_paths: &hole.effects.local_source_paths,
             local_output_meta: &hole_meta,
         };
         let mut out = match &value {
@@ -584,16 +786,25 @@ impl Interpreter<'_> {
         }
         let name = name.to_string();
         let current_dot = self.current_value_dot();
+        let mut helper_locals = self.locals.range_member_values.clone();
+        helper_locals.extend(
+            self.locals
+                .fragment_values
+                .iter()
+                .map(|(name, value)| (name.clone(), value.clone())),
+        );
         let mut seen = self.helper_seen.clone();
-        let summary = self.db.summarize_bound_helper_call(
+        let call = self.db.summarize_bound_helper_call(
             &name,
             arg,
             Some(&self.root_bindings),
             current_dot.as_ref(),
-            &self.locals.fragment_values,
+            &helper_locals,
             FragmentEvalContext::new(self.db),
             &mut seen,
         );
+        self.absorb_hole_effects(&call.argument_effects, RenderedDemotion::Dependency);
+        let summary = &call.summary;
         let suppressed: std::collections::BTreeSet<&String> = summary
             .rendered
             .iter()
@@ -608,6 +819,7 @@ impl Interpreter<'_> {
         claims.extend(summary.rendered.iter().map(|row| row.path.clone()));
         self.absorb_helper_reads_with_suppression(&summary.reads, &suppressed, &claims);
         self.absorb_helper_fails(&summary.fail_conditions);
+        self.absorb_member_host_conversions(&summary.member_host_conversions);
         for (path, hints) in &summary.type_hints {
             if path.trim().is_empty() {
                 continue;
@@ -632,13 +844,24 @@ impl Interpreter<'_> {
         }
         self.shape_erased_paths
             .extend(summary.shape_erased_paths.iter().cloned());
+        self.yaml_serialized_paths
+            .extend(summary.yaml_serialized_paths.iter().cloned());
         self.string_contract_paths
             .extend(summary.string_contract_paths.iter().cloned());
+        self.direct_range_source_paths
+            .extend(summary.direct_range_source_paths.iter().cloned());
+        self.json_decoded_range_source_paths
+            .extend(summary.json_decoded_range_source_paths.iter().cloned());
+        self.destructured_range_source_paths
+            .extend(summary.destructured_range_source_paths.iter().cloned());
         self.chart_defaults_observed
             .extend(summary.chart_defaults.iter().cloned());
+        self.apply_root_set_mutations(&summary.root_set_mutations, &summary.root_set_predicates);
+        self.values_default_sources_observed
+            .extend(summary.values_default_sources.iter().cloned());
         let mut chart_defaults = summary.chart_defaults.clone();
         self.locals.append_chart_value_defaults(&mut chart_defaults);
-        Some(splice_summary(&summary, &self.current_site))
+        Some(splice_summary(summary, &self.current_site))
     }
 
     /// Evaluate a hole rendered inside a partial scalar: guarded arms of
@@ -689,7 +912,7 @@ impl Interpreter<'_> {
         // An APPROXIMATELY-lowered enclosing condition gates this hole:
         // its rows' branch keys stand in for a guard the encoding cannot
         // represent, so a string contract riding them would narrow states
-        // the real branch never reaches (F64).
+        // the real branch never reaches.
         let no_contracts = std::collections::BTreeSet::new();
         let row_string_contract_paths = if self.approximate_condition_paths.is_empty() {
             &hole.effects.string_contract_paths
@@ -699,9 +922,12 @@ impl Interpreter<'_> {
         let scope = LowerScope {
             defaulted_paths: &defaulted,
             encoded_paths: &hole.effects.encoded_paths,
+            yaml_serialized_paths: &hole.effects.yaml_serialized_paths,
             shape_erased_paths: &hole.effects.shape_erased_paths,
             string_contract_paths: row_string_contract_paths,
+            json_serialized_paths: &hole.effects.json_serialized_paths,
             chart_value_defaults: &self.locals.chart_value_defaults,
+            local_source_paths: &hole.effects.local_source_paths,
             local_output_meta: &hole_meta,
         };
         let mut arms = match &value {
@@ -832,7 +1058,19 @@ impl Interpreter<'_> {
                     cursor = region.end;
                     continue;
                 }
-                Some(_) => {}
+                Some(facts) => {
+                    if facts.is_range {
+                        // YAML block spans can exclude trim-only closing
+                        // actions even though the template range is wholly
+                        // contained in the scalar. Evaluate the parsed range
+                        // for its body contracts; the scalar text remains
+                        // owned by the block lowering above.
+                        let _ = self.eval_inline_region(Span {
+                            start: hole.start,
+                            end: facts.region_end,
+                        });
+                    }
+                }
                 None => {
                     if parse_expr_text(self.text(*hole))
                         .iter()
@@ -872,6 +1110,12 @@ impl Interpreter<'_> {
             return;
         }
         let previous_site = self.enter_hole_site(span);
+        if exprs.iter().any(expr_contains_fail_call) {
+            self.record_fail_condition();
+            self.restore_site(previous_site);
+            return;
+        }
+        self.record_required_subjects(&exprs);
         let hole = self.eval_hole_exprs(&exprs);
         self.absorb_hole_effects(&hole.effects, RenderedDemotion::Document);
         self.push_effects_reads(&hole, ValueKind::Fragment);
@@ -911,6 +1155,14 @@ impl Interpreter<'_> {
         else {
             return self.inline_region_taint(text);
         };
+        self.eval_inline_control_action(action, text)
+    }
+
+    fn eval_inline_control_action(
+        &mut self,
+        action: tree_sitter::Node<'_>,
+        text: &str,
+    ) -> Vec<(PathCondition, Vec<StringPart>)> {
         if action.kind() == "range_action" {
             return self.eval_inline_range(action, text);
         }
@@ -927,7 +1179,7 @@ impl Interpreter<'_> {
         let mut prior_approximate_paths: Vec<String> = Vec::new();
         let mut prior: Vec<PathCondition> = Vec::new();
         let mut arms = Vec::new();
-        for (header, children) in arm_specs {
+        for (branch_index, (header, children)) in arm_specs.into_iter().enumerate() {
             self.active_predicates.truncate(entry_predicates);
             self.approximate_condition_paths.truncate(entry_approximate);
             // An arm under the negation of an approximately-lowered prior
@@ -941,7 +1193,9 @@ impl Interpreter<'_> {
                 arm_condition = and_conditions(arm_condition, negated);
             }
             let arm_entry_approximate = self.approximate_condition_paths.len();
-            if let Some(own) = self.activate_inline_if(header.as_ref()) {
+            if let Some(own) =
+                self.activate_inline_if(header.as_ref(), action.start_byte(), branch_index)
+            {
                 arm_condition = and_conditions(arm_condition, own.clone());
                 prior.push(own);
             }
@@ -984,16 +1238,24 @@ impl Interpreter<'_> {
         if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
             self.locals.insert_range_domain(variable, literals);
         }
-        let (source_paths, direct_path) = {
+        self.absorb_header_execution_effects(header.expr());
+        let range_source = match header.expr().deparen() {
+            TemplateExpr::VariableDefinition { value, .. }
+            | TemplateExpr::Assignment { value, .. } => value.as_ref(),
+            expr => expr,
+        };
+        let (source_paths, direct_path, json_decoded_path) = {
             let context = self.value_path_context();
             (
                 context
                     .resolved_values_paths_from_expr(header.expr())
                     .into_iter()
                     .collect::<Vec<_>>(),
-                context.single_direct_iterable_range_path_expr(header.expr()),
+                context.single_direct_iterable_range_path_expr(range_source),
+                context.single_direct_json_decoded_range_path_expr(range_source),
             )
         };
+        let destructured = helm_schema_ast::range_has_destructured_variable_definition(node);
         let mut own = Vec::new();
         for path in &source_paths {
             let guard = Guard::Range { path: path.clone() };
@@ -1003,10 +1265,39 @@ impl Interpreter<'_> {
         }
         let condition = Predicate::all(own);
         if let Some(path) = &direct_path {
+            self.direct_range_source_paths.insert(path.clone());
+            if destructured {
+                self.destructured_range_source_paths.insert(path.clone());
+            }
             self.active_direct_ranged_paths.push(path.clone());
         }
-        let dot = direct_path
-            .map(|path| AbstractValue::ValuesPath(helm_schema_core::append_value_path(&path, "*")));
+        if let Some(path) = &json_decoded_path {
+            self.json_decoded_range_source_paths.insert(path.clone());
+        }
+        let dot = direct_path.as_ref().map(|path| {
+            let member_path = helm_schema_core::append_value_path(path, "*");
+            if json_decoded_path.as_ref() == Some(path) {
+                AbstractValue::JsonDecodedPath(member_path)
+            } else {
+                AbstractValue::ValuesPath(member_path)
+            }
+        });
+        let value_variable = if destructured {
+            helm_schema_ast::range_destructured_value_variable(node, text)
+        } else {
+            helm_schema_ast::range_variable_name_expr(header.expr())
+        };
+        if let Some((variable, binding)) = value_variable.zip(dot.clone()) {
+            self.locals.range_member_values.insert(variable, binding);
+        }
+        if destructured
+            && let Some(variable) = helm_schema_ast::range_destructured_key_variable(node, text)
+            && let Some(path) = direct_path
+        {
+            self.locals
+                .range_member_values
+                .insert(variable, AbstractValue::RangeKey(path));
+        }
         self.dot_stack.push(dot);
         let mut arms = Vec::new();
         for (sub_condition, parts) in
@@ -1061,15 +1352,27 @@ impl Interpreter<'_> {
     fn activate_inline_if(
         &mut self,
         header: Option<&helm_schema_ast::TemplateHeader>,
+        region_start: usize,
+        branch_index: usize,
     ) -> Option<PathCondition> {
         let header = header?;
-        let (predicate, faithful) = {
+        let (mut predicate, faithful) = {
             let context = self.value_path_context();
             (
                 context.condition_predicate_expr(header.expr()),
                 context.condition_lowering_is_faithful(header.expr()),
             )
         };
+        let helper_paths = self.absorb_header_execution_effects(header.expr());
+        if predicate.is_trivial() && !helper_paths.is_empty() {
+            predicate = Predicate::all(
+                helper_paths
+                    .iter()
+                    .cloned()
+                    .map(Predicate::truthy_path)
+                    .collect(),
+            );
+        }
         if !faithful {
             let paths = self
                 .value_path_context()
@@ -1077,7 +1380,12 @@ impl Interpreter<'_> {
             if paths.is_empty() {
                 self.approximate_condition_paths.push(String::new());
             }
-            self.approximate_condition_paths.extend(paths);
+            self.approximate_condition_paths
+                .extend(paths.iter().cloned());
+            predicate = Predicate::approximate(
+                format!("{}:{region_start}:{branch_index}", self.source_offset),
+                paths,
+            );
         }
         let guards = predicate.contract_guards();
         for guard in &guards {
@@ -1133,8 +1441,8 @@ impl Interpreter<'_> {
                 };
                 let mut hole_meta = hole.effects.local_output_meta.clone();
                 merge_rendered_row_meta(&mut hole_meta, &hole.effects.helper_rendered);
-                // Same F64 abstention as the block-scalar sites: no string
-                // contract meta under approximately-lowered conditions.
+                // As at block-scalar sites, string-contract metadata must
+                // abstain under approximately lowered conditions.
                 let no_contracts = std::collections::BTreeSet::new();
                 let row_string_contract_paths = if self.approximate_condition_paths.is_empty() {
                     &hole.effects.string_contract_paths
@@ -1144,9 +1452,12 @@ impl Interpreter<'_> {
                 let scope = LowerScope {
                     defaulted_paths: &defaulted,
                     encoded_paths: &hole.effects.encoded_paths,
+                    yaml_serialized_paths: &hole.effects.yaml_serialized_paths,
                     shape_erased_paths: &hole.effects.shape_erased_paths,
                     string_contract_paths: row_string_contract_paths,
+                    json_serialized_paths: &hole.effects.json_serialized_paths,
                     chart_value_defaults: &self.locals.chart_value_defaults,
+                    local_source_paths: &hole.effects.local_source_paths,
                     local_output_meta: &hole_meta,
                 };
                 match &hole.value {
@@ -1158,7 +1469,9 @@ impl Interpreter<'_> {
                 self.eval_assignment_exprs(&exprs);
                 Vec::new()
             }
-            NodeAction::If(_) | NodeAction::With(_) | NodeAction::Range(_) => {
+            NodeAction::Range(_) => self.eval_inline_range(node, text),
+            NodeAction::If(_) => self.eval_inline_control_action(node, text),
+            NodeAction::With(_) => {
                 // Nested inline control: keep the influence, drop the
                 // structure (bounded conservative fallback).
                 let content = node.utf8_text(text.as_bytes()).unwrap_or("");
@@ -1224,7 +1537,115 @@ impl Interpreter<'_> {
     /// output. Helper bodies rely on this for config-normalization chains;
     /// only the chart-default effects surface (the summary lane never
     /// claimed set-call operand reads).
+    fn record_dot_member_host_conversions(&mut self, exprs: &[TemplateExpr]) {
+        if !self.approximate_condition_paths.is_empty() {
+            return;
+        }
+        let Some(target_path) = self
+            .current_value_dot()
+            .and_then(|value| value.unique_path())
+        else {
+            return;
+        };
+        if target_path.is_empty() {
+            return;
+        }
+
+        let mut assignments = Vec::new();
+        for expr in exprs {
+            expr.walk(|node| {
+                let TemplateExpr::Call { function, args } = node else {
+                    return;
+                };
+                if function != "set" || args.len() != 3 {
+                    return;
+                }
+                let target_is_dot = match args[0].deparen() {
+                    TemplateExpr::Field(path) => path.is_empty(),
+                    TemplateExpr::Variable(variable) => variable.is_empty(),
+                    _ => false,
+                };
+                if target_is_dot {
+                    assignments.push((args[1].clone(), args[2].clone()));
+                }
+            });
+        }
+
+        for (key_expr, value_expr) in assignments {
+            let (keys, assigns_object) = {
+                let context = self.value_path_context();
+                let keys = context
+                    .with_body_fragment_value_expr(&key_expr)
+                    .map(|value| value.strings())
+                    .unwrap_or_default();
+                let assigns_object = matches!(
+                    context.with_body_fragment_value_expr(&value_expr),
+                    Some(AbstractValue::Dict(_))
+                );
+                (keys, assigns_object)
+            };
+            if !assigns_object {
+                continue;
+            }
+            for key in keys {
+                let path = helm_schema_core::append_value_path(&target_path, &key);
+                for predicate in &self.active_predicates {
+                    let Predicate::Guard(Guard::TypeIs {
+                        path: tested_path,
+                        schema_type,
+                    }) = predicate
+                    else {
+                        continue;
+                    };
+                    if tested_path != &path || schema_type == "object" {
+                        continue;
+                    }
+                    let mut outer_predicates = self
+                        .active_predicates
+                        .iter()
+                        .filter(|outer| *outer != predicate)
+                        .cloned()
+                        .collect::<Vec<_>>();
+                    outer_predicates.sort();
+                    outer_predicates.dedup();
+                    self.member_host_conversions.insert(MemberHostConversion {
+                        path: path.clone(),
+                        input_kind: schema_type.clone(),
+                        outer_predicates,
+                    });
+                }
+            }
+        }
+    }
+
+    fn absorb_member_host_conversions(
+        &mut self,
+        conversions: &std::collections::BTreeSet<MemberHostConversion>,
+    ) {
+        if !self.approximate_condition_paths.is_empty() {
+            return;
+        }
+        for conversion in conversions {
+            let mut outer_predicates = self.active_predicates.clone();
+            outer_predicates.extend(conversion.outer_predicates.iter().cloned());
+            if outer_predicates
+                .iter()
+                .any(Predicate::contains_approximation)
+            {
+                continue;
+            }
+            outer_predicates.sort();
+            outer_predicates.dedup();
+            self.member_host_conversions.insert(MemberHostConversion {
+                path: conversion.path.clone(),
+                input_kind: conversion.input_kind.clone(),
+                outer_predicates,
+            });
+        }
+    }
+
     pub(super) fn apply_helper_scope_set_mutations(&mut self, exprs: &[TemplateExpr]) -> bool {
+        self.record_dot_member_host_conversions(exprs);
         if !self.helper_scope {
             return false;
         }
@@ -1258,12 +1679,64 @@ impl Interpreter<'_> {
         if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
             let rhs = std::slice::from_ref(&assignment.rhs_expr);
             self.record_required_subjects(rhs);
+            let rhs_truthy_reduction = {
+                let context = self.value_path_context();
+                context
+                    .condition_lowering_is_faithful(&assignment.rhs_expr)
+                    .then(|| context.condition_predicate_expr(&assignment.rhs_expr))
+            };
             let output_effects = self.value_path_context().expression_output_effects(rhs);
             let hole = self.eval_hole_exprs(rhs);
             // The binding is the hole value without widened members (an
             // unknown call result is influence, not a values-backed
             // fragment).
             let fragment_value = hole.value.clone().and_then(AbstractValue::without_widened);
+            let previous_truthy_reduction = self
+                .locals
+                .truthy_reductions
+                .get(&assignment.variable)
+                .cloned();
+            let truthy_reduction = match assignment.kind {
+                crate::fragment_assignment::AssignmentKind::Declaration => rhs_truthy_reduction
+                    .or_else(|| {
+                        // A text-producing RHS (`$m := join "\n" $list`) keeps
+                        // its INPUT value for attribution, but the binding's
+                        // runtime truthiness is the produced text's emptiness,
+                        // which that value cannot witness: a nonempty list can
+                        // join to "". Abstain instead of reducing.
+                        if rhs_produces_derived_text(&assignment.rhs_expr) {
+                            return None;
+                        }
+                        static_value_truthiness(fragment_value.as_ref()).map(|truthy| {
+                            if truthy {
+                                Predicate::True
+                            } else {
+                                Predicate::False
+                            }
+                        })
+                    }),
+                crate::fragment_assignment::AssignmentKind::Assignment
+                    if self_preserving_nonempty_accumulation(
+                        &assignment.rhs_expr,
+                        &assignment.variable,
+                    ) =>
+                {
+                    previous_truthy_reduction.map(|previous| {
+                        let condition = Predicate::all(self.active_predicates.clone());
+                        let lowerable = self.approximate_condition_paths.is_empty()
+                            && condition.contract_guards_are_exact()
+                            && condition.value_paths().iter().all(|path| {
+                                !path.starts_with('$') && !path.split('.').any(|part| part == "*")
+                            });
+                        if lowerable {
+                            or_predicates(previous, condition)
+                        } else {
+                            previous
+                        }
+                    })
+                }
+                crate::fragment_assignment::AssignmentKind::Assignment => None,
+            };
             // Helper bodies keep the prior binding when the right-hand side
             // resolves to nothing (the summary lane's rule): an unresolvable
             // re-assignment in one branch must not erase the other branches'
@@ -1274,6 +1747,13 @@ impl Interpreter<'_> {
                     assignment.variable.clone(),
                     fragment_value.clone(),
                 );
+            }
+            if let Some(predicate) = truthy_reduction {
+                self.locals
+                    .truthy_reductions
+                    .insert(assignment.variable.clone(), predicate);
+            } else {
+                self.locals.truthy_reductions.remove(&assignment.variable);
             }
             // `$tp := typeOf .Values.x` binds a TYPE DESCRIPTOR of the path:
             // later `eq $tp "string"` comparisons are type tests, never value
@@ -1291,6 +1771,9 @@ impl Interpreter<'_> {
             for path in &hole.effects.shape_erased_paths {
                 output_meta.entry(path.clone()).or_default().shape_erased = true;
             }
+            for path in &hole.effects.yaml_serialized_paths {
+                output_meta.entry(path.clone()).or_default().yaml_serialized = true;
+            }
             // Likewise a derived-text RHS (`$port := include … .`): a later
             // consuming transform on the local operates on rendered text and
             // claims nothing about the underlying paths.
@@ -1303,14 +1786,31 @@ impl Interpreter<'_> {
             for path in &hole.effects.string_contract_paths {
                 output_meta.entry(path.clone()).or_default().string_contract = true;
             }
-            // A helper-body `=` re-assignment under branch predicates keeps
-            // those predicates on each flowing path's meta: the write-through
+            for path in &hole.effects.json_serialized_paths {
+                output_meta.entry(path.clone()).or_default().json_serialized = true;
+            }
+            // Eager helper arguments execute, but their rendered values are dependencies rather
+            // than part of the assignment's value. Keep their runtime effects while preventing
+            // their output metadata from riding the assigned local.
+            let fragment_paths = fragment_value
+                .as_ref()
+                .map(AbstractValue::fragment_rendered_paths)
+                .unwrap_or_default();
+            let dependency_only_paths: std::collections::BTreeSet<&String> = hole
+                .effects
+                .helper_dependency_rendered
+                .iter()
+                .map(|row| &row.path)
+                .filter(|path| !fragment_paths.contains(*path))
+                .collect();
+            output_meta.retain(|path, _| !dependency_only_paths.contains(path));
+            // A `=` re-assignment under branch predicates keeps those
+            // predicates on each flowing path's meta: the write-through
             // survives the branch join in the locals, so the conditions must
-            // ride the meta to the render site (the summary lane's rule). A
-            // truthiness condition about a *different* flowing path describes
-            // a sibling's branch and stays off this path's meta.
-            if self.helper_scope
-                && assignment.kind == crate::fragment_assignment::AssignmentKind::Assignment
+            // ride the meta to the render site. A truthiness condition about
+            // a *different* flowing path describes a sibling's branch and
+            // stays off this path's meta.
+            if assignment.kind == crate::fragment_assignment::AssignmentKind::Assignment
                 && !self.active_predicates.is_empty()
             {
                 if let Some(binding) = &fragment_value {
@@ -1332,23 +1832,16 @@ impl Interpreter<'_> {
                     meta.conjoin_branches(&site);
                 }
             }
-            if self.helper_scope {
-                // Keep the (possibly empty) default and meta entries: the
-                // branch join unions per-variable facts only for variables
-                // every outcome still tracks, and a pre-branch binding
-                // without facts must not erase a branch's recorded ones.
-                self.locals
-                    .default_paths
-                    .insert(assignment.variable.clone(), output_effects.defaults.clone());
-                self.locals
-                    .output_meta
-                    .insert(assignment.variable.clone(), output_meta);
-            } else {
-                self.locals
-                    .set_default_paths(&assignment.variable, output_effects.defaults.clone());
-                self.locals
-                    .set_output_meta(assignment.variable.clone(), output_meta);
-            }
+            // Keep the (possibly empty) default and meta entries: the branch
+            // join unions per-variable facts only for variables every outcome
+            // still tracks, and a pre-branch binding without facts must not
+            // erase a branch's recorded ones.
+            self.locals
+                .default_paths
+                .insert(assignment.variable.clone(), output_effects.defaults.clone());
+            self.locals
+                .output_meta
+                .insert(assignment.variable.clone(), output_meta);
             let demotion = if self.helper_scope {
                 RenderedDemotion::Dependency
             } else {
@@ -1409,8 +1902,8 @@ fn prepare_hole_value(
     (value, extras)
 }
 
-/// The single hole of a scalar run that covers the entire value (allowing a
-/// wrapping quote pair), or `None` for genuinely partial scalars.
+/// The single hole of a scalar run that covers the entire value, or `None`
+/// when literal text makes the hole a partial scalar.
 fn entire_hole_span(segments: &[Segment]) -> Option<Span> {
     let mut hole = None;
     let mut prefix = String::new();
@@ -1434,11 +1927,7 @@ fn entire_hole_span(segments: &[Segment]) -> Option<Span> {
         }
     }
     let hole = hole?;
-    matches!(
-        (prefix.trim(), suffix.trim()),
-        ("", "") | ("\"", "\"") | ("'", "'")
-    )
-    .then_some(hole)
+    (prefix.trim().is_empty() && suffix.trim().is_empty()).then_some(hole)
 }
 
 /// The claim paths of the helper calls one hole resolved (read and rendered
@@ -1450,6 +1939,12 @@ fn helper_claim_paths(effects: &Effects) -> std::collections::BTreeSet<String> {
         .map(|read| read.values_path.clone())
         .collect();
     claims.extend(effects.helper_rendered.iter().map(|row| row.path.clone()));
+    claims.extend(
+        effects
+            .helper_dependency_rendered
+            .iter()
+            .map(|row| row.path.clone()),
+    );
     claims
 }
 

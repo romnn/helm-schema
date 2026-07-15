@@ -62,7 +62,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
 }
 
 #[test]
-fn canonicalization_preserves_different_conditions_at_distinct_render_sites() {
+fn canonicalization_merges_complementary_conditions_across_render_sites() {
     let mut uses = vec![
         ContractUse::with_provenances(
             "image.tag".to_string(),
@@ -96,7 +96,9 @@ fn canonicalization_preserves_different_conditions_at_distinct_render_sites() {
 
     canonicalize_contract_uses(&mut uses);
 
-    sim_assert_eq!(have: uses.len(), want: 2);
+    sim_assert_eq!(have: uses.len(), want: 1);
+    sim_assert_eq!(have: uses[0].condition.guard_conjunctions(), want: vec![vec![]]);
+    sim_assert_eq!(have: uses[0].provenance.len(), want: 2);
 }
 
 #[test]
@@ -132,17 +134,7 @@ fn canonicalization_collapses_conditions_from_the_same_render_site() {
     canonicalize_contract_uses(&mut uses);
 
     sim_assert_eq!(have: uses.len(), want: 1);
-    sim_assert_eq!(
-        have: uses[0].condition.guard_conjunctions(),
-        want: vec![
-            vec![Guard::Truthy {
-                path: "feature.enabled".to_string(),
-            }],
-            vec![Guard::Not {
-                path: "feature.enabled".to_string(),
-            }],
-        ]
-    );
+    sim_assert_eq!(have: uses[0].condition.guard_conjunctions(), want: vec![vec![]]);
 }
 
 #[test]
@@ -198,7 +190,7 @@ fn normalization_drops_same_site_branch_subsumed_by_self_truthy_branch() {
 }
 
 #[test]
-fn normalization_keeps_truthy_branches_from_distinct_provenance_sites() {
+fn normalization_drops_subsumed_truthy_branch_across_provenance_sites() {
     let resource = Some(ResourceRef::concrete(
         "v1".to_string(),
         "Secret".to_string(),
@@ -216,7 +208,7 @@ fn normalization_keeps_truthy_branches_from_distinct_provenance_sites() {
             "auth.password".to_string(),
             YamlPath(Vec::new()),
             ValueKind::Scalar,
-            base_guards,
+            base_guards.clone(),
             resource.clone(),
             vec![ContractProvenance::new(
                 "templates/first.yaml",
@@ -240,5 +232,10 @@ fn normalization_keeps_truthy_branches_from_distinct_provenance_sites() {
 
     normalize_contract_uses(&mut uses);
 
-    sim_assert_eq!(have: uses.len(), want: 2);
+    sim_assert_eq!(have: uses.len(), want: 1);
+    sim_assert_eq!(
+        have: uses[0].single_guard_conjunction(),
+        want: base_guards
+    );
+    sim_assert_eq!(have: uses[0].provenance.len(), want: 2);
 }

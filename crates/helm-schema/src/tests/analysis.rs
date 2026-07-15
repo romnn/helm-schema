@@ -94,12 +94,27 @@ fn signoz_root_service_account_helper_type_hint_flows_into_contract_schema_signa
     )?;
     let path = "clickhouse.zookeeper.nameOverride";
 
+    // The `printf … | trunc 63` string contract sits behind
+    // `else if .Values.zookeeper.nameOverride`, so it surfaces as
+    // branch-scoped fail implications (truthy ⇒ string) rather than an
+    // unconditional type hint that would also bind short-circuited states.
     assert!(
         contract_schema_signals!(collection)
             .evidence_for(path)
-            .is_some_and(|evidence| evidence.type_hints.contains("string")),
-        "expected structural contract type hint for {path}; contract_hints={:?}",
-        contract_schema_signals!(collection).schema_evidence_by_value_path(),
+            .is_some_and(|evidence| evidence.fail_implications.iter().any(|implication| {
+                implication
+                    .requirements
+                    .contains(&helm_schema_core::FailValueRequirement::SchemaType(
+                        "string".to_string(),
+                    ))
+                    && implication.outer_guards.contains(
+                        &helm_schema_core::ConditionalGuard::Truthy {
+                            path: path.to_string(),
+                        },
+                    )
+            })),
+        "expected a branch-scoped structural string requirement for {path}; evidence={:?}",
+        contract_schema_signals!(collection).evidence_for(path),
     );
 
     Ok(())
@@ -190,9 +205,59 @@ fn signoz_smtp_existing_secret_name_is_rendered_as_secret_ref_name() -> color_ey
         "expected {path} to be a referenced value path; evidence={evidence:#?}; uses={uses:#?}",
     );
     assert!(
-        !evidence.provider_schema_uses.is_empty(),
-        "expected {path} to carry provider schema uses; evidence={evidence:#?}; uses={uses:#?}",
+        evidence.provider_schema_uses.is_empty(),
+        "guarded provider evidence must not constrain the base path; evidence={evidence:#?}; uses={uses:#?}",
     );
+    let overlay = evidence.conditional_overlays.first().unwrap_or_else(|| {
+        panic!("missing guarded provider overlay for {path}; evidence={evidence:#?}")
+    });
+    sim_assert_eq!(
+        have: &overlay.guards,
+        want: &vec![
+            helm_schema_ir::ConditionalGuard::Truthy {
+                path: "signoz.smtpVars.enabled".to_string(),
+            },
+            helm_schema_ir::ConditionalGuard::AnyOf(vec![
+                helm_schema_ir::ConditionalGuard::Truthy {
+                    path: "signoz.smtpVars.existingSecret.fromKey".to_string(),
+                },
+                helm_schema_ir::ConditionalGuard::Truthy {
+                    path: "signoz.smtpVars.existingSecret.hostKey".to_string(),
+                },
+                helm_schema_ir::ConditionalGuard::Truthy {
+                    path: "signoz.smtpVars.existingSecret.passwordKey".to_string(),
+                },
+                helm_schema_ir::ConditionalGuard::Truthy {
+                    path: "signoz.smtpVars.existingSecret.portKey".to_string(),
+                },
+                helm_schema_ir::ConditionalGuard::Truthy {
+                    path: "signoz.smtpVars.existingSecret.usernameKey".to_string(),
+                },
+            ]),
+        ]
+    );
+    let provider_use = overlay
+        .evidence
+        .provider_schema_uses
+        .first()
+        .unwrap_or_else(|| {
+            panic!("missing branch-local provider use for {path}; overlay={overlay:#?}")
+        });
+    sim_assert_eq!(
+        have: &provider_use.path.0,
+        want: &vec![
+            "spec".to_string(),
+            "template".to_string(),
+            "spec".to_string(),
+            "containers[*]".to_string(),
+            "env[*]".to_string(),
+            "valueFrom".to_string(),
+            "secretKeyRef".to_string(),
+            "name".to_string(),
+        ]
+    );
+    sim_assert_eq!(have: provider_use.resource.api_version.as_str(), want: "apps/v1");
+    sim_assert_eq!(have: provider_use.resource.kind.as_str(), want: "StatefulSet");
 
     Ok(())
 }
@@ -291,7 +356,7 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
 }
 
 #[test]
-fn signoz_root_service_account_name_keeps_helper_and_else_branch_guards()
+fn signoz_root_service_account_name_keeps_resource_scope_and_default_semantics()
 -> color_eyre::eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
@@ -315,29 +380,48 @@ fn signoz_root_service_account_name_keeps_helper_and_else_branch_guards()
         .cloned()
         .collect::<Vec<_>>();
 
-    assert!(
-        uses.iter().any(|use_| {
-            use_.single_guard_conjunction().iter().any(|guard| {
-                matches!(
-                    guard,
-                    Guard::Truthy { path }
-                    if path == "signoz.serviceAccount.create"
-                )
+    sim_assert_eq!(have: uses.len(), want: 2, "uses={uses:#?}");
+    let service_account_use = uses
+        .iter()
+        .find(|use_| {
+            use_.resource.as_ref().is_some_and(|resource| {
+                resource.api_version == "v1" && resource.kind == "ServiceAccount"
             })
-        }),
-        "expected a create=true helper-backed branch for {path}; uses={uses:#?}"
+        })
+        .unwrap_or_else(|| {
+            panic!("missing ServiceAccount metadata.name use for {path}; uses={uses:#?}")
+        });
+    assert!(
+        service_account_use
+            .single_guard_conjunction()
+            .iter()
+            .any(|guard| matches!(guard, Guard::Truthy { path } if path == "signoz.serviceAccount.create")),
+        "the conditional ServiceAccount resource must retain its create guard; use={service_account_use:#?}"
+    );
+    let stateful_set_use = uses
+        .iter()
+        .find(|use_| {
+            use_.resource.as_ref().is_some_and(|resource| {
+                resource.api_version == "apps/v1" && resource.kind == "StatefulSet"
+            })
+        })
+        .unwrap_or_else(|| {
+            panic!("missing StatefulSet serviceAccountName use for {path}; uses={uses:#?}")
+        });
+    let stateful_set_guards = stateful_set_use.single_guard_conjunction();
+    assert!(
+        stateful_set_guards.iter().any(
+            |guard| matches!(guard, Guard::Default { path } if path == "signoz.serviceAccount.name")
+        ),
+        "both helper arms default the service account name; use={stateful_set_use:#?}"
     );
     assert!(
-        uses.iter().any(|use_| {
-            use_.single_guard_conjunction().iter().any(|guard| {
-                matches!(
-                    guard,
-                    Guard::Not { path }
-                    if path == "signoz.serviceAccount.create"
-                )
-            })
-        }),
-        "expected a create=false helper-backed branch for {path}; uses={uses:#?}"
+        stateful_set_guards.iter().all(|guard| !matches!(
+            guard,
+            Guard::Truthy { path } | Guard::Not { path }
+            if path == "signoz.serviceAccount.create"
+        )),
+        "the unconditional StatefulSet consumes the same value in both helper arms; use={stateful_set_use:#?}"
     );
 
     Ok(())
@@ -918,6 +1002,74 @@ spec:
     sim_assert_eq!(
         have: schema.map(|fragment| fragment.into_schema()),
         want: Some(json!({"type": "integer"}))
+    );
+
+    Ok(())
+}
+
+/// A bitnami-style `validateValues` aggregator joins conditionally-produced
+/// messages and fails on the joined text. The joined value's truthiness is
+/// NOT the collection's non-emptiness, so the `if $message` guard must not
+/// vanish — with a dependency activation condition appended, a vanished
+/// guard becomes a chart-killing `activation => fail` terminal clause.
+#[test]
+fn joined_validator_messages_do_not_become_activation_terminals() -> color_eyre::eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\ndependencies:\n  - name: child\n    version: 0.1.0\n    condition: child.enabled\n",
+    )?;
+    test_util::write(&chart_dir.join("values.yaml")?, "child:\n  enabled: true\n")?;
+    test_util::write(
+        &chart_dir.join("charts/child/Chart.yaml")?,
+        "apiVersion: v2\nname: child\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/values.yaml")?,
+        "enabled: true\nauth:\n  enabled: false\n  user: \"\"\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/templates/_helpers.tpl")?,
+        r#"{{- define "child.validateValues.auth" -}}
+{{- if and .Values.auth.enabled (not .Values.auth.user) }}
+child: auth.enabled
+    In order to enable authentication, you need to provide a user.
+{{- end -}}
+{{- end -}}
+
+{{- define "child.validateValues" -}}
+{{- $messages := list -}}
+{{- $messages := append $messages (include "child.validateValues.auth" .) -}}
+{{- $messages := without $messages "" -}}
+{{- $message := join "\n" $messages -}}
+
+{{- if $message -}}
+{{-   printf "\nVALUES VALIDATION:\n%s" $message | fail -}}
+{{- end -}}
+{{- end -}}
+"#,
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/child/templates/NOTES.txt")?,
+        "Thank you for installing.\n{{- include \"child.validateValues\" . }}\n",
+    )?;
+
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
+    let collection = analyze_charts(
+        &charts,
+        &defines,
+        false,
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
+    )?;
+
+    let terminal_clauses = contract_schema_signals!(collection)
+        .terminal_clauses()
+        .to_vec();
+    assert!(
+        terminal_clauses.is_empty(),
+        "the conditional validator must not terminate the activated chart: {terminal_clauses:#?}"
     );
 
     Ok(())

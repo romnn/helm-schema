@@ -376,22 +376,18 @@ fn convert_pipeline(node: Node<'_>, src: &str) -> TemplateExpr {
 
 /// Convert the `operand.field` chain rooted at a `selector_expression`.
 ///
-/// Two collapses live here, both grounded in the same observation that
-/// parens are syntactic grouping (depth and ordering don't change the
-/// value, only the parse tree):
-///
-/// - **Adjacent selectors merge.** `.Values.foo.bar` becomes
-///   `Field(["Values","foo","bar"])` instead of three nested nodes.
-/// - **Path-prefix parens disappear.** `(.Values.image).tag`,
-///   `((.Values.image)).tag`, `(.Values).image.tag` all become
-///   `Field(["Values","image","tag"])` — see [`unwrap_path_parens`]
-///   for why the parens are safe to drop here.
+/// Adjacent selectors merge: `.Values.foo.bar` becomes
+/// `Field(["Values","foo","bar"])` instead of three nested nodes.
+/// A parenthesized receiver remains a [`TemplateExpr::Parenthesized`]
+/// operand because grouping changes nil handling at runtime. For example,
+/// `(.Values.resources.limits).memory` tolerates an absent `limits`, while
+/// the ungrouped chain does not. Downstream analysis still derives the full
+/// values identity through the selector without losing that boundary.
 fn convert_selector(node: Node<'_>, src: &str) -> TemplateExpr {
     let suffix = field_text(node, "field", src).to_string();
     let operand = node
         .child_by_field_name("operand")
-        .map(|n| convert_pipeline(n, src))
-        .map(unwrap_path_parens);
+        .map(|n| convert_pipeline(n, src));
     match operand {
         Some(TemplateExpr::Field(mut path)) => {
             path.push(suffix);
@@ -413,40 +409,6 @@ fn convert_selector(node: Node<'_>, src: &str) -> TemplateExpr {
         },
         None => TemplateExpr::Unknown(node_text(node, src).to_string()),
     }
-}
-
-/// Strip every surrounding `Parenthesized` wrapper when (and only when)
-/// the inner-most non-parens node is a pure path expression — `Field`
-/// or `Selector`. Go template charts commonly write
-/// `(.Values.image).tag` so a `nil` value of `.Values.image` returns
-/// `nil` from the `.tag` access instead of erroring the whole action;
-/// the parens are a runtime guard, not a new sub-expression, and the
-/// path the chart names is the same `.Values.image.tag`. Without this
-/// collapse the IR sees
-/// `Selector { operand: Parenthesized(Field([...])), path: [...] }`
-/// and never recognises the chain as a `.Values.image.tag` reference,
-/// dropping the `.tag` field from the inferred schema.
-///
-/// Parenthesised non-path expressions (`(.X | upper).tag`,
-/// `(include "f" .).tag`, …) are returned unchanged: collapsing those
-/// would silently rewrite the operand to look like a path, which is
-/// misleading and wrong. The check uses [`TemplateExpr::deparen`] to
-/// peek through every layer first, so a path buried under any number
-/// of parens (`(((.X.Y)))`, `(((.X)).Y)`) still collapses cleanly while
-/// a non-path payload (`((.X | upper))`, `(((include …)))`) keeps every
-/// original wrapper.
-fn unwrap_path_parens(expr: TemplateExpr) -> TemplateExpr {
-    if !matches!(
-        expr.deparen(),
-        TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
-    ) {
-        return expr;
-    }
-    let mut current = expr;
-    while let TemplateExpr::Parenthesized(inner) = current {
-        current = *inner;
-    }
-    current
 }
 
 /// Convert the `value` field of a `variable_definition` / `assignment`

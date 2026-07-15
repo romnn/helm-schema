@@ -26,8 +26,9 @@
 //! iteration order is `loser` → `winner`; `winner` wins.
 //!
 //! Expected (matching what Helm actually renders): root.replicas has
-//! no integer type hint — the `default 5 .Values.replicas` body is
-//! shadowed and never executes.
+//! the generic scalar domain contributed by its quoted interpolation.
+//! The shadowed `default 5 .Values.replicas` body must not narrow that
+//! domain to an integer.
 
 use color_eyre::eyre::{Report, WrapErr};
 use helm_schema::AnalysisSession;
@@ -147,9 +148,17 @@ fn duplicate_helper_name_losing_body_does_not_contaminate_type_hints()
 
     sim_assert_eq!(
         have: replicas,
-        want: &serde_json::json!({}),
-        "losing-define body's integer literal leaked into root.replicas \
-         even though AST last-write-wins discards that body; got: {replicas}",
+        want: &serde_json::json!({
+            "anyOf": [
+                { "const": null },
+                { "type": "boolean" },
+                { "type": "integer" },
+                { "type": "number" },
+                { "type": "string" },
+            ],
+        }),
+        "root.replicas must retain only the generic quoted-scalar domain; \
+         the losing define must not narrow it with its integer default: {replicas}",
     );
 
     Ok(())

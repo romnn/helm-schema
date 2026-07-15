@@ -58,6 +58,7 @@ fn condition_context_with_output_meta(
     let template_default_paths = Box::leak(Box::new(HashMap::new()));
     let template_output_meta: &'static HashMap<String, BTreeMap<String, HelperOutputMeta>> =
         Box::leak(Box::new(template_output_meta));
+    let template_truthy_reductions = Box::leak(Box::new(HashMap::new()));
     let defines = Box::leak(Box::new(DefineIndex::new()));
     let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));
 
@@ -65,11 +66,13 @@ fn condition_context_with_output_meta(
 
     ValuePathContext {
         root_bindings,
+        root_truthy_predicates: Box::leak(Box::new(HashMap::new())),
         template_bindings,
         range_domains,
         get_bindings,
         template_default_paths,
         template_output_meta,
+        template_truthy_reductions,
         typeof_bindings,
         fragment_context: FragmentEvalContext::new(analysis_db),
         current_dot_fragment: None,
@@ -90,6 +93,22 @@ fn not_simple_path() {
     sim_assert_eq!(
         have: parse_condition("not .Values.X"),
         want: vec![Guard::Not { path: "X".into() }],
+    );
+}
+
+#[test]
+fn absent_custom_root_field_is_false_until_set() {
+    let expr = parse_action_expressions("{{ not .defaultValuesSet }}")
+        .into_iter()
+        .next()
+        .expect("parsed root-field condition");
+    let mut context = condition_context(HashMap::new());
+    context.current_dot_binding = Some(AbstractValue::RootContext);
+
+    assert!(context.condition_lowering_is_faithful(&expr));
+    sim_assert_eq!(
+        have: context.condition_predicate_expr(&expr),
+        want: Predicate::True,
     );
 }
 
@@ -557,11 +576,13 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
     let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));
     let context = ValuePathContext {
         root_bindings: Box::leak(Box::new(HashMap::new())),
+        root_truthy_predicates: Box::leak(Box::new(HashMap::new())),
         template_bindings: HashMap::new(),
         range_domains: Box::leak(Box::new(HashMap::new())),
         get_bindings: Box::leak(Box::new(HashMap::new())),
         template_default_paths: Box::leak(Box::new(HashMap::new())),
         template_output_meta: Box::leak(Box::new(HashMap::new())),
+        template_truthy_reductions: Box::leak(Box::new(HashMap::new())),
         typeof_bindings: Box::leak(Box::new(HashMap::new())),
         fragment_context: FragmentEvalContext::new(analysis_db),
         current_dot_fragment: None,

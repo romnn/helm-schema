@@ -18,6 +18,9 @@ pub(crate) struct HelperOutputMeta {
     /// The binding's value is a total stringification (`quote`, `toString`,
     /// `join`) of this path, so splices rendering it expose no input shape.
     pub(crate) shape_erased: bool,
+    /// The binding's value is YAML serialization of this path. Serialization
+    /// accepts any input kind, while a sequence placement remains structural.
+    pub(crate) yaml_serialized: bool,
     /// The binding's value is derived text of this path (an `include`'s
     /// rendered output, a `printf` result): a consuming transform applied to
     /// the local operates on that text and claims nothing about the path.
@@ -26,6 +29,10 @@ pub(crate) struct HelperOutputMeta {
     /// path while producing the binding's value: splices rendering it carry
     /// the contract under their own render conditions.
     pub(crate) string_contract: bool,
+    /// The path's value was serialized as JSON at this render boundary.
+    pub(crate) json_serialized: bool,
+    /// The path's runtime identity came from JSON decoding.
+    pub(crate) json_decoded: bool,
     pub(crate) provenance: Vec<ContractProvenance>,
     /// Predicate paths this row's derivation explicitly severed (index-call
     /// narrowing): guard reads of their strict ancestors are dropped.
@@ -37,8 +44,11 @@ impl HelperOutputMeta {
         self.predicates.extend(other.predicates.iter().cloned());
         self.defaulted |= other.defaulted;
         self.shape_erased |= other.shape_erased;
+        self.yaml_serialized |= other.yaml_serialized;
         self.derived_text |= other.derived_text;
         self.string_contract |= other.string_contract;
+        self.json_serialized |= other.json_serialized;
+        self.json_decoded |= other.json_decoded;
         merge_provenance_sites(&mut self.provenance, &other.provenance);
         self.suppress_predicate_paths
             .extend(other.suppress_predicate_paths.iter().cloned());

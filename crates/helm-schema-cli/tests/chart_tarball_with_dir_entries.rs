@@ -167,6 +167,8 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> color_eyre::e
         .map_err(into_eyre)
         .wrap_err("generate schema")?;
 
+    // The quoted ConfigMap slot renders every scalar form, so the shipped
+    // Boolean default cannot narrow `enabled` to Boolean-only input.
     // `global: {}` is mirrored into every subchart slot to match
     // Helm's chartutil.MergeValues, which writes `global: {}` into
     // each subchart at render time even when no chart in the tree
@@ -180,7 +182,14 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> color_eyre::e
             "subchart": {
                 "additionalProperties": {},
                 "properties": {
-                    "enabled": { "type": "boolean" },
+                    "enabled": {
+                        "anyOf": [
+                            { "type": "boolean" },
+                            { "type": "integer" },
+                            { "type": "number" },
+                            { "type": "string" }
+                        ]
+                    },
                     "global": { "additionalProperties": {}, "type": "object" }
                 },
                 "type": "object"

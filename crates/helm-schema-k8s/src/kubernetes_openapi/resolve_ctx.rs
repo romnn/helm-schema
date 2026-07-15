@@ -365,19 +365,23 @@ fn descend_one_schema_path_segment<F: FnMut(&str) -> Option<SchemaDoc>>(
         }
     }
 
+    let is_dynamic_mapping_value = segment == helm_schema_core::DYNAMIC_MAPPING_VALUE_SEGMENT;
     let (key, is_array_item) = segment
         .strip_suffix("[*]")
         .map_or((segment, false), |key| (key, true));
 
-    let mut next = node
-        .schema
-        .get("properties")
-        .and_then(Value::as_object)
-        .and_then(|properties| {
-            properties
-                .get(key)
-                .map(|schema| node.nested_child("properties", key, schema.clone()))
+    let mut next = (!is_dynamic_mapping_value)
+        .then(|| {
+            node.schema
+                .get("properties")
+                .and_then(Value::as_object)
+                .and_then(|properties| {
+                    properties
+                        .get(key)
+                        .map(|schema| node.nested_child("properties", key, schema.clone()))
+                })
         })
+        .flatten()
         .or_else(|| {
             node.schema
                 .get("additionalProperties")

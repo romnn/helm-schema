@@ -93,6 +93,55 @@ fn serialized_condition_uses_guard_conjunctions() {
 }
 
 #[test]
+fn serialized_condition_retains_exact_guards_from_approximate_conjunctions() {
+    let condition = GuardDnf::from_disjunction([
+        vec![truthy("exact")],
+        vec![
+            truthy("shared"),
+            Predicate::approximate("condition-1", ["version".to_string()].into_iter().collect()),
+        ],
+    ]);
+
+    sim_assert_eq!(
+        have: serde_json::to_value(condition).expect("serialize guard DNF"),
+        want: json!([
+            [{"type": "truthy", "path": "shared"}],
+            [{"type": "truthy", "path": "exact"}]
+        ])
+    );
+}
+
+#[test]
+fn serialized_condition_deduplicates_approximate_branches_with_equal_exact_guards() {
+    let condition = GuardDnf::from_disjunction([
+        vec![
+            truthy("shared"),
+            Predicate::approximate("condition-1", ["first".to_string()].into_iter().collect()),
+        ],
+        vec![
+            truthy("shared"),
+            Predicate::approximate("condition-2", ["second".to_string()].into_iter().collect()),
+        ],
+    ]);
+
+    sim_assert_eq!(
+        have: serde_json::to_value(condition).expect("serialize guard DNF"),
+        want: json!([[{"type": "truthy", "path": "shared"}]])
+    );
+}
+
+#[test]
+fn equal_evidence_across_opaque_branch_complements_is_unconditional() {
+    let approximate =
+        Predicate::approximate("condition-1", ["version".to_string()].into_iter().collect());
+    let mut condition = GuardDnf::from_conjunction([approximate.clone()]);
+
+    condition.union(GuardDnf::from_conjunction([approximate.negated()]));
+
+    sim_assert_eq!(have: condition, want: GuardDnf::unconditional());
+}
+
+#[test]
 fn conditional_guard_disjunction_uses_the_same_normalization() {
     let condition = GuardDnf::normalize_conditional_guard_disjunction([
         vec![

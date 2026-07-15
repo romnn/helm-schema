@@ -7,6 +7,7 @@ use crate::expr_eval::{
 use helm_schema_ast::parse_expr_text;
 use helm_schema_ast::render_printf_string_sets;
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
+use helm_schema_core::{Guard, GuardValue, Predicate};
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use test_util::prelude::sim_assert_eq;
 
@@ -273,6 +274,91 @@ fn integer_index_on_known_list_stays_positional() {
 }
 
 #[test]
+fn get_requires_its_values_backed_host_to_be_an_object() {
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "context".to_string(),
+        AbstractValue::JsonDecodedPath("contexts.*".to_string()),
+    );
+    let result = eval_expr(&single_expr(r#"get $context "creds""#), &env);
+
+    assert!(result.effects.helper_fails.iter().any(|capture| {
+        capture.member_access
+            && capture.conjunction
+                == vec![
+                    Predicate::from(Guard::TypeIs {
+                        path: "contexts.*".to_string(),
+                        schema_type: "object".to_string(),
+                    })
+                    .negated(),
+                ]
+    }));
+}
+
+#[test]
+fn grouped_selector_requires_an_object_only_when_receiver_is_present() {
+    let result = eval_expr(
+        &single_expr(r#"(.Values.resources.limits).memory"#),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: result.value,
+        want: Some(AbstractValue::ValuesPath(
+            "resources.limits.memory".to_string()
+        )),
+    );
+    let target_capture = result
+        .effects
+        .helper_fails
+        .iter()
+        .find(|capture| {
+            capture.member_access
+                && capture.conjunction.iter().any(|predicate| {
+                    matches!(
+                        predicate,
+                        Predicate::Not(inner)
+                            if matches!(
+                                inner.as_ref(),
+                                Predicate::Guard(Guard::TypeIs { path, schema_type })
+                                    if path == "resources.limits" && schema_type == "object"
+                            )
+                    )
+                })
+        })
+        .expect("grouped receiver member-host capture");
+    sim_assert_eq!(
+        have: &target_capture.conjunction,
+        want: &vec![
+            Predicate::Not(Box::new(Predicate::Guard(Guard::Absent {
+                path: "resources.limits".to_string(),
+            }))),
+            Predicate::Not(Box::new(Predicate::Guard(Guard::TypeIs {
+                path: "resources.limits".to_string(),
+                schema_type: "object".to_string(),
+            }))),
+        ],
+    );
+}
+
+#[test]
+fn ungrouped_selector_still_requires_the_intermediate_member() {
+    let result = eval_expr(
+        &single_expr(r#".Values.resources.limits.memory"#),
+        &EvalEnv::default(),
+    );
+
+    assert!(result.effects.helper_fails.iter().any(|capture| {
+        capture.member_access
+            && capture.conjunction
+                == vec![Predicate::Not(Box::new(Predicate::Guard(Guard::TypeIs {
+                    path: "resources.limits".to_string(),
+                    schema_type: "object".to_string(),
+                })))]
+    }));
+}
+
+#[test]
 fn set_call_updates_local_key_with_assigned_literal() {
     let expr = single_expr(r#"set $config (printf "%s" "name") "generated""#);
     let mut env = EvalEnv::default();
@@ -459,7 +545,7 @@ fn uniq_pipeline_preserves_local_list_items() {
 }
 
 #[test]
-fn split_list_preserves_equal_length_segment_positions() {
+fn split_list_preserves_exact_segment_sequence() {
     let expr = single_expr(r#"splitList "." "auth.password""#);
     let result = eval_expr(&expr, &EvalEnv::default());
 
@@ -473,18 +559,23 @@ fn split_list_preserves_equal_length_segment_positions() {
 }
 
 #[test]
-fn split_list_keeps_mixed_length_path_candidates_atomic() {
+fn split_list_preserves_mixed_length_path_alternatives() {
     let expr = single_expr(r#"splitList "." (coalesce "auth.password" "global.auth.password")"#);
     let result = eval_expr(&expr, &EvalEnv::default());
 
     sim_assert_eq!(
         have: result.value,
-        want: Some(AbstractValue::List(vec![AbstractValue::StringSet(
-            BTreeSet::from([
-                "auth.password".to_string(),
-                "global.auth.password".to_string(),
-            ])
-        )]))
+        want: Some(AbstractValue::Choice(BTreeSet::from([
+            AbstractValue::List(vec![
+                AbstractValue::StringSet(BTreeSet::from(["auth".to_string()])),
+                AbstractValue::StringSet(BTreeSet::from(["password".to_string()])),
+            ]),
+            AbstractValue::List(vec![
+                AbstractValue::StringSet(BTreeSet::from(["global".to_string()])),
+                AbstractValue::StringSet(BTreeSet::from(["auth".to_string()])),
+                AbstractValue::StringSet(BTreeSet::from(["password".to_string()])),
+            ]),
+        ])))
     );
 }
 
@@ -493,6 +584,14 @@ fn first_and_reverse_preserve_list_structure() {
     let first = eval_expr(&single_expr(r#"first (list "a" "b")"#), &EvalEnv::default());
     sim_assert_eq!(
         have: first.value,
+        want: Some(AbstractValue::StringSet(BTreeSet::from(["a".to_string()])))
+    );
+    let piped_first = eval_expr(
+        &single_expr(r#"(list "a" "b") | first"#),
+        &EvalEnv::default(),
+    );
+    sim_assert_eq!(
+        have: piped_first.value,
         want: Some(AbstractValue::StringSet(BTreeSet::from(["a".to_string()])))
     );
 
@@ -506,6 +605,76 @@ fn first_and_reverse_preserve_list_structure() {
             AbstractValue::StringSet(BTreeSet::from(["b".to_string()])),
             AbstractValue::StringSet(BTreeSet::from(["a".to_string()])),
         ]))
+    );
+    let piped_reverse = eval_expr(
+        &single_expr(r#"(list "a" "b") | reverse"#),
+        &EvalEnv::default(),
+    );
+    sim_assert_eq!(
+        have: piped_reverse.value,
+        want: Some(AbstractValue::List(vec![
+            AbstractValue::StringSet(BTreeSet::from(["b".to_string()])),
+            AbstractValue::StringSet(BTreeSet::from(["a".to_string()])),
+        ]))
+    );
+}
+
+#[test]
+fn strict_pipeline_calls_match_direct_operand_contracts() {
+    for (direct, pipeline) in [
+        ("len .Values.input", ".Values.input | len"),
+        ("first .Values.input", ".Values.input | first"),
+        ("reverse .Values.input", ".Values.input | reverse"),
+        (
+            r#"eq .Values.input "active""#,
+            r#".Values.input | eq "active""#,
+        ),
+        (
+            r#"ne .Values.input "active""#,
+            r#".Values.input | ne "active""#,
+        ),
+    ] {
+        let direct = eval_expr(&single_expr(direct), &EvalEnv::default());
+        let pipeline_result = eval_expr(&single_expr(pipeline), &EvalEnv::default());
+
+        assert!(
+            !direct.effects.helper_fails.is_empty(),
+            "the direct call should establish the reference contract: {pipeline}"
+        );
+        sim_assert_eq!(
+            have: pipeline_result.effects.helper_fails,
+            want: direct.effects.helper_fails,
+            "the pipeline form must preserve the direct call's runtime contract: {pipeline}"
+        );
+    }
+}
+
+#[test]
+fn integer_and_float_comparisons_keep_distinct_runtime_kinds() {
+    let conjunctions = |action: &str| {
+        eval_expr(&single_expr(action), &EvalEnv::default())
+            .effects
+            .helper_fails
+            .into_iter()
+            .map(|capture| capture.conjunction)
+            .collect::<BTreeSet<_>>()
+    };
+
+    sim_assert_eq!(
+        have: conjunctions("eq .Values.input 1"),
+        want: BTreeSet::from([vec![Predicate::from(Guard::TypeIs {
+            path: "input".to_string(),
+            schema_type: "integer".to_string(),
+        })
+        .negated()]])
+    );
+    sim_assert_eq!(
+        have: conjunctions("eq .Values.input 1.5"),
+        want: BTreeSet::from([vec![Predicate::from(Guard::TypeIs {
+            path: "input".to_string(),
+            schema_type: "number".to_string(),
+        })
+        .negated()]])
     );
 }
 
@@ -522,6 +691,110 @@ fn helper_argument_fields_resolve_from_dot_root() {
     assert!(
         result.effects.defaults.contains("serviceAccount.name"),
         "default should attach to the values path reached through .config.name"
+    );
+}
+
+#[test]
+fn default_choice_records_primary_and_fallback_selection_conditions() {
+    let result = eval_expr(
+        &single_expr("default .Values.persistence.storageClass .Values.global.storageClass"),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: result
+            .effects
+            .local_output_meta
+            .get("global.storageClass")
+            .map(|meta| &meta.predicates),
+        want: Some(&BTreeSet::from([BTreeSet::from([
+            Predicate::truthy_path("global.storageClass"),
+        ])])),
+    );
+    sim_assert_eq!(
+        have: result
+            .effects
+            .local_output_meta
+            .get("persistence.storageClass")
+            .map(|meta| &meta.predicates),
+        want: Some(&BTreeSet::from([BTreeSet::from([
+            Predicate::truthy_path("global.storageClass").negated(),
+        ])])),
+    );
+}
+
+#[test]
+fn coalesce_records_ordered_candidate_selection_conditions() {
+    let result = eval_expr(
+        &single_expr("coalesce .Values.primary .Values.fallback .Values.last"),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: result
+            .effects
+            .local_output_meta
+            .get("primary")
+            .map(|meta| &meta.predicates),
+        want: Some(&BTreeSet::from([BTreeSet::from([
+            Predicate::truthy_path("primary"),
+        ])])),
+    );
+    sim_assert_eq!(
+        have: result
+            .effects
+            .local_output_meta
+            .get("fallback")
+            .map(|meta| &meta.predicates),
+        want: Some(&BTreeSet::from([BTreeSet::from([
+            Predicate::truthy_path("primary").negated(),
+            Predicate::truthy_path("fallback"),
+        ])])),
+    );
+    sim_assert_eq!(
+        have: result
+            .effects
+            .local_output_meta
+            .get("last")
+            .map(|meta| &meta.predicates),
+        want: Some(&BTreeSet::from([BTreeSet::from([
+            Predicate::truthy_path("primary").negated(),
+            Predicate::truthy_path("fallback").negated(),
+            Predicate::truthy_path("last"),
+        ])])),
+    );
+
+    let consumed = eval_expr(
+        &single_expr("coalesce .Values.primary .Values.fallback | b64enc"),
+        &EvalEnv::default(),
+    );
+    let failure_conjunctions = consumed
+        .effects
+        .helper_fails
+        .into_iter()
+        .map(|capture| capture.conjunction.into_iter().collect::<BTreeSet<_>>())
+        .collect::<BTreeSet<_>>();
+    sim_assert_eq!(
+        have: failure_conjunctions,
+        want: BTreeSet::from([
+            BTreeSet::from([
+                Predicate::truthy_path("primary"),
+                Predicate::from(Guard::TypeIs {
+                    path: "primary".to_string(),
+                    schema_type: "string".to_string(),
+                })
+                .negated(),
+            ]),
+            BTreeSet::from([
+                Predicate::truthy_path("primary").negated(),
+                Predicate::truthy_path("fallback"),
+                Predicate::from(Guard::TypeIs {
+                    path: "fallback".to_string(),
+                    schema_type: "string".to_string(),
+                })
+                .negated(),
+            ]),
+        ])
     );
 }
 
@@ -605,5 +878,180 @@ fn helper_argument_merge_preserves_ordered_overwrite_and_root_context_expansion(
                 AbstractValue::ValuesPath("root.value".to_string()),
             ),
         ])
+    );
+}
+
+#[test]
+fn json_roundtrip_preserves_input_identity_with_decoded_representation() {
+    let result = eval_expr(
+        &single_expr(".Values.extraResources | toJson | fromJson"),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: result.value,
+        want: Some(AbstractValue::JsonDecodedPath("extraResources".to_string()))
+    );
+}
+
+#[test]
+fn json_roundtrip_preserves_values_root_inside_constructed_container() {
+    let result = eval_expr(
+        &single_expr(r#"get (dict "doc" .Values | toJson | fromJson) "doc""#),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: result.value,
+        want: Some(AbstractValue::JsonDecodedPath(String::new())),
+    );
+}
+
+#[test]
+fn yaml_roundtrip_preserves_values_root_inside_constructed_container() {
+    let result = eval_expr(
+        &single_expr(r#"get (dict "doc" .Values | toYaml | fromYaml) "doc""#),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: result.value,
+        want: Some(AbstractValue::ValuesPath(String::new())),
+    );
+}
+
+#[test]
+fn from_json_without_matching_serialization_only_contracts_the_input_string() {
+    let result = eval_expr(
+        &single_expr(".Values.payload | fromJson"),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(have: result.value, want: None);
+    sim_assert_eq!(
+        have: result.effects.type_hints.get("payload"),
+        want: Some(&["string".to_string()].into_iter().collect())
+    );
+}
+
+#[test]
+fn root_values_replacement_is_exported_and_used_by_later_values_reads() {
+    let mut env = EvalEnv {
+        dot: Some(AbstractValue::RootContext),
+        ..EvalEnv::default()
+    };
+    let result = eval_expr(
+        &single_expr(r#"set . "Values" (.Values | toJson | fromJson)"#),
+        &env,
+    );
+    env.root_fields.extend(result.effects.root_set_mutations);
+
+    sim_assert_eq!(
+        have: eval_expr(&single_expr(".Values.extraResources"), &env).value,
+        want: Some(AbstractValue::JsonDecodedPath("extraResources".to_string()))
+    );
+}
+
+#[test]
+fn root_set_truth_predicates_feed_later_root_field_assignments() {
+    let mut env = EvalEnv {
+        dot: Some(AbstractValue::RootContext),
+        ..EvalEnv::default()
+    };
+    let server = eval_expr(
+        &single_expr(
+            r#"set . "serverEnabled" (or
+                (eq (.Values.server.enabled | toString) "true")
+                (and
+                    (eq (.Values.server.enabled | toString) "-")
+                    (eq (.Values.global.enabled | toString) "true")))"#,
+        ),
+        &env,
+    );
+    let enabled = Predicate::Or(vec![
+        Predicate::Or(vec![
+            Predicate::from(Guard::Eq {
+                path: "server.enabled".to_string(),
+                value: GuardValue::string("true"),
+            }),
+            Predicate::from(Guard::Eq {
+                path: "server.enabled".to_string(),
+                value: GuardValue::Bool(true),
+            }),
+        ]),
+        Predicate::And(vec![
+            Predicate::from(Guard::Eq {
+                path: "server.enabled".to_string(),
+                value: GuardValue::string("-"),
+            }),
+            Predicate::Or(vec![
+                Predicate::from(Guard::Eq {
+                    path: "global.enabled".to_string(),
+                    value: GuardValue::string("true"),
+                }),
+                Predicate::from(Guard::Eq {
+                    path: "global.enabled".to_string(),
+                    value: GuardValue::Bool(true),
+                }),
+            ]),
+        ]),
+    ]);
+    sim_assert_eq!(
+        have: server.effects.root_set_predicates.get("serverEnabled"),
+        want: Some(&enabled)
+    );
+
+    env.root_truthy_predicates
+        .extend(server.effects.root_set_predicates);
+    let service = eval_expr(
+        &single_expr(
+            r#"set . "serverServiceEnabled"
+                (and .serverEnabled
+                    (eq (.Values.server.service.enabled | toString) "true"))"#,
+        ),
+        &env,
+    );
+    sim_assert_eq!(
+        have: service
+            .effects
+            .root_set_predicates
+            .get("serverServiceEnabled"),
+        want: Some(&Predicate::And(vec![
+            enabled,
+            Predicate::Or(vec![
+                Predicate::from(Guard::Eq {
+                    path: "server.service.enabled".to_string(),
+                    value: GuardValue::string("true"),
+                }),
+                Predicate::from(Guard::Eq {
+                    path: "server.service.enabled".to_string(),
+                    value: GuardValue::Bool(true),
+                }),
+            ]),
+        ]))
+    );
+}
+
+#[test]
+fn root_values_merge_records_the_fallback_values_subtree() {
+    let env = EvalEnv {
+        dot: Some(AbstractValue::RootContext),
+        locals: HashMap::from([(
+            "defaults".to_string(),
+            AbstractValue::ValuesPath("_internal_defaults".to_string()),
+        )]),
+        ..EvalEnv::default()
+    };
+    let result = eval_expr(
+        &single_expr(r#"set $ "Values" (mustMergeOverwrite $defaults $.Values)"#),
+        &env,
+    );
+
+    sim_assert_eq!(
+        have: result.effects.values_default_sources,
+        want: BTreeSet::from([crate::ValuesDefaultSource {
+            target_path: String::new(),
+            source_path: "_internal_defaults".to_string(),
+        }])
     );
 }

@@ -469,10 +469,10 @@ fn split_path_helper_resolves_key_selected_by_helper() {
         .map(|use_| use_.source_expr.as_str())
         .collect();
 
-    assert!(
-        password_sources.contains("auth.password")
-            && password_sources.contains("global.auth.password"),
-        "helper-selected string keys should resolve into Values paths: {ir:#?}"
+    sim_assert_eq!(
+        have: password_sources,
+        want: std::collections::BTreeSet::from(["auth.password", "global.auth.password"]),
+        "helper-selected path strings must resolve only to nested Values paths: {ir:#?}"
     );
 }
 
@@ -1034,11 +1034,14 @@ fn bitnami_tplvalues_merge_list_items_stay_on_labels_path() {
 
     let labels_path = ["metadata".to_string(), "labels".to_string()];
     for source_expr in ["podLabels", "commonLabels"] {
+        // `common.tplvalues.render` renders ANY input kind (strings through
+        // `tpl`, everything else through `toYaml`), so the placed row keeps
+        // structural attachment without a structured-input shape claim.
         assert!(
             ir.iter().any(|use_| {
                 use_.source_expr == source_expr
                     && use_.path.0 == labels_path
-                    && use_.kind == helm_schema_ir::ValueKind::Fragment
+                    && use_.kind == helm_schema_ir::ValueKind::YamlSerialized
             }),
             "expected {source_expr} to stay attached to metadata.labels: {ir:#?}",
         );

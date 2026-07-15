@@ -87,10 +87,14 @@ pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
         .values_descriptions
         .unwrap_or(&empty_values_descriptions);
 
-    let values_yaml_doc = input
+    let mut values_yaml_doc = input
         .values_yaml
         .and_then(|s| serde_yaml::from_str::<YamlValue>(s).ok())
         .unwrap_or(YamlValue::Null);
+    values_yaml::apply_values_default_sources(
+        &mut values_yaml_doc,
+        input.contract_schema_signals.values_default_sources(),
+    );
 
     let root_schema = build_root_schema(
         input.contract_schema_signals,
@@ -148,16 +152,17 @@ fn build_root_schema(
         .filter(|evidence| evidence.facts.accepted_values_root_fragment)
         .map(|evidence| split_value_path(&evidence.value_path))
         .collect::<Vec<_>>();
-    let no_replaced_ancestors = BTreeSet::new();
-    let replaced_paths = resolved_paths
+    let no_owning_ancestors = BTreeSet::new();
+    let owning_paths = resolved_paths
         .iter()
         .filter(|resolved_path| {
-            classify_base(resolved_path, &conditional_targets, &no_replaced_ancestors).replaces()
+            classify_base(resolved_path, &conditional_targets, &no_owning_ancestors)
+                .owns_descendants()
         })
         .map(|resolved_path| resolved_path.path_segments.clone())
         .collect::<BTreeSet<_>>();
     for resolved_path in &resolved_paths {
-        let owner = classify_base(resolved_path, &conditional_targets, &replaced_paths);
+        let owner = classify_base(resolved_path, &conditional_targets, &owning_paths);
         let Some(schema) = owner.schema(resolved_path) else {
             continue;
         };
@@ -167,7 +172,6 @@ fn build_root_schema(
             root_schema.insert_path_schema(&resolved_path.path_segments, schema);
         }
     }
-
     append_conditional_schemas(&mut root_schema, conditional_schemas, values_yaml_doc);
     append_terminal_clauses(
         &mut root_schema,
@@ -181,6 +185,11 @@ fn build_root_schema(
     for resolved_path in &resolved_paths {
         if resolved_path.used_as_serialized {
             default_fill_skip_paths.insert(resolved_path.path_segments.clone());
+        }
+    }
+    for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
+        if evidence.facts.used_as_yaml_serialized {
+            default_fill_skip_paths.insert(split_value_path(value_path));
         }
     }
     // A directly ranged path accepts the runtime iterable domain, which is

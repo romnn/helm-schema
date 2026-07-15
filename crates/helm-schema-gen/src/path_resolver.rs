@@ -34,7 +34,6 @@ struct ProviderSchemaLookupKey {
 
 pub(crate) struct PathSchemaResolver<'a> {
     schema_evidence_by_value_path: &'a BTreeMap<String, ContractPathSchemaEvidence>,
-    referenced_value_paths: &'a BTreeSet<String>,
     values_yaml_info: BTreeMap<String, ValuesYamlPathInfo>,
     resolve_policy: ResolvePolicy,
     provider: &'a dyn ResourceSchemaOracle,
@@ -55,7 +54,6 @@ impl<'a> PathSchemaResolver<'a> {
         );
         Self {
             schema_evidence_by_value_path: contract_signals.schema_evidence_by_value_path(),
-            referenced_value_paths: contract_signals.referenced_value_paths(),
             values_yaml_info,
             resolve_policy: ResolvePolicy,
             provider,
@@ -82,8 +80,15 @@ impl<'a> PathSchemaResolver<'a> {
 
     #[tracing::instrument(skip_all)]
     pub(crate) fn resolve_all(mut self) -> Vec<ResolvedPathSchema> {
-        let referenced_value_paths = self.referenced_value_paths;
-        referenced_value_paths
+        let resolved_value_paths = self
+            .schema_evidence_by_value_path
+            .iter()
+            .filter(|(_, evidence)| {
+                evidence.is_referenced_value_path || !evidence.fail_implications.is_empty()
+            })
+            .map(|(value_path, _)| value_path.clone())
+            .collect::<Vec<_>>();
+        resolved_value_paths
             .iter()
             .filter_map(|value_path| self.resolve_path(value_path))
             .collect()
@@ -313,23 +318,82 @@ pub(crate) fn fail_requirement_schema<'a>(
 ) -> Value {
     let mut parts = Vec::new();
     for implication in implications {
-        let requirement =
-            fail_value_requirement_schema(&implication.requirements, implication.per_member);
+        let requirement = fail_value_requirement_schema(
+            &implication.requirements,
+            !matches!(
+                implication.target,
+                helm_schema_core::ContractRequirementTarget::Value
+            ),
+        );
         if is_empty_schema(&requirement) {
             continue;
         }
-        if implication.per_member {
-            // Go's `range` iterates maps and lists; each schema keyword
-            // constrains only its own instance type, so both apply safely.
-            parts.push(serde_json::json!({
-                "additionalProperties": requirement,
-                "items": requirement,
-            }));
-        } else {
-            parts.push(requirement);
+        match implication.target {
+            helm_schema_core::ContractRequirementTarget::Value => parts.push(requirement),
+            helm_schema_core::ContractRequirementTarget::Members { allow_integer } => {
+                let mut arms = vec![
+                    serde_json::json!({ "type": "array", "items": requirement }),
+                    serde_json::json!({
+                        "type": "object",
+                        "additionalProperties": requirement,
+                    }),
+                ];
+                if allow_integer {
+                    let integer =
+                        if requirements_allow_runtime_kind(&implication.requirements, "integer") {
+                            serde_json::json!({ "type": "integer" })
+                        } else {
+                            // Nonpositive integer ranges execute no iterations,
+                            // so no member reaches the body requirement.
+                            serde_json::json!({ "type": "integer", "maximum": 0 })
+                        };
+                    arms.push(integer);
+                }
+                arms.push(serde_json::json!({ "type": "null" }));
+                parts.push(serde_json::json!({ "anyOf": arms }));
+            }
+            helm_schema_core::ContractRequirementTarget::Keys => {
+                let object = if requirements_allow_runtime_kind(&implication.requirements, "string")
+                {
+                    serde_json::json!({ "type": "object" })
+                } else {
+                    serde_json::json!({ "type": "object", "maxProperties": 0 })
+                };
+                let array = if requirements_allow_runtime_kind(&implication.requirements, "integer")
+                {
+                    serde_json::json!({ "type": "array" })
+                } else {
+                    // An empty array never evaluates the range body, so no
+                    // integer key reaches the strict consumer.
+                    serde_json::json!({ "type": "array", "maxItems": 0 })
+                };
+                parts.push(serde_json::json!({
+                    "anyOf": [object, array, { "type": "null" }]
+                }));
+            }
         }
     }
     merge_schema_list(parts)
+}
+
+fn requirements_allow_runtime_kind(
+    requirements: &[helm_schema_core::FailValueRequirement],
+    schema_type: &str,
+) -> bool {
+    use helm_schema_core::FailValueRequirement;
+
+    requirements.iter().all(|requirement| match requirement {
+        FailValueRequirement::SchemaType(required) => required == schema_type,
+        FailValueRequirement::NotSchemaType(rejected) => rejected != schema_type,
+        FailValueRequirement::Iterable { allow_integer } => {
+            matches!(schema_type, "array" | "object" | "null")
+                || schema_type == "integer" && *allow_integer
+        }
+        FailValueRequirement::HasMember(_) => schema_type == "object",
+        FailValueRequirement::MemberHost { handled_kinds } => {
+            schema_type == "object" || handled_kinds.iter().any(|kind| kind == schema_type)
+        }
+    })
 }
 
 fn fail_value_requirement_schema(
@@ -365,7 +429,6 @@ fn fail_value_requirement_schema(
                         .filter(|kind| kind.as_str() != "object")
                         .map(|kind| type_schema(kind)),
                 );
-                arms.push(serde_json::json!({ "type": "null" }));
                 parts.push(serde_json::json!({ "anyOf": arms }));
             }
             FailValueRequirement::Iterable { allow_integer } => {
