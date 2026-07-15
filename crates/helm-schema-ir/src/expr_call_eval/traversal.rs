@@ -44,7 +44,12 @@ pub(super) fn eval_dig(
         let mut step = path;
         for prefix_len in 0..keys.len() {
             if prefix_len > 0 {
-                step = format!("{step}.{}", keys[prefix_len - 1]);
+                step = helm_schema_core::append_value_path(&step, &keys[prefix_len - 1]);
+            }
+            // Digging from the whole-values root: the root map itself has
+            // no path-level contract to state.
+            if step.is_empty() {
+                continue;
             }
             let capture = crate::eval_effect::FailCapture {
                 conjunction: vec![

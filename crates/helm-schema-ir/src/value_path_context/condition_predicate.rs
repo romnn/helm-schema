@@ -115,6 +115,7 @@ impl ValuePathContext<'_> {
                 "empty" => self.empty_predicate(args).is_some(),
                 "coalesce" => self.coalesce_truthy_predicate(args).is_some(),
                 "default" => self.default_truthy_predicate(args).is_some(),
+                "dig" => self.dig_truthy_predicate(args).is_some(),
                 function if is_files_get_function(function) => {
                     self.files_get_printf_predicate(args).is_some()
                 }
@@ -194,11 +195,49 @@ impl ValuePathContext<'_> {
             "typeIs" | "kindIs" => self.type_is_predicate(args),
             "coalesce" => self.coalesce_truthy_predicate(args),
             "default" => self.default_truthy_predicate(args),
+            "dig" => self
+                .dig_truthy_predicate(args)
+                .or_else(|| self.truthy_predicate(expr)),
             function if is_files_get_function(function) => self
                 .files_get_printf_predicate(args)
                 .or_else(|| self.truthy_predicate(expr)),
             _ => self.truthy_predicate(expr),
         }
+    }
+
+    /// `dig k1 … kn default subject` with literal keys, a FALSY literal
+    /// default, and one values-backed map subject is truthy exactly when
+    /// the dug path's value is truthy: a missing chain yields the falsy
+    /// default, and a present chain yields the leaf value itself. Truthy
+    /// or non-literal defaults abstain (absence would select a truthy
+    /// fallback), as does a subject without a single map identity.
+    fn dig_truthy_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let (subject, rest) = args.split_last()?;
+        let (default, key_exprs) = rest.split_last()?;
+        if key_exprs.is_empty() {
+            return None;
+        }
+        let keys = key_exprs
+            .iter()
+            .map(literal_string)
+            .collect::<Option<Vec<_>>>()?;
+        let TemplateExpr::Literal(literal) = default.deparen() else {
+            return None;
+        };
+        if literal_is_truthy(literal) {
+            return None;
+        }
+        // The subject must be ONE values-backed map identity — the
+        // whole-values root (`.Values` or `.Values.AsMap`) or a single
+        // path. A choice of subjects would misstate the leaf condition.
+        let base = match self.with_body_fragment_value_expr(subject)? {
+            AbstractValue::ValuesPath(base) => base,
+            _ => return None,
+        };
+        let path = keys.iter().fold(base, |path, key| {
+            helm_schema_core::append_value_path(&path, key)
+        });
+        Some(Predicate::truthy_path(path))
     }
 
     fn positive_len_predicate(&self, function: &str, args: &[TemplateExpr]) -> Option<Predicate> {

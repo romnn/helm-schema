@@ -418,12 +418,11 @@ impl AbstractValue {
             Self::OutputPath(prefix, meta) => Some(Self::OutputPath(prefix.clone(), meta.clone())),
             Self::RootContext => {
                 if rest.first().is_some_and(|segment| segment == "Values") {
-                    if rest.len() == 1 {
+                    let tail = resolve_root_values_methods(&rest[1..])?;
+                    if tail.is_empty() {
                         Some(Self::values_root())
                     } else {
-                        Some(Self::ValuesPath(helm_schema_core::join_value_path(
-                            &rest[1..],
-                        )))
+                        Some(Self::ValuesPath(helm_schema_core::join_value_path(tail)))
                     }
                 } else {
                     None
@@ -677,6 +676,26 @@ impl AbstractValue {
 
 fn item_path(path: &str) -> String {
     helm_schema_core::append_value_path(path, "*")
+}
+
+/// Go-template method resolution on the typed root values object.
+///
+/// Helm's `.Values` is `chartutil.Values`, a named map type whose exported
+/// methods shadow same-named map keys during selector resolution. A leading
+/// `AsMap` calls the niladic method that returns the receiver map itself
+/// (an empty map for nil/empty values), so the remaining segments continue
+/// from the root. The other exposed methods (`YAML`, `Table`, `Encode`,
+/// `PathValue`) take arguments or produce derived text, so selecting
+/// through them never names a user value and resolution abstains instead
+/// of fabricating a path segment. Only the ROOT receiver carries the type;
+/// nested values are plain maps, so deeper same-named segments stay
+/// ordinary keys.
+pub(crate) fn resolve_root_values_methods(tail: &[String]) -> Option<&[String]> {
+    match tail.first().map(String::as_str) {
+        Some("AsMap") => Some(&tail[1..]),
+        Some("YAML" | "Table" | "Encode" | "PathValue") => None,
+        _ => Some(tail),
+    }
 }
 
 pub(crate) fn path_is_encoded(path: &str, encoded_paths: &BTreeSet<String>) -> bool {

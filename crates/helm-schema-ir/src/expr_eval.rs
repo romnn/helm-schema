@@ -167,9 +167,7 @@ pub(crate) fn eval_expr_with_helper_calls(
     match expr {
         TemplateExpr::Parenthesized(inner) => eval_expr_with_helper_calls(inner, env, resolver),
         TemplateExpr::Field(path) if path.first().is_some_and(|segment| segment == "Values") => {
-            let mut result = EvalResult::from_value(values_path_value(path, env));
-            record_member_access_captures(&path[1..], 0, env, &mut result.effects);
-            result
+            root_values_selector_result(&path[1..], env)
         }
         TemplateExpr::Field(path) if path.is_empty() => {
             EvalResult::from_value(env.dot.clone().unwrap_or(AbstractValue::RootContext))
@@ -201,9 +199,7 @@ pub(crate) fn eval_expr_with_helper_calls(
             if matches!(operand.as_ref(), TemplateExpr::Variable(var) if var.is_empty())
                 && path.first().is_some_and(|segment| segment == "Values") =>
         {
-            let mut result = EvalResult::from_value(values_path_value(path, env));
-            record_member_access_captures(&path[1..], 0, env, &mut result.effects);
-            result
+            root_values_selector_result(&path[1..], env)
         }
         TemplateExpr::Variable(var) if var.is_empty() => {
             EvalResult::from_value(AbstractValue::RootContext)
@@ -242,8 +238,7 @@ pub(crate) fn eval_expr_with_helper_calls(
                 && !var.is_empty()
                 && path.first().is_some_and(|segment| segment == "Values")
             {
-                let mut result = EvalResult::from_value(values_path_value(path, env));
-                record_member_access_captures(&path[1..], 0, env, &mut result.effects);
+                let result = root_values_selector_result(&path[1..], env);
                 return with_bound_selector_paths(result, expr, env);
             }
             if let TemplateExpr::Variable(var) = operand.as_ref()
@@ -299,8 +294,19 @@ pub(crate) fn eval_expr_with_helper_calls(
     }
 }
 
-fn values_path_value(path: &[String], env: &EvalEnv) -> AbstractValue {
-    let tail = &path[1..];
+/// Evaluate `.Values`-rooted selector segments (the part after `Values`),
+/// applying method resolution on the typed root receiver first so `AsMap`
+/// continues from the root and the derived-text methods claim nothing.
+fn root_values_selector_result(segments: &[String], env: &EvalEnv) -> EvalResult {
+    let Some(tail) = crate::abstract_value::resolve_root_values_methods(segments) else {
+        return EvalResult::none();
+    };
+    let mut result = EvalResult::from_value(values_path_value(tail, env));
+    record_member_access_captures(tail, 0, env, &mut result.effects);
+    result
+}
+
+fn values_path_value(tail: &[String], env: &EvalEnv) -> AbstractValue {
     if let Some(root) = env.root_fields.get("Values")
         && let Some(value) = root.apply_to_path(tail)
     {

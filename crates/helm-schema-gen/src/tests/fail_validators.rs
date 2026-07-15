@@ -98,6 +98,95 @@ fn fail_branches_bind_validator_requirements() {
     }
 }
 
+/// `.Values.AsMap` is Go-template METHOD resolution on Helm's typed root
+/// values object, returning the receiver map itself — never a user path
+/// named `AsMap`. Literal-key `dig` probes through it must bind their fail
+/// validators to the real root paths (cilium's `validate.yaml` deprecation
+/// checks), and no `AsMap` property may be fabricated.
+#[test]
+fn values_asmap_method_digs_bind_root_fail_validators() {
+    let src = indoc! {r#"
+        {{- if (dig "removed" "" .Values.AsMap) }}
+          {{ fail "removed has been removed" }}
+        {{- end }}
+        {{- if (dig "legacy" "mode" "" .Values.AsMap) }}
+          {{ fail "legacy.mode has been removed" }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), None);
+
+    assert!(
+        schema["properties"].get("AsMap").is_none(),
+        "AsMap is a method on the typed root, not a values path; schema={schema}"
+    );
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "removed": true }),
+            false,
+            "truthy removed option fails rendering",
+        ),
+        (
+            serde_json::json!({ "removed": false }),
+            true,
+            "falsy removed option renders",
+        ),
+        (
+            serde_json::json!({ "legacy": { "mode": "audit" } }),
+            false,
+            "truthy nested removed option fails rendering",
+        ),
+        (
+            serde_json::json!({ "legacy": { "mode": "" } }),
+            true,
+            "falsy nested removed option renders",
+        ),
+        (serde_json::json!({}), true, "defaults render"),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Only the ROOT receiver is Helm's typed values object: nested values are
+/// plain maps, so a nested `AsMap` segment stays an ordinary key, and a
+/// genuine uppercase root key that is not a method name stays a normal
+/// path. Selecting a derived-text method (`.Values.YAML`) claims no path.
+#[test]
+fn values_typed_method_resolution_keeps_genuine_keys() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+        data:
+          upper: {{ .Values.Upper | quote }}
+          nested: {{ .Values.foo.AsMap | quote }}
+          derived: {{ .Values.YAML | quote }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), None);
+
+    assert!(
+        schema["properties"].get("Upper").is_some(),
+        "a genuine uppercase root key stays a values path; schema={schema}"
+    );
+    assert!(
+        schema["properties"]["foo"]["properties"]
+            .get("AsMap")
+            .is_some(),
+        "nested values are plain maps, so AsMap is an ordinary key there; schema={schema}"
+    );
+    assert!(
+        schema["properties"].get("YAML").is_none(),
+        "derived-text Values methods claim no user path; schema={schema}"
+    );
+}
+
 /// A `fail` guarded by a condition the lowering can only APPROXIMATE on
 /// the tested path must not become a requirement: kyverno's replicas
 /// helper fails only when `eq (int .) 0`, which does not decode, so

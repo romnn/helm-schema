@@ -8897,70 +8897,33 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {}
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
+            "not": {
+              "properties": {
+                "global": {}
               },
-              {
-                "properties": {
-                  "global": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "global": {}
+            "properties": {
+              "global": {
+                "anyOf": [
+                  {
+                    "type": "object"
                   },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "global": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
+                  {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
+                ]
               }
-            ]
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
           }
         ]
       },
