@@ -20,6 +20,31 @@ pub(crate) fn build_condition_clauses(
         .collect()
 }
 
+/// Pass-level memo for guard-condition fragments: big charts repeat the same
+/// activation and branch guards across hundreds of arms, and rebuilding each
+/// structural encoding dominates arm emission.
+pub(crate) type ConditionFragmentCache =
+    std::collections::BTreeMap<(Vec<String>, ConditionalGuard), Option<SchemaNode>>;
+
+pub(crate) fn build_condition_clauses_cached(
+    guards: &[ConditionalGuard],
+    ancestor_segments: &[String],
+    values_yaml_doc: &YamlValue,
+    cache: &mut ConditionFragmentCache,
+) -> Vec<SchemaNode> {
+    guards
+        .iter()
+        .filter_map(|guard| {
+            cache
+                .entry((ancestor_segments.to_vec(), guard.clone()))
+                .or_insert_with(|| {
+                    build_single_condition_fragment(guard, ancestor_segments, values_yaml_doc)
+                })
+                .clone()
+        })
+        .collect()
+}
+
 fn build_single_condition_fragment(
     guard: &ConditionalGuard,
     ancestor_segments: &[String],

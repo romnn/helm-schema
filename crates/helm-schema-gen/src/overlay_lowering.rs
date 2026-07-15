@@ -674,11 +674,13 @@ fn shared_guard_ancestor_segments(guards: &[ConditionalGuard]) -> Vec<String> {
     shared.unwrap_or_default()
 }
 
+#[tracing::instrument(skip_all)]
 pub(crate) fn append_conditional_schemas(
     root_schema: &mut SchemaDocument,
     mut conditionals: Vec<ConditionalResolvedSchema>,
     values_yaml_doc: &YamlValue,
 ) {
+    let mut condition_cache = crate::condition_encoding::ConditionFragmentCache::new();
     conditionals.retain(|conditional| {
         let folds_into_base = conditional.fold_unconditional_object_host_into_base
             && conditional.arm_only
@@ -764,10 +766,11 @@ pub(crate) fn append_conditional_schemas(
             helm_schema_core::GuardDnf::normalize_conditional_guard_disjunction(group.guard_sets)
                 .into_iter()
                 .map(|guards| {
-                    SchemaNode::all_of(build_condition_clauses(
+                    SchemaNode::all_of(crate::condition_encoding::build_condition_clauses_cached(
                         &guards,
                         &ancestor_segments,
                         values_yaml_doc,
+                        &mut condition_cache,
                     ))
                 })
                 .collect();
