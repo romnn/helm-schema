@@ -52,7 +52,26 @@
         "type": "object"
       }
     },
-    "schema10": {
+    "schema11": {
+      "not": {
+        "properties": {
+          "config": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      }
+    },
+    "schema12": {
       "not": {
         "properties": {
           "rbac": {
@@ -71,7 +90,7 @@
         "type": "object"
       }
     },
-    "schema14": {
+    "schema16": {
       "not": {
         "properties": {
           "sidecarLabel": {}
@@ -82,7 +101,7 @@
         "type": "object"
       }
     },
-    "schema15": {
+    "schema17": {
       "properties": {
         "create": {
           "enum": [
@@ -95,7 +114,7 @@
       ],
       "type": "object"
     },
-    "schema16": {
+    "schema18": {
       "not": {
         "properties": {
           "create": {}
@@ -105,12 +124,6 @@
         ],
         "type": "object"
       }
-    },
-    "schema18": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
     },
     "schema2": {
       "not": {
@@ -139,6 +152,12 @@
         "type": "object"
       }
     },
+    "schema20": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
     "schema5": {
       "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
       "type": "string"
@@ -162,15 +181,15 @@
         "type": "object"
       }
     },
-    "schema9": {
+    "schema7": {
       "not": {
         "properties": {
           "config": {
             "properties": {
-              "create": {}
+              "clusterWide": {}
             },
             "required": [
-              "create"
+              "clusterWide"
             ],
             "type": "object"
           }
@@ -191,7 +210,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema9"
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -236,7 +255,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema10"
+                "$ref": "#/$defs/schema12"
               },
               {
                 "properties": {
@@ -327,7 +346,7 @@
           "commonAnnotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema18"
+                "$ref": "#/$defs/schema20"
               },
               {
                 "not": {
@@ -344,7 +363,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema10"
+            "$ref": "#/$defs/schema12"
           },
           {
             "properties": {
@@ -396,7 +415,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema9"
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -423,23 +442,7 @@
             "not": {
               "anyOf": [
                 {
-                  "not": {
-                    "properties": {
-                      "config": {
-                        "properties": {
-                          "clusterWide": {}
-                        },
-                        "required": [
-                          "clusterWide"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "config"
-                    ],
-                    "type": "object"
-                  }
+                  "$ref": "#/$defs/schema7"
                 },
                 {
                   "properties": {
@@ -513,7 +516,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema10"
+                "$ref": "#/$defs/schema12"
               },
               {
                 "properties": {
@@ -612,11 +615,125 @@
     },
     {
       "if": {
+        "properties": {
+          "image": {
+            "properties": {
+              "repository": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "repository"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "repository": {
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "image": {
+            "properties": {
+              "tag": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "tag"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "tag": {
+                "description": "Overrides the image tag whose default is the chart appVersion.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "monitoringQueriesConfigMap": {
+            "properties": {
+              "name": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "monitoringQueriesConfigMap"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "monitoringQueriesConfigMap": {
+            "additionalProperties": {},
+            "description": "Default monitoring queries",
+            "properties": {
+              "name": {
+                "description": "The name of the default monitoring configmap.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema9"
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -663,7 +780,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema12"
                   },
                   {
                     "properties": {
@@ -833,7 +950,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema9"
+                    "$ref": "#/$defs/schema11"
                   },
                   {
                     "properties": {
@@ -901,7 +1018,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema10"
+                "$ref": "#/$defs/schema12"
               },
               {
                 "properties": {
@@ -1040,6 +1157,62 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "namespaceOverride": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "namespaceOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/schema7"
+                },
+                {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "clusterWide": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "clusterWide"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "not": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "$ref": "#/$defs/schema1"
@@ -1082,7 +1255,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema18"
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "not": {
@@ -1274,7 +1447,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema10"
+            "$ref": "#/$defs/schema12"
           },
           {
             "properties": {
@@ -1356,6 +1529,20 @@
       "description": "Additional arguments to be added to the operator's args list."
     },
     "additionalEnv": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ],
       "description": "Array containing extra environment variables which can be templated.\nFor example:\n- name: RELEASE_NAME\nvalue: \"{{ .Release.Name }}\"\n- name: MY_VAR\nvalue: \"mySpecialKey\""
     },
     "affinity": {
@@ -1369,7 +1556,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema18"
+          "$ref": "#/$defs/schema20"
         },
         {
           "not": {
@@ -1386,7 +1573,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema18"
               },
               {
                 "properties": {
@@ -1591,7 +1778,7 @@
               "podMonitorAdditionalLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema18"
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "not": {
@@ -1631,7 +1818,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema17"
                   }
                 ]
               },
@@ -1641,7 +1828,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema18"
+                        "$ref": "#/$defs/schema20"
                       },
                       {
                         "not": {
@@ -1669,7 +1856,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema17"
                   }
                 ]
               },
@@ -1715,7 +1902,7 @@
                           {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema14"
+                                "$ref": "#/$defs/schema16"
                               },
                               {
                                 "properties": {
@@ -1737,7 +1924,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema15"
+                        "$ref": "#/$defs/schema17"
                       },
                       {
                         "anyOf": [
@@ -1755,7 +1942,7 @@
                           {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema14"
+                                "$ref": "#/$defs/schema16"
                               },
                               {
                                 "properties": {
@@ -1782,7 +1969,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema18"
+                        "$ref": "#/$defs/schema20"
                       },
                       {
                         "not": {
@@ -1810,7 +1997,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema17"
                   }
                 ]
               },
@@ -1939,7 +2126,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema18"
+          "$ref": "#/$defs/schema20"
         },
         {
           "not": {
@@ -1958,7 +2145,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema18"
+          "$ref": "#/$defs/schema20"
         },
         {
           "not": {
@@ -2083,7 +2270,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema18"
               },
               {
                 "properties": {
@@ -2197,7 +2384,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema16"
+                        "$ref": "#/$defs/schema18"
                       },
                       {
                         "properties": {
@@ -2234,7 +2421,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema16"
+                        "$ref": "#/$defs/schema18"
                       },
                       {
                         "properties": {

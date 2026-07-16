@@ -129,23 +129,134 @@ pub(super) fn eval_replace(
     let old = eval_expr_with_helper_calls(&args[0], env, resolver);
     let new = eval_expr_with_helper_calls(&args[1], env, resolver);
     let mut subject = eval_expr_with_helper_calls(&args[2], env, resolver);
+    let subject_effects = subject.effects.clone();
     subject.effects.merge(old.effects);
     subject.effects.merge(new.effects);
+    let mut effects = subject.effects;
     let old_values = value_strings(&old.value);
     let new_values = value_strings(&new.value);
-    let subject_values = value_strings(&subject.value);
-    if old_values.is_empty() || new_values.is_empty() || subject_values.is_empty() {
-        return subject;
+    let (string_paths, raw_range_key_paths) =
+        super::strict_operands::string_call_operand_facts("replace", args, env, resolver);
+    // A single nonempty literal OLD keeps a raw-identity subject's path
+    // qualified by OLD as a lexical escape (F74) instead of degrading it
+    // to derived text: the subject still must be a Go string, but its raw
+    // value IS the output for strings not containing OLD.
+    if let Some(old_token) = single_replace_token(&old_values)
+        && let Some(value) = subject.value.as_ref().and_then(|value| {
+            super::value_facts::replace_transformed_value(
+                value,
+                &subject_effects,
+                old_token,
+                &new_values,
+            )
+        })
+    {
+        super::strict_operands::record_string_consumer_effects(&string_paths, &mut effects);
+        super::strict_operands::record_raw_range_key_string_consumer_paths(
+            &raw_range_key_paths,
+            &mut effects,
+        );
+        return EvalResult::with_effects(Some(value), effects);
     }
-    let mut rendered = BTreeSet::new();
-    for subject in subject_values {
-        for old in &old_values {
-            for new in &new_values {
-                rendered.insert(subject.replace(old, new));
+    let subject_values = value_strings(&subject.value);
+    let value = if old_values.is_empty() || new_values.is_empty() || subject_values.is_empty() {
+        super::value_facts::derive_value_text(subject.value)
+    } else {
+        let mut rendered = BTreeSet::new();
+        for subject in subject_values {
+            for old in &old_values {
+                for new in &new_values {
+                    rendered.insert(subject.replace(old, new));
+                }
             }
         }
+        Some(AbstractValue::StringSet(rendered))
+    };
+    super::strict_operands::record_string_transform_effects(
+        "replace",
+        &value,
+        &string_paths,
+        &raw_range_key_paths,
+        &mut effects,
+    );
+    EvalResult::with_effects(value, effects)
+}
+
+pub(super) fn eval_replace_pipeline(
+    current: EvalResult,
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let piped_value = current.value;
+    let piped_effects = current.effects.clone();
+    let old = eval_expr_with_helper_calls(&args[0], env, resolver);
+    let new = eval_expr_with_helper_calls(&args[1], env, resolver);
+    let mut effects = current.effects;
+    effects.merge(old.effects);
+    effects.merge(new.effects);
+    let old_values = value_strings(&old.value);
+    let new_values = value_strings(&new.value);
+    let (string_paths, raw_range_key_paths) = super::strict_operands::pipeline_string_operand_facts(
+        "replace",
+        args,
+        &piped_value,
+        &piped_effects,
+        env,
+        resolver,
+    );
+    // Same lexical-escape rule as the direct call (F74).
+    if let Some(old_token) = single_replace_token(&old_values)
+        && let Some(value) = piped_value.as_ref().and_then(|value| {
+            super::value_facts::replace_transformed_value(
+                value,
+                &piped_effects,
+                old_token,
+                &new_values,
+            )
+        })
+    {
+        super::strict_operands::record_string_consumer_effects(&string_paths, &mut effects);
+        super::strict_operands::record_raw_range_key_string_consumer_paths(
+            &raw_range_key_paths,
+            &mut effects,
+        );
+        return EvalResult::with_effects(Some(value), effects);
     }
-    EvalResult::with_effects(Some(AbstractValue::StringSet(rendered)), subject.effects)
+    let subject_values = piped_value
+        .as_ref()
+        .map(AbstractValue::strings)
+        .unwrap_or_default();
+    let value = if old_values.is_empty() || new_values.is_empty() || subject_values.is_empty() {
+        super::value_facts::derive_value_text(piped_value)
+    } else {
+        let mut rendered = BTreeSet::new();
+        for subject in subject_values {
+            for old in &old_values {
+                for new in &new_values {
+                    rendered.insert(subject.replace(old, new));
+                }
+            }
+        }
+        Some(AbstractValue::StringSet(rendered))
+    };
+    super::strict_operands::record_string_transform_effects(
+        "replace",
+        &value,
+        &string_paths,
+        &raw_range_key_paths,
+        &mut effects,
+    );
+    EvalResult::with_effects(value, effects)
+}
+
+/// The single nonempty OLD literal of a `replace` call, when static.
+fn single_replace_token(old_values: &BTreeSet<String>) -> Option<&String> {
+    let mut old_values = old_values.iter();
+    let (Some(token), None) = (old_values.next(), old_values.next()) else {
+        return None;
+    };
+    (!token.is_empty()).then_some(token)
 }
 
 pub(super) fn eval_repeat(
@@ -192,10 +303,13 @@ pub(super) fn eval_tpl(
     // objects this way).
     let _context = eval_expr_with_helper_calls(&args[1], env, resolver);
     let value = if expression_applies_to_yaml(&args[0]) {
-        let paths = value_paths(&template.value);
-        effects.add_encoded_paths(paths.clone());
-        effects.add_shape_erased_paths(paths.clone());
-        AbstractValue::widened(paths)
+        // `tpl` re-renders the serialized YAML text: template-free content
+        // round-trips unchanged and templated scalar leaves stay scalars,
+        // so the serialized placement identity carries through to the sink
+        // instead of degrading to opaque text (F56: cloudnative-pg's
+        // `tpl (.Values.additionalEnv | toYaml) .` env fragment and
+        // airflow's `tpl (toYaml .Values.scheduler.command) .`).
+        template.value
     } else {
         // `tpl` type-asserts its template to a Go string: a raw values
         // subject (`tpl .Values.extraEnv $`, also through a `with`-bound

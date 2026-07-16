@@ -12904,6 +12904,33 @@
             "type": "object"
           },
           {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "scope": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "scope"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          },
+          {
             "anyOf": [
               {
                 "$ref": "#/$defs/schema99"
@@ -12928,6 +12955,34 @@
                 "type": "object"
               }
             ]
+          },
+          {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "scope": {
+                    "properties": {
+                      "namespace": {
+                        "pattern": "[\"\\\\]",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "scope"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
           },
           {
             "not": {
@@ -12963,17 +13018,10 @@
                 "description": "Limit the scope of the controller to a specific namespace",
                 "properties": {
                   "namespace": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Namespace to limit the controller to; defaults to $(POD_NAMESPACE)"
+                    "description": "Namespace to limit the controller to; defaults to $(POD_NAMESPACE)",
+                    "not": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -18854,98 +18902,6 @@
             "allOf": [
               {
                 "properties": {
-                  "fullnameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "fullnameOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "tcp": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "tcp"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema74"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "fullnameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "fullnameOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "tcp": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "tcp"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema16"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "controller": {
-            "additionalProperties": {},
-            "properties": {
-              "tcp": {
-                "additionalProperties": {},
-                "properties": {
-                  "configMapNamespace": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Allows customization of the tcp-services-configmap; defaults to $(POD_NAMESPACE)"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
                   "controller": {
                     "properties": {
                       "tcp": {
@@ -19084,98 +19040,6 @@
                       }
                     ],
                     "description": "Annotations to be added to the udp config configmap"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "fullnameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "fullnameOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "udp": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "udp"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema74"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "fullnameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "fullnameOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "udp": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "udp"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema16"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "controller": {
-            "additionalProperties": {},
-            "properties": {
-              "udp": {
-                "additionalProperties": {},
-                "properties": {
-                  "configMapNamespace": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Allows customization of the udp-services-configmap; defaults to $(POD_NAMESPACE)"
                   }
                 }
               }
@@ -22368,6 +22232,166 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema35"
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "admissionWebhooks": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "admissionWebhooks"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema17"
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "admissionWebhooks": {
+                            "properties": {
+                              "patch": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "patch"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "admissionWebhooks"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "controller": {
+                      "properties": {
+                        "admissionWebhooks": {
+                          "properties": {
+                            "certManager": {
+                              "properties": {
+                                "enabled": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "enabled"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "certManager"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "admissionWebhooks"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "controller"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "properties": {
+              "defaultBackend": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "defaultBackend"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema74"
+          },
+          {
+            "$ref": "#/$defs/schema16"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "nameOverride": {
             "$ref": "#/$defs/helm-truthy"
@@ -24289,29 +24313,6 @@
                     ]
                   }
                 }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/schema30"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "configMapNamespace": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Allows customization of the configmap / nginx-configmap namespace; defaults to $(POD_NAMESPACE)"
               }
             }
           }
@@ -26449,88 +26450,6 @@
         },
         {
           "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "scope": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "scope"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema121"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "scope": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "scope"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema65"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "scope": {
-                "additionalProperties": {},
-                "description": "Limit the scope of the controller to a specific namespace",
-                "properties": {
-                  "namespace": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "Namespace to limit the controller to; defaults to $(POD_NAMESPACE)"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
             "$ref": "#/$defs/schema30"
           },
           "then": {
@@ -26717,190 +26636,6 @@
               "allOf": [
                 {
                   "if": {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "certManager": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "certManager"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema124"
-                          },
-                          {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "certManager": {
-                        "additionalProperties": {},
-                        "description": "Use certmanager to generate webhook certs",
-                        "properties": {
-                          "admissionCert": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "duration": {
-                                "anyOf": [
-                                  {
-                                    "not": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ],
-                                "description": "default to be 1y"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "admissionWebhooks": {
-              "allOf": [
-                {
-                  "if": {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "certManager": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "certManager"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema124"
-                          },
-                          {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "certManager": {
-                              "properties": {
-                                "issuerRef": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "issuerRef"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "certManager"
-                          ],
-                          "type": "object"
-                        }
-                      }
-                    ]
-                  },
-                  "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "certManager": {
-                        "additionalProperties": {},
-                        "description": "Use certmanager to generate webhook certs",
-                        "properties": {
-                          "rootCert": {
-                            "additionalProperties": {},
-                            "description": "self-signed root certificate",
-                            "properties": {
-                              "duration": {
-                                "anyOf": [
-                                  {
-                                    "not": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  {
-                                    "type": "string"
-                                  }
-                                ],
-                                "description": "default to be 5y"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "admissionWebhooks": {
-              "allOf": [
-                {
-                  "if": {
                     "anyOf": [
                       {
                         "$ref": "#/$defs/schema124"
@@ -26933,95 +26668,6 @@
                           }
                         ],
                         "description": "Admission Webhook failure policy to use"
-                      }
-                    }
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "admissionWebhooks": {
-              "allOf": [
-                {
-                  "if": {
-                    "allOf": [
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema124"
-                          },
-                          {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema91"
-                          },
-                          {
-                            "properties": {
-                              "patch": {
-                                "properties": {
-                                  "enabled": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "enabled"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "patch"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "certManager": {
-                              "properties": {
-                                "enabled": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "certManager"
-                          ],
-                          "type": "object"
-                        }
-                      }
-                    ]
-                  },
-                  "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "failurePolicy": {
-                        "description": "Admission Webhook failure policy to use",
-                        "type": "string"
                       }
                     }
                   }

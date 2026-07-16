@@ -4004,6 +4004,68 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "nameOverride": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "nameOverride"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "crds": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "crds"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "installCRDs": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "installCRDs"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "not": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -12430,18 +12492,7 @@
           "description": "Specifies whether a service account should be created."
         },
         "labels": {},
-        "name": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "name": {}
       },
       "type": "object"
     },

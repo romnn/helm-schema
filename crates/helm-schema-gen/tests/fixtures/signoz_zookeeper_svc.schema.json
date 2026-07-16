@@ -24,10 +24,91 @@
           "type": "object"
         }
       ]
+    },
+    "providerSource_k8s_b9d0b61f90db": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "allOf": [
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "commonAnnotations": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "commonAnnotations"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "commonAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "commonAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "annotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "annotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "commonAnnotations": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                "type": "object"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
     {
       "if": {
         "allOf": [
@@ -272,6 +353,93 @@
                 "type": "null"
               }
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "annotations": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "annotations"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "commonAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "commonAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "annotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "annotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
           }
         }
       }
@@ -1183,6 +1351,29 @@
       "allOf": [
         {
           "if": {
+            "not": {
+              "type": "string"
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+                "type": "object"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
             "type": "string"
           },
           "then": {
@@ -1198,26 +1389,6 @@
               },
               {
                 "type": "string"
-              }
-            ]
-          }
-        },
-        {
-          "if": {
-            "not": {
-              "type": "string"
-            }
-          },
-          "then": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "type": "object"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
               }
             ]
           }
@@ -1255,7 +1426,12 @@
             },
             {
               "not": {
-                "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
               }
             },
             {
@@ -1310,7 +1486,12 @@
             },
             {
               "not": {
-                "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
               }
             },
             {
@@ -1364,7 +1545,12 @@
             },
             {
               "not": {
-                "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
               }
             },
             {
@@ -1454,7 +1640,12 @@
                       },
                       {
                         "not": {
-                          "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                         }
                       },
                       {
@@ -1529,7 +1720,12 @@
                       },
                       {
                         "not": {
-                          "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                         }
                       },
                       {
@@ -1729,6 +1925,74 @@
           "allOf": [
             {
               "if": {
+                "not": {
+                  "type": "string"
+                }
+              },
+              "then": {
+                "anyOf": [
+                  {
+                    "description": "The list of ports that are exposed by this service. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
+                    "items": {
+                      "description": "ServicePort contains information on service's port.",
+                      "properties": {
+                        "appProtocol": {
+                          "description": "The application protocol for this port. This is used as a hint for implementations to offer richer behavior for protocols that they understand. This field follows standard Kubernetes label syntax. Valid values are either:\n\n* Un-prefixed protocol names - reserved for IANA standard service names (as per RFC-6335 and https://www.iana.org/assignments/service-names).\n\n* Kubernetes-defined prefixed names:\n  * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior-\n  * 'kubernetes.io/ws'  - WebSocket over cleartext as described in https://www.rfc-editor.org/rfc/rfc6455\n  * 'kubernetes.io/wss' - WebSocket over TLS as described in https://www.rfc-editor.org/rfc/rfc6455\n\n* Other protocols should use implementation-defined prefixed names such as mycompany.com/my-custom-protocol.",
+                          "type": "string"
+                        },
+                        "name": {
+                          "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
+                          "type": "string"
+                        },
+                        "nodePort": {
+                          "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
+                          "format": "int32",
+                          "type": "integer"
+                        },
+                        "port": {
+                          "description": "The port that will be exposed by this service.",
+                          "format": "int32",
+                          "type": "integer"
+                        },
+                        "protocol": {
+                          "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\". Default is TCP.",
+                          "type": "string"
+                        },
+                        "targetPort": {
+                          "oneOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "integer"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "port"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array",
+                    "x-kubernetes-list-map-keys": [
+                      "port",
+                      "protocol"
+                    ],
+                    "x-kubernetes-list-type": "map",
+                    "x-kubernetes-patch-merge-key": "port",
+                    "x-kubernetes-patch-strategy": "merge"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "if": {
                 "type": "string"
               },
               "then": {
@@ -1744,26 +2008,6 @@
                   },
                   {
                     "type": "string"
-                  }
-                ]
-              }
-            },
-            {
-              "if": {
-                "not": {
-                  "type": "string"
-                }
-              },
-              "then": {
-                "anyOf": [
-                  {
-                    "items": {},
-                    "type": "array"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
                   }
                 ]
               }
@@ -1844,7 +2088,12 @@
                 },
                 {
                   "not": {
-                    "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                   }
                 },
                 {
@@ -1900,7 +2149,20 @@
               "then": {
                 "anyOf": [
                   {
-                    "additionalProperties": {},
+                    "description": "SessionAffinityConfig represents the configurations of session affinity.",
+                    "properties": {
+                      "clientIP": {
+                        "description": "ClientIPConfig represents the configurations of Client IP based session affinity.",
+                        "properties": {
+                          "timeoutSeconds": {
+                            "description": "timeoutSeconds specifies the seconds of ClientIP type session sticky time. The value must be >0 && <=86400(for 1 day) if ServiceAffinity == \"ClientIP\". Default value is 10800(for 3 hours).",
+                            "format": "int32",
+                            "type": "integer"
+                          }
+                        },
+                        "type": "object"
+                      }
+                    },
                     "type": "object"
                   },
                   {

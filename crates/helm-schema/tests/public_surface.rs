@@ -73,6 +73,26 @@ data:
         want: json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
+            // F76: the manually quoted splice (`enabled: "{{ … }}"`) breaks
+            // on strings containing `"` or `\`, so those are excluded.
+            "allOf": [{
+                "if": {
+                    "properties": {
+                        "enabled": { "pattern": "[\"\\\\]", "type": "string" }
+                    },
+                    "required": ["enabled"],
+                    "type": "object"
+                },
+                "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                        "enabled": {
+                            "description": "Whether the config map is enabled",
+                            "not": { "type": "string" }
+                        }
+                    }
+                }
+            }],
             "properties": {
                 "enabled": {
                     "description": "Whether the config map is enabled"
@@ -458,6 +478,39 @@ data:
             },
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
+            // F76: the manually quoted `mode: "{{ … }}"` splice breaks on
+            // strings containing `"` or `\`, scoped to its create-guarded
+            // render.
+            "allOf": [{
+                "if": {
+                    "allOf": [
+                        {
+                            "properties": {
+                                "serviceAccount": {
+                                    "properties": {
+                                        "create": { "$ref": "#/$defs/helm-truthy" }
+                                    },
+                                    "required": ["create"],
+                                    "type": "object"
+                                }
+                            },
+                            "required": ["serviceAccount"],
+                            "type": "object"
+                        },
+                        {
+                            "properties": {
+                                "mode": { "pattern": "[\"\\\\]", "type": "string" }
+                            },
+                            "required": ["mode"],
+                            "type": "object"
+                        }
+                    ]
+                },
+                "then": {
+                    "additionalProperties": {},
+                    "properties": { "mode": { "not": { "type": "string" } } }
+                }
+            }],
             "properties": {
                 "mode": {},
                 "serviceAccount": {
@@ -936,6 +989,21 @@ data:
         want: &json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
+            // F76: the manually quoted `mode: "{{ … }}"` splice breaks on
+            // strings containing `"` or `\`, so those are excluded.
+            "allOf": [{
+                "if": {
+                    "properties": {
+                        "mode": { "pattern": "[\"\\\\]", "type": "string" }
+                    },
+                    "required": ["mode"],
+                    "type": "object"
+                },
+                "then": {
+                    "additionalProperties": {},
+                    "properties": { "mode": { "not": { "type": "string" } } }
+                }
+            }],
             "properties": {
                 "mode": {}
             },

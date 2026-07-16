@@ -132,3 +132,151 @@ pub(super) fn concrete_integer(value: &AbstractValue) -> Option<i64> {
     };
     text.parse().ok()
 }
+
+/// Wraps a raw-identity value with a lexical escape token: the enclosing
+/// transform (`replace TOKEN …`, `(split TOKEN …)._0`) is the identity on
+/// raw strings that do not contain `token`, so the output keeps the raw
+/// path qualified by the token instead of degrading to derived text (F74).
+/// Values that are not a clean raw identity (already derived, serialized,
+/// or shape-erased) return `None` — callers fall back to their legacy
+/// lowering.
+pub(super) fn escape_wrapped_identity(
+    value: &AbstractValue,
+    effects: &crate::eval_effect::Effects,
+    token: &str,
+) -> Option<AbstractValue> {
+    match value {
+        AbstractValue::ValuesPath(path) => {
+            if effects.shape_erased_paths.contains(path)
+                || effects.derived_text_paths.contains(path)
+                || effects
+                    .local_output_meta
+                    .get(path)
+                    .is_some_and(|meta| meta.shape_erased || meta.derived_text)
+            {
+                return None;
+            }
+            let mut meta = crate::helper_meta::HelperOutputMeta::default();
+            meta.lexical_escapes.insert(token.to_string());
+            Some(AbstractValue::OutputPath(path.clone(), meta))
+        }
+        AbstractValue::OutputPath(path, meta) => {
+            if meta.shape_erased
+                || meta.derived_text
+                || meta.yaml_serialized
+                || meta.json_serialized
+            {
+                return None;
+            }
+            let mut meta = meta.clone();
+            meta.lexical_escapes.insert(token.to_string());
+            Some(AbstractValue::OutputPath(path.clone(), meta))
+        }
+        _ => None,
+    }
+}
+
+/// The transformed value of `replace OLD NEW subject` when OLD is one
+/// static literal: static string arms replace textually, raw-identity arms
+/// keep their path qualified by OLD as a lexical escape. `None` when any
+/// arm has neither meaning — the caller falls back to the legacy
+/// derived-text lowering.
+pub(super) fn replace_transformed_value(
+    value: &AbstractValue,
+    effects: &crate::eval_effect::Effects,
+    old: &str,
+    new_values: &BTreeSet<String>,
+) -> Option<AbstractValue> {
+    match value {
+        AbstractValue::StringSet(strings) => {
+            if new_values.is_empty() {
+                return None;
+            }
+            let mut rendered = BTreeSet::new();
+            for subject in strings {
+                for new in new_values {
+                    rendered.insert(subject.replace(old, new));
+                }
+            }
+            Some(AbstractValue::StringSet(rendered))
+        }
+        AbstractValue::Choice(choices) => {
+            let mapped = choices
+                .iter()
+                .map(|choice| replace_transformed_value(choice, effects, old, new_values))
+                .collect::<Option<Vec<_>>>()?;
+            AbstractValue::choice(mapped)
+        }
+        other => escape_wrapped_identity(other, effects, old),
+    }
+}
+
+/// The map value of `split SEP subject` when SEP is a static literal:
+/// static string arms split into their exact `_N` member maps, raw-identity
+/// arms become a map whose `_0` member keeps the raw path qualified by SEP
+/// as a lexical escape (`_0` IS the whole raw string exactly when SEP does
+/// not occur in it, F74). `None` when any arm has neither meaning.
+pub(super) fn split_transformed_value(
+    value: &AbstractValue,
+    effects: &crate::eval_effect::Effects,
+    separator: &str,
+) -> Option<AbstractValue> {
+    match value {
+        AbstractValue::StringSet(strings) => {
+            let members = strings
+                .iter()
+                .map(|text| {
+                    AbstractValue::Dict(
+                        text.split(separator)
+                            .enumerate()
+                            .map(|(index, part)| {
+                                (
+                                    format!("_{index}"),
+                                    AbstractValue::StringSet(
+                                        [part.to_string()].into_iter().collect(),
+                                    ),
+                                )
+                            })
+                            .collect(),
+                    )
+                })
+                .collect();
+            AbstractValue::choice(members)
+        }
+        AbstractValue::Choice(choices) => {
+            let mapped = choices
+                .iter()
+                .map(|choice| split_transformed_value(choice, effects, separator))
+                .collect::<Option<Vec<_>>>()?;
+            AbstractValue::choice(mapped)
+        }
+        other => {
+            let prefix = escape_wrapped_identity(other, effects, separator)?;
+            Some(AbstractValue::Overlay {
+                entries: std::collections::BTreeMap::from([("_0".to_string(), prefix)]),
+                fallback: Box::new(AbstractValue::Unknown),
+            })
+        }
+    }
+}
+
+/// Marks a passthrough value's `OutputPath` arms as derived text: the
+/// enclosing transform produced NEW text from them (a dynamic `replace`, a
+/// truncation, a numeric cast), so an escape-qualified identity they still
+/// spell no longer holds (F74). `ValuesPath` arms need no marking — the
+/// expression-level derived flags already cover them.
+pub(super) fn derive_value_text(value: Option<AbstractValue>) -> Option<AbstractValue> {
+    fn mark(value: AbstractValue) -> AbstractValue {
+        match value {
+            AbstractValue::OutputPath(path, mut meta) => {
+                meta.derived_text = true;
+                AbstractValue::OutputPath(path, meta)
+            }
+            AbstractValue::Choice(choices) => {
+                AbstractValue::Choice(choices.into_iter().map(mark).collect())
+            }
+            other => other,
+        }
+    }
+    value.map(mark)
+}

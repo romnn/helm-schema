@@ -127,7 +127,14 @@ pub(crate) fn collect_conditional_schemas(
                 let resolved_domain = schema_runtime_types(&resolved_target.schema);
                 let base_enforces_requirement =
                     !resolved_domain.is_empty() && resolved_domain.is_subset(&requirement_domain);
-                if base_enforces_requirement && !widened {
+                // Only an UNCONDITIONAL requirement is provably redundant
+                // with the base: a guarded one must keep its own arm — the
+                // emitted base can end up wider than the resolved schema
+                // this check reads (an open-map merge drops `type: object`),
+                // and the guards may fire in states the base leaves open
+                // (F63: external-secrets' header read of
+                // `.Values.webhook.podDisruptionBudget.enabled`).
+                if base_enforces_requirement && !widened && implication.outer_guards.is_empty() {
                     continue;
                 }
             }

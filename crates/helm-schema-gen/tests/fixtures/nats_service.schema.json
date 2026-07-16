@@ -158,6 +158,99 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {}
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "fullnameOverride": {
             "$ref": "#/$defs/helm-truthy"
@@ -499,7 +592,12 @@
                   },
                   {
                     "not": {
-                      "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                      "pattern": "^(|~|null|Null|NULL)$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                     }
                   },
                   {
@@ -1767,7 +1865,12 @@
                       },
                       {
                         "not": {
-                          "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                         }
                       },
                       {

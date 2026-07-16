@@ -408,7 +408,10 @@ impl Interpreter<'_> {
             let sink = if self.hint_scope_is_unconditional(path) {
                 &mut self.fallback_type_hints
             } else {
-                &mut self.guarded_type_hints
+                // Branch-scoped fallback hints keep their fallback identity
+                // (F76): overlay lowering must know they are intent, not a
+                // consumer contract.
+                &mut self.guarded_fallback_type_hints
             };
             sink.entry(path.clone())
                 .or_default()

@@ -352,6 +352,120 @@
     {
       "if": {
         "properties": {
+          "image": {
+            "properties": {
+              "registry": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "registry"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "description": "configure ui image",
+            "properties": {
+              "registry": {
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "image": {
+            "properties": {
+              "repository": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "repository"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "description": "configure ui image",
+            "properties": {
+              "repository": {
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "image": {
+            "properties": {
+              "tag": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "tag"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "description": "configure ui image",
+            "properties": {
+              "tag": {
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
           "ingress": {
             "properties": {
               "enabled": {

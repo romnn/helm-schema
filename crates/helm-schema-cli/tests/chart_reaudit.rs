@@ -1692,3 +1692,247 @@ fn prometheus_remote_write_urls_require_strings() -> color_eyre::eyre::Result<()
         ],
     )
 }
+
+/// F74: datadog's `check-dca-version` helper converts the exact tag
+/// `latest` to `1.20.0` before `semverCompare`, so the raw-input contract
+/// accepts the sentinel while other lexically invalid tags still terminate
+/// rendering. `doNotCheckTag` disables the whole check.
+#[test]
+fn datadog_cluster_agent_latest_tag_survives_the_version_check() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "datadog",
+        vec![
+            SemanticCase::accepted(
+                "the latest sentinel is reassigned before parsing",
+                json!({ "clusterAgent": { "image": { "tag": "latest" } } }),
+            ),
+            SemanticCase::accepted(
+                "ordinary version tag",
+                json!({ "clusterAgent": { "image": { "tag": "1.26.0" } } }),
+            ),
+            SemanticCase::rejected(
+                "non-sentinel invalid version",
+                "/clusterAgent/image/tag",
+                json!({ "clusterAgent": { "image": { "tag": "garbage" } } }),
+            ),
+            SemanticCase::accepted(
+                "doNotCheckTag skips the check entirely",
+                json!({ "clusterAgent": { "image": { "tag": "garbage", "doNotCheckTag": true } } }),
+            ),
+        ],
+    )
+}
+
+/// F74: traefik's `traefik.proxyVersion` helper strips the documented
+/// `latest-`/`experimental-` prefixes, replaces `master` with the chart's
+/// appVersion, and trims any `@digest` suffix before its version checks, so
+/// those raw forms render while an untouched non-version string still
+/// terminates.
+#[test]
+fn traefik_transformed_tag_sentinels_survive_the_version_checks() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "traefik",
+        vec![
+            SemanticCase::accepted(
+                "latest- prefixed version",
+                json!({ "image": { "tag": "latest-v3.6.0" } }),
+            ),
+            SemanticCase::accepted(
+                "experimental- prefixed version",
+                json!({ "image": { "tag": "experimental-v3.6.0" } }),
+            ),
+            SemanticCase::accepted(
+                "master appVersion sentinel",
+                json!({ "image": { "tag": "master" } }),
+            ),
+            SemanticCase::accepted(
+                "digest-suffixed version",
+                json!({ "image": { "tag": "v3.6.0@sha256:0123abcd" } }),
+            ),
+            SemanticCase::accepted("plain version", json!({ "image": { "tag": "v3.6.0" } })),
+            SemanticCase::rejected(
+                "bare latest is not stripped",
+                "/image/tag",
+                json!({ "image": { "tag": "latest" } }),
+            ),
+            SemanticCase::rejected(
+                "untouched non-version string",
+                "/image/tag",
+                json!({ "image": { "tag": "audit" } }),
+            ),
+        ],
+    )
+}
+
+/// F76: zalando's operator manually double-quotes its assembled image
+/// scalar (`image: "{{ .registry }}/{{ .repository }}:{{ .tag }}"`), so a
+/// raw `"` inside any component corrupts the completed quoted token while
+/// ordinary strings and numbers format safely.
+#[test]
+fn zalando_operator_quoted_image_scalar_excludes_raw_quotes() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "zalando-postgres-operator",
+        vec![
+            SemanticCase::rejected(
+                "registry with embedded double quote",
+                "/image/registry",
+                json!({ "image": { "registry": "bad\"quote" } }),
+            ),
+            SemanticCase::rejected(
+                "registry with backslash escape",
+                "/image/registry",
+                json!({ "image": { "registry": "back\\slash" } }),
+            ),
+            SemanticCase::accepted(
+                "ordinary registry",
+                json!({ "image": { "registry": "ghcr.io" } }),
+            ),
+            SemanticCase::accepted("numeric registry", json!({ "image": { "registry": 7 } })),
+        ],
+    )
+}
+
+/// F76: tempo assembles `image: {{ .registry }}/{{ .repository }}:{{ .tag }}`
+/// unquoted, so a list registry opens a flow sequence at the token start and
+/// breaks the final YAML; maps and strings format as plain text.
+#[test]
+fn tempo_assembled_image_scalar_excludes_token_initial_lists() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "tempo",
+        vec![
+            SemanticCase::rejected(
+                "list registry",
+                "/tempo/registry",
+                json!({ "tempo": { "registry": ["a", "b"] } }),
+            ),
+            SemanticCase::rejected(
+                "empty list registry",
+                "/tempo/registry",
+                json!({ "tempo": { "registry": [] } }),
+            ),
+            SemanticCase::accepted(
+                "plain registry",
+                json!({ "tempo": { "registry": "docker.io" } }),
+            ),
+            SemanticCase::accepted(
+                "map registry renders as plain text",
+                json!({ "tempo": { "registry": { "a": "b" } } }),
+            ),
+        ],
+    )
+}
+
+/// F76: flux2 embeds `logLevel` after the literal `--log-level=` prefix in
+/// every controller command, so Helm totally formats any value into one
+/// argument string; the `default "info"` fallback documents intent without
+/// constraining the input kind.
+#[test]
+fn flux2_prefixed_log_level_accepts_every_input_kind() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "flux2",
+        vec![
+            SemanticCase::accepted("map log level", json!({ "logLevel": { "a": "b" } })),
+            SemanticCase::accepted("list log level", json!({ "logLevel": ["a"] })),
+            SemanticCase::accepted("false selects the default", json!({ "logLevel": false })),
+            SemanticCase::accepted("plain log level", json!({ "logLevel": "info" })),
+        ],
+    )
+}
+
+/// F76 adjudication: the re-audit claimed aws-load-balancer-controller's
+/// `nameOverride: "null"` should validate, but rendering it produces
+/// `app.kubernetes.io/name: null` on every resource and the v1.35.0 strict
+/// schemas reject a null label value (`labels.additionalProperties` is
+/// `string`), so the plain-token exclusion correctly keeps rejecting it.
+#[test]
+fn aws_lbc_null_spelling_name_override_stays_rejected() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "aws-load-balancer-controller",
+        vec![
+            SemanticCase::rejected(
+                "null-spelling name override",
+                "/nameOverride",
+                json!({ "clusterName": "test", "nameOverride": "null" }),
+            ),
+            SemanticCase::accepted(
+                "ordinary name override",
+                json!({ "clusterName": "test", "nameOverride": "ok-name" }),
+            ),
+        ],
+    )
+}
+
+/// F56/F62: `tpl (toYaml .Values.X) .` re-renders the serialized fragment,
+/// so the parsed placement carries through to the sequence/provider slot
+/// exactly like a bare `toYaml` splice: cloudnative-pg's `additionalEnv`
+/// and airflow's scheduler fragments reject scalar inputs that break the
+/// completed document while structured inputs render.
+#[test]
+fn tpl_serialized_fragments_keep_their_structural_slots() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "cloudnative-pg",
+        vec![
+            SemanticCase::rejected(
+                "scalar additionalEnv breaks the env sequence",
+                "/additionalEnv",
+                json!({ "additionalEnv": 7 }),
+            ),
+            SemanticCase::accepted(
+                "EnvVar list renders",
+                json!({ "additionalEnv": [{ "name": "A", "value": "b" }] }),
+            ),
+            SemanticCase::accepted(
+                "templated EnvVar value renders",
+                json!({ "additionalEnv": [{ "name": "A", "value": "{{ .Release.Name }}" }] }),
+            ),
+        ],
+    )?;
+    // Airflow's scheduler fragments carry the same contract, but their
+    // rejections come from the PodSpec provider slots, which the corpus
+    // environment's empty caches cannot supply; the provider-backed gen
+    // test `tpl_serialized_fragment_projects_the_provider_slot` pins them.
+    assert_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::accepted(
+                "list scheduler command",
+                json!({ "scheduler": { "command": ["bash"] } }),
+            ),
+            SemanticCase::accepted(
+                "null command selects the image default",
+                json!({ "scheduler": { "command": null } }),
+            ),
+        ],
+    )
+}
+
+/// F63: external-secrets' webhook PDB header reads
+/// `.Values.webhook.podDisruptionBudget.enabled`, so a truthy non-object
+/// host terminates rendering while the object form (and the default) render.
+#[test]
+fn external_secrets_pdb_header_member_requires_an_object_host() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "external-secrets",
+        vec![
+            SemanticCase::rejected(
+                "integer podDisruptionBudget",
+                "/webhook/podDisruptionBudget",
+                json!({ "webhook": { "podDisruptionBudget": 7 } }),
+            ),
+            SemanticCase::rejected(
+                "array podDisruptionBudget",
+                "/webhook/podDisruptionBudget",
+                json!({ "webhook": { "podDisruptionBudget": [1] } }),
+            ),
+            SemanticCase::rejected(
+                "boolean podDisruptionBudget",
+                "/webhook/podDisruptionBudget",
+                json!({ "webhook": { "podDisruptionBudget": true } }),
+            ),
+            SemanticCase::accepted(
+                "object podDisruptionBudget",
+                json!({ "webhook": { "podDisruptionBudget": { "enabled": false } } }),
+            ),
+        ],
+    )
+}

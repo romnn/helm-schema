@@ -3211,6 +3211,21 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "tempo": {
+          "additionalProperties": {},
+          "properties": {
+            "registry": {
+              "not": {
+                "type": "array"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "properties": {
           "tempoQuery": {
@@ -3755,6 +3770,42 @@
         "properties": {
           "tempoQuery": {
             "$ref": "#/$defs/schema13"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tempoQuery": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tempoQuery"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tempoQuery": {
+            "additionalProperties": {},
+            "properties": {
+              "repository": {
+                "not": {
+                  "type": "array"
+                }
+              }
+            }
           }
         }
       }

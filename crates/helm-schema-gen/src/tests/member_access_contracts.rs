@@ -440,3 +440,52 @@ fn nested_member_range_keeps_map_lane_in_member_arm() {
         "a scalar item fails the member reads inside the range: {schema}"
     );
 }
+
+/// F63: an `if` header's chained selector (`and .Values.webhook.create
+/// .Values.webhook.podDisruptionBudget.enabled`) field-accesses `.enabled`
+/// on the intermediate map, so a non-object host aborts rendering even
+/// though the region's own body never renders for it. The member-host arm
+/// must survive the sibling `hasKey` dispatch inside the body
+/// (external-secrets' webhook PodDisruptionBudget).
+#[test]
+fn header_member_read_requires_an_object_host_beside_body_dispatch() {
+    let src = indoc! {r#"
+        {{- if and .Values.webhook.create .Values.webhook.podDisruptionBudget.enabled }}
+        apiVersion: policy/v1
+        kind: PodDisruptionBudget
+        metadata:
+          name: test
+        spec:
+          {{- if hasKey .Values.webhook.podDisruptionBudget "maxUnavailable" }}
+          maxUnavailable: {{ .Values.webhook.podDisruptionBudget.maxUnavailable }}
+          {{- else if hasKey .Values.webhook.podDisruptionBudget "minAvailable" }}
+          minAvailable: {{ .Values.webhook.podDisruptionBudget.minAvailable }}
+          {{- end }}
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(
+            "webhook:\n  create: true\n  podDisruptionBudget:\n    enabled: false\n    minAvailable: 1\n",
+        ),
+    );
+    for (instance, want) in [
+        (
+            serde_json::json!({ "webhook": { "podDisruptionBudget": 7 } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "webhook": { "podDisruptionBudget": [1] } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "webhook": { "podDisruptionBudget": { "enabled": false } } }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "instance={instance}; schema={schema}"
+        );
+    }
+}

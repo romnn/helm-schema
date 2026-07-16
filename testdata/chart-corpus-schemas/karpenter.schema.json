@@ -294,6 +294,18 @@
       },
       "type": "array"
     },
+    "schema47": {
+      "properties": {
+        "port": {
+          "pattern": "[\"\\\\]",
+          "type": "string"
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "type": "object"
+    },
     "schema5": {
       "additionalProperties": {},
       "properties": {
@@ -342,7 +354,7 @@
         }
       }
     },
-    "schema51": {
+    "schema52": {
       "not": {
         "properties": {
           "affinity": {}
@@ -353,7 +365,7 @@
         "type": "object"
       }
     },
-    "schema55": {
+    "schema56": {
       "properties": {
         "create": {}
       },
@@ -362,11 +374,15 @@
       ],
       "type": "object"
     },
-    "schema56": {
+    "schema57": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
+    },
+    "schema58": {
+      "pattern": "[\"\\\\]",
+      "type": "string"
     },
     "schema7": {
       "additionalProperties": {},
@@ -607,7 +623,7 @@
           "additionalAnnotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema56"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "not": {
@@ -653,7 +669,7 @@
           "additionalLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema56"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "not": {
@@ -672,7 +688,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema51"
+                "$ref": "#/$defs/schema52"
               },
               {
                 "properties": {
@@ -723,7 +739,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema51"
+                "$ref": "#/$defs/schema52"
               },
               {
                 "properties": {
@@ -774,7 +790,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema51"
+                "$ref": "#/$defs/schema52"
               },
               {
                 "properties": {
@@ -874,7 +890,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema51"
+                "$ref": "#/$defs/schema52"
               },
               {
                 "properties": {
@@ -929,7 +945,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema51"
+                "$ref": "#/$defs/schema52"
               },
               {
                 "properties": {
@@ -980,7 +996,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema51"
+                "$ref": "#/$defs/schema52"
               },
               {
                 "properties": {
@@ -1031,7 +1047,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema51"
+                "$ref": "#/$defs/schema52"
               },
               {
                 "properties": {
@@ -1100,7 +1116,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema51"
+                "$ref": "#/$defs/schema52"
               },
               {
                 "properties": {
@@ -1153,7 +1169,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema51"
+            "$ref": "#/$defs/schema52"
           },
           {
             "properties": {
@@ -1200,7 +1216,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema51"
+                    "$ref": "#/$defs/schema52"
                   },
                   {
                     "properties": {
@@ -1232,7 +1248,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema51"
+                    "$ref": "#/$defs/schema52"
                   },
                   {
                     "properties": {
@@ -1271,6 +1287,92 @@
               }
             ],
             "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "healthProbe": {
+                "$ref": "#/$defs/schema47"
+              }
+            },
+            "required": [
+              "healthProbe"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "controller"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "controller": {
+            "additionalProperties": {},
+            "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
+            "properties": {
+              "healthProbe": {
+                "additionalProperties": {},
+                "properties": {
+                  "port": {
+                    "description": "The container port to use for http health probe.",
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "controller": {
+            "properties": {
+              "metrics": {
+                "$ref": "#/$defs/schema47"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "controller"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "controller": {
+            "additionalProperties": {},
+            "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
+            "properties": {
+              "metrics": {
+                "additionalProperties": {},
+                "properties": {
+                  "port": {
+                    "description": "The container port to use for metrics.",
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1622,6 +1724,60 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "logLevel": {}
+                  },
+                  "required": [
+                    "logLevel"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "logLevel": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "logLevel"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "logLevel": {
+                "$ref": "#/$defs/schema58"
+              }
+            },
+            "required": [
+              "logLevel"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "logLevel": {
+            "description": "Global log level, defaults to 'info'",
+            "not": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "$ref": "#/$defs/schema32"
@@ -1739,7 +1895,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema57"
                   },
                   {
                     "not": {
@@ -1750,6 +1906,71 @@
                 "description": "Additional annotations for the Service."
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "additionalAnnotations": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "additionalAnnotations"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "additionalAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "additionalAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "annotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "annotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ]
           }
         }
       }
@@ -1828,7 +2049,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema57"
                   },
                   {
                     "not": {
@@ -1837,6 +2058,434 @@
                   }
                 ],
                 "description": "Additional annotations for the ServiceAccount."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "settings": {
+            "properties": {
+              "featureGates": {
+                "properties": {
+                  "nodeOverlay": {
+                    "$ref": "#/$defs/schema58"
+                  }
+                },
+                "required": [
+                  "nodeOverlay"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "featureGates"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "settings"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "settings": {
+            "additionalProperties": {},
+            "description": "Global Settings to configure Karpenter",
+            "properties": {
+              "featureGates": {
+                "additionalProperties": {},
+                "description": "Feature Gate configuration values. Feature Gates will follow the same graduation process and requirements as feature gates\nin Kubernetes. More information here https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates-for-alpha-or-beta-features.",
+                "properties": {
+                  "nodeOverlay": {
+                    "description": "nodeOverlay is ALPHA and is disabled by default.\nSetting this will allow the use of node overlay to impact scheduling decisions",
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "settings": {
+            "properties": {
+              "featureGates": {
+                "properties": {
+                  "nodeRepair": {
+                    "$ref": "#/$defs/schema58"
+                  }
+                },
+                "required": [
+                  "nodeRepair"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "featureGates"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "settings"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "settings": {
+            "additionalProperties": {},
+            "description": "Global Settings to configure Karpenter",
+            "properties": {
+              "featureGates": {
+                "additionalProperties": {},
+                "description": "Feature Gate configuration values. Feature Gates will follow the same graduation process and requirements as feature gates\nin Kubernetes. More information here https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates-for-alpha-or-beta-features.",
+                "properties": {
+                  "nodeRepair": {
+                    "description": "nodeRepair is ALPHA and is disabled by default.\nSetting this to true will enable node repair.",
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "settings": {
+            "properties": {
+              "featureGates": {
+                "properties": {
+                  "reservedCapacity": {
+                    "$ref": "#/$defs/schema58"
+                  }
+                },
+                "required": [
+                  "reservedCapacity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "featureGates"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "settings"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "settings": {
+            "additionalProperties": {},
+            "description": "Global Settings to configure Karpenter",
+            "properties": {
+              "featureGates": {
+                "additionalProperties": {},
+                "description": "Feature Gate configuration values. Feature Gates will follow the same graduation process and requirements as feature gates\nin Kubernetes. More information here https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates-for-alpha-or-beta-features.",
+                "properties": {
+                  "reservedCapacity": {
+                    "description": "reservedCapacity is BETA and is enabled by default.\nSetting this will enable native on-demand capacity reservation support.",
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "settings": {
+            "properties": {
+              "featureGates": {
+                "properties": {
+                  "spotToSpotConsolidation": {
+                    "$ref": "#/$defs/schema58"
+                  }
+                },
+                "required": [
+                  "spotToSpotConsolidation"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "featureGates"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "settings"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "settings": {
+            "additionalProperties": {},
+            "description": "Global Settings to configure Karpenter",
+            "properties": {
+              "featureGates": {
+                "additionalProperties": {},
+                "description": "Feature Gate configuration values. Feature Gates will follow the same graduation process and requirements as feature gates\nin Kubernetes. More information here https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates-for-alpha-or-beta-features.",
+                "properties": {
+                  "spotToSpotConsolidation": {
+                    "description": "spotToSpotConsolidation is ALPHA and is disabled by default.\nSetting this to true will enable spot replacement consolidation for both single and multi-node consolidation.",
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "settings": {
+            "properties": {
+              "featureGates": {
+                "properties": {
+                  "staticCapacity": {
+                    "$ref": "#/$defs/schema58"
+                  }
+                },
+                "required": [
+                  "staticCapacity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "featureGates"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "settings"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "settings": {
+            "additionalProperties": {},
+            "description": "Global Settings to configure Karpenter",
+            "properties": {
+              "featureGates": {
+                "additionalProperties": {},
+                "description": "Feature Gate configuration values. Feature Gates will follow the same graduation process and requirements as feature gates\nin Kubernetes. More information here https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates-for-alpha-or-beta-features.",
+                "properties": {
+                  "staticCapacity": {
+                    "description": "staticCapacity is ALPHA and is disabled by default.\nSetting this to true will enable static capacity provisioning.",
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "settings": {
+                      "properties": {
+                        "minValuesPolicy": {}
+                      },
+                      "required": [
+                        "minValuesPolicy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "settings"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "settings": {
+                    "properties": {
+                      "minValuesPolicy": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "minValuesPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "settings"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "minValuesPolicy": {
+                    "$ref": "#/$defs/schema58"
+                  }
+                },
+                "required": [
+                  "minValuesPolicy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "settings": {
+            "additionalProperties": {},
+            "description": "Global Settings to configure Karpenter",
+            "properties": {
+              "minValuesPolicy": {
+                "description": "How the Karpenter scheduler treats min values. Options include 'Strict' (fails scheduling when min values can't be met) and 'BestEffort' (relaxes min values when they can't be met).",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "settings": {
+                      "properties": {
+                        "preferencePolicy": {}
+                      },
+                      "required": [
+                        "preferencePolicy"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "settings"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "settings": {
+                    "properties": {
+                      "preferencePolicy": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "preferencePolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "settings"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "settings": {
+                "properties": {
+                  "preferencePolicy": {
+                    "$ref": "#/$defs/schema58"
+                  }
+                },
+                "required": [
+                  "preferencePolicy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "settings"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "settings": {
+            "additionalProperties": {},
+            "description": "Global Settings to configure Karpenter",
+            "properties": {
+              "preferencePolicy": {
+                "description": "How the Karpenter scheduler should treat preferences. Preferences include preferredDuringSchedulingIgnoreDuringExecution\nnode and pod affinities/anti-affinities and ScheduleAnyways topologySpreadConstraints. Can be one of 'Ignore' and 'Respect'",
+                "not": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -1970,7 +2619,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema56"
+          "$ref": "#/$defs/schema57"
         },
         {
           "not": {
@@ -2005,7 +2654,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema56"
+          "$ref": "#/$defs/schema57"
         },
         {
           "not": {
@@ -2447,7 +3096,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema56"
+          "$ref": "#/$defs/schema57"
         },
         {
           "not": {
@@ -2478,7 +3127,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema56"
+          "$ref": "#/$defs/schema57"
         },
         {
           "not": {
@@ -2547,7 +3196,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema55"
+                  "$ref": "#/$defs/schema56"
                 }
               },
               {

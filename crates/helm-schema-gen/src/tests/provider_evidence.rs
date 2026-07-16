@@ -1110,3 +1110,44 @@ fn included_encoded_secret_data_preserves_nullable_source_without_byte_format() 
         "unencoded sibling helper input should still inherit Secret.data byte format, got {raw}; schema={schema}"
     );
 }
+
+/// F56/F62: `tpl (toYaml .Values.X) .` re-renders the serialized fragment,
+/// so the provider slot projects back to the input exactly like a bare
+/// `toYaml` splice (airflow's scheduler command and extraContainers).
+#[test]
+fn tpl_serialized_fragment_projects_the_provider_slot() {
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            spec:
+              containers:
+                - name: scheduler
+                  image: img
+                  {{- if .Values.scheduler.command }}
+                  command: {{ tpl (toYaml .Values.scheduler.command) . | nindent 12 }}
+                  {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("scheduler:\n  command: ~\n"));
+
+    for (instance, want) in [
+        (serde_json::json!({ "scheduler": { "command": 7 } }), false),
+        (
+            serde_json::json!({ "scheduler": { "command": ["bash"] } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "scheduler": { "command": null } }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "the tpl-serialized command keeps the PodSpec string-array slot: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}

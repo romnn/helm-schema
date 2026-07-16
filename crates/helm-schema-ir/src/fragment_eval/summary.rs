@@ -291,6 +291,7 @@ fn splice_row_meta(splice: &Splice, conditions: &[PathCondition]) -> HelperOutpu
         string_contract: splice.meta.string_contract,
         json_serialized: splice.meta.json_serialized,
         json_decoded: splice.meta.json_decoded,
+        lexical_escapes: splice.meta.lexical_escapes.clone(),
         provenance,
         ..HelperOutputMeta::default()
     };

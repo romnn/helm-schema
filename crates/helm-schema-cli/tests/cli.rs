@@ -1437,31 +1437,14 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> color_eyre:
         .wrap_err("generate schema")?;
 
     let expected = serde_json::json!({
-        "$defs": {
-            "helm-truthy": {
-                "anyOf": [
-                    { "const": true },
-                    { "not": { "const": 0 }, "type": "number" },
-                    { "minLength": 1, "type": "string" },
-                    { "minItems": 1, "type": "array" },
-                    { "minProperties": 1, "type": "object" }
-                ]
-            }
-        },
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {
-            "other": {
-                // F42: the `default "fallback"` literal types only the
-                // truthy arm — every Helm-empty input takes the fallback
-                // and renders, so the whole Helm-falsy set stays open
-                // beside the hinted string.
-                "anyOf": [
-                    { "not": { "$ref": "#/$defs/helm-truthy" } },
-                    { "type": "null" },
-                    { "type": "string" }
-                ]
-            },
+            // F42/F76: the `default "fallback"` literal types only the
+            // truthy arm, and the only consumer is `printf`, which totally
+            // formats ANY input — so the documented string intent must not
+            // constrain the path at all.
+            "other": {},
             "serviceAccount": {
                 "additionalProperties": {},
                 "properties": {

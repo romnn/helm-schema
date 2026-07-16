@@ -14,7 +14,7 @@ use super::strict_operands::{
     record_raw_range_key_string_consumer_paths, record_string_call_consumers,
     record_string_consumer_effects,
 };
-use super::value_facts::{identity_value_paths, value_strings};
+use super::value_facts::{identity_value_paths, split_transformed_value, value_strings};
 use super::{eval_all_args, merge_arg_effects, merge_arg_values};
 
 /// `default FALLBACK PRIMARY` and `PRIMARY | default FALLBACK` are one rule:
@@ -413,8 +413,16 @@ pub(super) fn eval_nonempty_split(
     let mut effects = subject.effects;
     record_string_call_consumers("split", args, env, resolver, &mut effects);
     let separator = value_strings(&separator.value);
-    let value = single_string(separator)
-        .and_then(|separator| nonempty_split_map(subject.value.as_ref(), &separator));
+    let value = single_string(separator).and_then(|separator| {
+        // A raw-identity subject keeps its path through `._0` qualified by
+        // the separator as a lexical escape (F74) before the legacy map
+        // degrade.
+        subject
+            .value
+            .as_ref()
+            .and_then(|value| split_transformed_value(value, &effects, &separator))
+            .or_else(|| nonempty_split_map(subject.value.as_ref(), &separator))
+    });
     EvalResult::with_effects(value, effects)
 }
 
@@ -436,9 +444,13 @@ pub(super) fn eval_nonempty_split_pipeline(
         .first()
         .map(|arg| eval_expr_with_helper_calls(arg, env, resolver))
         .and_then(|result| single_string(value_strings(&result.value)));
-    let value = separator
-        .as_deref()
-        .and_then(|separator| nonempty_split_map(current.value.as_ref(), separator));
+    let value = separator.as_deref().and_then(|separator| {
+        current
+            .value
+            .as_ref()
+            .and_then(|value| split_transformed_value(value, &current.effects, separator))
+            .or_else(|| nonempty_split_map(current.value.as_ref(), separator))
+    });
     let mut effects = current.effects;
     merge_arg_effects(args, env, resolver, &mut effects);
     record_string_consumer_effects(&string_paths, &mut effects);

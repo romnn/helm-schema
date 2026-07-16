@@ -6,7 +6,12 @@ fn declared_scalar_default_survives_active_conjunctive_branch() {
         "allOf": [
             {
                 "not": {
-                    "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                    "pattern": "^(|~|null|Null|NULL)$"
+                }
+            },
+            {
+                "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                 }
             }
         ],
@@ -69,11 +74,18 @@ fn declared_empty_default_survives_ranged_map_member_projection() {
     let nullable_unsafe_plain_scalar = serde_json::json!({
         "anyOf": [
             {
-                "allOf": [{
-                    "not": {
-                        "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                "allOf": [
+                    {
+                        "not": {
+                            "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                    },
+                    {
+                        "not": {
+                            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
                     }
-                }],
+                ],
                 "type": "string"
             },
             { "type": "null" }

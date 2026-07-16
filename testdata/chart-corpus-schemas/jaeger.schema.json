@@ -72,33 +72,6 @@
     "schema10": {
       "not": {
         "properties": {
-          "esLookback": {
-            "properties": {
-              "serviceAccount": {
-                "properties": {
-                  "create": {}
-                },
-                "required": [
-                  "create"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "esLookback"
-        ],
-        "type": "object"
-      }
-    },
-    "schema11": {
-      "not": {
-        "properties": {
           "esRollover": {
             "properties": {
               "serviceAccount": {
@@ -123,7 +96,7 @@
         "type": "object"
       }
     },
-    "schema15": {
+    "schema14": {
       "not": {
         "properties": {
           "spark": {
@@ -150,7 +123,7 @@
         "type": "object"
       }
     },
-    "schema16": {
+    "schema15": {
       "not": {
         "properties": {
           "storage": {
@@ -177,7 +150,7 @@
         "type": "object"
       }
     },
-    "schema19": {
+    "schema18": {
       "additionalProperties": {},
       "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi",
       "properties": {
@@ -190,6 +163,32 @@
               "type": "null"
             }
           ]
+        }
+      }
+    },
+    "schema19": {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "pullSecrets": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
         }
       }
     },
@@ -238,32 +237,6 @@
       }
     },
     "schema20": {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "properties": {
-            "pullSecrets": {
-              "anyOf": [
-                {
-                  "type": "array"
-                },
-                {
-                  "type": "object"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            }
-          }
-        }
-      }
-    },
-    "schema21": {
       "anyOf": [
         {
           "additionalProperties": {},
@@ -283,7 +256,7 @@
         }
       ]
     },
-    "schema22": {
+    "schema21": {
       "additionalProperties": {},
       "properties": {
         "serviceAccount": {
@@ -296,7 +269,7 @@
         }
       }
     },
-    "schema23": {
+    "schema22": {
       "additionalProperties": {},
       "properties": {
         "image": {
@@ -319,7 +292,7 @@
         }
       }
     },
-    "schema26": {
+    "schema25": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -337,6 +310,30 @@
         ],
         "type": "object"
       }
+    },
+    "schema28": {
+      "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120"
+    },
+    "schema29": {
+      "properties": {
+        "storage": {
+          "properties": {
+            "type": {
+              "enum": [
+                "cassandra"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "storage"
+      ],
+      "type": "object"
     },
     "schema3": {
       "anyOf": [
@@ -377,31 +374,7 @@
         }
       ]
     },
-    "schema30": {
-      "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/\nttlSecondsAfterFinished: 120"
-    },
     "schema31": {
-      "properties": {
-        "storage": {
-          "properties": {
-            "type": {
-              "enum": [
-                "cassandra"
-              ]
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "storage"
-      ],
-      "type": "object"
-    },
-    "schema33": {
       "not": {
         "properties": {
           "jaeger": {
@@ -420,7 +393,7 @@
         "type": "object"
       }
     },
-    "schema35": {
+    "schema33": {
       "additionalProperties": {},
       "properties": {
         "pullSecrets": {
@@ -433,6 +406,37 @@
             },
             {
               "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema37": {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "pullPolicy": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "schema38": {
+      "additionalProperties": {},
+      "properties": {
+        "cmdlineParams": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
             },
             {
               "type": "null"
@@ -481,37 +485,6 @@
       ]
     },
     "schema41": {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "properties": {
-            "pullPolicy": {
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "schema42": {
-      "additionalProperties": {},
-      "properties": {
-        "cmdlineParams": {
-          "anyOf": [
-            {
-              "type": "array"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
-    "schema45": {
       "anyOf": [
         {
           "type": "object"
@@ -519,7 +492,7 @@
       ],
       "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 256m\nmemory: 128Mi"
     },
-    "schema46": {
+    "schema42": {
       "additionalProperties": {},
       "properties": {
         "name": {},
@@ -529,7 +502,7 @@
       },
       "type": "object"
     },
-    "schema47": {
+    "schema43": {
       "additionalProperties": {},
       "properties": {
         "annotations": {
@@ -544,11 +517,11 @@
         }
       }
     },
-    "schema48": {
+    "schema44": {
       "description": "Explicitly mounts the API credentials for the Service Account",
       "type": "boolean"
     },
-    "schema49": {
+    "schema45": {
       "additionalProperties": {},
       "properties": {
         "image": {
@@ -561,6 +534,47 @@
             }
           ]
         }
+      }
+    },
+    "schema46": {
+      "additionalProperties": {},
+      "properties": {
+        "extraConfigmapMounts": {
+          "items": {},
+          "type": "array"
+        }
+      }
+    },
+    "schema47": {
+      "additionalProperties": {},
+      "properties": {
+        "successfulJobsHistoryLimit": {
+          "type": "integer"
+        }
+      }
+    },
+    "schema48": {
+      "additionalProperties": {},
+      "properties": {
+        "extraSecretMounts": {
+          "items": {},
+          "type": "array"
+        }
+      }
+    },
+    "schema49": {
+      "not": {
+        "properties": {
+          "global": {
+            "enum": [
+              null
+            ]
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
       }
     },
     "schema5": {
@@ -581,38 +595,12 @@
     "schema50": {
       "additionalProperties": {},
       "properties": {
-        "extraConfigmapMounts": {
-          "items": {},
-          "type": "array"
-        }
-      }
-    },
-    "schema51": {
-      "additionalProperties": {},
-      "properties": {
-        "successfulJobsHistoryLimit": {
-          "type": "integer"
-        }
-      }
-    },
-    "schema52": {
-      "additionalProperties": {},
-      "properties": {
-        "extraSecretMounts": {
-          "items": {},
-          "type": "array"
-        }
-      }
-    },
-    "schema53": {
-      "additionalProperties": {},
-      "properties": {
         "failedJobsHistoryLimit": {
           "type": "integer"
         }
       }
     },
-    "schema56": {
+    "schema52": {
       "anyOf": [
         {
           "type": "array"
@@ -628,13 +616,13 @@
         }
       ]
     },
-    "schema57": {
+    "schema53": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema58": {
+    "schema54": {
       "additionalProperties": {},
       "properties": {
         "concurrencyPolicy": {
@@ -642,54 +630,22 @@
         }
       }
     },
-    "schema59": {
-      "description": "Explicitly mounts the API credentials for the Service Account"
-    },
-    "schema6": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "storage": {
-                "properties": {
-                  "type": {}
-                },
-                "required": [
-                  "type"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storage"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "storage": {
-              "properties": {
-                "type": {
-                  "enum": [
-                    "elasticsearch"
-                  ]
-                }
-              },
-              "required": [
-                "type"
-              ],
+    "schema55": {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "anyOf": [
+            {
               "type": "object"
             }
-          },
-          "required": [
-            "storage"
-          ],
-          "type": "object"
+          ]
         }
-      ]
+      }
     },
-    "schema60": {
+    "schema57": {
+      "description": "Explicitly mounts the API credentials for the Service Account"
+    },
+    "schema58": {
       "not": {
         "properties": {
           "enabled": {}
@@ -700,7 +656,7 @@
         "type": "object"
       }
     },
-    "schema64": {
+    "schema62": {
       "anyOf": [
         {
           "type": "array"
@@ -713,13 +669,13 @@
         }
       ]
     },
-    "schema66": {
+    "schema63": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema67": {
+    "schema64": {
       "anyOf": [
         {
           "type": "object"
@@ -729,11 +685,11 @@
         }
       ]
     },
-    "schema68": {
+    "schema65": {
       "additionalProperties": {},
       "type": "object"
     },
-    "schema8": {
+    "schema7": {
       "additionalProperties": {},
       "properties": {
         "serviceAccount": {
@@ -754,7 +710,7 @@
         }
       }
     },
-    "schema9": {
+    "schema8": {
       "not": {
         "properties": {
           "esIndexCleaner": {
@@ -777,6 +733,33 @@
         },
         "required": [
           "esIndexCleaner"
+        ],
+        "type": "object"
+      }
+    },
+    "schema9": {
+      "not": {
+        "properties": {
+          "esLookback": {
+            "properties": {
+              "serviceAccount": {
+                "properties": {
+                  "create": {}
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "esLookback"
         ],
         "type": "object"
       }
@@ -877,7 +860,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema33"
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -949,7 +932,7 @@
           "commonLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema66"
+                "$ref": "#/$defs/schema63"
               },
               {
                 "not": {
@@ -1009,7 +992,7 @@
         "additionalProperties": {},
         "properties": {
           "esIndexCleaner": {
-            "$ref": "#/$defs/schema47"
+            "$ref": "#/$defs/schema43"
           }
         }
       }
@@ -1038,7 +1021,7 @@
         "additionalProperties": {},
         "properties": {
           "esIndexCleaner": {
-            "$ref": "#/$defs/schema42"
+            "$ref": "#/$defs/schema38"
           }
         }
       }
@@ -1125,7 +1108,7 @@
         "additionalProperties": {},
         "properties": {
           "esIndexCleaner": {
-            "$ref": "#/$defs/schema20"
+            "$ref": "#/$defs/schema19"
           }
         }
       }
@@ -1154,7 +1137,36 @@
         "additionalProperties": {},
         "properties": {
           "esIndexCleaner": {
-            "$ref": "#/$defs/schema49"
+            "$ref": "#/$defs/schema45"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "esIndexCleaner": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "esIndexCleaner"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esIndexCleaner": {
+            "$ref": "#/$defs/schema55"
           }
         }
       }
@@ -1205,6 +1217,847 @@
             },
             "required": [
               "esIndexCleaner"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema8"
+              },
+              {
+                "properties": {
+                  "esIndexCleaner": {
+                    "properties": {
+                      "serviceAccount": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "esIndexCleaner"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esIndexCleaner": {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "$ref": "#/$defs/schema43"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "esIndexCleaner": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esIndexCleaner"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "esIndexCleaner": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "esIndexCleaner"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema8"
+                  },
+                  {
+                    "properties": {
+                      "esIndexCleaner": {
+                        "properties": {
+                          "serviceAccount": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "serviceAccount"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "esIndexCleaner"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "esIndexCleaner": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "esIndexCleaner"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema8"
+                  },
+                  {
+                    "properties": {
+                      "esIndexCleaner": {
+                        "properties": {
+                          "serviceAccount": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "serviceAccount"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "esIndexCleaner"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema8"
+                    },
+                    {
+                      "properties": {
+                        "esIndexCleaner": {
+                          "properties": {
+                            "serviceAccount": {
+                              "properties": {
+                                "create": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "create"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "esIndexCleaner"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "esIndexCleaner": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "esIndexCleaner"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema8"
+                    },
+                    {
+                      "properties": {
+                        "esIndexCleaner": {
+                          "properties": {
+                            "serviceAccount": {
+                              "properties": {
+                                "create": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "create"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "serviceAccount"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "esIndexCleaner"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esIndexCleaner": {
+            "additionalProperties": {},
+            "properties": {
+              "serviceAccount": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "esIndexCleaner": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esIndexCleaner"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "esIndexCleaner": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "esIndexCleaner"
+                ],
+                "type": "object"
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "esIndexCleaner": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "esIndexCleaner"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema8"
+                      },
+                      {
+                        "properties": {
+                          "esIndexCleaner": {
+                            "properties": {
+                              "serviceAccount": {
+                                "properties": {
+                                  "create": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "create"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "serviceAccount"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "esIndexCleaner"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "esIndexCleaner": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "esIndexCleaner"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema8"
+                      },
+                      {
+                        "properties": {
+                          "esIndexCleaner": {
+                            "properties": {
+                              "serviceAccount": {
+                                "properties": {
+                                  "create": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "create"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "serviceAccount"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "esIndexCleaner"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/schema8"
+                        },
+                        {
+                          "properties": {
+                            "esIndexCleaner": {
+                              "properties": {
+                                "serviceAccount": {
+                                  "properties": {
+                                    "create": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  },
+                                  "required": [
+                                    "create"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "serviceAccount"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "esIndexCleaner"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "esIndexCleaner": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "esIndexCleaner"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/schema8"
+                        },
+                        {
+                          "properties": {
+                            "esIndexCleaner": {
+                              "properties": {
+                                "serviceAccount": {
+                                  "properties": {
+                                    "create": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  },
+                                  "required": [
+                                    "create"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "serviceAccount"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "esIndexCleaner"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esIndexCleaner": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "esLookback": {
+                "properties": {
+                  "annotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esLookback"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "esLookback": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esLookback"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esLookback": {
+            "$ref": "#/$defs/schema43"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "esLookback": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "esLookback"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esLookback": {
+            "$ref": "#/$defs/schema38"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "esLookback": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "esLookback"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esLookback": {
+            "$ref": "#/$defs/schema1"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "esLookback": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "esLookback"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esLookback": {
+            "$ref": "#/$defs/schema2"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "esLookback": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "esLookback"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esLookback": {
+            "$ref": "#/$defs/schema19"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "esLookback": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "esLookback"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esLookback": {
+            "$ref": "#/$defs/schema45"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "esLookback": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "esLookback"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esLookback": {
+            "$ref": "#/$defs/schema55"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "esLookback": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esLookback"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "esLookback": {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "annotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "annotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "esLookback"
             ],
             "type": "object"
           },
@@ -1215,818 +2068,6 @@
               },
               {
                 "properties": {
-                  "esIndexCleaner": {
-                    "properties": {
-                      "serviceAccount": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esIndexCleaner"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "esIndexCleaner": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "$ref": "#/$defs/schema47"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "esIndexCleaner": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "esIndexCleaner"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "esIndexCleaner": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esIndexCleaner"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema9"
-                  },
-                  {
-                    "properties": {
-                      "esIndexCleaner": {
-                        "properties": {
-                          "serviceAccount": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "serviceAccount"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "esIndexCleaner"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "esIndexCleaner": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esIndexCleaner"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema9"
-                  },
-                  {
-                    "properties": {
-                      "esIndexCleaner": {
-                        "properties": {
-                          "serviceAccount": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "serviceAccount"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "esIndexCleaner"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/schema9"
-                    },
-                    {
-                      "properties": {
-                        "esIndexCleaner": {
-                          "properties": {
-                            "serviceAccount": {
-                              "properties": {
-                                "create": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "serviceAccount"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "esIndexCleaner"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "esIndexCleaner": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esIndexCleaner"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/schema9"
-                    },
-                    {
-                      "properties": {
-                        "esIndexCleaner": {
-                          "properties": {
-                            "serviceAccount": {
-                              "properties": {
-                                "create": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "create"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "serviceAccount"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "esIndexCleaner"
-                      ],
-                      "type": "object"
-                    }
-                  ]
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "esIndexCleaner": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "esIndexCleaner": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "esIndexCleaner"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "esIndexCleaner": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esIndexCleaner"
-                ],
-                "type": "object"
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "esIndexCleaner": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "esIndexCleaner"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema9"
-                      },
-                      {
-                        "properties": {
-                          "esIndexCleaner": {
-                            "properties": {
-                              "serviceAccount": {
-                                "properties": {
-                                  "create": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "create"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "serviceAccount"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "esIndexCleaner"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "esIndexCleaner": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "esIndexCleaner"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema9"
-                      },
-                      {
-                        "properties": {
-                          "esIndexCleaner": {
-                            "properties": {
-                              "serviceAccount": {
-                                "properties": {
-                                  "create": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "create"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "serviceAccount"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "esIndexCleaner"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema9"
-                        },
-                        {
-                          "properties": {
-                            "esIndexCleaner": {
-                              "properties": {
-                                "serviceAccount": {
-                                  "properties": {
-                                    "create": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "create"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "serviceAccount"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "esIndexCleaner"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "esIndexCleaner": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "esIndexCleaner"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema9"
-                        },
-                        {
-                          "properties": {
-                            "esIndexCleaner": {
-                              "properties": {
-                                "serviceAccount": {
-                                  "properties": {
-                                    "create": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "create"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "serviceAccount"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "esIndexCleaner"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "esIndexCleaner": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "esLookback": {
-                "properties": {
-                  "annotations": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "annotations"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "esLookback"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "esLookback": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "esLookback"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "esLookback": {
-            "$ref": "#/$defs/schema47"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "esLookback": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "esLookback"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "esLookback": {
-            "$ref": "#/$defs/schema42"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "esLookback": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "esLookback"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "esLookback": {
-            "$ref": "#/$defs/schema1"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "esLookback": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "esLookback"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "esLookback": {
-            "$ref": "#/$defs/schema2"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "esLookback": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "esLookback"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "esLookback": {
-            "$ref": "#/$defs/schema20"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "esLookback": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "esLookback"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "esLookback": {
-            "$ref": "#/$defs/schema49"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "esLookback": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "esLookback"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "esLookback": {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "annotations": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "annotations"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "esLookback"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema10"
-              },
-              {
-                "properties": {
                   "esLookback": {
                     "properties": {
                       "serviceAccount": {
@@ -2060,7 +2101,7 @@
         "additionalProperties": {},
         "properties": {
           "esLookback": {
-            "$ref": "#/$defs/schema8"
+            "$ref": "#/$defs/schema7"
           }
         }
       }
@@ -2111,7 +2152,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema9"
                   },
                   {
                     "properties": {
@@ -2168,7 +2209,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema9"
                   },
                   {
                     "properties": {
@@ -2203,7 +2244,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema10"
+                      "$ref": "#/$defs/schema9"
                     },
                     {
                       "properties": {
@@ -2262,7 +2303,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema10"
+                      "$ref": "#/$defs/schema9"
                     },
                     {
                       "properties": {
@@ -2302,7 +2343,7 @@
         "additionalProperties": {},
         "properties": {
           "esLookback": {
-            "$ref": "#/$defs/schema22"
+            "$ref": "#/$defs/schema21"
           }
         }
       }
@@ -2374,7 +2415,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema10"
+                        "$ref": "#/$defs/schema9"
                       },
                       {
                         "properties": {
@@ -2431,7 +2472,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema10"
+                        "$ref": "#/$defs/schema9"
                       },
                       {
                         "properties": {
@@ -2466,7 +2507,7 @@
                     "not": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema10"
+                          "$ref": "#/$defs/schema9"
                         },
                         {
                           "properties": {
@@ -2525,7 +2566,7 @@
                     "not": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema10"
+                          "$ref": "#/$defs/schema9"
                         },
                         {
                           "properties": {
@@ -2619,7 +2660,7 @@
         "additionalProperties": {},
         "properties": {
           "esRollover": {
-            "$ref": "#/$defs/schema47"
+            "$ref": "#/$defs/schema43"
           }
         }
       }
@@ -2648,7 +2689,7 @@
         "additionalProperties": {},
         "properties": {
           "esRollover": {
-            "$ref": "#/$defs/schema42"
+            "$ref": "#/$defs/schema38"
           }
         }
       }
@@ -2735,7 +2776,7 @@
         "additionalProperties": {},
         "properties": {
           "esRollover": {
-            "$ref": "#/$defs/schema20"
+            "$ref": "#/$defs/schema19"
           }
         }
       }
@@ -2764,7 +2805,36 @@
         "additionalProperties": {},
         "properties": {
           "esRollover": {
-            "$ref": "#/$defs/schema49"
+            "$ref": "#/$defs/schema45"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "esRollover": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "esRollover"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "esRollover": {
+            "$ref": "#/$defs/schema55"
           }
         }
       }
@@ -3043,7 +3113,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema10"
               },
               {
                 "properties": {
@@ -3080,7 +3150,7 @@
         "additionalProperties": {},
         "properties": {
           "esRollover": {
-            "$ref": "#/$defs/schema8"
+            "$ref": "#/$defs/schema7"
           }
         }
       }
@@ -3131,7 +3201,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema11"
+                    "$ref": "#/$defs/schema10"
                   },
                   {
                     "properties": {
@@ -3188,7 +3258,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema11"
+                    "$ref": "#/$defs/schema10"
                   },
                   {
                     "properties": {
@@ -3223,7 +3293,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema11"
+                      "$ref": "#/$defs/schema10"
                     },
                     {
                       "properties": {
@@ -3282,7 +3352,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema11"
+                      "$ref": "#/$defs/schema10"
                     },
                     {
                       "properties": {
@@ -3322,7 +3392,7 @@
         "additionalProperties": {},
         "properties": {
           "esRollover": {
-            "$ref": "#/$defs/schema22"
+            "$ref": "#/$defs/schema21"
           }
         }
       }
@@ -3517,7 +3587,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema11"
+                        "$ref": "#/$defs/schema10"
                       },
                       {
                         "properties": {
@@ -3574,7 +3644,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema11"
+                        "$ref": "#/$defs/schema10"
                       },
                       {
                         "properties": {
@@ -3609,7 +3679,7 @@
                     "not": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema11"
+                          "$ref": "#/$defs/schema10"
                         },
                         {
                           "properties": {
@@ -3668,7 +3738,7 @@
                     "not": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema11"
+                          "$ref": "#/$defs/schema10"
                         },
                         {
                           "properties": {
@@ -3778,7 +3848,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema33"
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -3895,7 +3965,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema9"
+                    "$ref": "#/$defs/schema8"
                   },
                   {
                     "properties": {
@@ -3981,7 +4051,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema9"
                   },
                   {
                     "properties": {
@@ -4067,7 +4137,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema11"
+                    "$ref": "#/$defs/schema10"
                   },
                   {
                     "properties": {
@@ -4153,7 +4223,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema14"
                   },
                   {
                     "properties": {
@@ -4230,7 +4300,162 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema33"
+            "allOf": [
+              {
+                "properties": {
+                  "esIndexCleaner": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "esIndexCleaner"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema49"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "esLookback": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "esLookback"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema49"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "esRollover": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "esRollover"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema49"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema31"
+                  },
+                  {
+                    "properties": {
+                      "jaeger": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jaeger"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/schema49"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "spark": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "spark"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema49"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/schema31"
           },
           {
             "properties": {
@@ -4269,7 +4494,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/schema66"
+                    "$ref": "#/$defs/schema63"
                   },
                   {
                     "maximum": 0,
@@ -4292,7 +4517,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema33"
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -4379,7 +4604,7 @@
             "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
             "properties": {
               "httproute": {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               }
             }
           }
@@ -4390,7 +4615,114 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema33"
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema31"
+              },
+              {
+                "properties": {
+                  "jaeger": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jaeger"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema31"
+                  },
+                  {
+                    "properties": {
+                      "jaeger": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jaeger"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "jaeger": {
+                    "properties": {
+                      "httproute": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "httproute"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jaeger"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jaeger": {
+            "additionalProperties": {},
+            "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
+            "properties": {
+              "httproute": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/schema31"
           },
           {
             "properties": {
@@ -4421,7 +4753,7 @@
             "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
             "properties": {
               "image": {
-                "$ref": "#/$defs/schema35"
+                "$ref": "#/$defs/schema33"
               }
             }
           }
@@ -4432,7 +4764,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema33"
+            "$ref": "#/$defs/schema31"
           },
           {
             "properties": {
@@ -4463,7 +4795,53 @@
             "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
             "properties": {
               "image": {
-                "$ref": "#/$defs/schema67"
+                "$ref": "#/$defs/schema64"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/schema31"
+          },
+          {
+            "properties": {
+              "jaeger": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jaeger"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jaeger": {
+            "additionalProperties": {},
+            "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
+            "properties": {
+              "image": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ]
               }
             }
           }
@@ -4476,7 +4854,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema33"
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -4624,7 +5002,7 @@
                 "description": "- name: name\nport:\ntargetPort:\nprotocol: (optional)",
                 "properties": {
                   "hosts": {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema52"
                   }
                 }
               }
@@ -4669,7 +5047,7 @@
             "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
             "properties": {
               "service": {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               }
             }
           }
@@ -4718,13 +5096,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/schema46"
+                          "$ref": "#/$defs/schema42"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/schema46"
+                          "$ref": "#/$defs/schema42"
                         },
                         "type": "object"
                       },
@@ -4750,7 +5128,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema33"
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -4810,7 +5188,7 @@
             "description": "Jaeger Deployment Settings\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/Dockerfile\nhttps://github.com/jaegertracing/jaeger/blob/main/cmd/jaeger/config.yaml",
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               }
             }
           }
@@ -4821,7 +5199,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema33"
+            "$ref": "#/$defs/schema31"
           },
           {
             "properties": {
@@ -4867,7 +5245,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema33"
+            "$ref": "#/$defs/schema31"
           },
           {
             "properties": {
@@ -4979,7 +5357,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema33"
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -5142,7 +5520,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "annotations": {
-                "$ref": "#/$defs/schema67"
+                "$ref": "#/$defs/schema64"
               }
             }
           }
@@ -5200,7 +5578,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "cmdlineParams": {
-                "$ref": "#/$defs/schema64"
+                "$ref": "#/$defs/schema62"
               }
             }
           }
@@ -5362,7 +5740,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "extraConfigmapMounts": {
-                "$ref": "#/$defs/schema56"
+                "$ref": "#/$defs/schema52"
               }
             }
           }
@@ -5524,7 +5902,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "extraSecretMounts": {
-                "$ref": "#/$defs/schema56"
+                "$ref": "#/$defs/schema52"
               }
             }
           }
@@ -5559,7 +5937,46 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "image": {
-                "$ref": "#/$defs/schema35"
+                "$ref": "#/$defs/schema33"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "spark": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "spark"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "spark": {
+            "additionalProperties": {},
+            "description": "https://github.com/jaegertracing/spark-dependencies",
+            "properties": {
+              "image": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  }
+                ]
               }
             }
           }
@@ -5618,7 +6035,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema15"
+                "$ref": "#/$defs/schema14"
               },
               {
                 "properties": {
@@ -5659,7 +6076,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/schema19"
+                "$ref": "#/$defs/schema18"
               }
             }
           }
@@ -5712,7 +6129,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema14"
                   },
                   {
                     "properties": {
@@ -5769,7 +6186,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema14"
                   },
                   {
                     "properties": {
@@ -5804,7 +6221,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema15"
+                      "$ref": "#/$defs/schema14"
                     },
                     {
                       "properties": {
@@ -5863,7 +6280,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema15"
+                      "$ref": "#/$defs/schema14"
                     },
                     {
                       "properties": {
@@ -5907,7 +6324,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/schema45"
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -5981,7 +6398,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema15"
+                        "$ref": "#/$defs/schema14"
                       },
                       {
                         "properties": {
@@ -6038,7 +6455,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema15"
+                        "$ref": "#/$defs/schema14"
                       },
                       {
                         "properties": {
@@ -6073,7 +6490,7 @@
                     "not": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema15"
+                          "$ref": "#/$defs/schema14"
                         },
                         {
                           "properties": {
@@ -6132,7 +6549,7 @@
                     "not": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema15"
+                          "$ref": "#/$defs/schema14"
                         },
                         {
                           "properties": {
@@ -6203,7 +6620,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema31"
+            "$ref": "#/$defs/schema29"
           }
         ]
       },
@@ -6219,7 +6636,7 @@
                 "description": "Cassandra connection settings (for external Cassandra or customizing provisioned)",
                 "properties": {
                   "env": {
-                    "$ref": "#/$defs/schema64"
+                    "$ref": "#/$defs/schema62"
                   }
                 }
               }
@@ -6251,7 +6668,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema31"
+            "$ref": "#/$defs/schema29"
           }
         ]
       },
@@ -6343,7 +6760,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema31"
+            "$ref": "#/$defs/schema29"
           }
         ]
       },
@@ -6433,7 +6850,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema29"
               }
             ]
           },
@@ -6459,7 +6876,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema29"
               }
             ]
           }
@@ -6513,7 +6930,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema31"
+            "$ref": "#/$defs/schema29"
           }
         ]
       },
@@ -6590,7 +7007,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema29"
               }
             ]
           },
@@ -6643,7 +7060,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema29"
               }
             ]
           },
@@ -6671,7 +7088,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema16"
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -6703,7 +7120,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema29"
               }
             ]
           },
@@ -6764,7 +7181,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema29"
               }
             ]
           },
@@ -6790,7 +7207,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema29"
               }
             ]
           }
@@ -6876,7 +7293,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema29"
               }
             ]
           },
@@ -6902,7 +7319,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema29"
               }
             ]
           }
@@ -7183,151 +7600,6 @@
       "if": {
         "anyOf": [
           {
-            "allOf": [
-              {
-                "properties": {
-                  "esIndexCleaner": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esIndexCleaner"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema6"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "esLookback": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esLookback"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema6"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "esRollover": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "esRollover"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema6"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "spark": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "spark"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema6"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/schema31"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "storage": {
-            "additionalProperties": {},
-            "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
-            "properties": {
-              "elasticsearch": {
-                "additionalProperties": {},
-                "description": "Elasticsearch connection settings\nNOTE: In Jaeger v2, Elasticsearch is configured directly in config.extensions.jaeger_storage\n(see the 'config' section at the top of this file). The settings below are only used by\nthe ES maintenance jobs (esIndexCleaner, esRollover, esLookback) via the elasticsearch.env helper.",
-                "properties": {
-                  "url": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "user: elastic\npassword: changeme"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "properties": {
               "esIndexCleaner": {
                 "properties": {
@@ -7383,6 +7655,64 @@
               "esRollover"
             ],
             "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "esRollover": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "esRollover"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "storage": {
+                    "properties": {
+                      "elasticsearch": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "elasticsearch"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "storage"
+                ],
+                "type": "object"
+              }
+            ]
           }
         ]
       },
@@ -7394,14 +7724,12 @@
             "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
             "properties": {
               "elasticsearch": {
-                "additionalProperties": {},
-                "description": "Elasticsearch connection settings\nNOTE: In Jaeger v2, Elasticsearch is configured directly in config.extensions.jaeger_storage\n(see the 'config' section at the top of this file). The settings below are only used by\nthe ES maintenance jobs (esIndexCleaner, esRollover, esLookback) via the elasticsearch.env helper.",
-                "properties": {
-                  "url": {
-                    "description": "user: elastic\npassword: changeme",
-                    "type": "string"
+                "anyOf": [
+                  {
+                    "type": "object"
                   }
-                }
+                ],
+                "description": "Elasticsearch connection settings\nNOTE: In Jaeger v2, Elasticsearch is configured directly in config.extensions.jaeger_storage\n(see the 'config' section at the top of this file). The settings below are only used by\nthe ES maintenance jobs (esIndexCleaner, esRollover, esLookback) via the elasticsearch.env helper."
               }
             }
           }
@@ -7721,7 +8049,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema29"
                   }
                 ]
               },
@@ -7774,7 +8102,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema29"
                   }
                 ]
               },
@@ -7802,7 +8130,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema16"
+                        "$ref": "#/$defs/schema15"
                       },
                       {
                         "properties": {
@@ -7834,7 +8162,7 @@
                     ]
                   },
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema29"
                   }
                 ]
               },
@@ -7895,7 +8223,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema29"
                   }
                 ]
               },
@@ -7921,7 +8249,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema31"
+                    "$ref": "#/$defs/schema29"
                   }
                 ]
               }
@@ -7961,10 +8289,10 @@
     "commonAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema57"
+          "$ref": "#/$defs/schema53"
         },
         {
-          "$ref": "#/$defs/schema68"
+          "$ref": "#/$defs/schema65"
         },
         {
           "not": {
@@ -7982,7 +8310,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema66"
+          "$ref": "#/$defs/schema63"
         },
         {
           "not": {
@@ -8044,7 +8372,39 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema58"
+            "$ref": "#/$defs/schema54"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "$ref": "#/$defs/schema46"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "$ref": "#/$defs/schema48"
           }
         },
         {
@@ -8076,7 +8436,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema52"
+            "$ref": "#/$defs/schema37"
           }
         },
         {
@@ -8092,39 +8452,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema53"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "$ref": "#/$defs/schema41"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "$ref": "#/$defs/schema23"
+            "$ref": "#/$defs/schema22"
           }
         },
         {
@@ -8145,7 +8473,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema66"
+                    "$ref": "#/$defs/schema63"
                   },
                   {
                     "not": {
@@ -8175,7 +8503,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema66"
+                    "$ref": "#/$defs/schema63"
                   },
                   {
                     "not": {
@@ -8205,7 +8533,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema26"
+                    "$ref": "#/$defs/schema25"
                   },
                   {
                     "properties": {
@@ -8237,7 +8565,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "automountServiceAccountToken": {
-                    "$ref": "#/$defs/schema48"
+                    "$ref": "#/$defs/schema44"
                   }
                 }
               }
@@ -8292,7 +8620,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema51"
+            "$ref": "#/$defs/schema47"
           }
         }
       ],
@@ -8302,10 +8630,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema57"
+              "$ref": "#/$defs/schema53"
             },
             {
-              "$ref": "#/$defs/schema68"
+              "$ref": "#/$defs/schema65"
             },
             {
               "not": {
@@ -8335,7 +8663,7 @@
         "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
-          "$ref": "#/$defs/schema21"
+          "$ref": "#/$defs/schema20"
         },
         "nodeSelector": {},
         "numberOfDays": {
@@ -8343,7 +8671,7 @@
         },
         "podAnnotations": {},
         "podLabels": {
-          "$ref": "#/$defs/schema30"
+          "$ref": "#/$defs/schema28"
         },
         "podSecurityContext": {},
         "resources": {},
@@ -8359,10 +8687,10 @@
                 "annotations": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema57"
+                      "$ref": "#/$defs/schema53"
                     },
                     {
-                      "$ref": "#/$defs/schema68"
+                      "$ref": "#/$defs/schema65"
                     },
                     {
                       "not": {
@@ -8377,7 +8705,7 @@
               "additionalProperties": {},
               "properties": {
                 "automountServiceAccountToken": {
-                  "$ref": "#/$defs/schema59"
+                  "$ref": "#/$defs/schema57"
                 },
                 "create": {
                   "anyOf": [
@@ -8455,7 +8783,39 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema58"
+            "$ref": "#/$defs/schema54"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "$ref": "#/$defs/schema46"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "$ref": "#/$defs/schema48"
           }
         },
         {
@@ -8487,7 +8847,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema52"
+            "$ref": "#/$defs/schema37"
           }
         },
         {
@@ -8503,39 +8863,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema53"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "$ref": "#/$defs/schema41"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "$ref": "#/$defs/schema23"
+            "$ref": "#/$defs/schema22"
           }
         },
         {
@@ -8556,7 +8884,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema66"
+                    "$ref": "#/$defs/schema63"
                   },
                   {
                     "not": {
@@ -8586,7 +8914,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema66"
+                    "$ref": "#/$defs/schema63"
                   },
                   {
                     "not": {
@@ -8616,7 +8944,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema26"
+                    "$ref": "#/$defs/schema25"
                   },
                   {
                     "properties": {
@@ -8694,7 +9022,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema51"
+            "$ref": "#/$defs/schema47"
           }
         }
       ],
@@ -8704,10 +9032,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema57"
+              "$ref": "#/$defs/schema53"
             },
             {
-              "$ref": "#/$defs/schema68"
+              "$ref": "#/$defs/schema65"
             },
             {
               "not": {
@@ -8735,7 +9063,7 @@
         "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
-          "$ref": "#/$defs/schema21"
+          "$ref": "#/$defs/schema20"
         },
         "nodeSelector": {},
         "podAnnotations": {},
@@ -8754,10 +9082,10 @@
                 "annotations": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema57"
+                      "$ref": "#/$defs/schema53"
                     },
                     {
-                      "$ref": "#/$defs/schema68"
+                      "$ref": "#/$defs/schema65"
                     },
                     {
                       "not": {
@@ -8772,7 +9100,7 @@
               "additionalProperties": {},
               "properties": {
                 "automountServiceAccountToken": {
-                  "$ref": "#/$defs/schema59"
+                  "$ref": "#/$defs/schema57"
                 },
                 "create": {
                   "anyOf": [
@@ -8851,7 +9179,39 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema58"
+            "$ref": "#/$defs/schema54"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "$ref": "#/$defs/schema46"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "$ref": "#/$defs/schema48"
           }
         },
         {
@@ -8883,7 +9243,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema52"
+            "$ref": "#/$defs/schema37"
           }
         },
         {
@@ -8899,39 +9259,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema53"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "$ref": "#/$defs/schema41"
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "$ref": "#/$defs/schema23"
+            "$ref": "#/$defs/schema22"
           }
         },
         {
@@ -8956,7 +9284,7 @@
                   "podAnnotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema66"
+                        "$ref": "#/$defs/schema63"
                       },
                       {
                         "not": {
@@ -8992,7 +9320,7 @@
                   "podLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema66"
+                        "$ref": "#/$defs/schema63"
                       },
                       {
                         "not": {
@@ -9060,7 +9388,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema66"
+                    "$ref": "#/$defs/schema63"
                   },
                   {
                     "not": {
@@ -9090,7 +9418,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema66"
+                    "$ref": "#/$defs/schema63"
                   },
                   {
                     "not": {
@@ -9120,7 +9448,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema26"
+                    "$ref": "#/$defs/schema25"
                   },
                   {
                     "properties": {
@@ -9198,7 +9526,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema51"
+            "$ref": "#/$defs/schema47"
           }
         }
       ],
@@ -9208,10 +9536,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema57"
+              "$ref": "#/$defs/schema53"
             },
             {
-              "$ref": "#/$defs/schema68"
+              "$ref": "#/$defs/schema65"
             },
             {
               "not": {
@@ -9240,7 +9568,7 @@
         "extraSecretMounts": {},
         "failedJobsHistoryLimit": {},
         "image": {
-          "$ref": "#/$defs/schema21"
+          "$ref": "#/$defs/schema20"
         },
         "initHook": {
           "anyOf": [
@@ -9256,10 +9584,10 @@
                 "annotations": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema57"
+                      "$ref": "#/$defs/schema53"
                     },
                     {
-                      "$ref": "#/$defs/schema68"
+                      "$ref": "#/$defs/schema65"
                     },
                     {
                       "not": {
@@ -9296,10 +9624,10 @@
                 "annotations": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema57"
+                      "$ref": "#/$defs/schema53"
                     },
                     {
-                      "$ref": "#/$defs/schema68"
+                      "$ref": "#/$defs/schema65"
                     },
                     {
                       "not": {
@@ -9314,7 +9642,7 @@
               "additionalProperties": {},
               "properties": {
                 "automountServiceAccountToken": {
-                  "$ref": "#/$defs/schema59"
+                  "$ref": "#/$defs/schema57"
                 },
                 "create": {
                   "anyOf": [
@@ -9348,6 +9676,7 @@
           "type": "array"
         },
         {
+          "items": {},
           "type": "array"
         },
         {
@@ -9357,7 +9686,7 @@
           "type": "null"
         },
         {
-          "type": "object"
+          "$ref": "#/$defs/schema65"
         }
       ],
       "description": "Array with extra yaml objects to install alongside the chart. Values are evaluated as a template."
@@ -9401,7 +9730,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema58"
               },
               {
                 "properties": {
@@ -9435,7 +9764,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema58"
               },
               {
                 "properties": {
@@ -9476,7 +9805,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema60"
+                    "$ref": "#/$defs/schema58"
                   },
                   {
                     "properties": {
@@ -9540,7 +9869,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema58"
               },
               {
                 "properties": {
@@ -9556,14 +9885,14 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema41"
+            "$ref": "#/$defs/schema37"
           }
         },
         {
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema58"
               },
               {
                 "properties": {
@@ -9579,14 +9908,14 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema23"
+            "$ref": "#/$defs/schema22"
           }
         },
         {
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema58"
               },
               {
                 "properties": {
@@ -9607,7 +9936,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema66"
+                    "$ref": "#/$defs/schema63"
                   },
                   {
                     "not": {
@@ -9625,7 +9954,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema60"
+                    "$ref": "#/$defs/schema58"
                   },
                   {
                     "properties": {
@@ -9670,7 +9999,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema58"
               },
               {
                 "properties": {
@@ -9705,7 +10034,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema60"
+                    "$ref": "#/$defs/schema58"
                   },
                   {
                     "properties": {
@@ -9797,10 +10126,10 @@
             "annotations": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema57"
+                  "$ref": "#/$defs/schema53"
                 },
                 {
-                  "$ref": "#/$defs/schema68"
+                  "$ref": "#/$defs/schema65"
                 },
                 {
                   "not": {
@@ -9869,7 +10198,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "hosts": {
-                    "$ref": "#/$defs/schema56"
+                    "$ref": "#/$defs/schema52"
                   }
                 }
               }
@@ -9880,10 +10209,10 @@
             "annotations": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema57"
+                  "$ref": "#/$defs/schema53"
                 },
                 {
-                  "$ref": "#/$defs/schema68"
+                  "$ref": "#/$defs/schema65"
                 },
                 {
                   "not": {
@@ -9919,10 +10248,10 @@
             "annotations": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema57"
+                  "$ref": "#/$defs/schema53"
                 },
                 {
-                  "$ref": "#/$defs/schema68"
+                  "$ref": "#/$defs/schema65"
                 },
                 {
                   "not": {
@@ -9947,10 +10276,10 @@
             "labels": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema57"
+                  "$ref": "#/$defs/schema53"
                 },
                 {
-                  "$ref": "#/$defs/schema66"
+                  "$ref": "#/$defs/schema63"
                 },
                 {
                   "not": {
@@ -9981,10 +10310,10 @@
             "annotations": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema57"
+                  "$ref": "#/$defs/schema53"
                 },
                 {
-                  "$ref": "#/$defs/schema68"
+                  "$ref": "#/$defs/schema65"
                 },
                 {
                   "not": {
@@ -10032,7 +10361,7 @@
               "cmdlineParams": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema68"
+                    "$ref": "#/$defs/schema65"
                   },
                   {
                     "not": {
@@ -10072,7 +10401,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema42"
+            "$ref": "#/$defs/schema38"
           }
         },
         {
@@ -10088,7 +10417,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema58"
+            "$ref": "#/$defs/schema54"
           }
         },
         {
@@ -10137,7 +10466,7 @@
             "additionalProperties": {},
             "properties": {
               "extraConfigmapMounts": {
-                "$ref": "#/$defs/schema64"
+                "$ref": "#/$defs/schema62"
               }
             }
           }
@@ -10188,7 +10517,7 @@
             "additionalProperties": {},
             "properties": {
               "extraSecretMounts": {
-                "$ref": "#/$defs/schema64"
+                "$ref": "#/$defs/schema62"
               }
             }
           }
@@ -10206,7 +10535,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema53"
+            "$ref": "#/$defs/schema50"
           }
         },
         {
@@ -10222,7 +10551,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema41"
+            "$ref": "#/$defs/schema37"
           }
         },
         {
@@ -10238,7 +10567,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema23"
+            "$ref": "#/$defs/schema22"
           }
         },
         {
@@ -10259,7 +10588,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema66"
+                    "$ref": "#/$defs/schema63"
                   },
                   {
                     "not": {
@@ -10289,7 +10618,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema66"
+                    "$ref": "#/$defs/schema63"
                   },
                   {
                     "not": {
@@ -10319,7 +10648,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema26"
+                    "$ref": "#/$defs/schema25"
                   },
                   {
                     "properties": {
@@ -10397,7 +10726,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema51"
+            "$ref": "#/$defs/schema47"
           }
         }
       ],
@@ -10408,10 +10737,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema57"
+              "$ref": "#/$defs/schema53"
             },
             {
-              "$ref": "#/$defs/schema68"
+              "$ref": "#/$defs/schema65"
             },
             {
               "not": {
@@ -10455,7 +10784,7 @@
         "nodeSelector": {},
         "podAnnotations": {},
         "podLabels": {
-          "$ref": "#/$defs/schema30"
+          "$ref": "#/$defs/schema28"
         },
         "podSecurityContext": {},
         "resources": {},
@@ -10471,10 +10800,10 @@
                 "annotations": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema57"
+                      "$ref": "#/$defs/schema53"
                     },
                     {
-                      "$ref": "#/$defs/schema68"
+                      "$ref": "#/$defs/schema65"
                     },
                     {
                       "not": {
@@ -10489,7 +10818,7 @@
               "additionalProperties": {},
               "properties": {
                 "automountServiceAccountToken": {
-                  "$ref": "#/$defs/schema59"
+                  "$ref": "#/$defs/schema57"
                 },
                 "create": {
                   "anyOf": [

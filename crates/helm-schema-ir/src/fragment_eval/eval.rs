@@ -84,6 +84,10 @@ pub struct EvaluatedDocument {
     /// Input-type hints from literal `default`/`coalesce` fallbacks: they
     /// type only the truthy arm of the path, never its Helm-falsy states.
     pub(crate) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Fallback hints observed under branch predicates: fallback-grade
+    /// intent that may type conditional overlays, but never a branch whose
+    /// renders all totally format (F76).
+    pub(crate) guarded_fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Paths consumed through total stringifications (`quote`, `toString`,
     /// `join`, `printf`) anywhere in the source: the chart tolerates any
     /// input type at them even when no placed row exists.
@@ -141,6 +145,7 @@ pub(crate) fn eval_document(
         type_hints: interpreter.type_hints,
         guarded_type_hints: interpreter.guarded_type_hints,
         fallback_type_hints: interpreter.fallback_type_hints,
+        guarded_fallback_type_hints: interpreter.guarded_fallback_type_hints,
         shape_erased_paths: interpreter.shape_erased_paths,
         string_contract_paths: interpreter.string_contract_paths,
         range_modes: interpreter.range_modes,
@@ -543,6 +548,8 @@ pub(super) struct Interpreter<'a> {
     /// Input-type hints from literal `default`/`coalesce` fallbacks: they
     /// type only the truthy arm of the path, never its Helm-falsy states.
     pub(super) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Fallback hints observed under branch predicates (F76).
+    pub(super) guarded_fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Paths consumed only through total stringifications (`quote`,
     /// `toString`, `join`, `printf`): the chart tolerates any input type at
     /// them even when no placed row exists.
@@ -630,6 +637,7 @@ impl<'a> Interpreter<'a> {
             yaml_serialized_paths: BTreeSet::new(),
             guarded_type_hints: BTreeMap::new(),
             fallback_type_hints: BTreeMap::new(),
+            guarded_fallback_type_hints: BTreeMap::new(),
             shape_erased_paths: BTreeSet::new(),
             string_contract_paths: BTreeSet::new(),
             range_modes: crate::range_modes::RangeModes::default(),

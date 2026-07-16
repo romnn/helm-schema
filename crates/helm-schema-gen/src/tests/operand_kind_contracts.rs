@@ -801,6 +801,221 @@ fn substr_contract_projects_through_helper_arguments() {
     }
 }
 
+/// F74: an `if` arm that reassigns the parser's local to a literal sentinel
+/// (`$version = "1.20.0"` under `eq $version "latest"`, datadog's cluster
+/// agent check) replaces the raw value on that arm, so the lexical contract
+/// fires only where the sentinel equality is false. The undecodable sibling
+/// conjunct (`eq $length 1`) must not widen the exclusion: `¬E` alone is a
+/// sound subset of `¬(A ∧ E)`.
+#[test]
+fn conditional_literal_reassignment_excludes_the_sentinel_from_the_parser_domain() {
+    let src = indoc! {r#"
+        {{- $version := .Values.image.tag | toString -}}
+        {{- $length := len (split "." $version) -}}
+        {{- if and (eq $length 1) (eq $version "latest") -}}
+        {{- $version = "1.20.0" -}}
+        {{- end -}}
+        {{- if not (semverCompare ">=1.20.0-0" $version) -}}
+        {{- fail "chart requires 1.20.0 or greater" -}}
+        {{- end -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("image:\n  tag: 7.68.2\n"));
+
+    for tag in ["latest", "1.26.0", "7.68.2-rc.1"] {
+        let instance = serde_json::json!({ "image": { "tag": tag } });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "the reassigned sentinel and ordinary versions render: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    for tag in ["garbage", "latest-extra"] {
+        let instance = serde_json::json!({ "image": { "tag": tag } });
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a non-sentinel lexically invalid version still aborts the parser: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// F74: when the reassigning arm's condition has no decodable equality
+/// conjunct, the exclusion is unrepresentable and the parser contract must
+/// abstain — rejecting raw inputs that the reassigned arm would have
+/// replaced is unsound.
+#[test]
+fn conditional_reassignment_without_equality_sentinel_abstains() {
+    let src = indoc! {r#"
+        {{- $version := .Values.image.tag | toString -}}
+        {{- if .Values.image.floating -}}
+        {{- $version = "1.20.0" -}}
+        {{- end -}}
+        {{- if not (semverCompare ">=1.20.0-0" $version) -}}
+        {{- fail "chart requires 1.20.0 or greater" -}}
+        {{- end -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("image:\n  tag: 7.68.2\n  floating: false\n"),
+    );
+
+    let instance = serde_json::json!({ "image": { "tag": "garbage", "floating": true } });
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "the truthy-guard arm replaces the raw value, so its lexical domain abstains: \
+         instance={instance}; schema={schema}"
+    );
+}
+
+/// F74: a `replace OLD NEW` stage with a literal OLD is the identity on raw
+/// strings that do not contain OLD, so the parser's lexical domain applies
+/// only to the untransformed arm; raw strings containing the stripped
+/// sentinel are exempt.
+#[test]
+fn replace_chain_exempts_stripped_sentinels_from_the_parser_domain() {
+    let src = indoc! {r#"
+        {{- $version := .Values.image.tag | replace "latest-" "" | replace "master" "1.20.0" -}}
+        {{- if not (semverCompare ">=1.20.0-0" $version) -}}
+        {{- fail "unsupported version" -}}
+        {{- end -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("image:\n  tag: 1.26.0\n"));
+
+    for tag in ["latest-1.26.0", "master", "1.26.0"] {
+        let instance = serde_json::json!({ "image": { "tag": tag } });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "sentinel-bearing and plain versions render: instance={instance}; schema={schema}"
+        );
+    }
+    let instance = serde_json::json!({ "image": { "tag": "garbage" } });
+    assert!(
+        !schema_accepts_instance(&schema, &instance),
+        "a raw string no replace touches must satisfy the parser: \
+         instance={instance}; schema={schema}"
+    );
+}
+
+/// F74: `(split "@" tag)._0` consumes only the text before the first `@`,
+/// so a digest-suffixed tag is exempt from the parser's lexical domain
+/// while an untouched raw string still must parse.
+#[test]
+fn split_prefix_member_exempts_digest_suffixes_from_the_parser_domain() {
+    let src = indoc! {r#"
+        {{- $version := (split "@" .Values.image.tag)._0 -}}
+        {{- if not (semverCompare ">=1.20.0-0" $version) -}}
+        {{- fail "unsupported version" -}}
+        {{- end -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("image:\n  tag: 1.26.0\n"));
+
+    for tag in ["1.26.0@sha256:0123abcd", "1.26.0"] {
+        let instance = serde_json::json!({ "image": { "tag": tag } });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "digest and plain forms render: instance={instance}; schema={schema}"
+        );
+    }
+    let instance = serde_json::json!({ "image": { "tag": "garbage" } });
+    assert!(
+        !schema_accepts_instance(&schema, &instance),
+        "an undelimited raw string must satisfy the parser: \
+         instance={instance}; schema={schema}"
+    );
+}
+
+/// F74: a helper's replace/split chain keeps its escape-qualified identity
+/// across the include boundary, so the consumer-side parser weakens its
+/// pattern by the same tokens instead of projecting the final language onto
+/// raw inputs (traefik's `traefik.proxyVersion`).
+#[test]
+fn helper_replace_chain_keeps_escape_qualified_identity_at_the_consumer() {
+    let src = indoc! {r#"
+        {{- $version := include "repro.proxyVersion" $ }}
+        {{- if semverCompare "<1.0.0-0" $version }}
+        {{- fail "unsupported version" -}}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+    "#};
+    let helpers = indoc! {r#"
+        {{- define "repro.proxyVersion" -}}
+          {{- $version := (split "@" (default "9.9.9" $.Values.image.tag))._0 | replace "latest-" "" | replace "master" "9.9.9" }}
+          {{- $version -}}
+        {{- end -}}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("image:\n  tag:\n"),
+    );
+
+    for tag in [
+        serde_json::json!("latest-9.8.7"),
+        serde_json::json!("master"),
+        serde_json::json!("9.8.7@sha256:0123abcd"),
+        serde_json::json!("9.8.7"),
+        serde_json::json!(null),
+    ] {
+        let instance = serde_json::json!({ "image": { "tag": tag } });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "transformed and defaulted tags render: instance={instance}; schema={schema}"
+        );
+    }
+    for tag in ["latest", "audit"] {
+        let instance = serde_json::json!({ "image": { "tag": tag } });
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a raw string the chain leaves untouched must satisfy the parser: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// F74: a later dynamic transform in the same chain produces text the
+/// escape tokens cannot account for, so the parser must abstain for the
+/// whole path instead of firing with the earlier stage's weakened pattern.
+#[test]
+fn dynamic_transform_after_escape_stage_makes_the_parser_abstain() {
+    let src = indoc! {r#"
+        {{- $version := .Values.image.tag | replace "latest-" "" | replace .Values.image.strip "" -}}
+        {{- if not (semverCompare ">=1.20.0-0" $version) -}}
+        {{- fail "unsupported version" -}}
+        {{- end -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+    "#};
+    let schema =
+        schema_for_values_yaml(parse_ir(src), Some("image:\n  tag: 1.26.0\n  strip: xyz\n"));
+
+    let instance = serde_json::json!({ "image": { "tag": "garbage", "strip": "garbage" } });
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "a dynamic replace can rewrite any raw string, so the lexical domain abstains: \
+         instance={instance}; schema={schema}"
+    );
+}
+
 /// A local selected from several source paths does not identify which raw
 /// path reaches the parser. Until that value remains branch-partitioned, the
 /// lexical contract must abstain instead of constraining inactive candidates.

@@ -21,6 +21,7 @@ use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProv
 
 mod block_scalar_projection;
 mod bound_helpers;
+mod completed_token_contracts;
 mod default_hint_extraction;
 mod empty_collections;
 mod fail_validators;

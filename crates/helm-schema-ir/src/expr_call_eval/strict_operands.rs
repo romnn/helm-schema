@@ -252,14 +252,15 @@ fn record_strict_parser_result(
     effects: &mut Effects,
 ) {
     for path in parser_operand_identity_paths(operand, total_string_preimage) {
+        // Escape tokens recorded on the operand's metas exempt raw strings
+        // a replace/split-prefix chain transformed before parsing (F74).
+        let escapes: BTreeSet<String> = parser_output_metas(&operand.value, &path)
+            .iter()
+            .flat_map(|meta| meta.lexical_escapes.iter().cloned())
+            .collect();
+        let pattern = crate::helper_meta::pattern_with_lexical_escapes(pattern, &escapes);
         for conjunction in parser_operand_selection_conjunctions(operand, &path) {
-            push_value_pattern_capture(
-                conjunction,
-                path.clone(),
-                pattern.to_string(),
-                false,
-                effects,
-            );
+            push_value_pattern_capture(conjunction, path.clone(), pattern.clone(), false, effects);
         }
     }
 }
@@ -285,6 +286,10 @@ fn parser_operand_selection_conjunctions(operand: &EvalResult, path: &str) -> Ve
                 if meta.defaulted {
                     conjunction.push(Predicate::truthy_path(path.to_string()));
                 }
+                // A sibling branch reassigned this binding away from the
+                // raw path (F74): the parser observes the raw value only
+                // where those reassignments did not run.
+                conjunction.extend(meta.capture_exclusions.iter().cloned());
                 conjunction.sort();
                 conjunction.dedup();
                 out.push(conjunction);

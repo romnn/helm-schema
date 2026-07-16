@@ -2745,79 +2745,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "secretConfiguration": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "secretConfiguration"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "podAnnotations": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "podAnnotations"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "secretConfiguration": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "secretConfiguration"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "secretConfiguration": {
-            "additionalProperties": {},
-            "properties": {
-              "data": {
-                "additionalProperties": {},
-                "description": "`Secret` data."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "properties": {
           "secretConfiguration": {
             "properties": {
@@ -4581,7 +4508,6 @@
       ],
       "properties": {
         "data": {
-          "additionalProperties": {},
           "description": "`Secret` data."
         },
         "enabled": {

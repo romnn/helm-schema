@@ -28,7 +28,7 @@
     "schema1": {
       "description": "We usually recommend not to specify default resources and to leave this as a conscious\nchoice for the user. This also increases chances charts run on environments with little\nresources, such as Minikube. If you do want to specify resources, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'resources:'.\nlimits:\ncpu: 100m\nmemory: 64Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
     },
-    "schema10": {
+    "schema11": {
       "not": {
         "properties": {
           "customResourceState": {
@@ -47,7 +47,7 @@
         "type": "object"
       }
     },
-    "schema11": {
+    "schema12": {
       "properties": {
         "networkPolicy": {
           "properties": {
@@ -68,7 +68,7 @@
       ],
       "type": "object"
     },
-    "schema13": {
+    "schema15": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -87,7 +87,7 @@
         "type": "object"
       }
     },
-    "schema15": {
+    "schema18": {
       "not": {
         "properties": {
           "rbac": {
@@ -106,11 +106,8 @@
         "type": "object"
       }
     },
-    "schema16": {
+    "schema19": {
       "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
-    },
-    "schema17": {
-      "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
     },
     "schema2": {
       "anyOf": [
@@ -156,10 +153,13 @@
         }
       ]
     },
-    "schema21": {
+    "schema20": {
+      "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+    },
+    "schema25": {
       "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
     },
-    "schema23": {
+    "schema27": {
       "not": {
         "properties": {
           "rbac": {
@@ -178,17 +178,75 @@
         "type": "object"
       }
     },
-    "schema26": {
+    "schema3": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "kubeRBACProxy": {
+                "properties": {
+                  "enabled": {}
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kubeRBACProxy"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "kubeRBACProxy": {
+              "properties": {
+                "enabled": {
+                  "enum": [
+                    false
+                  ]
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "kubeRBACProxy"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "schema30": {
       "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted."
     },
-    "schema28": {
+    "schema32": {
       "description": "If false then the user will opt out of automounting API credentials.",
       "type": "boolean"
     },
-    "schema29": {
+    "schema33": {
       "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted."
     },
-    "schema3": {
+    "schema35": {
+      "additionalProperties": {},
+      "properties": {
+        "httpHeaders": {},
+        "scheme": {}
+      },
+      "type": "object"
+    },
+    "schema38": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema4": {
       "additionalProperties": {},
       "properties": {
         "httpHeaders": {
@@ -222,21 +280,7 @@
         }
       }
     },
-    "schema31": {
-      "additionalProperties": {},
-      "properties": {
-        "httpHeaders": {},
-        "scheme": {}
-      },
-      "type": "object"
-    },
-    "schema34": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "schema36": {
+    "schema40": {
       "not": {
         "properties": {
           "create": {}
@@ -247,7 +291,7 @@
         "type": "object"
       }
     },
-    "schema37": {
+    "schema41": {
       "additionalProperties": {},
       "properties": {
         "scheme": {
@@ -255,7 +299,27 @@
         }
       }
     },
-    "schema4": {
+    "schema42": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "schema45": {
+      "additionalProperties": {},
+      "properties": {},
+      "type": "object"
+    },
+    "schema46": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema5": {
       "anyOf": [
         {
           "not": {
@@ -299,16 +363,10 @@
         }
       ]
     },
-    "schema40": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "schema6": {
+    "schema7": {
       "description": "Secret to mount to read bearer token for scraping targets. The secret needs\nto be in the same namespace as the service monitor and accessible by the\nPrometheus Operator"
     },
-    "schema7": {
+    "schema8": {
       "not": {
         "properties": {
           "customResourceState": {
@@ -406,7 +464,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema11"
                   },
                   {
                     "properties": {
@@ -491,7 +549,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema12"
               }
             ]
           },
@@ -529,7 +587,7 @@
           "annotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema40"
+                "$ref": "#/$defs/schema46"
               },
               {
                 "not": {
@@ -546,7 +604,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema4"
+            "$ref": "#/$defs/schema5"
           },
           {
             "not": {
@@ -594,9 +652,368 @@
           {
             "allOf": [
               {
+                "properties": {
+                  "autosharding": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autosharding"
+                ],
+                "type": "object"
+              },
+              {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema27"
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema11"
+                  },
+                  {
+                    "properties": {
+                      "customResourceState": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "customResourceState"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "customResourceState": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "customResourceState"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kubeRBACProxy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kubeRBACProxy"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kubeconfig": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kubeconfig"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema12"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema2"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "prometheus": {
+                "properties": {
+                  "monitor": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "monitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "prometheus": {
+                "properties": {
+                  "scrapeconfig": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "scrapeconfig"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema27"
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema18"
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "useClusterRole": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "useClusterRole"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema15"
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "customLabels": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema46"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ],
+            "description": "Additional labels to add to all resources\napp: kube-state-metrics"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema11"
                   },
                   {
                     "properties": {
@@ -787,7 +1204,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema11"
                   },
                   {
                     "properties": {
@@ -830,7 +1247,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema7"
+                "$ref": "#/$defs/schema8"
               }
             ]
           },
@@ -856,7 +1273,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema7"
+                "$ref": "#/$defs/schema8"
               },
               {
                 "anyOf": [
@@ -992,7 +1409,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema12"
               }
             ]
           },
@@ -1092,7 +1509,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -1118,7 +1535,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "properties": {
@@ -1146,7 +1563,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema13"
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -1225,7 +1642,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema13"
+                    "$ref": "#/$defs/schema15"
                   },
                   {
                     "properties": {
@@ -1459,7 +1876,7 @@
             "description": "Liveness probe",
             "properties": {
               "httpGet": {
-                "$ref": "#/$defs/schema3"
+                "$ref": "#/$defs/schema4"
               }
             }
           }
@@ -1496,7 +1913,7 @@
             "description": "Liveness probe",
             "properties": {
               "httpGet": {
-                "$ref": "#/$defs/schema37"
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -1567,7 +1984,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -1597,7 +2014,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema11"
                   },
                   {
                     "properties": {
@@ -1701,7 +2118,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema12"
               }
             ]
           },
@@ -1801,7 +2218,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -1827,7 +2244,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "properties": {
@@ -1855,7 +2272,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema13"
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -1970,7 +2387,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema12"
               }
             ]
           },
@@ -2015,7 +2432,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema12"
               }
             ]
           }
@@ -2154,7 +2571,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema12"
               }
             ]
           },
@@ -2199,7 +2616,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema12"
               }
             ]
           }
@@ -3151,7 +3568,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema4"
+            "$ref": "#/$defs/schema5"
           },
           {
             "not": {
@@ -3234,7 +3651,7 @@
             "description": "Readiness probe",
             "properties": {
               "httpGet": {
-                "$ref": "#/$defs/schema3"
+                "$ref": "#/$defs/schema4"
               }
             }
           }
@@ -3271,7 +3688,7 @@
             "description": "Readiness probe",
             "properties": {
               "httpGet": {
-                "$ref": "#/$defs/schema37"
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -3294,13 +3711,7 @@
             "not": {
               "properties": {
                 "securityContext": {
-                  "properties": {
-                    "enabled": {}
-                  },
-                  "required": [
-                    "enabled"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/schema42"
                 }
               },
               "required": [
@@ -3373,7 +3784,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3403,7 +3814,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema11"
                   },
                   {
                     "properties": {
@@ -3507,7 +3918,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema12"
               }
             ]
           },
@@ -3607,7 +4018,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3633,7 +4044,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "properties": {
@@ -3661,7 +4072,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema13"
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -3692,7 +4103,7 @@
           "selectorOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema40"
+                "$ref": "#/$defs/schema46"
               },
               {
                 "not": {
@@ -3708,48 +4119,6 @@
     {
       "if": {
         "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "kubeRBACProxy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "kubeRBACProxy"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "selfMonitor": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "selfMonitor"
-                ],
-                "type": "object"
-              }
-            ]
-          },
           {
             "allOf": [
               {
@@ -3791,30 +4160,79 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema11"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "kubeRBACProxy": {
+                "$ref": "#/$defs/schema2"
+              },
+              {
+                "not": {
                   "properties": {
-                    "enabled": {
-                      "$ref": "#/$defs/helm-truthy"
+                    "kubeRBACProxy": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
                     }
                   },
                   "required": [
-                    "enabled"
+                    "kubeRBACProxy"
                   ],
                   "type": "object"
                 }
               },
-              "required": [
-                "kubeRBACProxy"
-              ],
-              "type": "object"
-            }
+              {
+                "not": {
+                  "properties": {
+                    "networkPolicy": {
+                      "properties": {
+                        "ingress": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "networkPolicy"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema3"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "kubeRBACProxy": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "kubeRBACProxy"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           }
         ]
       },
@@ -3836,6 +4254,147 @@
                     "type": "integer"
                   }
                 ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "clusterIP": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "clusterIP"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "clusterIP": {
+                    "pattern": "[\"\\\\]",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "clusterIP"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "autosharding": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "autosharding"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "clusterIP": {
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "loadBalancerIP": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "loadBalancerIP"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "loadBalancerIP": {
+                    "pattern": "[\"\\\\]",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "loadBalancerIP"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "loadBalancerIP": {
+                "not": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -3913,48 +4472,7 @@
             "type": "object"
           },
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "kubeRBACProxy": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "kubeRBACProxy"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "kubeRBACProxy": {
-                    "properties": {
-                      "enabled": {
-                        "enum": [
-                          false
-                        ]
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "kubeRBACProxy"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -3975,104 +4493,6 @@
                     "type": "integer"
                   }
                 ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "fullnameOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "fullnameOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "namespaceOverride": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "namespaceOverride"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "scrapeconfig": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "scrapeconfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema11"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "properties": {
-              "port": {
-                "type": "integer"
               }
             }
           }
@@ -4101,6 +4521,44 @@
       }
     },
     {
+      "if": {
+        "properties": {
+          "service": {
+            "properties": {
+              "type": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "service"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "type": {
+                "description": "Default to clusterIP for backward compatibility",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "service": {
@@ -4114,7 +4572,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema13"
+                "$ref": "#/$defs/schema15"
               },
               {
                 "properties": {
@@ -4230,7 +4688,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -4260,7 +4718,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -4286,7 +4744,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "properties": {
@@ -4396,7 +4854,7 @@
             "description": "Startup probe can optionally be enabled.",
             "properties": {
               "httpGet": {
-                "$ref": "#/$defs/schema3"
+                "$ref": "#/$defs/schema4"
               }
             }
           }
@@ -4456,7 +4914,7 @@
             "description": "Startup probe can optionally be enabled.",
             "properties": {
               "httpGet": {
-                "$ref": "#/$defs/schema37"
+                "$ref": "#/$defs/schema41"
               }
             }
           }
@@ -4795,12 +5253,10 @@
     "annotations": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema45"
         },
         {
-          "$ref": "#/$defs/schema40"
+          "$ref": "#/$defs/schema46"
         },
         {
           "not": {
@@ -4821,7 +5277,7 @@
       "type": "object"
     },
     "automountServiceAccountToken": {
-      "$ref": "#/$defs/schema28"
+      "$ref": "#/$defs/schema32"
     },
     "autosharding": {
       "additionalProperties": {},
@@ -4897,6 +5353,19 @@
       "description": "Containers allows injecting additional containers.\n- name: crd-init\nimage: kiwigrid/k8s-sidecar:latest"
     },
     "customLabels": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/schema45"
+        },
+        {
+          "$ref": "#/$defs/schema46"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        }
+      ],
       "description": "Additional labels to add to all resources\napp: kube-state-metrics"
     },
     "customResourceState": {
@@ -4999,6 +5468,7 @@
           "type": "array"
         },
         {
+          "items": {},
           "type": "array"
         },
         {
@@ -5008,6 +5478,7 @@
           "type": "null"
         },
         {
+          "additionalProperties": {},
           "type": "object"
         }
       ],
@@ -5116,37 +5587,6 @@
               }
             }
           }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "proxyEndpointsPort": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "integer"
-                  }
-                ],
-                "description": "Configure specific proxy endpoints port\nThis port is for healthz on readinessProbe kube-rbac-proxy-http container"
-              }
-            }
-          }
         }
       ],
       "description": "Configure kube-rbac-proxy. When enabled, creates one kube-rbac-proxy container per exposed HTTP endpoint (metrics and telemetry if enabled).\nThe requests are served through the same service but requests are then HTTPS.",
@@ -5213,10 +5653,10 @@
     "labels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema34"
+          "$ref": "#/$defs/schema38"
         },
         {
-          "$ref": "#/$defs/schema40"
+          "$ref": "#/$defs/schema46"
         },
         {
           "not": {
@@ -5259,7 +5699,7 @@
           "type": "integer"
         },
         "httpGet": {
-          "$ref": "#/$defs/schema31"
+          "$ref": "#/$defs/schema35"
         },
         "initialDelaySeconds": {
           "type": "integer"
@@ -5356,10 +5796,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema34"
+          "$ref": "#/$defs/schema38"
         },
         {
-          "$ref": "#/$defs/schema40"
+          "$ref": "#/$defs/schema46"
         },
         {
           "not": {
@@ -5375,10 +5815,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema34"
+          "$ref": "#/$defs/schema38"
         },
         {
-          "$ref": "#/$defs/schema40"
+          "$ref": "#/$defs/schema46"
         },
         {
           "not": {
@@ -5392,6 +5832,84 @@
     "prometheus": {
       "additionalProperties": {},
       "allOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "monitor": {
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "additionalLabels": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema46"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "monitor": {
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "annotations": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema46"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
         {
           "additionalProperties": {},
           "properties": {
@@ -6151,6 +6669,86 @@
                   "then": {
                     "additionalProperties": {},
                     "properties": {
+                      "additionalLabels": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema46"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              ],
+              "description": "Create a scrapeConfig resource for scraping the kube-state-metrics service. Use this instead of serviceMonitor\nto have more instances of kube-state-metrics safety."
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "scrapeconfig": {
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "annotations": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema46"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              ],
+              "description": "Create a scrapeConfig resource for scraping the kube-state-metrics service. Use this instead of serviceMonitor\nto have more instances of kube-state-metrics safety."
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "scrapeconfig": {
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
                       "enableHttp2": {
                         "anyOf": [
                           {
@@ -6608,7 +7206,7 @@
                   "description": "File to read bearer token for scraping targets"
                 },
                 "bearerTokenSecret": {
-                  "$ref": "#/$defs/schema6"
+                  "$ref": "#/$defs/schema7"
                 },
                 "enableHttp2": {
                   "description": "Whether to enable HTTP2 for servicemonitor"
@@ -6631,13 +7229,13 @@
             "interval": {},
             "jobLabel": {},
             "labelLimit": {
-              "$ref": "#/$defs/schema21"
+              "$ref": "#/$defs/schema25"
             },
             "labelNameLengthLimit": {
-              "$ref": "#/$defs/schema17"
+              "$ref": "#/$defs/schema20"
             },
             "labelValueLengthLimit": {
-              "$ref": "#/$defs/schema16"
+              "$ref": "#/$defs/schema19"
             },
             "metricRelabelings": {},
             "metrics": {
@@ -6648,7 +7246,7 @@
                   "description": "File to read bearer token for scraping targets"
                 },
                 "bearerTokenSecret": {
-                  "$ref": "#/$defs/schema6"
+                  "$ref": "#/$defs/schema7"
                 },
                 "enableHttp2": {
                   "description": "Whether to enable HTTP2 for servicemonitor"
@@ -6676,14 +7274,14 @@
             "proxyUrl": {},
             "relabelings": {},
             "sampleLimit": {
-              "$ref": "#/$defs/schema26"
+              "$ref": "#/$defs/schema30"
             },
             "scheme": {},
             "scrapeTimeout": {},
             "selectorOverride": {},
             "targetLabels": {},
             "targetLimit": {
-              "$ref": "#/$defs/schema29"
+              "$ref": "#/$defs/schema33"
             },
             "tlsConfig": {}
           },
@@ -6716,19 +7314,19 @@
             },
             "jobName": {},
             "labelLimit": {
-              "$ref": "#/$defs/schema21"
+              "$ref": "#/$defs/schema25"
             },
             "labelNameLengthLimit": {
-              "$ref": "#/$defs/schema17"
+              "$ref": "#/$defs/schema20"
             },
             "labelValueLengthLimit": {
-              "$ref": "#/$defs/schema16"
+              "$ref": "#/$defs/schema19"
             },
             "metricRelabelings": {},
             "proxyUrl": {},
             "relabelings": {},
             "sampleLimit": {
-              "$ref": "#/$defs/schema26"
+              "$ref": "#/$defs/schema30"
             },
             "scheme": {},
             "scrapeInterval": {},
@@ -6737,7 +7335,7 @@
               "description": "StaticConfigLabels defines the labels to be used in the Prometheus static configuration for scraping."
             },
             "targetLimit": {
-              "$ref": "#/$defs/schema29"
+              "$ref": "#/$defs/schema33"
             },
             "tlsConfig": {}
           },
@@ -6830,7 +7428,7 @@
           "type": "integer"
         },
         "httpGet": {
-          "$ref": "#/$defs/schema31"
+          "$ref": "#/$defs/schema35"
         },
         "initialDelaySeconds": {
           "type": "integer"
@@ -6895,12 +7493,10 @@
     "selectorOverride": {
       "anyOf": [
         {
-          "additionalProperties": {},
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema45"
         },
         {
-          "$ref": "#/$defs/schema40"
+          "$ref": "#/$defs/schema46"
         },
         {
           "not": {
@@ -6961,18 +7557,7 @@
         },
         "telemetryHost": {},
         "telemetryNodePort": {},
-        "telemetryPort": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "integer"
-            }
-          ]
-        }
+        "telemetryPort": {}
       },
       "type": "object"
     },
@@ -7077,10 +7662,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema34"
+              "$ref": "#/$defs/schema38"
             },
             {
-              "$ref": "#/$defs/schema40"
+              "$ref": "#/$defs/schema46"
             },
             {
               "not": {
@@ -7126,18 +7711,7 @@
           "description": "Only allow access to the loadBalancerIP from these IPs"
         },
         "nodePort": {},
-        "port": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "integer"
-            }
-          ]
-        },
+        "port": {},
         "type": {
           "description": "Default to clusterIP for backward compatibility"
         }
@@ -7151,7 +7725,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema36"
+                "$ref": "#/$defs/schema40"
               },
               {
                 "properties": {
@@ -7172,7 +7746,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema46"
                   },
                   {
                     "not": {
@@ -7189,7 +7763,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema36"
+                "$ref": "#/$defs/schema40"
               },
               {
                 "properties": {
@@ -7208,7 +7782,7 @@
             "additionalProperties": {},
             "properties": {
               "automountServiceAccountToken": {
-                "$ref": "#/$defs/schema28"
+                "$ref": "#/$defs/schema32"
               }
             }
           }
@@ -7217,7 +7791,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema36"
+                "$ref": "#/$defs/schema40"
               },
               {
                 "properties": {
@@ -7493,6 +8067,20 @@
       "type": "object"
     },
     "tolerations": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ],
       "description": "Tolerations for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
     },
     "topologySpreadConstraints": {

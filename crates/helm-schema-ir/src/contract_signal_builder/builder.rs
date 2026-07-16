@@ -18,6 +18,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     type_hints: &BTreeMap<String, BTreeSet<String>>,
     guarded_type_hints: &BTreeMap<String, BTreeSet<String>>,
     fallback_type_hints: &BTreeMap<String, BTreeSet<String>>,
+    guarded_fallback_type_hints: &BTreeMap<String, BTreeSet<String>>,
     shape_erased_value_paths: &BTreeSet<String>,
     string_contract_value_paths: &BTreeSet<String>,
     range_modes: &crate::range_modes::RangeModes,
@@ -103,6 +104,21 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             acc.fallback_type_hints.extend(schema_types);
         }
     }
+    // Branch-scoped fallback hints stay fallback-grade: they may type a
+    // conditional overlay, but never one whose renders all totally format
+    // (F76).
+    for (value_path, schema_types) in guarded_fallback_type_hints {
+        let schema_types = schema_types
+            .iter()
+            .filter(|schema_type| !schema_type.trim().is_empty())
+            .cloned()
+            .collect::<BTreeSet<_>>();
+        if !value_path.trim().is_empty() && !schema_types.is_empty() {
+            let acc = path_accumulator(&mut paths, value_path);
+            acc.referenced = true;
+            acc.guarded_fallback_type_hints.extend(schema_types);
+        }
+    }
     finish_schema_signals(paths, terminal_clauses)
 }
 
@@ -123,6 +139,9 @@ struct ContractPathAccumulator {
     /// Hints from literal `default`/`coalesce` fallbacks: they type only
     /// the truthy arm, so base lowering keeps Helm-falsy inputs open.
     fallback_type_hints: BTreeSet<String>,
+    /// Branch-scoped fallback hints (F76): fallback-grade overlay typing
+    /// that a totally-formatting branch must not bind.
+    guarded_fallback_type_hints: BTreeSet<String>,
     conditional_overlay_branches: BTreeMap<Vec<ConditionalGuard>, PathSchemaFactsAccumulator>,
     has_unconditional_overlay_peer: bool,
     saw_unsupported_overlay: bool,
@@ -1888,6 +1907,7 @@ impl ContractPathAccumulator {
             type_hints,
             guarded_type_hints,
             fallback_type_hints,
+            guarded_fallback_type_hints,
             guarded_provider_schema_uses,
             guarded_metadata_field_kinds,
             conditional_overlay_branches,
@@ -1911,6 +1931,17 @@ impl ContractPathAccumulator {
             .iter()
             .chain(guarded_type_hints.iter())
             .chain(fallback_type_hints.iter())
+            .chain(guarded_fallback_type_hints.iter())
+            .cloned()
+            .collect();
+        // Fallback-grade hints are intent, not consumer contracts: a branch
+        // whose renders ALL totally format (an embedded partial-scalar
+        // splice like `--log-level={{ x | default "info" }}`) proves the
+        // chart tolerates any input kind there, so those hints must not
+        // close it (F76, flux2). Contract-grade hints keep typing it.
+        let contract_type_hints: BTreeSet<String> = type_hints
+            .iter()
+            .chain(guarded_type_hints.iter())
             .cloned()
             .collect();
         let mut evidence_groups: Vec<(PathSchemaFactsAccumulator, Vec<Vec<ConditionalGuard>>)> =
@@ -1959,8 +1990,24 @@ impl ContractPathAccumulator {
                 // map arm's object hint must never type the slice arm's
                 // `then` (and vice versa), or a live arm becomes
                 // internally contradictory.
+                //
+                // A branch whose renders ALL totally format (an embedded
+                // partial-scalar splice like `--log-level={{ x | default
+                // "info" }}`) proves the chart tolerates any input kind
+                // there, so branch-scoped hint-grade typing — a literal
+                // fallback's documented intent routed through the guarded
+                // channel — must not close it (F76, flux2). Path-level
+                // hints keep typing the branch: they carry real consumer
+                // contracts (flux2's own `substr` tag check) that hold
+                // wherever the path renders.
+                let branch_hint_pool =
+                    if branch.facts.used_as_serialized && !branch.facts.has_string_contract {
+                        &contract_type_hints
+                    } else {
+                        &overlay_type_hints
+                    };
                 let branch_hints =
-                    partition_compatible_hints(&overlay_type_hints, &guards, value_path.as_str());
+                    partition_compatible_hints(branch_hint_pool, &guards, value_path.as_str());
                 ConditionalPathOverlay {
                     guards,
                     evidence: branch.conditional_overlay_evidence(facts, branch_hints),
@@ -1977,6 +2024,8 @@ impl ContractPathAccumulator {
         // never reaches.
         fail_implications.sort();
         fail_implications.dedup();
+        let mut guarded_type_hints = guarded_type_hints;
+        guarded_type_hints.extend(guarded_fallback_type_hints);
         ContractPathSchemaEvidence {
             value_path,
             is_referenced_value_path: referenced,

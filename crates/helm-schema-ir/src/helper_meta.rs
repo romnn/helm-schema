@@ -37,6 +37,19 @@ pub(crate) struct HelperOutputMeta {
     /// Predicate paths this row's derivation explicitly severed (index-call
     /// narrowing): guard reads of their strict ancestors are dropped.
     pub(crate) suppress_predicate_paths: BTreeSet<String>,
+    /// Conditions under which this path's RAW value is the consumed operand:
+    /// a sibling `if` arm reassigned the binding away (datadog's `latest` →
+    /// `1.20.0` sentinel, F74), so strict-operand captures conjoin these
+    /// before rejecting raw inputs. Only the capture lanes read them —
+    /// guard decoding and row lowering see the joined value choice itself.
+    pub(crate) capture_exclusions: BTreeSet<Predicate>,
+    /// Literal tokens whose PRESENCE in the raw string diverts it from this
+    /// value: the value equals the raw string exactly when the raw contains
+    /// none of them (traefik's `replace "latest-" ""` sentinel stripping and
+    /// `(split "@" …)._0` digest trimming, F74). Lexical captures must
+    /// exempt raw strings containing any token instead of projecting the
+    /// final language onto them.
+    pub(crate) lexical_escapes: BTreeSet<String>,
 }
 
 impl HelperOutputMeta {
@@ -52,6 +65,10 @@ impl HelperOutputMeta {
         merge_provenance_sites(&mut self.provenance, &other.provenance);
         self.suppress_predicate_paths
             .extend(other.suppress_predicate_paths.iter().cloned());
+        self.capture_exclusions
+            .extend(other.capture_exclusions.iter().cloned());
+        self.lexical_escapes
+            .extend(other.lexical_escapes.iter().cloned());
     }
 
     pub(crate) fn suppress_predicate_path(&mut self, path: impl Into<String>) {
@@ -145,4 +162,45 @@ pub(crate) fn insert_type_hint(
         .entry(path)
         .or_default()
         .insert(schema_type.to_string());
+}
+
+/// Weakens a lexical capture pattern by escape tokens: a raw string
+/// containing any token diverged from the observed value before the check
+/// ran (F74), so the capture accepts it unconditionally. JSON Schema
+/// `pattern` is an unanchored search, so a bare escaped token alternative
+/// matches any string containing it.
+pub(crate) fn pattern_with_lexical_escapes(pattern: &str, escapes: &BTreeSet<String>) -> String {
+    if escapes.is_empty() {
+        return pattern.to_string();
+    }
+    let mut alternatives: Vec<String> = escapes.iter().map(|token| regex_literal(token)).collect();
+    alternatives.push(format!("(?:{pattern})"));
+    alternatives.join("|")
+}
+
+fn regex_literal(text: &str) -> String {
+    let mut escaped = String::with_capacity(text.len());
+    for character in text.chars() {
+        if matches!(
+            character,
+            '.' | '+'
+                | '*'
+                | '?'
+                | '('
+                | ')'
+                | '|'
+                | '['
+                | ']'
+                | '{'
+                | '}'
+                | '^'
+                | '$'
+                | '\\'
+                | '/'
+        ) {
+            escaped.push('\\');
+        }
+        escaped.push(character);
+    }
+    escaped
 }

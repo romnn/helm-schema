@@ -178,6 +178,34 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> color_eyre::e
     let expected = serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
+        // F76: the subchart's manually quoted `enabled: "{{ … }}"` splice
+        // breaks on strings containing `"` or `\`, so those are excluded.
+        "allOf": [{
+            "if": {
+                "properties": {
+                    "subchart": {
+                        "properties": {
+                            "enabled": { "pattern": "[\"\\\\]", "type": "string" }
+                        },
+                        "required": ["enabled"],
+                        "type": "object"
+                    }
+                },
+                "required": ["subchart"],
+                "type": "object"
+            },
+            "then": {
+                "additionalProperties": {},
+                "properties": {
+                    "subchart": {
+                        "additionalProperties": {},
+                        "properties": {
+                            "enabled": { "not": { "type": "string" } }
+                        }
+                    }
+                }
+            }
+        }],
         "properties": {
             "subchart": {
                 "additionalProperties": {},

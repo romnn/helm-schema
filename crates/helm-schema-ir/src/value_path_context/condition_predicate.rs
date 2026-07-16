@@ -1110,6 +1110,16 @@ impl ValuePathContext<'_> {
                 .template_output_meta
                 .get(name)
                 .or_else(|| self.template_output_meta.get(name.trim_start_matches('$')));
+            // A binding qualified by lexical escape tokens is not the raw
+            // value for every input (a replace/split chain rewrote some
+            // strings, F74): an equality on it cannot lower to a raw-path
+            // guard.
+            if meta.is_some_and(|meta| {
+                meta.values()
+                    .any(|candidate| !candidate.lexical_escapes.is_empty())
+            }) {
+                return None;
+            }
             if let Some(meta) = meta.filter(|meta| {
                 meta.values()
                     .any(|candidate| !candidate.predicates.is_empty())

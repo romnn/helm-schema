@@ -71,6 +71,12 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
             .iter()
             .map(|(path, hints)| (path.clone(), hints.clone())),
     );
+    contract.extend_guarded_fallback_type_hints(
+        document
+            .guarded_fallback_type_hints
+            .iter()
+            .map(|(path, hints)| (path.clone(), hints.clone())),
+    );
     contract.extend_shape_erased_value_paths(document.shape_erased_paths.iter().cloned());
     contract.extend_string_contract_value_paths(document.string_contract_paths.iter().cloned());
     contract.merge_range_modes(&document.range_modes);

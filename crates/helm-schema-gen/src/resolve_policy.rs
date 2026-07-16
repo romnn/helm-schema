@@ -26,7 +26,13 @@ use crate::schema_node::is_placeholder_fragment_object_schema;
 use crate::values_yaml::ValuesYamlPathFacts;
 use crate::values_yaml::yaml_value_at_path;
 
-const PLAIN_SCALAR_IMPLICIT_TOKEN_PATTERN: &str = r"^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$";
+/// Strings spelling an implicit YAML NULL token (including the empty
+/// string) in a bare plain-scalar position.
+const PLAIN_SCALAR_NULL_TOKEN_PATTERN: &str = r"^(|~|null|Null|NULL)$";
+/// Strings spelling an implicit YAML BOOLEAN token in a bare plain-scalar
+/// position (the YAML 1.1 set Helm's renderer round-trips through).
+const PLAIN_SCALAR_BOOL_TOKEN_PATTERN: &str =
+    r"^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$";
 
 /// Generator-side policy for lowering semantic value uses into schema evidence.
 ///
@@ -201,6 +207,16 @@ impl ResolvePolicy {
             guarded_type_hint_schema,
             fallback_type_hint_schema,
         } = input;
+        // A literal fallback documents intent, not a contract: like the
+        // declared default, its type must not narrow a path that some
+        // serializing or totally-formatting render provably tolerates any
+        // input at (F76: flux2's `--log-level={{ .Values.logLevel |
+        // default "info" }}` embeds every value kind as argument text).
+        let fallback_type_hint_schema = if facts.contract.used_as_serialized {
+            empty_schema()
+        } else {
+            fallback_type_hint_schema
+        };
         // A fallback hint types only the truthy arm: every Helm-empty input
         // takes the literal fallback and renders, so when NO independent
         // channel types the path (a provider slot, a guard comparison, a
@@ -535,6 +551,31 @@ impl ResolvePolicy {
 }
 
 fn plain_scalar_provider_preimage(schema: Value) -> Value {
+    // A raw string spelling an implicit YAML token of ANOTHER kind the slot
+    // ALSO allows still validates once the completed document reparses
+    // (F76: aws-load-balancer-controller's `nameOverride: "null"` renders a
+    // null the null-widened provider slot accepts), so the token-class
+    // exclusions below apply only for kinds the slot rejects.
+    let allowed = ImplicitTokenAllowance {
+        null: schema_allows_type(&schema, "null"),
+        boolean: schema_allows_type(&schema, "boolean"),
+        number: schema_allows_type(&schema, "number"),
+        integer: schema_allows_type(&schema, "integer"),
+    };
+    plain_scalar_provider_preimage_with(schema, &allowed)
+}
+
+/// Which implicit-token kinds the WHOLE provider slot accepts; computed once
+/// so nested variants keep seeing their siblings' kinds.
+#[derive(Clone, Copy)]
+struct ImplicitTokenAllowance {
+    null: bool,
+    boolean: bool,
+    number: bool,
+    integer: bool,
+}
+
+fn plain_scalar_provider_preimage_with(schema: Value, allowed: &ImplicitTokenAllowance) -> Value {
     let Some(object) = schema.as_object() else {
         return schema;
     };
@@ -545,7 +586,7 @@ fn plain_scalar_provider_preimage(schema: Value) -> Value {
             .map(|schema_type| {
                 let mut variant = object.clone();
                 variant.insert("type".to_string(), Value::String(schema_type.to_string()));
-                plain_scalar_provider_preimage(Value::Object(variant))
+                plain_scalar_provider_preimage_with(Value::Object(variant), allowed)
             })
             .collect();
         return union_schema_list(variants);
@@ -559,7 +600,7 @@ fn plain_scalar_provider_preimage(schema: Value) -> Value {
                     variants
                         .iter()
                         .cloned()
-                        .map(plain_scalar_provider_preimage)
+                        .map(|variant| plain_scalar_provider_preimage_with(variant, allowed))
                         .collect(),
                 ),
             );
@@ -571,24 +612,40 @@ fn plain_scalar_provider_preimage(schema: Value) -> Value {
         Some("integer") => scalar_number_preimage(schema, true),
         Some("number") => scalar_number_preimage(schema, false),
         Some("boolean") => scalar_boolean_preimage(schema),
-        Some("string") => scalar_plain_string_preimage(schema),
+        Some("string") => scalar_plain_string_preimage(schema, allowed),
         _ => schema,
     }
 }
 
-fn scalar_plain_string_preimage(schema: Value) -> Value {
+fn scalar_plain_string_preimage(schema: Value, allowed: &ImplicitTokenAllowance) -> Value {
+    let mut exclusions = vec![
+        serde_json::json!({ "not": { "pattern": "^[!&*#{}\\[\\],|>@`%]" } }),
+        serde_json::json!({ "not": { "pattern": "^[-?:]([ \\t]|$)" } }),
+        serde_json::json!({ "not": { "pattern": ":[ \\t]|:$" } }),
+        serde_json::json!({ "not": { "pattern": "[ \\t]#" } }),
+        serde_json::json!({ "not": { "pattern": "[\\r\\n]" } }),
+    ];
+    if !allowed.null {
+        exclusions
+            .push(serde_json::json!({ "not": { "pattern": PLAIN_SCALAR_NULL_TOKEN_PATTERN } }));
+    }
+    if !allowed.boolean {
+        exclusions
+            .push(serde_json::json!({ "not": { "pattern": PLAIN_SCALAR_BOOL_TOKEN_PATTERN } }));
+    }
+    if !allowed.number && !allowed.integer {
+        exclusions.push(serde_json::json!({
+            "not": { "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$" }
+        }));
+    }
+    if !allowed.number {
+        exclusions.push(serde_json::json!({
+            "not": { "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$" }
+        }));
+    }
     let lexical_domain = serde_json::json!({
         "type": "string",
-        "allOf": [
-            { "not": { "pattern": "^[!&*#{}\\[\\],|>@`%]" } },
-            { "not": { "pattern": "^[-?:]([ \\t]|$)" } },
-            { "not": { "pattern": ":[ \\t]|:$" } },
-            { "not": { "pattern": "[ \\t]#" } },
-            { "not": { "pattern": "[\\r\\n]" } },
-            { "not": { "pattern": PLAIN_SCALAR_IMPLICIT_TOKEN_PATTERN } },
-            { "not": { "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$" } },
-            { "not": { "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$" } }
-        ]
+        "allOf": exclusions
     });
     merge_schema_list(vec![schema, lexical_domain])
 }
@@ -1054,7 +1111,7 @@ fn has_plain_scalar_implicit_token_exclusion(schema: &Value) -> bool {
         .get("not")
         .and_then(|not| not.get("pattern"))
         .and_then(Value::as_str)
-        == Some(PLAIN_SCALAR_IMPLICIT_TOKEN_PATTERN)
+        == Some(PLAIN_SCALAR_NULL_TOKEN_PATTERN)
     {
         return true;
     }

@@ -312,6 +312,10 @@ pub struct SpliceMeta {
     pub json_serialized: bool,
     /// The splice's runtime identity was recovered through JSON decoding.
     pub json_decoded: bool,
+    /// Literal tokens whose presence in the raw string diverts it from the
+    /// rendered value (`replace`/split-prefix chains, F74); lexical captures
+    /// exempt raw strings containing any of them.
+    pub lexical_escapes: BTreeSet<String>,
     /// Helper-body source sites this splice was derived through.
     pub provenance: Vec<ContractProvenance>,
     /// The render site the splice materializes at.

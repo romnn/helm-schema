@@ -34,8 +34,8 @@ use root_mutation::eval_set_call;
 use serialization::{
     eval_cat, eval_from_json, eval_from_json_pipeline, eval_from_yaml, eval_from_yaml_pipeline,
     eval_join, eval_join_pipeline, eval_print, eval_printf, eval_repeat, eval_replace,
-    eval_to_json, eval_to_json_result, eval_to_yaml, eval_to_yaml_result, eval_tpl,
-    record_printf_argument_effects, record_total_conversion_effects,
+    eval_replace_pipeline, eval_to_json, eval_to_json_result, eval_to_yaml, eval_to_yaml_result,
+    eval_tpl, record_printf_argument_effects, record_total_conversion_effects,
 };
 use strict_operands::{
     pipeline_string_operand_facts, record_collection_item_kind_result,
@@ -46,7 +46,9 @@ use strict_operands::{
     string_call_operand_facts,
 };
 use traversal::{eval_dig, eval_index};
-use value_facts::{concrete_collection_len, concrete_integer, identity_value_paths};
+use value_facts::{
+    concrete_collection_len, concrete_integer, derive_value_text, identity_value_paths,
+};
 
 pub(crate) fn eval_call_with_helper_calls(
     function: &str,
@@ -253,19 +255,7 @@ pub(crate) fn eval_call_with_helper_calls(
         "ternary" => eval_ternary(args, None, env, resolver),
         "print" => eval_print(args, env, resolver),
         "printf" => eval_printf(args, env, resolver),
-        "replace" if args.len() == 3 => {
-            let mut result = eval_replace(args, env, resolver);
-            let (string_paths, raw_range_key_paths) =
-                string_call_operand_facts("replace", args, env, resolver);
-            record_string_transform_effects(
-                "replace",
-                &result.value,
-                &string_paths,
-                &raw_range_key_paths,
-                &mut result.effects,
-            );
-            result
-        }
+        "replace" if args.len() == 3 => eval_replace(args, env, resolver),
         "repeat" if args.len() == 2 => {
             let mut result = eval_repeat(args, env, resolver);
             let (string_paths, raw_range_key_paths) =
@@ -303,7 +293,7 @@ pub(crate) fn eval_call_with_helper_calls(
             let result = eval_all_args(args, env, resolver);
             let mut effects = result.effects;
             record_total_conversion_effects(identity_value_paths(&result.value), &mut effects);
-            EvalResult::with_effects(result.value, effects)
+            EvalResult::with_effects(derive_value_text(result.value), effects)
         }
         function if is_string_transform_function(function) => {
             let result = eval_all_args(args, env, resolver);
@@ -317,7 +307,7 @@ pub(crate) fn eval_call_with_helper_calls(
                 &raw_range_key_paths,
                 &mut effects,
             );
-            EvalResult::with_effects(result.value, effects)
+            EvalResult::with_effects(derive_value_text(result.value), effects)
         }
         // Subject-last string consumers with non-string output (`splitList`,
         // `semverCompare`): the LAST argument must be a Go string; the
@@ -434,62 +424,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 env,
                 resolver,
             ),
-            "replace" if args.len() == 2 => {
-                let piped_value = current.value.clone();
-                let piped_effects = current.effects.clone();
-                let old = eval_expr_with_helper_calls(&args[0], env, resolver);
-                let new = eval_expr_with_helper_calls(&args[1], env, resolver);
-                let old_values = old
-                    .value
-                    .as_ref()
-                    .map(AbstractValue::strings)
-                    .unwrap_or_default();
-                let new_values = new
-                    .value
-                    .as_ref()
-                    .map(AbstractValue::strings)
-                    .unwrap_or_default();
-                let subject_values = current
-                    .value
-                    .as_ref()
-                    .map(AbstractValue::strings)
-                    .unwrap_or_default();
-                let mut effects = current.effects;
-                effects.merge(old.effects);
-                effects.merge(new.effects);
-                let value = if old_values.is_empty()
-                    || new_values.is_empty()
-                    || subject_values.is_empty()
-                {
-                    current.value
-                } else {
-                    let mut rendered = BTreeSet::new();
-                    for subject in subject_values {
-                        for old in &old_values {
-                            for new in &new_values {
-                                rendered.insert(subject.replace(old, new));
-                            }
-                        }
-                    }
-                    Some(AbstractValue::StringSet(rendered))
-                };
-                let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
-                    "replace",
-                    args,
-                    &piped_value,
-                    &piped_effects,
-                    env,
-                    resolver,
-                );
-                record_string_transform_effects(
-                    "replace",
-                    &value,
-                    &string_paths,
-                    &raw_range_key_paths,
-                    &mut effects,
-                );
-                EvalResult::with_effects(value, effects)
-            }
+            "replace" if args.len() == 2 => eval_replace_pipeline(current, args, env, resolver),
             function if is_string_transform_function(function) => {
                 let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
                     function,
@@ -514,7 +449,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                     &raw_range_key_paths,
                     &mut effects,
                 );
-                EvalResult::with_effects(current.value, effects)
+                EvalResult::with_effects(derive_value_text(current.value), effects)
             }
             "fromYaml" => eval_from_yaml_pipeline(current, args, env, resolver),
             "fromJson" => eval_from_json_pipeline(current, args, env, resolver),

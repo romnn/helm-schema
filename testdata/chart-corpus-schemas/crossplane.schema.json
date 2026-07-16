@@ -45,14 +45,36 @@
       }
     },
     "schema10": {
+      "properties": {
+        "deploy": {}
+      },
+      "required": [
+        "deploy"
+      ],
+      "type": "object"
+    },
+    "schema11": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema12": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema11": {
+    "schema13": {
       "additionalProperties": {},
       "type": "object"
+    },
+    "schema14": {
+      "pattern": "[\"\\\\]",
+      "type": "string"
     },
     "schema2": {
       "not": {
@@ -94,28 +116,25 @@
     },
     "schema7": {
       "properties": {
-        "enabled": {}
+        "leaderElection": {
+          "pattern": "[\"\\\\]",
+          "type": "string"
+        }
       },
       "required": [
-        "enabled"
+        "leaderElection"
       ],
       "type": "object"
     },
     "schema8": {
       "properties": {
-        "deploy": {}
+        "port": {
+          "pattern": "[\"\\\\]",
+          "type": "string"
+        }
       },
       "required": [
-        "deploy"
-      ],
-      "type": "object"
-    },
-    "schema9": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
+        "port"
       ],
       "type": "object"
     }
@@ -212,7 +231,7 @@
           "customLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema10"
+                "$ref": "#/$defs/schema12"
               },
               {
                 "not": {
@@ -362,6 +381,105 @@
     },
     {
       "if": {
+        "properties": {
+          "image": {
+            "properties": {
+              "repository": {
+                "$ref": "#/$defs/schema14"
+              }
+            },
+            "required": [
+              "repository"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "repository": {
+                "description": "Repository for the Crossplane pod image.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "image": {
+                "properties": {
+                  "tag": {
+                    "$ref": "#/$defs/schema14"
+                  }
+                },
+                "required": [
+                  "tag"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "image": {
+                  "properties": {
+                    "ignoreTag": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "ignoreTag"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "tag": {
+                "description": "The Crossplane image tag. Defaults to the value of `appVersion` in `Chart.yaml`.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -463,6 +581,93 @@
               }
             ],
             "description": "The imagePullSecret names to add to the Crossplane ServiceAccount."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema7"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "leaderElection": {
+            "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the Crossplane pod.",
+            "not": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "metrics": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "metrics": {
+                "properties": {
+                  "port": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "port"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "metrics": {
+                "$ref": "#/$defs/schema8"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "metrics": {
+            "additionalProperties": {},
+            "properties": {
+              "port": {
+                "description": "The port the metrics server listens on.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -597,6 +802,177 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema2"
+              },
+              {
+                "properties": {
+                  "rbacManager": {
+                    "properties": {
+                      "deploy": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "deploy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbacManager"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "rbacManager": {
+                "$ref": "#/$defs/schema7"
+              }
+            },
+            "required": [
+              "rbacManager"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "rbacManager": {
+            "additionalProperties": {},
+            "properties": {
+              "leaderElection": {
+                "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the RBAC Manager pod.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "readiness": {
+                "properties": {
+                  "port": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "port"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "readiness"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "readiness": {
+                "$ref": "#/$defs/schema8"
+              }
+            },
+            "required": [
+              "readiness"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "readiness": {
+            "additionalProperties": {},
+            "properties": {
+              "port": {
+                "description": "The port the readyz server listens on.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "registryCaBundleConfig": {
+                "properties": {
+                  "key": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "key"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "registryCaBundleConfig"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "registryCaBundleConfig": {
+                "properties": {
+                  "key": {
+                    "$ref": "#/$defs/schema14"
+                  }
+                },
+                "required": [
+                  "key"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "registryCaBundleConfig"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "registryCaBundleConfig": {
+            "additionalProperties": {},
+            "properties": {
+              "key": {
+                "description": "The ConfigMap key containing a custom CA bundle to enable fetching packages from registries with unknown or untrusted certificates.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "$ref": "#/$defs/schema4"
@@ -631,7 +1007,7 @@
               "customAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema12"
                   },
                   {
                     "not": {
@@ -720,6 +1096,124 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/schema4"
+          },
+          {
+            "properties": {
+              "webhooks": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhooks"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema4"
+              },
+              {
+                "properties": {
+                  "webhooks": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "webhooks"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "webhooks": {
+                "properties": {
+                  "port": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "port"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhooks"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "webhooks": {
+                "$ref": "#/$defs/schema8"
+              }
+            },
+            "required": [
+              "webhooks"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhooks": {
+            "additionalProperties": {},
+            "properties": {
+              "port": {
+                "description": "The port the webhook server listens on.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "properties": {
@@ -743,7 +1237,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema11"
+          "$ref": "#/$defs/schema13"
         }
       ],
       "description": "Add custom arguments to the Crossplane pod."
@@ -784,7 +1278,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema10"
+          "$ref": "#/$defs/schema12"
         },
         {
           "not": {
@@ -802,7 +1296,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema10"
+          "$ref": "#/$defs/schema12"
         },
         {
           "not": {
@@ -832,7 +1326,7 @@
     "extraEnvVarsCrossplane": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema11"
+          "$ref": "#/$defs/schema13"
         },
         {
           "items": {},
@@ -842,7 +1336,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema11"
+          "$ref": "#/$defs/schema13"
         }
       ],
       "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
@@ -850,7 +1344,7 @@
     "extraEnvVarsCrossplaneInit": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema11"
+          "$ref": "#/$defs/schema13"
         },
         {
           "items": {},
@@ -860,7 +1354,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema11"
+          "$ref": "#/$defs/schema13"
         }
       ],
       "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
@@ -875,6 +1369,7 @@
           "type": "array"
         },
         {
+          "items": {},
           "type": "array"
         },
         {
@@ -884,7 +1379,7 @@
           "type": "null"
         },
         {
-          "type": "object"
+          "$ref": "#/$defs/schema13"
         }
       ],
       "description": "To add arbitrary Kubernetes Objects during a Helm Install"
@@ -1038,39 +1533,6 @@
     },
     "metrics": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "port": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "integer"
-                  }
-                ],
-                "description": "The port the metrics server listens on."
-              }
-            }
-          }
-        }
-      ],
       "properties": {
         "enabled": {
           "anyOf": [
@@ -1316,7 +1778,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema8"
+                  "$ref": "#/$defs/schema10"
                 }
               },
               {
@@ -1365,7 +1827,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema8"
+                  "$ref": "#/$defs/schema10"
                 }
               },
               {
@@ -1441,16 +1903,6 @@
       "additionalProperties": {},
       "properties": {
         "port": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "integer"
-            }
-          ],
           "description": "The port the readyz server listens on."
         }
       },
@@ -1559,7 +2011,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema10"
+              "$ref": "#/$defs/schema12"
             },
             {
               "not": {
@@ -1621,7 +2073,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema9"
+                  "$ref": "#/$defs/schema11"
                 }
               },
               {
@@ -1643,7 +2095,7 @@
               "customAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema12"
                   },
                   {
                     "not": {
@@ -1662,7 +2114,7 @@
               "anyOf": [
                 {
                   "not": {
-                    "$ref": "#/$defs/schema9"
+                    "$ref": "#/$defs/schema11"
                   }
                 },
                 {
@@ -1714,6 +2166,20 @@
       "type": "object"
     },
     "sidecarsCrossplane": {
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ],
       "description": "Add sidecar containers to the Crossplane pod. Supports template expressions."
     },
     "tolerations": {
@@ -1752,48 +2218,6 @@
     },
     "webhooks": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/schema7"
-                }
-              },
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "port": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "integer"
-                  }
-                ],
-                "description": "The port the webhook server listens on."
-              }
-            }
-          }
-        }
-      ],
       "properties": {
         "enabled": {
           "anyOf": [

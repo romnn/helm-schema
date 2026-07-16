@@ -149,12 +149,12 @@
                       },
                       {
                         "not": {
-                          "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                          "pattern": "^(|~|null|Null|NULL)$"
                         }
                       },
                       {
                         "not": {
-                          "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                         }
                       },
                       {
@@ -312,6 +312,117 @@
                 "type": "null"
               }
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "image": {
+            "properties": {
+              "registry": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "registry"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "registry": {
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "image": {
+            "properties": {
+              "repository": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "repository"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "repository": {
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "image": {
+            "properties": {
+              "tag": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "tag"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "tag": {
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -1216,7 +1327,12 @@
                       },
                       {
                         "not": {
-                          "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                         }
                       },
                       {
@@ -1455,7 +1571,12 @@
             },
             {
               "not": {
-                "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
               }
             },
             {
@@ -1511,7 +1632,12 @@
             },
             {
               "not": {
-                "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
               }
             },
             {
@@ -1595,7 +1721,12 @@
             },
             {
               "not": {
-                "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
               }
             },
             {
@@ -1703,7 +1834,12 @@
             },
             {
               "not": {
-                "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
               }
             },
             {
@@ -2069,7 +2205,12 @@
                 },
                 {
                   "not": {
-                    "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
                   }
                 },
                 {

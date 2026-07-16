@@ -220,7 +220,15 @@
       ],
       "type": "object"
     },
-    "schema23": {
+    "schema22": {
+      "anyOf": [
+        {
+          "type": "object"
+        }
+      ],
+      "description": "only available if kind is Deployment"
+    },
+    "schema24": {
       "properties": {
         "create": {}
       },
@@ -229,13 +237,13 @@
       ],
       "type": "object"
     },
-    "schema25": {
+    "schema26": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema26": {
+    "schema27": {
       "additionalProperties": {},
       "type": "object"
     },
@@ -356,7 +364,7 @@
           "annotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema25"
+                "$ref": "#/$defs/schema26"
               },
               {
                 "not": {
@@ -505,6 +513,252 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "autoscaling": {
+                    "properties": {
+                      "behavior": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "behavior"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoscaling"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoscaling": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoscaling"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema20"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "autoscaling": {
+                    "properties": {
+                      "customRules": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "customRules"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoscaling"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoscaling": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoscaling"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema20"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "autoscaling": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoscaling"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "autoscaling": {
+                          "properties": {
+                            "targetCPUUtilizationPercentage": {}
+                          },
+                          "required": [
+                            "targetCPUUtilizationPercentage"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "autoscaling"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "autoscaling": {
+                        "properties": {
+                          "targetCPUUtilizationPercentage": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "targetCPUUtilizationPercentage"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoscaling"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/schema20"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "autoscaling": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoscaling"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoscaling": {
+                    "properties": {
+                      "targetMemoryUtilizationPercentage": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "targetMemoryUtilizationPercentage"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoscaling"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema20"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "autoscaling": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoscaling"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema20"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema20"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "autoscaling": {
+            "$ref": "#/$defs/schema22"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -616,7 +870,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/schema25"
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "type": "null"
@@ -1460,7 +1714,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/schema25"
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "type": "null"
@@ -1844,6 +2098,192 @@
                 "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/upstream-servers\nThis configuration is deprecated, please use `extraFiles` instead."
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema6"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "existingConfigMap": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingConfigMap"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "hotReload": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "hotReload"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "podAnnotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "podAnnotations"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "hotReload": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "hotReload"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema20"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "existingConfigMap": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingConfigMap"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "hotReload": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "hotReload"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "podAnnotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "podAnnotations"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "hotReload": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "hotReload"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "existingConfigMap": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "existingConfigMap"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ],
+            "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file"
           }
         }
       }
@@ -3292,6 +3732,23 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/schema1"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -3410,7 +3867,7 @@
             "description": "only available if kind is Deployment",
             "properties": {
               "annotations": {
-                "$ref": "#/$defs/schema26"
+                "$ref": "#/$defs/schema27"
               }
             }
           }
@@ -3479,7 +3936,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/schema25"
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "type": "null"
@@ -3727,6 +4184,91 @@
           {
             "allOf": [
               {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "tls": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema20"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema20"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "$ref": "#/$defs/schema22"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "$ref": "#/$defs/schema6"
               },
               {
@@ -3896,7 +4438,7 @@
           "labels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema25"
+                "$ref": "#/$defs/schema26"
               },
               {
                 "not": {
@@ -4005,7 +4547,7 @@
                 "type": "array"
               },
               {
-                "$ref": "#/$defs/schema25"
+                "$ref": "#/$defs/schema26"
               },
               {
                 "type": "null"
@@ -5419,7 +5961,7 @@
           "podAnnotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema25"
+                "$ref": "#/$defs/schema26"
               },
               {
                 "not": {
@@ -5468,7 +6010,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema25"
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "not": {
@@ -5526,6 +6068,42 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema20"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podDisruptionBudget": {
+            "$ref": "#/$defs/schema22"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/$defs/schema1"
       },
       "then": {
@@ -5534,7 +6112,7 @@
           "podLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema25"
+                "$ref": "#/$defs/schema26"
               },
               {
                 "not": {
@@ -5779,7 +6357,7 @@
           "additionalProperties": {},
           "properties": {
             "annotations": {
-              "$ref": "#/$defs/schema26"
+              "$ref": "#/$defs/schema27"
             },
             "controlledResources": {
               "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory",
@@ -5931,7 +6509,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema25"
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "not": {
@@ -6296,7 +6874,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema25"
+                        "$ref": "#/$defs/schema26"
                       },
                       {
                         "not": {
@@ -6394,7 +6972,7 @@
       "description": "Configure podsecuritypolicy\nRef: https://kubernetes.io/docs/concepts/policy/pod-security-policy/\nfrom Kubernetes 1.25, PSP is deprecated\nSee: https://kubernetes.io/blog/2022/08/23/kubernetes-v1-25-release/#pod-security-changes\nWe automatically disable PSP if Kubernetes version is 1.25 or higher",
       "properties": {
         "annotations": {
-          "$ref": "#/$defs/schema26"
+          "$ref": "#/$defs/schema27"
         },
         "create": {
           "anyOf": [
@@ -6497,7 +7075,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema25"
+              "$ref": "#/$defs/schema26"
             },
             {
               "not": {
@@ -6535,7 +7113,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema25"
+              "$ref": "#/$defs/schema26"
             },
             {
               "not": {
@@ -6584,7 +7162,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema24"
                 }
               },
               {
@@ -6606,7 +7184,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema25"
+                    "$ref": "#/$defs/schema26"
                   },
                   {
                     "not": {
@@ -6623,7 +7201,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema24"
                 }
               },
               {

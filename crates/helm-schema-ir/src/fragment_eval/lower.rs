@@ -99,6 +99,9 @@ impl LowerScope<'_> {
                 json_serialized: helper_meta.is_some_and(|meta| meta.json_serialized)
                     || path_is_encoded(path, self.json_serialized_paths),
                 json_decoded: helper_meta.is_some_and(|meta| meta.json_decoded),
+                lexical_escapes: helper_meta
+                    .map(|meta| meta.lexical_escapes.clone())
+                    .unwrap_or_default(),
                 provenance: helper_meta
                     .map(|meta| meta.provenance.clone())
                     .unwrap_or_default(),

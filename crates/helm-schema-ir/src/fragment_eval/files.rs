@@ -176,6 +176,12 @@ impl<'a> Interpreter<'a> {
                 .or_default()
                 .extend(hints);
         }
+        for (path, hints) in nested.guarded_fallback_type_hints {
+            self.guarded_fallback_type_hints
+                .entry(path)
+                .or_default()
+                .extend(hints);
+        }
         self.parsed_yaml_input_paths
             .extend(nested.parsed_yaml_input_paths);
         self.yaml_serialized_paths

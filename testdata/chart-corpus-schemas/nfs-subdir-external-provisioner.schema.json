@@ -44,7 +44,32 @@
         "type": "object"
       }
     },
-    "schema3": {
+    "schema10": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema2": {
+      "not": {
+        "properties": {
+          "storageClass": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "storageClass"
+        ],
+        "type": "object"
+      }
+    },
+    "schema5": {
       "not": {
         "properties": {
           "rbac": {
@@ -63,7 +88,7 @@
         "type": "object"
       }
     },
-    "schema5": {
+    "schema7": {
       "anyOf": [
         {
           "type": "array"
@@ -79,7 +104,7 @@
         }
       ]
     },
-    "schema6": {
+    "schema8": {
       "not": {
         "properties": {
           "create": {}
@@ -89,21 +114,6 @@
         ],
         "type": "object"
       }
-    },
-    "schema7": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema8": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -172,7 +182,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema3"
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -292,6 +302,80 @@
     },
     {
       "if": {
+        "properties": {
+          "image": {
+            "properties": {
+              "repository": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "repository"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "repository": {
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "image": {
+            "properties": {
+              "tag": {
+                "pattern": "[\"\\\\]",
+                "type": "string"
+              }
+            },
+            "required": [
+              "tag"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "tag": {
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -353,7 +437,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema3"
+                "$ref": "#/$defs/schema5"
               },
               {
                 "properties": {
@@ -405,17 +489,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "storageClass": {
-                      "$ref": "#/$defs/schema7"
-                    }
-                  },
-                  "required": [
-                    "storageClass"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema2"
               },
               {
                 "properties": {
@@ -446,7 +520,7 @@
           "labels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema10"
               },
               {
                 "not": {
@@ -535,7 +609,7 @@
             "additionalProperties": {},
             "properties": {
               "mountOptions": {
-                "$ref": "#/$defs/schema5"
+                "$ref": "#/$defs/schema7"
               }
             }
           }
@@ -599,7 +673,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema3"
+            "$ref": "#/$defs/schema5"
           },
           {
             "properties": {
@@ -681,6 +755,251 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema2"
+              },
+              {
+                "properties": {
+                  "storageClass": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "storageClass": {
+                "properties": {
+                  "archiveOnDelete": {
+                    "pattern": "[\"\\\\]",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "archiveOnDelete"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "storageClass": {
+            "additionalProperties": {},
+            "description": "For creating the StorageClass automatically:",
+            "properties": {
+              "archiveOnDelete": {
+                "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema2"
+              },
+              {
+                "properties": {
+                  "storageClass": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "storageClass": {
+                "properties": {
+                  "onDelete": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "onDelete"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "storageClass": {
+                "properties": {
+                  "onDelete": {
+                    "pattern": "[\"\\\\]",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "onDelete"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "storageClass": {
+            "additionalProperties": {},
+            "description": "For creating the StorageClass automatically:",
+            "properties": {
+              "onDelete": {
+                "description": "If it exists and has 'delete' value, delete the directory. If it exists and has 'retain' value, save the directory.\nOverrides archiveOnDelete.\nIgnored if value not set.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema2"
+              },
+              {
+                "properties": {
+                  "storageClass": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "storageClass": {
+                "properties": {
+                  "pathPattern": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "pathPattern"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "storageClass": {
+                "properties": {
+                  "pathPattern": {
+                    "pattern": "[\"\\\\]",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "pathPattern"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "storageClass": {
+            "additionalProperties": {},
+            "description": "For creating the StorageClass automatically:",
+            "properties": {
+              "pathPattern": {
+                "description": "Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.\nIgnored if value not set.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "properties": {
@@ -733,7 +1052,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema8"
+          "$ref": "#/$defs/schema10"
         },
         {
           "not": {
@@ -819,7 +1138,7 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "$ref": "#/$defs/schema5"
+                    "$ref": "#/$defs/schema7"
                   }
                 }
               ]
@@ -852,7 +1171,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema8"
+          "$ref": "#/$defs/schema10"
         },
         {
           "not": {
@@ -968,7 +1287,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema6"
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -989,7 +1308,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema10"
                   },
                   {
                     "not": {
@@ -1006,7 +1325,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema6"
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1084,7 +1403,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema6"
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1113,7 +1432,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema6"
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1134,7 +1453,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema10"
                   },
                   {
                     "not": {
@@ -1151,7 +1470,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema6"
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1180,7 +1499,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema6"
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1217,7 +1536,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema6"
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1246,7 +1565,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema6"
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {

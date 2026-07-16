@@ -60,6 +60,7 @@ impl Interpreter<'_> {
 
         let mut out = Contributions::default();
         let mut outcomes = Vec::new();
+        let mut arm_header_exprs: Vec<Option<TemplateExpr>> = Vec::new();
         let mut prior_conditions: Vec<PathCondition> = Vec::new();
         let mut has_unconditional_else = false;
         let mut promote_body_outcome = false;
@@ -81,6 +82,10 @@ impl Interpreter<'_> {
             }
 
             let arm = self.classify_branch(region, index);
+            arm_header_exprs.push(match &arm {
+                ArmSpec::If(Some(header)) => Some(header.expr().clone()),
+                _ => None,
+            });
             if matches!(arm, ArmSpec::Else) && index > 0 {
                 has_unconditional_else = true;
             }
@@ -180,6 +185,14 @@ impl Interpreter<'_> {
             outcomes.truncate(1);
         } else if !has_unconditional_else {
             outcomes.push(entry_locals.clone());
+        }
+        if region.kind == ControlKind::If {
+            self.apply_reassignment_exclusions(
+                &entry_locals,
+                &mut outcomes,
+                &arm_header_exprs,
+                region.span.start,
+            );
         }
         self.locals.join_branch_outcomes(&entry_locals, outcomes);
 
@@ -1143,4 +1156,143 @@ fn header_range_source(expr: &TemplateExpr) -> &TemplateExpr {
         source = value;
     }
     source
+}
+
+impl Interpreter<'_> {
+    /// An `if` arm that REASSIGNED a local away from its entry `.Values`
+    /// identity replaces the raw value on that arm, so the arms that kept
+    /// the identity supply it only where the reassigning arm's condition is
+    /// false (datadog's `latest` → `1.20.0` version sentinel, F74). Each
+    /// kept value gets that exclusion as branch meta before the join:
+    /// downstream strict operand captures fire only where the raw value
+    /// actually reaches the consumer. The exclusion is carried as an
+    /// approximate predicate whose sound subset negates one exactly decoded
+    /// equality conjunct of the losing arm's header (`¬E` implies
+    /// `¬(… ∧ E)`); with no such conjunct the bare approximation makes
+    /// those captures abstain.
+    fn apply_reassignment_exclusions(
+        &self,
+        entry: &crate::symbolic_local_state::SymbolicLocalState,
+        outcomes: &mut [crate::symbolic_local_state::SymbolicLocalState],
+        header_exprs: &[Option<TemplateExpr>],
+        region_start: usize,
+    ) {
+        let mut entry_identities: Vec<(&String, BTreeSet<String>)> = entry
+            .fragment_values
+            .iter()
+            .filter_map(|(name, value)| {
+                let paths = value.paths();
+                (!paths.is_empty()).then_some((name, paths))
+            })
+            .collect();
+        entry_identities.sort_by_key(|(name, _)| name.as_str());
+        for (name, entry_paths) in entry_identities {
+            let mut exclusions = Vec::new();
+            let mut keeping = Vec::new();
+            for (index, outcome) in outcomes.iter().enumerate() {
+                let Some(value) = outcome.fragment_values.get(name) else {
+                    continue;
+                };
+                // Only a reassignment to values-independent content (a
+                // literal sentinel, derived text) severs the identity.
+                // Path-bearing rebindings — a guarded traversal advance
+                // into a member, a switch to another source path — keep
+                // their own machinery.
+                if value.paths().is_empty() {
+                    let marker = format!("reassign:{}:{region_start}:{index}", self.source_offset);
+                    exclusions.push(self.reassignment_exclusion(
+                        header_exprs.get(index).and_then(Option::as_ref),
+                        marker,
+                    ));
+                } else if !value.paths().is_disjoint(&entry_paths) {
+                    keeping.push(index);
+                }
+            }
+            if exclusions.is_empty() {
+                continue;
+            }
+            let exclusion: BTreeSet<Predicate> = exclusions.into_iter().collect();
+            for index in keeping {
+                if let Some(value) = outcomes[index].fragment_values.get(name) {
+                    let excluded = attach_reassignment_exclusion(value, &exclusion);
+                    outcomes[index]
+                        .fragment_values
+                        .insert(name.clone(), excluded);
+                }
+            }
+        }
+    }
+
+    /// The exclusion predicate for one identity-losing arm: the negation of
+    /// its header condition, sound-approximated. The header's `and`
+    /// conjuncts decode individually (against the region's ENTRY locals) so
+    /// an exact equality sentinel survives beside undecodable siblings; a
+    /// single negated equality conjunct is a sound subset of the full
+    /// negation. Anything else abstains.
+    fn reassignment_exclusion(&self, header: Option<&TemplateExpr>, marker: String) -> Predicate {
+        let Some(header) = header else {
+            return Predicate::approximate(marker, BTreeSet::new());
+        };
+        let context = self.value_path_context();
+        let paths = context.resolved_values_paths_from_expr(header);
+        let conjunct_exprs: Vec<&TemplateExpr> = match header.deparen() {
+            TemplateExpr::Call { function, args } if function == "and" => args.iter().collect(),
+            other => vec![other],
+        };
+        for expr in conjunct_exprs {
+            if !context.condition_lowering_is_faithful(expr) {
+                continue;
+            }
+            let conjuncts = match context.condition_predicate_expr(expr) {
+                Predicate::And(items) => items,
+                other => vec![other],
+            };
+            for conjunct in conjuncts {
+                if let Predicate::Guard(Guard::Eq { path, value }) = conjunct
+                    && !path.starts_with('$')
+                    && !path.split('.').any(|part| part == "*")
+                {
+                    return Predicate::approximate_with_sound_subset(
+                        marker,
+                        paths,
+                        vec![Guard::NotEq { path, value }],
+                    );
+                }
+            }
+        }
+        Predicate::approximate(marker, paths)
+    }
+}
+
+fn attach_reassignment_exclusion(
+    value: &AbstractValue,
+    exclusion: &BTreeSet<Predicate>,
+) -> AbstractValue {
+    match value {
+        AbstractValue::ValuesPath(path) => {
+            let mut meta = crate::helper_meta::HelperOutputMeta::default();
+            meta.capture_exclusions.extend(exclusion.iter().cloned());
+            AbstractValue::OutputPath(path.clone(), meta)
+        }
+        AbstractValue::JsonDecodedPath(path) => {
+            let mut meta = crate::helper_meta::HelperOutputMeta {
+                json_decoded: true,
+                ..Default::default()
+            };
+            meta.capture_exclusions.extend(exclusion.iter().cloned());
+            AbstractValue::OutputPath(path.clone(), meta)
+        }
+        AbstractValue::OutputPath(path, meta) => {
+            let mut meta = meta.clone();
+            meta.capture_exclusions.extend(exclusion.iter().cloned());
+            AbstractValue::OutputPath(path.clone(), meta)
+        }
+        AbstractValue::Choice(choices) => AbstractValue::Choice(
+            choices
+                .iter()
+                .map(|choice| attach_reassignment_exclusion(choice, exclusion))
+                .collect(),
+        ),
+        other => other.clone(),
+    }
 }

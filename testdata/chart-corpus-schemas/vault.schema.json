@@ -241,20 +241,57 @@
         }
       ]
     },
-    "schema102": {
+    "schema101": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "additionalProperties": {},
+              "type": "object"
+            }
+          ]
+        }
+      }
+    },
+    "schema104": {
       "description": "Minimum consecutive successes for the probe to be considered successful after having failed",
       "type": "integer"
     },
-    "schema104": {
+    "schema105": {
+      "properties": {
+        "externalVaultAddr": {
+          "pattern": "[\"\\\\]",
+          "type": "string"
+        }
+      },
+      "required": [
+        "externalVaultAddr"
+      ],
+      "type": "object"
+    },
+    "schema107": {
       "description": "When a probe fails, Kubernetes will try failureThreshold times before giving up",
       "type": "integer"
     },
-    "schema105": {
+    "schema108": {
       "description": "Name of the storage class to use.  If null it will use the\nconfigured default Storage Class."
     },
-    "schema107": {
-      "description": "Number of seconds after the container has started before probe initiates",
-      "type": "integer"
+    "schema109": {
+      "properties": {
+        "repository": {
+          "pattern": "[\"\\\\]",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
     },
     "schema11": {
       "anyOf": [
@@ -318,44 +355,21 @@
         }
       ]
     },
-    "schema110": {
-      "properties": {
-        "createSecret": {
-          "enum": [
-            "true"
-          ]
-        }
-      },
-      "required": [
-        "createSecret"
-      ],
-      "type": "object"
+    "schema111": {
+      "description": "Number of seconds after the container has started before probe initiates",
+      "type": "integer"
     },
     "schema114": {
       "properties": {
-        "createSecret": {
-          "enum": [
-            true
-          ]
+        "tag": {
+          "pattern": "[\"\\\\]",
+          "type": "string"
         }
       },
       "required": [
-        "createSecret"
+        "tag"
       ],
       "type": "object"
-    },
-    "schema115": {
-      "additionalProperties": {},
-      "description": "Annotations to apply to the PVC",
-      "type": "object"
-    },
-    "schema117": {
-      "description": "Access Mode of the storage device being used for the PVC",
-      "type": "string"
-    },
-    "schema119": {
-      "description": "Number of seconds after which the probe times out.",
-      "type": "integer"
     },
     "schema12": {
       "anyOf": [
@@ -415,34 +429,17 @@
         }
       ]
     },
+    "schema120": {
+      "additionalProperties": {},
+      "description": "Annotations to apply to the PVC",
+      "type": "object"
+    },
+    "schema122": {
+      "description": "Access Mode of the storage device being used for the PVC",
+      "type": "string"
+    },
     "schema124": {
-      "properties": {
-        "create": {
-          "enum": [
-            "true"
-          ]
-        }
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema127": {
-      "properties": {
-        "create": {
-          "enum": [
-            true
-          ]
-        }
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema128": {
-      "description": "How often (in seconds) to perform the probe",
+      "description": "Number of seconds after which the probe times out.",
       "type": "integer"
     },
     "schema13": {
@@ -464,21 +461,16 @@
       "type": "object"
     },
     "schema133": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
+      "description": "How often (in seconds) to perform the probe",
+      "type": "integer"
     },
-    "schema135": {
+    "schema140": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema136": {
+    "schema141": {
       "anyOf": [
         {
           "type": "string"
@@ -488,9 +480,13 @@
         }
       ]
     },
-    "schema137": {
+    "schema142": {
       "additionalProperties": {},
       "type": "object"
+    },
+    "schema143": {
+      "pattern": "[\"\\\\]",
+      "type": "string"
     },
     "schema17": {
       "anyOf": [
@@ -1813,7 +1809,27 @@
       ],
       "type": "object"
     },
-    "schema59": {
+    "schema56": {
+      "properties": {
+        "image": {
+          "properties": {
+            "repository": {
+              "pattern": "[\"\\\\]",
+              "type": "string"
+            }
+          },
+          "required": [
+            "repository"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
+    },
+    "schema60": {
       "properties": {
         "injector": {
           "properties": {
@@ -1832,7 +1848,7 @@
       ],
       "type": "object"
     },
-    "schema63": {
+    "schema64": {
       "properties": {
         "injector": {
           "properties": {
@@ -1851,7 +1867,7 @@
       ],
       "type": "object"
     },
-    "schema65": {
+    "schema66": {
       "additionalProperties": {},
       "properties": {
         "failureThreshold": {
@@ -1859,7 +1875,7 @@
         }
       }
     },
-    "schema66": {
+    "schema67": {
       "properties": {
         "injector": {
           "properties": {
@@ -1878,7 +1894,7 @@
       ],
       "type": "object"
     },
-    "schema67": {
+    "schema68": {
       "properties": {
         "injector": {
           "properties": {
@@ -1898,27 +1914,24 @@
       "type": "object"
     },
     "schema69": {
-      "not": {
-        "properties": {
-          "injector": {
-            "properties": {
-              "webhook": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "webhook"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "injector"
-        ],
-        "type": "object"
-      }
+      "properties": {
+        "image": {
+          "properties": {
+            "tag": {
+              "pattern": "[\"\\\\]",
+              "type": "string"
+            }
+          },
+          "required": [
+            "tag"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
     },
     "schema7": {
       "anyOf": [
@@ -2039,7 +2052,30 @@
         }
       ]
     },
-    "schema72": {
+    "schema71": {
+      "not": {
+        "properties": {
+          "injector": {
+            "properties": {
+              "webhook": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "injector"
+        ],
+        "type": "object"
+      }
+    },
+    "schema74": {
       "properties": {
         "injector": {
           "properties": {
@@ -2058,7 +2094,7 @@
       ],
       "type": "object"
     },
-    "schema85": {
+    "schema87": {
       "not": {
         "properties": {
           "injector": {
@@ -2170,7 +2206,7 @@
         }
       ]
     },
-    "schema92": {
+    "schema94": {
       "not": {
         "properties": {
           "global": {
@@ -2189,7 +2225,7 @@
         "type": "object"
       }
     },
-    "schema93": {
+    "schema95": {
       "not": {
         "properties": {
           "server": {
@@ -2208,7 +2244,7 @@
         "type": "object"
       }
     },
-    "schema94": {
+    "schema96": {
       "anyOf": [
         {
           "additionalProperties": {},
@@ -2224,23 +2260,6 @@
           "type": "object"
         }
       ]
-    },
-    "schema99": {
-      "additionalProperties": {},
-      "properties": {
-        "hosts": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          ]
-        }
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2294,7 +2313,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
                         "not": {
@@ -2399,7 +2418,7 @@
                   "extraLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema135"
+                        "$ref": "#/$defs/schema140"
                       },
                       {
                         "not": {
@@ -2471,7 +2490,7 @@
                       "container": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema137"
+                            "$ref": "#/$defs/schema142"
                           },
                           {
                             "not": {
@@ -2554,7 +2573,7 @@
                     "description": "Security context for the pod template and container in the csi provider\ndaemonSet. For OpenShift, the container securityContext defaults to\n`privileged: true`.",
                     "properties": {
                       "container": {
-                        "$ref": "#/$defs/schema136"
+                        "$ref": "#/$defs/schema141"
                       }
                     }
                   }
@@ -2594,7 +2613,7 @@
                       "pod": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema137"
+                            "$ref": "#/$defs/schema142"
                           },
                           {
                             "not": {
@@ -2677,7 +2696,7 @@
                     "description": "Security context for the pod template and container in the csi provider\ndaemonSet. For OpenShift, the container securityContext defaults to\n`privileged: true`.",
                     "properties": {
                       "pod": {
-                        "$ref": "#/$defs/schema136"
+                        "$ref": "#/$defs/schema141"
                       }
                     }
                   }
@@ -3517,6 +3536,88 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "csi": {
+                "$ref": "#/$defs/schema56"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema5"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "description": "secrets-store-csi-driver-provider-vault",
+            "properties": {
+              "image": {
+                "additionalProperties": {},
+                "properties": {
+                  "repository": {
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "csi": {
+                "$ref": "#/$defs/schema69"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema5"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "description": "secrets-store-csi-driver-provider-vault",
+            "properties": {
+              "image": {
+                "additionalProperties": {},
+                "properties": {
+                  "tag": {
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/$defs/schema5"
       },
       "then": {
@@ -3554,31 +3655,6 @@
                 "description": "Used to configure livenessProbe for the pods.",
                 "properties": {
                   "failureThreshold": {
-                    "$ref": "#/$defs/schema104"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/schema5"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "description": "secrets-store-csi-driver-provider-vault",
-            "properties": {
-              "livenessProbe": {
-                "additionalProperties": {},
-                "description": "Used to configure livenessProbe for the pods.",
-                "properties": {
-                  "initialDelaySeconds": {
                     "$ref": "#/$defs/schema107"
                   }
                 }
@@ -3603,8 +3679,33 @@
                 "additionalProperties": {},
                 "description": "Used to configure livenessProbe for the pods.",
                 "properties": {
+                  "initialDelaySeconds": {
+                    "$ref": "#/$defs/schema111"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema5"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "description": "secrets-store-csi-driver-provider-vault",
+            "properties": {
+              "livenessProbe": {
+                "additionalProperties": {},
+                "description": "Used to configure livenessProbe for the pods.",
+                "properties": {
                   "periodSeconds": {
-                    "$ref": "#/$defs/schema128"
+                    "$ref": "#/$defs/schema133"
                   }
                 }
               }
@@ -3629,7 +3730,7 @@
                 "description": "Used to configure livenessProbe for the pods.",
                 "properties": {
                   "successThreshold": {
-                    "$ref": "#/$defs/schema102"
+                    "$ref": "#/$defs/schema104"
                   }
                 }
               }
@@ -3654,7 +3755,7 @@
                 "description": "Used to configure livenessProbe for the pods.",
                 "properties": {
                   "timeoutSeconds": {
-                    "$ref": "#/$defs/schema119"
+                    "$ref": "#/$defs/schema124"
                   }
                 }
               }
@@ -3711,7 +3812,7 @@
                   "affinity": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
                         "not": {
@@ -3821,7 +3922,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
                         "not": {
@@ -3924,7 +4025,7 @@
                   "extraLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema135"
+                        "$ref": "#/$defs/schema140"
                       },
                       {
                         "not": {
@@ -3965,7 +4066,7 @@
                   "nodeSelector": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
                         "not": {
@@ -4251,31 +4352,6 @@
                 "description": "Used to configure readinessProbe for the pods.",
                 "properties": {
                   "failureThreshold": {
-                    "$ref": "#/$defs/schema104"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/schema5"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "description": "secrets-store-csi-driver-provider-vault",
-            "properties": {
-              "readinessProbe": {
-                "additionalProperties": {},
-                "description": "Used to configure readinessProbe for the pods.",
-                "properties": {
-                  "initialDelaySeconds": {
                     "$ref": "#/$defs/schema107"
                   }
                 }
@@ -4300,8 +4376,33 @@
                 "additionalProperties": {},
                 "description": "Used to configure readinessProbe for the pods.",
                 "properties": {
+                  "initialDelaySeconds": {
+                    "$ref": "#/$defs/schema111"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema5"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "description": "secrets-store-csi-driver-provider-vault",
+            "properties": {
+              "readinessProbe": {
+                "additionalProperties": {},
+                "description": "Used to configure readinessProbe for the pods.",
+                "properties": {
                   "periodSeconds": {
-                    "$ref": "#/$defs/schema128"
+                    "$ref": "#/$defs/schema133"
                   }
                 }
               }
@@ -4326,7 +4427,7 @@
                 "description": "Used to configure readinessProbe for the pods.",
                 "properties": {
                   "successThreshold": {
-                    "$ref": "#/$defs/schema102"
+                    "$ref": "#/$defs/schema104"
                   }
                 }
               }
@@ -4351,7 +4452,7 @@
                 "description": "Used to configure readinessProbe for the pods.",
                 "properties": {
                   "timeoutSeconds": {
-                    "$ref": "#/$defs/schema119"
+                    "$ref": "#/$defs/schema124"
                   }
                 }
               }
@@ -4408,7 +4509,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
                         "not": {
@@ -4511,7 +4612,7 @@
                   "extraLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema135"
+                        "$ref": "#/$defs/schema140"
                       },
                       {
                         "not": {
@@ -4872,7 +4973,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema94"
                   },
                   {
                     "properties": {
@@ -4932,7 +5033,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema95"
                   },
                   {
                     "properties": {
@@ -5317,7 +5418,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema94"
                   },
                   {
                     "properties": {
@@ -5377,7 +5478,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema95"
                   },
                   {
                     "properties": {
@@ -5822,7 +5923,62 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/schema136"
+            "$ref": "#/$defs/schema141"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "global": {
+                "properties": {
+                  "externalVaultAddr": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "externalVaultAddr"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "global": {
+                "$ref": "#/$defs/schema105"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "properties": {
+              "externalVaultAddr": {
+                "description": "External vault server address for the injector and CSI provider to use.\nSetting this will disable deployment of a vault server.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -6002,7 +6158,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema94"
                   },
                   {
                     "properties": {
@@ -6062,7 +6218,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema95"
                   },
                   {
                     "properties": {
@@ -6408,7 +6564,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema85"
+                "$ref": "#/$defs/schema87"
               },
               {
                 "properties": {
@@ -6455,6 +6611,639 @@
                   }
                 ],
                 "description": "Affinity Settings for injector pods\nThis can either be a multi-line string or YAML matching the PodSpec's affinity field.\nCommenting out or setting as empty the affinity variable, will allow\ndeployment of multiple replicas to single node services such as Minikube."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentDefaults": {
+                    "properties": {
+                      "cpuLimit": {
+                        "$ref": "#/$defs/schema143"
+                      }
+                    },
+                    "required": [
+                      "cpuLimit"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agentDefaults"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "agentDefaults": {
+                "additionalProperties": {},
+                "description": "The default values for the injected Vault Agent containers.",
+                "properties": {
+                  "cpuLimit": {
+                    "description": "For more information on configuring resources, see the K8s documentation:\nhttps://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentDefaults": {
+                    "properties": {
+                      "cpuRequest": {
+                        "$ref": "#/$defs/schema143"
+                      }
+                    },
+                    "required": [
+                      "cpuRequest"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agentDefaults"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "agentDefaults": {
+                "additionalProperties": {},
+                "description": "The default values for the injected Vault Agent containers.",
+                "properties": {
+                  "cpuRequest": {
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentDefaults": {
+                    "properties": {
+                      "ephemeralLimit": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "ephemeralLimit"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agentDefaults"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentDefaults": {
+                    "properties": {
+                      "ephemeralLimit": {
+                        "$ref": "#/$defs/schema143"
+                      }
+                    },
+                    "required": [
+                      "ephemeralLimit"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agentDefaults"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "agentDefaults": {
+                "additionalProperties": {},
+                "description": "The default values for the injected Vault Agent containers.",
+                "properties": {
+                  "ephemeralLimit": {
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentDefaults": {
+                    "properties": {
+                      "ephemeralRequest": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "ephemeralRequest"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agentDefaults"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentDefaults": {
+                    "properties": {
+                      "ephemeralRequest": {
+                        "$ref": "#/$defs/schema143"
+                      }
+                    },
+                    "required": [
+                      "ephemeralRequest"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agentDefaults"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "agentDefaults": {
+                "additionalProperties": {},
+                "description": "The default values for the injected Vault Agent containers.",
+                "properties": {
+                  "ephemeralRequest": {
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentDefaults": {
+                    "properties": {
+                      "memLimit": {
+                        "$ref": "#/$defs/schema143"
+                      }
+                    },
+                    "required": [
+                      "memLimit"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agentDefaults"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "agentDefaults": {
+                "additionalProperties": {},
+                "description": "The default values for the injected Vault Agent containers.",
+                "properties": {
+                  "memLimit": {
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentDefaults": {
+                    "properties": {
+                      "memRequest": {
+                        "$ref": "#/$defs/schema143"
+                      }
+                    },
+                    "required": [
+                      "memRequest"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agentDefaults"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "agentDefaults": {
+                "additionalProperties": {},
+                "description": "The default values for the injected Vault Agent containers.",
+                "properties": {
+                  "memRequest": {
+                    "description": "ephemeralLimit: \"128Mi\"\nephemeralRequest: \"64Mi\"",
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentDefaults": {
+                    "properties": {
+                      "template": {
+                        "$ref": "#/$defs/schema143"
+                      }
+                    },
+                    "required": [
+                      "template"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agentDefaults"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "agentDefaults": {
+                "additionalProperties": {},
+                "description": "The default values for the injected Vault Agent containers.",
+                "properties": {
+                  "template": {
+                    "description": "Default template type for secrets when no custom template is specified.\nPossible values include: \"json\" and \"map\".",
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentDefaults": {
+                    "properties": {
+                      "templateConfig": {
+                        "properties": {
+                          "exitOnRetryFailure": {
+                            "$ref": "#/$defs/schema143"
+                          }
+                        },
+                        "required": [
+                          "exitOnRetryFailure"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "templateConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agentDefaults"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "agentDefaults": {
+                "additionalProperties": {},
+                "description": "The default values for the injected Vault Agent containers.",
+                "properties": {
+                  "templateConfig": {
+                    "additionalProperties": {},
+                    "description": "Default values within Agent's template_config stanza.",
+                    "properties": {
+                      "exitOnRetryFailure": {
+                        "not": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentDefaults": {
+                    "properties": {
+                      "templateConfig": {
+                        "properties": {
+                          "staticSecretRenderInterval": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "staticSecretRenderInterval"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "templateConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agentDefaults"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentDefaults": {
+                    "properties": {
+                      "templateConfig": {
+                        "properties": {
+                          "staticSecretRenderInterval": {
+                            "$ref": "#/$defs/schema143"
+                          }
+                        },
+                        "required": [
+                          "staticSecretRenderInterval"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "templateConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "agentDefaults"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "agentDefaults": {
+                "additionalProperties": {},
+                "description": "The default values for the injected Vault Agent containers.",
+                "properties": {
+                  "templateConfig": {
+                    "additionalProperties": {},
+                    "description": "Default values within Agent's template_config stanza.",
+                    "properties": {
+                      "staticSecretRenderInterval": {
+                        "not": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -6740,6 +7529,104 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentImage": {
+                    "$ref": "#/$defs/schema109"
+                  }
+                },
+                "required": [
+                  "agentImage"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "agentImage": {
+                "additionalProperties": {},
+                "description": "agentImage sets the repo and tag of the Vault image to use for the Vault Agent\ncontainers.  This should be set to the official Vault image.  Vault 1.3.1+ is\nrequired.",
+                "properties": {
+                  "repository": {
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "agentImage": {
+                    "$ref": "#/$defs/schema114"
+                  }
+                },
+                "required": [
+                  "agentImage"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "agentImage": {
+                "additionalProperties": {},
+                "description": "agentImage sets the repo and tag of the Vault image to use for the Vault Agent\ncontainers.  This should be set to the official Vault image.  Vault 1.3.1+ is\nrequired.",
+                "properties": {
+                  "tag": {
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/$defs/schema3"
       },
       "then": {
@@ -6765,7 +7652,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema67"
+            "$ref": "#/$defs/schema68"
           },
           {
             "$ref": "#/$defs/schema3"
@@ -6781,7 +7668,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema137"
+                    "$ref": "#/$defs/schema142"
                   },
                   {
                     "not": {
@@ -6822,7 +7709,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema67"
+            "$ref": "#/$defs/schema68"
           },
           {
             "$ref": "#/$defs/schema3"
@@ -6864,6 +7751,257 @@
               "authPath": {
                 "description": "Mount Path of the Vault Kubernetes Auth Method.",
                 "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "certs": {
+                    "properties": {
+                      "secretName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "secretName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "certs"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "certs": {
+                    "properties": {
+                      "certName": {
+                        "$ref": "#/$defs/schema143"
+                      }
+                    },
+                    "required": [
+                      "certName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "certs"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "certs": {
+                "additionalProperties": {},
+                "properties": {
+                  "certName": {
+                    "description": "certName and keyName are the names of the files within the secret for\nthe TLS cert and private key, respectively. These have reasonable\ndefaults but can be customized if necessary.",
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "certs": {
+                    "properties": {
+                      "secretName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "secretName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "certs"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "certs": {
+                    "properties": {
+                      "keyName": {
+                        "$ref": "#/$defs/schema143"
+                      }
+                    },
+                    "required": [
+                      "keyName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "certs"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "certs": {
+                "additionalProperties": {},
+                "properties": {
+                  "keyName": {
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "certs": {
+                    "properties": {
+                      "secretName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "secretName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "certs"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "certs": {
+                    "properties": {
+                      "secretName": {
+                        "$ref": "#/$defs/schema143"
+                      }
+                    },
+                    "required": [
+                      "secretName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "certs"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "certs": {
+                "additionalProperties": {},
+                "properties": {
+                  "secretName": {
+                    "description": "secretName is the name of the secret that has the TLS certificate and\nprivate key to serve the injector webhook. If this is null, then the\ninjector will default to its automatic management mode that will assign\na service account to the injector to generate its own certificates.",
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
               }
             }
           }
@@ -6937,6 +8075,82 @@
             "properties": {
               "injector": {
                 "properties": {
+                  "externalVaultAddr": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "externalVaultAddr"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "injector": {
+                "$ref": "#/$defs/schema105"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "global": {
+                  "properties": {
+                    "externalVaultAddr": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "externalVaultAddr"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "global"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "externalVaultAddr": {
+                "description": "Deprecated: Please use global.externalVaultAddr instead.",
+                "not": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
                   "extraEnvironmentVars": {
                     "$ref": "#/$defs/helm-truthy"
                   }
@@ -6995,7 +8209,7 @@
               "extraLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema135"
+                    "$ref": "#/$defs/schema140"
                   },
                   {
                     "not": {
@@ -7220,6 +8434,145 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "image": {
+                    "properties": {
+                      "pullPolicy": {
+                        "$ref": "#/$defs/schema143"
+                      }
+                    },
+                    "required": [
+                      "pullPolicy"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "additionalProperties": {},
+                "description": "image sets the repo and tag of the vault-k8s image to use for the injector.",
+                "properties": {
+                  "pullPolicy": {
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "$ref": "#/$defs/schema56"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "additionalProperties": {},
+                "description": "image sets the repo and tag of the vault-k8s image to use for the injector.",
+                "properties": {
+                  "repository": {
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "$ref": "#/$defs/schema69"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "additionalProperties": {},
+                "description": "image sets the repo and tag of the vault-k8s image to use for the injector.",
+                "properties": {
+                  "tag": {
+                    "not": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/$defs/schema3"
       },
       "then": {
@@ -7279,30 +8632,6 @@
                 "description": "Used to define custom livenessProbe settings",
                 "properties": {
                   "failureThreshold": {
-                    "$ref": "#/$defs/schema104"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/schema3"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "injector": {
-            "additionalProperties": {},
-            "properties": {
-              "livenessProbe": {
-                "additionalProperties": {},
-                "description": "Used to define custom livenessProbe settings",
-                "properties": {
-                  "initialDelaySeconds": {
                     "$ref": "#/$defs/schema107"
                   }
                 }
@@ -7326,8 +8655,32 @@
                 "additionalProperties": {},
                 "description": "Used to define custom livenessProbe settings",
                 "properties": {
+                  "initialDelaySeconds": {
+                    "$ref": "#/$defs/schema111"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema3"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "livenessProbe": {
+                "additionalProperties": {},
+                "description": "Used to define custom livenessProbe settings",
+                "properties": {
                   "periodSeconds": {
-                    "$ref": "#/$defs/schema128"
+                    "$ref": "#/$defs/schema133"
                   }
                 }
               }
@@ -7351,7 +8704,7 @@
                 "description": "Used to define custom livenessProbe settings",
                 "properties": {
                   "successThreshold": {
-                    "$ref": "#/$defs/schema102"
+                    "$ref": "#/$defs/schema104"
                   }
                 }
               }
@@ -7375,7 +8728,7 @@
                 "description": "Used to define custom livenessProbe settings",
                 "properties": {
                   "timeoutSeconds": {
-                    "$ref": "#/$defs/schema119"
+                    "$ref": "#/$defs/schema124"
                   }
                 }
               }
@@ -7490,7 +8843,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema63"
+            "$ref": "#/$defs/schema64"
           },
           {
             "$ref": "#/$defs/schema3"
@@ -7506,7 +8859,7 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema137"
+                    "$ref": "#/$defs/schema142"
                   },
                   {
                     "not": {
@@ -7547,7 +8900,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema63"
+            "$ref": "#/$defs/schema64"
           },
           {
             "$ref": "#/$defs/schema3"
@@ -7661,7 +9014,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema59"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -7774,7 +9127,7 @@
               "objectSelector": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema137"
+                    "$ref": "#/$defs/schema142"
                   },
                   {
                     "type": "string"
@@ -7929,7 +9282,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema59"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -8041,30 +9394,6 @@
                 "description": "Used to define custom readinessProbe settings",
                 "properties": {
                   "failureThreshold": {
-                    "$ref": "#/$defs/schema104"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/schema3"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "injector": {
-            "additionalProperties": {},
-            "properties": {
-              "readinessProbe": {
-                "additionalProperties": {},
-                "description": "Used to define custom readinessProbe settings",
-                "properties": {
-                  "initialDelaySeconds": {
                     "$ref": "#/$defs/schema107"
                   }
                 }
@@ -8088,8 +9417,32 @@
                 "additionalProperties": {},
                 "description": "Used to define custom readinessProbe settings",
                 "properties": {
+                  "initialDelaySeconds": {
+                    "$ref": "#/$defs/schema111"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema3"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "readinessProbe": {
+                "additionalProperties": {},
+                "description": "Used to define custom readinessProbe settings",
+                "properties": {
                   "periodSeconds": {
-                    "$ref": "#/$defs/schema128"
+                    "$ref": "#/$defs/schema133"
                   }
                 }
               }
@@ -8113,7 +9466,7 @@
                 "description": "Used to define custom readinessProbe settings",
                 "properties": {
                   "successThreshold": {
-                    "$ref": "#/$defs/schema102"
+                    "$ref": "#/$defs/schema104"
                   }
                 }
               }
@@ -8137,7 +9490,7 @@
                 "description": "Used to define custom readinessProbe settings",
                 "properties": {
                   "timeoutSeconds": {
-                    "$ref": "#/$defs/schema119"
+                    "$ref": "#/$defs/schema124"
                   }
                 }
               }
@@ -8189,7 +9542,30 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "allOf": [
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "revokeOnShutdown": {
+                    "$ref": "#/$defs/schema143"
+                  }
+                },
+                "required": [
+                  "revokeOnShutdown"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -8198,17 +9574,10 @@
             "additionalProperties": {},
             "properties": {
               "revokeOnShutdown": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "boolean"
-                  }
-                ],
-                "description": "Configures all Vault Agent sidecars to revoke their token when shutting down"
+                "description": "Configures all Vault Agent sidecars to revoke their token when shutting down",
+                "not": {
+                  "type": "string"
+                }
               }
             }
           }
@@ -8239,7 +9608,7 @@
                   "container": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
                         "not": {
@@ -8307,7 +9676,7 @@
                 "description": "Security context for the pod template and the injector container\nThe default pod securityContext is:\nrunAsNonRoot: true\nrunAsGroup: {{ .Values.injector.gid | default 1000 }}\nrunAsUser: {{ .Values.injector.uid | default 100 }}\nfsGroup: {{ .Values.injector.gid | default 1000 }}\nand for container is\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL",
                 "properties": {
                   "container": {
-                    "$ref": "#/$defs/schema136"
+                    "$ref": "#/$defs/schema141"
                   }
                 }
               }
@@ -8340,7 +9709,7 @@
                   "pod": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
                         "not": {
@@ -8408,7 +9777,7 @@
                 "description": "Security context for the pod template and the injector container\nThe default pod securityContext is:\nrunAsNonRoot: true\nrunAsGroup: {{ .Values.injector.gid | default 1000 }}\nrunAsUser: {{ .Values.injector.uid | default 100 }}\nfsGroup: {{ .Values.injector.gid | default 1000 }}\nand for container is\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL",
                 "properties": {
                   "pod": {
-                    "$ref": "#/$defs/schema136"
+                    "$ref": "#/$defs/schema141"
                   }
                 }
               }
@@ -8684,7 +10053,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
                         "not": {
@@ -8920,30 +10289,6 @@
                 "description": "Used to define custom startupProbe settings",
                 "properties": {
                   "failureThreshold": {
-                    "$ref": "#/$defs/schema104"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/schema3"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "injector": {
-            "additionalProperties": {},
-            "properties": {
-              "startupProbe": {
-                "additionalProperties": {},
-                "description": "Used to define custom startupProbe settings",
-                "properties": {
-                  "initialDelaySeconds": {
                     "$ref": "#/$defs/schema107"
                   }
                 }
@@ -8967,8 +10312,32 @@
                 "additionalProperties": {},
                 "description": "Used to define custom startupProbe settings",
                 "properties": {
+                  "initialDelaySeconds": {
+                    "$ref": "#/$defs/schema111"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema3"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "startupProbe": {
+                "additionalProperties": {},
+                "description": "Used to define custom startupProbe settings",
+                "properties": {
                   "periodSeconds": {
-                    "$ref": "#/$defs/schema128"
+                    "$ref": "#/$defs/schema133"
                   }
                 }
               }
@@ -8992,7 +10361,7 @@
                 "description": "Used to define custom startupProbe settings",
                 "properties": {
                   "successThreshold": {
-                    "$ref": "#/$defs/schema102"
+                    "$ref": "#/$defs/schema104"
                   }
                 }
               }
@@ -9016,7 +10385,7 @@
                 "description": "Used to define custom startupProbe settings",
                 "properties": {
                   "timeoutSeconds": {
-                    "$ref": "#/$defs/schema119"
+                    "$ref": "#/$defs/schema124"
                   }
                 }
               }
@@ -9052,7 +10421,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema72"
+            "$ref": "#/$defs/schema74"
           },
           {
             "$ref": "#/$defs/schema3"
@@ -9068,7 +10437,7 @@
               "strategy": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema137"
+                    "$ref": "#/$defs/schema142"
                   },
                   {
                     "not": {
@@ -9109,7 +10478,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema72"
+            "$ref": "#/$defs/schema74"
           },
           {
             "$ref": "#/$defs/schema3"
@@ -9142,7 +10511,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema66"
+            "$ref": "#/$defs/schema67"
           },
           {
             "$ref": "#/$defs/schema3"
@@ -9182,7 +10551,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/schema66"
+              "$ref": "#/$defs/schema67"
             }
           },
           {
@@ -9238,7 +10607,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema66"
+            "$ref": "#/$defs/schema67"
           },
           {
             "$ref": "#/$defs/schema3"
@@ -9592,7 +10961,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema59"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -9865,7 +11234,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema59"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "not": {
@@ -10002,7 +11371,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/schema69"
+                "$ref": "#/$defs/schema71"
               },
               {
                 "$ref": "#/$defs/schema3"
@@ -10012,7 +11381,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema69"
+                "$ref": "#/$defs/schema71"
               },
               {
                 "anyOf": [
@@ -10072,7 +11441,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema69"
+                "$ref": "#/$defs/schema71"
               },
               {
                 "anyOf": [
@@ -10680,7 +12049,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema69"
+                    "$ref": "#/$defs/schema71"
                   },
                   {
                     "$ref": "#/$defs/schema3"
@@ -10690,7 +12059,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema69"
+                    "$ref": "#/$defs/schema71"
                   },
                   {
                     "anyOf": [
@@ -10750,7 +12119,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema69"
+                    "$ref": "#/$defs/schema71"
                   },
                   {
                     "anyOf": [
@@ -10831,7 +12200,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema94"
                   },
                   {
                     "properties": {
@@ -10902,7 +12271,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema95"
                   },
                   {
                     "properties": {
@@ -11340,7 +12709,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/schema136"
+            "$ref": "#/$defs/schema141"
           }
         }
       }
@@ -11612,7 +12981,7 @@
                   "extraLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema135"
+                        "$ref": "#/$defs/schema140"
                       },
                       {
                         "not": {
@@ -11637,7 +13006,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema94"
                   },
                   {
                     "properties": {
@@ -11697,7 +13066,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema95"
                   },
                   {
                     "properties": {
@@ -12068,7 +13437,7 @@
                   "selectors": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema135"
+                        "$ref": "#/$defs/schema140"
                       },
                       {
                         "not": {
@@ -12320,7 +13689,7 @@
                   "selectors": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema135"
+                        "$ref": "#/$defs/schema140"
                       },
                       {
                         "not": {
@@ -12647,7 +14016,7 @@
         "livenessProbe": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema65"
+              "$ref": "#/$defs/schema66"
             },
             {
               "$ref": "#/$defs/schema13"
@@ -12685,7 +14054,7 @@
         "readinessProbe": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema65"
+              "$ref": "#/$defs/schema66"
             },
             {
               "$ref": "#/$defs/schema13"
@@ -12919,7 +14288,7 @@
         "livenessProbe": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema65"
+              "$ref": "#/$defs/schema66"
             },
             {
               "$ref": "#/$defs/schema13"
@@ -12963,7 +14332,7 @@
         "readinessProbe": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema65"
+              "$ref": "#/$defs/schema66"
             },
             {
               "$ref": "#/$defs/schema13"
@@ -13012,7 +14381,7 @@
             "annotations": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema137"
+                  "$ref": "#/$defs/schema142"
                 },
                 {
                   "type": "string"
@@ -13026,7 +14395,7 @@
         "startupProbe": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema65"
+              "$ref": "#/$defs/schema66"
             },
             {
               "$ref": "#/$defs/schema13"
@@ -13086,71 +14455,6 @@
     "nameOverride": {},
     "server": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "serviceAccount": {
-              "allOf": [
-                {
-                  "if": {
-                    "allOf": [
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema124"
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/schema133"
-                                }
-                              },
-                              {
-                                "$ref": "#/$defs/schema127"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema110"
-                          },
-                          {
-                            "$ref": "#/$defs/schema114"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "name": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template"
-                      }
-                    }
-                  }
-                }
-              ],
-              "description": "Definition of the serviceAccount used to run Vault.\nThese options are also used when using an external Vault server to validate\nKubernetes tokens."
-            }
-          }
-        }
-      ],
       "properties": {
         "affinity": {
           "description": "Affinity Settings\nCommenting out or setting as empty the affinity variable, will allow\ndeployment to single node services such as Minikube\nThis should be either a multi-line string or YAML matching the PodSpec's affinity field.",
@@ -13166,10 +14470,10 @@
           "description": "This configures the Vault Statefulset to create a PVC for audit\nlogs.  Once Vault is deployed, initialized, and unsealed, Vault must\nbe configured to use this for audit logs.  This will be mounted to\n/vault/audit\nSee https://developer.hashicorp.com/vault/docs/audit to know more",
           "properties": {
             "accessMode": {
-              "$ref": "#/$defs/schema117"
+              "$ref": "#/$defs/schema122"
             },
             "annotations": {
-              "$ref": "#/$defs/schema115"
+              "$ref": "#/$defs/schema120"
             },
             "enabled": {},
             "labels": {
@@ -13186,7 +14490,7 @@
               "type": "string"
             },
             "storageClass": {
-              "$ref": "#/$defs/schema105"
+              "$ref": "#/$defs/schema108"
             }
           },
           "type": "object"
@@ -13205,10 +14509,10 @@
           "description": "This configures the Vault Statefulset to create a PVC for data\nstorage when using the file or raft backend storage engines.\nSee https://developer.hashicorp.com/vault/docs/configuration/storage to know more",
           "properties": {
             "accessMode": {
-              "$ref": "#/$defs/schema117"
+              "$ref": "#/$defs/schema122"
             },
             "annotations": {
-              "$ref": "#/$defs/schema115"
+              "$ref": "#/$defs/schema120"
             },
             "enabled": {},
             "labels": {
@@ -13225,7 +14529,7 @@
               "type": "string"
             },
             "storageClass": {
-              "$ref": "#/$defs/schema105"
+              "$ref": "#/$defs/schema108"
             }
           },
           "type": "object"
@@ -13305,13 +14609,13 @@
           "anyOf": [
             {
               "additionalProperties": {
-                "$ref": "#/$defs/schema94"
+                "$ref": "#/$defs/schema96"
               },
               "type": "object"
             },
             {
               "items": {
-                "$ref": "#/$defs/schema94"
+                "$ref": "#/$defs/schema96"
               },
               "type": "array"
             }
@@ -13396,10 +14700,12 @@
           "properties": {
             "activeService": {},
             "additionalRules": {
-              "description": "Additional custom rules that can be added to the route"
+              "description": "Additional custom rules that can be added to the route",
+              "items": {},
+              "type": "array"
             },
             "annotations": {
-              "$ref": "#/$defs/schema137"
+              "$ref": "#/$defs/schema142"
             },
             "enabled": {
               "anyOf": [
@@ -13419,10 +14725,12 @@
               "type": "array"
             },
             "hostnames": {
-              "description": "- host-example"
+              "description": "- host-example",
+              "items": {},
+              "type": "array"
             },
             "labels": {
-              "$ref": "#/$defs/schema137"
+              "$ref": "#/$defs/schema142"
             },
             "matches": {
               "items": {
@@ -13548,7 +14856,7 @@
               "type": "string"
             },
             "labels": {
-              "$ref": "#/$defs/schema137"
+              "$ref": "#/$defs/schema142"
             },
             "pathType": {
               "description": "As of Kubernetes 1.19, all Ingress Paths must have a pathType configured. The default value below should be sufficient in most cases.\nSee: https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types for other possible values.",
@@ -13558,13 +14866,13 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema99"
+                    "$ref": "#/$defs/schema101"
                   },
                   "type": "object"
                 },
                 {
                   "items": {
-                    "$ref": "#/$defs/schema99"
+                    "$ref": "#/$defs/schema101"
                   },
                   "type": "array"
                 }
@@ -13605,26 +14913,26 @@
               "description": "Used to define a liveness exec command. If provided, exec is preferred to httpGet (path) as the livenessProbe handler."
             },
             "failureThreshold": {
-              "$ref": "#/$defs/schema104"
+              "$ref": "#/$defs/schema107"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/schema107"
+              "$ref": "#/$defs/schema111"
             },
             "path": {
               "description": "- /bin/sh\n- -c\n- /vault/userconfig/mylivenessscript/run.sh\nPath for the livenessProbe to use httpGet as the livenessProbe handler"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/schema128"
+              "$ref": "#/$defs/schema133"
             },
             "port": {
               "description": "Port number on which livenessProbe will be checked if httpGet is used as the livenessProbe handler",
               "type": "integer"
             },
             "successThreshold": {
-              "$ref": "#/$defs/schema102"
+              "$ref": "#/$defs/schema104"
             },
             "timeoutSeconds": {
-              "$ref": "#/$defs/schema119"
+              "$ref": "#/$defs/schema124"
             }
           },
           "type": "object"
@@ -13656,7 +14964,7 @@
                       "additionalProperties": {},
                       "properties": {
                         "namespaceSelector": {
-                          "$ref": "#/$defs/schema137"
+                          "$ref": "#/$defs/schema142"
                         }
                       },
                       "type": "object"
@@ -13741,24 +15049,24 @@
               "description": "If you need to use a http path instead of the default exec\npath: /v1/sys/health?standbyok=true"
             },
             "failureThreshold": {
-              "$ref": "#/$defs/schema104"
+              "$ref": "#/$defs/schema107"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/schema107"
+              "$ref": "#/$defs/schema111"
             },
             "path": {},
             "periodSeconds": {
-              "$ref": "#/$defs/schema128"
+              "$ref": "#/$defs/schema133"
             },
             "port": {
               "description": "Port number on which readinessProbe will be checked.",
               "type": "integer"
             },
             "successThreshold": {
-              "$ref": "#/$defs/schema102"
+              "$ref": "#/$defs/schema104"
             },
             "timeoutSeconds": {
-              "$ref": "#/$defs/schema119"
+              "$ref": "#/$defs/schema124"
             }
           },
           "type": "object"
@@ -13776,7 +15084,7 @@
               "description": "When HA mode is enabled and K8s service registration is being used,\nconfigure the route to point to the Vault active service."
             },
             "annotations": {
-              "$ref": "#/$defs/schema137"
+              "$ref": "#/$defs/schema142"
             },
             "enabled": {
               "anyOf": [
@@ -13794,7 +15102,7 @@
               "type": "string"
             },
             "labels": {
-              "$ref": "#/$defs/schema137"
+              "$ref": "#/$defs/schema142"
             },
             "tls": {
               "additionalProperties": {},
@@ -13867,7 +15175,7 @@
             "annotations": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema137"
+                  "$ref": "#/$defs/schema142"
                 },
                 {
                   "type": "string"
@@ -13974,7 +15282,7 @@
                 "container": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema137"
+                      "$ref": "#/$defs/schema142"
                     },
                     {
                       "type": "string"
@@ -13990,7 +15298,7 @@
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/schema137"
+                      "$ref": "#/$defs/schema142"
                     },
                     {
                       "not": {

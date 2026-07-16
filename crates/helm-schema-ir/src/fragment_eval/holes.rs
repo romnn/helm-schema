@@ -431,7 +431,10 @@ impl Interpreter<'_> {
             let sink = if self.hint_scope_is_unconditional(path) {
                 &mut self.fallback_type_hints
             } else {
-                &mut self.guarded_type_hints
+                // Branch-scoped fallback hints keep their fallback identity
+                // (F76): overlay lowering must know they are intent, not a
+                // consumer contract.
+                &mut self.guarded_fallback_type_hints
             };
             sink.entry(path.clone())
                 .or_default()
@@ -579,7 +582,119 @@ impl Interpreter<'_> {
             };
             arms = combine_scalar_arms(arms, segment_arms);
         }
+        self.record_completed_token_contracts(&arms);
         scalar_arms_to_fragment(arms, false)
+    }
+
+    /// Completed-token contracts of a partial scalar (F76): raw inputs that
+    /// corrupt the ASSEMBLED YAML token abort rendering, so they become fail
+    /// captures under the ambient conditions (the absorb site prepends
+    /// them):
+    /// - a raw splice OPENING an unquoted token (`image: {{ x }}/…`) breaks
+    ///   on a list value, whose rendering opens a flow sequence there
+    ///   (tempo's assembled image scalar);
+    /// - a raw splice inside MANUAL double quotes (`image: "{{ x }}/…"`)
+    ///   breaks on strings containing `"` or `\` (zalando's manually quoted
+    ///   image scalar).
+    ///
+    /// Only splices whose rendered text IS the raw value claim (transforms
+    /// like `quote`, `b64enc`, or `trunc` reshape the text), and a path
+    /// claims only when EVERY scalar arm agrees — the arms partition what
+    /// the token renders, so a path present at the position in all of them
+    /// provably reaches it.
+    fn record_completed_token_contracts(&mut self, arms: &[(PathCondition, Vec<StringPart>)]) {
+        fn arm_claims(
+            parts: &[StringPart],
+        ) -> (
+            std::collections::BTreeSet<String>,
+            std::collections::BTreeSet<String>,
+        ) {
+            let opens = matches!(
+                parts.first(),
+                Some(StringPart::Text(alternatives))
+                    if !alternatives.is_empty()
+                        && alternatives.iter().all(|text| text.starts_with('"'))
+            );
+            let closes = matches!(
+                parts.last(),
+                Some(StringPart::Text(alternatives))
+                    if !alternatives.is_empty()
+                        && alternatives.iter().all(|text| text.ends_with('"'))
+            );
+            let double_quoted = parts.len() >= 2 && opens && closes;
+            let mut token_initial = std::collections::BTreeSet::new();
+            let mut quoted = std::collections::BTreeSet::new();
+            let mut preceding_text = false;
+            for (index, part) in parts.iter().enumerate() {
+                match part {
+                    StringPart::Text(alternatives) => {
+                        preceding_text |= alternatives.iter().any(|text| !text.is_empty());
+                    }
+                    StringPart::Splice(splice) => {
+                        let raw = splice.kind == ValueKind::PartialScalar
+                            && !splice.meta.encoded
+                            && !splice.meta.shape_erased
+                            && !splice.meta.yaml_serialized
+                            && !splice.meta.string_contract
+                            && !splice.meta.json_serialized
+                            && !splice.values_path.is_empty();
+                        if !raw {
+                            continue;
+                        }
+                        if double_quoted {
+                            quoted.insert(splice.values_path.clone());
+                        } else if index == 0 && !preceding_text && !splice.meta.defaulted {
+                            // A defaulted splice exempts itself: every
+                            // Helm-falsy input (the empty list included)
+                            // renders the fallback instead of the raw value.
+                            token_initial.insert(splice.values_path.clone());
+                        }
+                    }
+                    StringPart::Taint(_) => {}
+                }
+            }
+            (token_initial, quoted)
+        }
+
+        let mut claims = arms.iter().map(|(_, parts)| arm_claims(parts));
+        let Some((mut token_initial, mut quoted)) = claims.next() else {
+            return;
+        };
+        for (arm_initial, arm_quoted) in claims {
+            token_initial.retain(|path| arm_initial.contains(path));
+            quoted.retain(|path| arm_quoted.contains(path));
+        }
+        let mut captures = Vec::new();
+        for path in token_initial {
+            captures.push(crate::eval_effect::FailCapture {
+                conjunction: vec![Predicate::from(crate::Guard::TypeIs {
+                    path,
+                    schema_type: "array".to_string(),
+                })],
+                ranged: crate::range_modes::RangeModes::default(),
+                kind: crate::eval_effect::CaptureKind::Fail,
+            });
+        }
+        for path in quoted {
+            captures.push(crate::eval_effect::FailCapture {
+                conjunction: vec![
+                    Predicate::from(crate::Guard::TypeIs {
+                        path: path.clone(),
+                        schema_type: "string".to_string(),
+                    }),
+                    Predicate::from(crate::Guard::MatchesPattern {
+                        path,
+                        pattern: "[\"\\\\]".to_string(),
+                        templated: false,
+                    }),
+                ],
+                ranged: crate::range_modes::RangeModes::default(),
+                kind: crate::eval_effect::CaptureKind::Fail,
+            });
+        }
+        if !captures.is_empty() {
+            self.absorb_helper_fails(&captures);
+        }
     }
 
     /// Group a scalar run's parts into segments, folding parts covered by an
