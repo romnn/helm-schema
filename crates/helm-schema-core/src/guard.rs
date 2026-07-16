@@ -117,6 +117,12 @@ pub enum Guard {
     /// the ranged collection; the predicate applies to its matching entries,
     /// not to the collection value itself.
     RangeKeyPrefix { path: String, prefix: String },
+    /// A destructured range key equals a literal (`if eq $key "name"`). The
+    /// path names the ranged collection; the predicate selects exactly the
+    /// entry with that key. Document-level lowering may only use the
+    /// POSITIVE form (the key exists in the collection); the negation runs
+    /// for every OTHER member and has no key-presence encoding.
+    RangeKeyEquals { path: String, key: String },
     /// Disjunction: `if or .Values.A .Values.B`
     Or { paths: Vec<String> },
     /// Disjunction whose arms may each contain a conjunction of typed guards.
@@ -156,6 +162,14 @@ pub enum Guard {
     /// structural placements under the `else` would otherwise apply to
     /// EVERY type of the dispatched path.
     NotTypeIs { path: String, schema_type: String },
+    /// The path's RAW value is a JSON integer strictly greater than `bound`.
+    ///
+    /// This deliberately claims less than the Sprig coercion it stands in
+    /// for: `gt (int64 .Values.x) N` also holds for numeric strings and
+    /// `true`, so this guard is a SOUND SUBSET usable only where firing
+    /// less often is safe (a fail-arm condition), never as an exact branch
+    /// condition whose negation must also hold.
+    IntGt { path: String, bound: i64 },
 }
 
 impl Guard {
@@ -187,11 +201,13 @@ impl Guard {
             | Self::Absent { .. }
             | Self::MatchesPattern { .. }
             | Self::RangeKeyPrefix { .. }
+            | Self::RangeKeyEquals { .. }
             | Self::Range { .. }
             | Self::With { .. }
             | Self::Default { .. }
             | Self::TypeIs { .. }
-            | Self::NotTypeIs { .. } => {}
+            | Self::NotTypeIs { .. }
+            | Self::IntGt { .. } => {}
         }
     }
 
@@ -206,11 +222,13 @@ impl Guard {
             | Guard::Absent { path }
             | Guard::MatchesPattern { path, .. }
             | Guard::RangeKeyPrefix { path, .. }
+            | Guard::RangeKeyEquals { path, .. }
             | Guard::Range { path }
             | Guard::With { path }
             | Guard::Default { path }
             | Guard::TypeIs { path, .. }
-            | Guard::NotTypeIs { path, .. } => {
+            | Guard::NotTypeIs { path, .. }
+            | Guard::IntGt { path, .. } => {
                 vec![path.as_str()]
             }
             Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),
@@ -248,6 +266,10 @@ impl Guard {
                 pattern,
                 templated,
             },
+            Guard::RangeKeyEquals { path, key } => Guard::RangeKeyEquals {
+                path: map(&path),
+                key,
+            },
             Guard::RangeKeyPrefix { path, prefix } => Guard::RangeKeyPrefix {
                 path: map(&path),
                 prefix,
@@ -276,6 +298,10 @@ impl Guard {
             Guard::NotTypeIs { path, schema_type } => Guard::NotTypeIs {
                 path: map(&path),
                 schema_type,
+            },
+            Guard::IntGt { path, bound } => Guard::IntGt {
+                path: map(&path),
+                bound,
             },
         }
     }

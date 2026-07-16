@@ -87,6 +87,40 @@ fn build_single_condition_fragment(
             guard_value_enum_schema(value).map(SchemaNode::not)?,
             !guard_value_matches_optional_yaml(value, yaml_value_at_path(values_yaml_doc, path)),
         ),
+        // The member key is an OPAQUE property name (it may contain dots),
+        // so it becomes a literal `required` entry below the segmented
+        // collection path. An absent collection satisfies the test exactly
+        // when the declared default already ships that key.
+        ConditionalGuard::HasKey { path, key } => build_default_aware_leaf_condition_fragment(
+            path,
+            ancestor_segments,
+            SchemaNode::foreign(serde_json::json!({
+                "type": "object",
+                "required": [key],
+            })),
+            matches!(
+                yaml_value_at_path(values_yaml_doc, path),
+                Some(YamlValue::Mapping(mapping))
+                    if mapping.contains_key(YamlValue::String(key.clone()))
+            ),
+        ),
+        // The guard is a sound SUBSET of its Sprig coercion by definition,
+        // so the explicit test admits raw integers only; an absent key
+        // satisfies it exactly when the declared default is an integer
+        // above the bound (the merged render is then statically decided).
+        ConditionalGuard::IntGt { path, bound } => build_default_aware_leaf_condition_fragment(
+            path,
+            ancestor_segments,
+            SchemaNode::foreign(serde_json::json!({
+                "type": "integer",
+                "exclusiveMinimum": bound,
+            })),
+            matches!(
+                yaml_value_at_path(values_yaml_doc, path),
+                Some(YamlValue::Number(number))
+                    if number.as_i64().is_some_and(|value| value > *bound)
+            ),
+        ),
         ConditionalGuard::Absent { path } => {
             let segments = split_value_path(path);
             let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
@@ -287,6 +321,16 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
         ConditionalGuard::Absent { path } => {
             Some(yaml_value_at_path(values_yaml_doc, path).is_none())
         }
+        ConditionalGuard::IntGt { path, bound } => Some(matches!(
+            yaml_value_at_path(values_yaml_doc, path),
+            Some(YamlValue::Number(number))
+                if number.as_i64().is_some_and(|value| value > *bound)
+        )),
+        ConditionalGuard::HasKey { path, key } => Some(matches!(
+            yaml_value_at_path(values_yaml_doc, path),
+            Some(YamlValue::Mapping(mapping))
+                if mapping.contains_key(YamlValue::String(key.clone()))
+        )),
         ConditionalGuard::TypeIs { path, schema_type } => {
             let Some(value) = yaml_value_at_path(values_yaml_doc, path) else {
                 return Some(false);

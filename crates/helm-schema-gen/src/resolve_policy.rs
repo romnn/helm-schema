@@ -118,6 +118,10 @@ pub(crate) struct ValuePathSchemaInputs {
     /// (add accepted alternatives), never stand alone as its typing —
     /// `allOf` branches can narrow but never re-widen a base.
     pub(crate) guarded_type_hint_schema: Value,
+    /// Hints from literal `default`/`coalesce` fallbacks: they type only the
+    /// truthy arm of the path, so when they are the path's only typing the
+    /// base must keep the whole Helm-falsy set open beside them (F42).
+    pub(crate) fallback_type_hint_schema: Value,
 }
 
 impl ResolvePolicy {
@@ -179,6 +183,8 @@ impl ResolvePolicy {
             | ConditionalGuard::Absent { .. }
             | ConditionalGuard::TypeIs { .. }
             | ConditionalGuard::MatchesPattern { .. }
+            | ConditionalGuard::IntGt { .. }
+            | ConditionalGuard::HasKey { .. }
             | ConditionalGuard::Not(_)
             | ConditionalGuard::AllOf(_)
             | ConditionalGuard::AnyOf(_) => None,
@@ -193,7 +199,22 @@ impl ResolvePolicy {
             guard_predicate_schema,
             type_hint_schema,
             guarded_type_hint_schema,
+            fallback_type_hint_schema,
         } = input;
+        // A fallback hint types only the truthy arm: every Helm-empty input
+        // takes the literal fallback and renders, so when NO independent
+        // channel types the path (a provider slot, a guard comparison, a
+        // runtime string contract, or an ordinary hint), the merged base
+        // must keep the whole Helm-falsy set open beside the hinted type
+        // (F42: cilium `default "1.8" .Values.upgradeCompatibility`).
+        let fallback_hint_only_typing = !is_empty_schema(&fallback_type_hint_schema)
+            && is_empty_schema(&type_hint_schema)
+            && is_empty_schema(&provider_schema)
+            && is_empty_schema(&guard_predicate_schema)
+            && !facts.contract.has_string_contract;
+        // Inside the merge pipeline the fallback hint behaves like an
+        // ordinary hint; only the falsy escape below distinguishes it.
+        let type_hint_schema = merge_two_schemas(type_hint_schema, fallback_type_hint_schema);
         // A serialized or totally-stringified render accepts any input
         // type, so the chart provably tolerates anything at this path in
         // the states where that use is live. The declared default then
@@ -260,6 +281,7 @@ impl ResolvePolicy {
                 guard_predicate_schema,
                 type_hint_schema,
                 guarded_type_hint_schema: empty_schema(),
+                fallback_type_hint_schema: empty_schema(),
             },
             preserve_empty_string_fallback,
         );
@@ -270,14 +292,16 @@ impl ResolvePolicy {
             merged
         };
         let merged = if !is_empty_schema(&merged)
-            && facts.contract.has_render_use
-            && facts.contract.all_render_uses_self_guarded
-            && !facts.contract.has_unconditional_render_use
             && !facts.contract.is_direct_ranged_source
+            && ((facts.contract.has_render_use
+                && facts.contract.all_render_uses_self_guarded
+                && !facts.contract.has_unconditional_render_use)
+                || fallback_hint_only_typing)
         {
-            // Every Helm-falsy value skips a self-guarded consumer. Keeping only the
-            // declared falsy default made schema validity depend on which off-state the
-            // chart happened to ship.
+            // Every Helm-falsy value skips a self-guarded consumer (or takes
+            // a literal fallback before any consumer runs). Keeping only the
+            // declared falsy default made schema validity depend on which
+            // off-state the chart happened to ship.
             union_schema_list(vec![merged, helm_falsy_schema()])
         } else {
             merged
@@ -308,8 +332,13 @@ impl ResolvePolicy {
                 merged,
                 facts.values_yaml.is_empty_map,
                 // Bare `p.*` value rows also spell `*` (map-value flows),
-                // so only STRUCTURED item rows prove a list shape here.
-                facts.contract.has_structured_item_descendants,
+                // so only STRUCTURED item rows prove a list shape here — and
+                // a destructured `range $k, $v` iterates maps just as well,
+                // so its member rows must keep the declared-`{}` map OPEN
+                // for user-named entries instead of pinning the exact empty
+                // off-state (F30: cluster-autoscaler `extraEnvConfigMaps`).
+                facts.contract.has_structured_item_descendants
+                    && !facts.contract.has_destructured_range_use,
                 facts.contract.has_render_use && facts.contract.all_render_uses_self_guarded,
                 facts.contract.used_as_fragment && !facts.contract.is_ranged_source,
             )
@@ -637,6 +666,44 @@ pub(crate) fn conditional_target_schema(
     resolved_fallback: Value,
     active_by_defaults: Option<bool>,
 ) -> Value {
+    let schema = conditional_target_schema_inner(
+        target_value_path,
+        overlay,
+        values_yaml_doc,
+        branch_schema,
+        values_yaml_schema,
+        resolved_fallback,
+        active_by_defaults,
+    );
+    // A branch whose renders all sit behind the path's OWN truthy selection
+    // (`if .Values.x`, `with`, `default`) never consumes a Helm-falsy value:
+    // the guard skips or the fallback substitutes, so the branch's typing
+    // holds only for truthy inputs (F42). The self-guard predicates are
+    // deliberately absent from the overlay key (they double as nullability
+    // evidence), so the falsy escape must ride the arm schema itself. The
+    // declared-default and values.yaml merges above may narrow the escape
+    // away again, which is why it is restored after them.
+    let facts = overlay.evidence.facts;
+    if facts.has_render_use
+        && facts.all_render_uses_self_guarded
+        && !facts.has_unconditional_render_use
+        && !facts.is_direct_ranged_source
+        && !crate::schema_model::is_empty_schema(&schema)
+    {
+        return union_schema_list(vec![schema, helm_falsy_schema()]);
+    }
+    schema
+}
+
+fn conditional_target_schema_inner(
+    target_value_path: &str,
+    overlay: &ConditionalPathOverlay,
+    values_yaml_doc: &YamlValue,
+    branch_schema: Value,
+    values_yaml_schema: Value,
+    resolved_fallback: Value,
+    active_by_defaults: Option<bool>,
+) -> Value {
     let declared_default = yaml_value_at_path(values_yaml_doc, target_value_path)
         .and_then(|value| serde_json::to_value(value).ok());
     // A branch that rejects the path's own declared default narrows values
@@ -787,6 +854,8 @@ fn collect_positive_self_types(
         }
         helm_schema_core::ConditionalGuard::Truthy { .. }
         | helm_schema_core::ConditionalGuard::With { .. }
+        | helm_schema_core::ConditionalGuard::IntGt { .. }
+        | helm_schema_core::ConditionalGuard::HasKey { .. }
         | helm_schema_core::ConditionalGuard::Eq { .. }
         | helm_schema_core::ConditionalGuard::NotEq { .. }
         | helm_schema_core::ConditionalGuard::Absent { .. }

@@ -14,6 +14,12 @@ pub(crate) struct Effects {
     /// helper body: they hold only where those branches render, so they may
     /// type conditional overlays but never the unconditional base.
     pub(crate) guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Input-type hints from a literal `default`/`coalesce` fallback. The
+    /// selection call itself never consumes the raw value — every Helm-empty
+    /// input takes the fallback and renders — so these type only the TRUTHY
+    /// arm of the path and must never close the base against the Helm-falsy
+    /// set (F42).
+    pub(crate) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Types observed by a predicate expression. These become input
     /// alternatives only when an expression such as `ternary` consumes the
     /// predicate; control-flow lowering owns ordinary `if`/`with` guards.
@@ -179,6 +185,7 @@ impl Effects {
             defaults,
             type_hints,
             guarded_type_hints,
+            fallback_type_hints,
             tested_type_hints,
             parsed_yaml_input_paths,
             yaml_serialized_paths,
@@ -269,6 +276,11 @@ impl Effects {
                 insert_type_hint(&mut self.guarded_type_hints, path.clone(), &hint);
             }
         }
+        for (path, hints) in fallback_type_hints {
+            for hint in hints {
+                insert_type_hint(&mut self.fallback_type_hints, path.clone(), &hint);
+            }
+        }
         for (path, hints) in tested_type_hints {
             for hint in hints {
                 insert_type_hint(&mut self.tested_type_hints, path.clone(), &hint);
@@ -293,6 +305,7 @@ impl Effects {
             defaults: _,
             type_hints: _,
             guarded_type_hints: _,
+            fallback_type_hints: _,
             tested_type_hints: _,
             parsed_yaml_input_paths,
             yaml_serialized_paths,
@@ -330,6 +343,7 @@ impl Effects {
             defaults: BTreeSet::new(),
             type_hints: BTreeMap::new(),
             guarded_type_hints: BTreeMap::new(),
+            fallback_type_hints: BTreeMap::new(),
             tested_type_hints: BTreeMap::new(),
             parsed_yaml_input_paths,
             yaml_serialized_paths,
@@ -367,6 +381,14 @@ impl Effects {
         for path in paths {
             if !path.trim().is_empty() {
                 insert_type_hint(&mut self.type_hints, path, schema_type);
+            }
+        }
+    }
+
+    pub(crate) fn add_fallback_type_hints(&mut self, paths: BTreeSet<String>, schema_type: &str) {
+        for path in paths {
+            if !path.trim().is_empty() {
+                insert_type_hint(&mut self.fallback_type_hints, path, schema_type);
             }
         }
     }

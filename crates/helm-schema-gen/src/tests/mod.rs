@@ -24,11 +24,13 @@ mod bound_helpers;
 mod default_hint_extraction;
 mod empty_collections;
 mod fail_validators;
+mod fallback_selection;
 mod fragment_projection;
 mod fragment_seeds;
 mod guard_lowering;
 mod helper_projection;
 mod iterable_lanes;
+mod kind_partition_matrix;
 mod member_access_contracts;
 mod member_serialized_shapes;
 mod nullability_defaults;
@@ -221,14 +223,15 @@ fn schema_accepts_instance(schema: &Value, instance: &Value) -> bool {
 }
 
 fn type_hints_for(source: impl SchemaSignalSource) -> BTreeMap<String, BTreeSet<String>> {
-    // Union of base hints and overlay-scoped hints: callers pin that a hint
-    // was extracted at all, not which scope it binds in.
+    // Union of base, fallback-scoped, and overlay-scoped hints: callers pin
+    // that a hint was extracted at all, not which scope it binds in.
     source
         .into_schema_signals()
         .schema_evidence_by_value_path()
         .iter()
         .map(|(path, evidence)| {
             let mut hints = evidence.type_hints.clone();
+            hints.extend(evidence.fallback_type_hints.iter().cloned());
             for overlay in &evidence.conditional_overlays {
                 hints.extend(overlay.evidence.type_hints.iter().cloned());
             }

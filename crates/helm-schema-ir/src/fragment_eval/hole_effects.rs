@@ -191,6 +191,7 @@ impl Interpreter<'_> {
         };
         if has_helper_claims {
             claims.extend(effects.type_hints.keys().cloned());
+            claims.extend(effects.fallback_type_hints.keys().cloned());
         }
         self.absorb_hole_effects(&effects, RenderedDemotion::None);
 
@@ -310,7 +311,7 @@ impl Interpreter<'_> {
             };
             match guard {
                 Guard::Range { .. } | Guard::With { .. } | Guard::Default { .. } => false,
-                Guard::RangeKeyPrefix { .. } => true,
+                Guard::RangeKeyPrefix { .. } | Guard::RangeKeyEquals { .. } => true,
                 Guard::Truthy { path: guard_path }
                 | Guard::Not { path: guard_path }
                 | Guard::Absent { path: guard_path }
@@ -321,6 +322,9 @@ impl Interpreter<'_> {
                     path: guard_path, ..
                 }
                 | Guard::MatchesPattern {
+                    path: guard_path, ..
+                }
+                | Guard::IntGt {
                     path: guard_path, ..
                 } => !guard_path.trim().is_empty() && foreign(guard_path),
                 // A type test PARTITIONS its subject: hints observed under
@@ -394,6 +398,19 @@ impl Interpreter<'_> {
             }
             self.guarded_type_hints
                 .entry(path.clone())
+                .or_default()
+                .extend(hints.iter().cloned());
+        }
+        for (path, hints) in &effects.fallback_type_hints {
+            if path.trim().is_empty() {
+                continue;
+            }
+            let sink = if self.hint_scope_is_unconditional(path) {
+                &mut self.fallback_type_hints
+            } else {
+                &mut self.guarded_type_hints
+            };
+            sink.entry(path.clone())
                 .or_default()
                 .extend(hints.iter().cloned());
         }

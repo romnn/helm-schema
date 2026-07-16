@@ -334,6 +334,7 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
         guard_predicate_schema: serde_json::json!({}),
         type_hint_schema: serde_json::json!({}),
         guarded_type_hint_schema: serde_json::json!({}),
+        fallback_type_hint_schema: serde_json::json!({}),
     });
 
     assert!(

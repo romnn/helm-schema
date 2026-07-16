@@ -446,27 +446,6 @@
     },
     {
       "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/schema19"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -615,7 +594,37 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/schema19"
           }
         }
       }
@@ -3551,25 +3560,62 @@
       ],
       "properties": {
         "autoReloadAll": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "custom_annotations": {
-          "additionalProperties": {},
-          "description": "Optional flags to pass to the Reloader entrypoint\nExample:\ncustom_annotations:\nconfigmap: \"my.company.com/configmap\"\nsecret: \"my.company.com/secret\"\nignore: \"my.company.com/reloader-ignore\"",
-          "properties": {
-            "configmap": {
-              "type": [
-                "string",
-                "null"
-              ]
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
             },
-            "secret": {
-              "type": [
-                "string",
-                "null"
-              ]
+            {
+              "additionalProperties": {},
+              "properties": {
+                "configmap": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "secret": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "type": "object"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
             }
-          },
+          ],
+          "description": "Optional flags to pass to the Reloader entrypoint\nExample:\ncustom_annotations:\nconfigmap: \"my.company.com/configmap\"\nsecret: \"my.company.com/secret\"\nignore: \"my.company.com/reloader-ignore\"",
           "type": "object"
         },
         "deployment": {
@@ -3902,7 +3948,16 @@
           "type": "object"
         },
         "enableCSIIntegration": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "enableHA": {
           "anyOf": [
@@ -3922,29 +3977,97 @@
           "type": "boolean"
         },
         "enablePProf": {
-          "description": "Set to true to enable pprof for profiling",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Set to true to enable pprof for profiling"
         },
         "ignoreConfigMaps": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "ignoreCronJobs": {
-          "description": "Set to true to exclude CronJob workloads from automatic reload monitoring\nUseful when you don't want CronJobs to be restarted when their referenced ConfigMaps/Secrets change",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Set to true to exclude CronJob workloads from automatic reload monitoring\nUseful when you don't want CronJobs to be restarted when their referenced ConfigMaps/Secrets change"
         },
         "ignoreJobs": {
-          "description": "Set to true to exclude Job workloads from automatic reload monitoring\nUseful when you don't want Jobs to be restarted when their referenced ConfigMaps/Secrets change",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Set to true to exclude Job workloads from automatic reload monitoring\nUseful when you don't want Jobs to be restarted when their referenced ConfigMaps/Secrets change"
         },
         "ignoreNamespaces": {
-          "description": "Comma separated list of namespaces to ignore",
-          "type": "string"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Comma separated list of namespaces to ignore"
         },
         "ignoreSecrets": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "isArgoRollouts": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "enum": [
+                true
+              ]
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "isOpenshift": {
           "type": "boolean"
@@ -3959,12 +4082,30 @@
           "type": "object"
         },
         "logFormat": {
-          "description": "json",
-          "type": "string"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "json"
         },
         "logLevel": {
-          "description": "Log level to use (trace, debug, info, warning, error, fatal and panic)",
-          "type": "string"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Log level to use (trace, debug, info, warning, error, fatal and panic)"
         },
         "matchLabels": {},
         "namespaceSelector": {
@@ -4092,18 +4233,64 @@
           "description": "Set to true if you have a pod security policy that enforces readOnlyRootFilesystem"
         },
         "reloadOnCreate": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "enum": [
+                true
+              ]
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "reloadOnDelete": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "enum": [
+                true
+              ]
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "reloadStrategy": {
-          "description": "Set to default, env-vars or annotations",
-          "type": "string"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Set to default, env-vars or annotations"
         },
         "resourceLabelSelector": {
-          "description": "Comma separated list of k8s label selectors for configmap/secret selection",
-          "type": "string"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Comma separated list of k8s label selectors for configmap/secret selection"
         },
         "service": {
           "anyOf": [
@@ -4184,8 +4371,17 @@
               "$ref": "#/$defs/schema3"
             },
             "enabled": {
-              "description": "Deprecated: Service monitor will be removed in future releases of reloader in favour of Pod monitor\nEnabling this requires service to be enabled as well, or no endpoints will be found\nSet the namespace the ServiceMonitor should be deployed\nnamespace: monitoring",
-              "type": "boolean"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "description": "Deprecated: Service monitor will be removed in future releases of reloader in favour of Pod monitor\nEnabling this requires service to be enabled as well, or no endpoints will be found\nSet the namespace the ServiceMonitor should be deployed\nnamespace: monitoring"
             },
             "honorLabels": {
               "$ref": "#/$defs/schema5"
@@ -4196,6 +4392,7 @@
             "metricRelabelings": {
               "$ref": "#/$defs/schema2"
             },
+            "namespace": {},
             "relabelings": {
               "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace",
               "items": {},
@@ -4221,7 +4418,16 @@
               "type": "array"
             },
             "enabled": {
-              "type": "boolean"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
             },
             "maxAllowed": {
               "additionalProperties": {},

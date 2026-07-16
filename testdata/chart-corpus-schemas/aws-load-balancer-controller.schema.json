@@ -663,8 +663,17 @@
             "description": "Overrideable variables when enableCertManager is set to true",
             "properties": {
               "renewBefore": {
-                "description": "30 days",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "30 days"
               }
             }
           }
@@ -2215,27 +2224,6 @@
     },
     {
       "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/schema37"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -2394,7 +2382,37 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/schema37"
           }
         }
       }
@@ -4445,7 +4463,16 @@
             "additionalProperties": {},
             "properties": {
               "targetCPUUtilizationPercentage": {
-                "type": "integer"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
               }
             }
           }
@@ -4673,7 +4700,18 @@
       ],
       "description": "To use IngressClass resource instead of annotation, before you need to install the IngressClass resource pointing to controller.\nIf specified as true, the IngressClass resource will be created."
     },
-    "creator": {},
+    "creator": {
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
     "defaultLoadBalancerScheme": {
       "description": "Default load balancer scheme when not specifying \"alb.ingress.kubernetes.io/scheme\" or\n\"service.beta.kubernetes.io/aws-load-balancer-scheme\" annotations.\nPossible values are \"internal\" and \"internet-facing\" (default \"internal\")"
     },
@@ -5005,9 +5043,21 @@
       ]
     },
     "podDisruptionBudget": {
-      "additionalProperties": {},
-      "description": "podDisruptionBudget specifies the disruption budget for the controller pods.\nDisruption budget will be configured only when the replicaCount is greater than 1\nmaxUnavailable: 1",
-      "type": "object"
+      "anyOf": [
+        {
+          "$ref": "#/$defs/schema28"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        }
+      ],
+      "description": "podDisruptionBudget specifies the disruption budget for the controller pods.\nDisruption budget will be configured only when the replicaCount is greater than 1\nmaxUnavailable: 1"
     },
     "podLabels": {
       "anyOf": [
@@ -5098,11 +5148,20 @@
       "description": "readiness probe configuration for the controller"
     },
     "region": {
-      "description": "The AWS region for the kubernetes cluster. Set to use KIAM or kube2iam for example.",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The AWS region for the kubernetes cluster. Set to use KIAM or kube2iam for example."
     },
     "replicaCount": {},
     "resources": {
@@ -5325,8 +5384,17 @@
             "additionalProperties": {},
             "properties": {
               "interval": {
-                "description": "Prometheus scrape interval",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Prometheus scrape interval"
               }
             }
           }
@@ -5506,11 +5574,20 @@
       "description": "type: RollingUpdate\nrollingUpdate:\nmaxSurge: 1\nmaxUnavailable: 1"
     },
     "vpcId": {
-      "description": "The VPC ID for the Kubernetes cluster. Set this manually when your pods are unable to use the metadata service to determine this automatically",
-      "type": [
-        "string",
-        "null"
-      ]
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "The VPC ID for the Kubernetes cluster. Set this manually when your pods are unable to use the metadata service to determine this automatically"
     },
     "vpcTags": {
       "allOf": [

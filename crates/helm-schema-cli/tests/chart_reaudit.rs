@@ -1457,3 +1457,238 @@ fn jaeger_http_route_validator_requires_a_parent_reference() -> color_eyre::eyre
         ],
     )
 }
+
+/// F45: flux2's shared `template.image` helper slices every controller tag
+/// with `substr 0 7` before comparing against `sha256:`, so a non-string tag
+/// terminates rendering while ordinary and digest tags render.
+#[test]
+fn flux2_controller_tags_require_substr_string_subjects() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "flux2",
+        vec![
+            SemanticCase::rejected(
+                "mapping kustomize-controller tag",
+                "/kustomizeController/tag",
+                json!({ "kustomizeController": { "tag": { "bad": true } } }),
+            ),
+            SemanticCase::rejected("list CLI tag", "/cli/tag", json!({ "cli": { "tag": [1] } })),
+            SemanticCase::accepted(
+                "plain version tag",
+                json!({ "kustomizeController": { "tag": "v1.2.3" } }),
+            ),
+            SemanticCase::accepted("digest tag", json!({ "cli": { "tag": "sha256:0123abcd" } })),
+        ],
+    )
+}
+
+/// F42: `semverCompare ">=X" (default "X" .Values.upgradeCompatibility)`
+/// only parses the raw value on its truthy arm. Every Helm-empty input
+/// selects the literal fallback and renders, while a truthy non-semver
+/// input still terminates inside the parser.
+#[test]
+fn cilium_upgrade_compatibility_keeps_helm_empty_inputs_open() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "cilium",
+        vec![
+            SemanticCase::accepted(
+                "false selects the fallback",
+                json!({ "upgradeCompatibility": false }),
+            ),
+            SemanticCase::accepted(
+                "empty map selects the fallback",
+                json!({ "upgradeCompatibility": {} }),
+            ),
+            SemanticCase::accepted(
+                "plain version string",
+                json!({ "upgradeCompatibility": "1.14" }),
+            ),
+            SemanticCase::rejected(
+                "truthy non-semver string",
+                "/upgradeCompatibility",
+                json!({ "upgradeCompatibility": "garbage" }),
+            ),
+            SemanticCase::rejected(
+                "truthy map reaches the parser",
+                "/upgradeCompatibility",
+                json!({ "upgradeCompatibility": { "a": 1 } }),
+            ),
+        ],
+    )
+}
+
+/// F42: cloudnative-pg selects `default .Chart.Name .Values.nameOverride`
+/// before `trunc`/`contains`, and reads `namespaceOverride` only inside its
+/// own truthy `if`; Helm-empty overrides substitute or skip and render.
+#[test]
+fn cloudnative_pg_override_fallbacks_keep_helm_empty_inputs_open() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "cloudnative-pg",
+        vec![
+            SemanticCase::accepted("false name override", json!({ "nameOverride": false })),
+            SemanticCase::accepted("empty map name override", json!({ "nameOverride": {} })),
+            SemanticCase::accepted("string name override", json!({ "nameOverride": "custom" })),
+            SemanticCase::rejected(
+                "truthy map survives selection and aborts trunc",
+                "/nameOverride",
+                json!({ "nameOverride": { "a": 1 } }),
+            ),
+            SemanticCase::accepted(
+                "false namespace override is skipped",
+                json!({ "namespaceOverride": false }),
+            ),
+            SemanticCase::accepted(
+                "string namespace override",
+                json!({ "namespaceOverride": "ns" }),
+            ),
+        ],
+    )
+}
+
+/// F86: the master template's direct `ternary "no" "yes" .Values.auth.enabled`
+/// call sits under `gt (int64 .Values.master.count) 0` plus the
+/// standalone/sentinel partition. The Boolean contract must hold on BOTH
+/// architecture arms, while scaling the master to zero keeps the whole
+/// partition dead.
+#[test]
+fn bitnami_redis_auth_ternary_holds_across_architecture_partitions() -> color_eyre::eyre::Result<()>
+{
+    assert_chart_cases(
+        "bitnami-redis",
+        vec![
+            SemanticCase::rejected(
+                "replication string auth.enabled",
+                "/auth/enabled",
+                json!({ "auth": { "enabled": "true" } }),
+            ),
+            SemanticCase::rejected(
+                "standalone string auth.enabled",
+                "/auth/enabled",
+                json!({ "architecture": "standalone", "auth": { "enabled": "true" } }),
+            ),
+            SemanticCase::accepted(
+                "standalone Boolean auth.enabled",
+                json!({ "architecture": "standalone", "auth": { "enabled": true } }),
+            ),
+            SemanticCase::accepted(
+                "replication Boolean auth.enabled",
+                json!({ "auth": { "enabled": true } }),
+            ),
+            SemanticCase::accepted(
+                "scaled-to-zero master never runs the ternary",
+                json!({
+                    "architecture": "standalone",
+                    "master": { "count": 0 },
+                    "auth": { "enabled": "true" }
+                }),
+            ),
+        ],
+    )
+}
+
+/// F59/F93: velero ranges `.Values.schedules` and emits each member as a
+/// `velero.io/v1 Schedule`, so the chart-local CRD's member schema applies
+/// through `additionalProperties` to every (arbitrarily named) entry.
+#[test]
+fn velero_schedule_members_carry_the_crd_member_schema() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "velero",
+        vec![
+            SemanticCase::rejected(
+                "string paused on a ranged member",
+                "/schedules/audit/paused",
+                json!({ "schedules": { "audit": { "schedule": "0 0 * * *", "paused": "audit" } } }),
+            ),
+            SemanticCase::accepted(
+                "Boolean paused on a ranged member",
+                json!({ "schedules": { "audit": { "schedule": "0 0 * * *", "paused": true } } }),
+            ),
+            SemanticCase::rejected(
+                "invalid hook onError enum",
+                "/schedules/audit/template",
+                json!({
+                    "schedules": { "audit": { "schedule": "0 0 * * *", "template": {
+                        "hooks": { "resources": [{ "name": "h", "post": [{
+                            "exec": { "command": ["/bin/x"], "onError": "audit" }
+                        }] }] }
+                    } } }
+                }),
+            ),
+            SemanticCase::accepted(
+                "valid hook onError enum",
+                json!({
+                    "schedules": { "audit": { "schedule": "0 0 * * *", "template": {
+                        "hooks": { "resources": [{ "name": "h", "post": [{
+                            "exec": { "command": ["/bin/x"], "onError": "Fail" }
+                        }] }] }
+                    } } }
+                }),
+            ),
+            SemanticCase::accepted(
+                "disabled member skips the document",
+                json!({ "schedules": { "audit": { "disabled": true, "paused": "audit" } } }),
+            ),
+        ],
+    )
+}
+
+/// F30: `extraEnvConfigMaps` is a user-keyed map the deployment destructures
+/// (`range $key, $value`), so a complete member renders while the member
+/// contract still enforces the `required "Must specify key!"` read and the
+/// structural `.name` access.
+#[test]
+fn cluster_autoscaler_env_config_map_members_stay_open_with_contracts()
+-> color_eyre::eyre::Result<()> {
+    let live = json!({ "autoDiscovery": { "clusterName": "audit-cluster" } });
+    let merge = |extra: serde_json::Value| {
+        let mut base = live.clone();
+        base.as_object_mut()
+            .expect("object")
+            .insert("extraEnvConfigMaps".to_string(), extra);
+        base
+    };
+    assert_chart_cases(
+        "cluster-autoscaler",
+        vec![
+            SemanticCase::accepted(
+                "complete dynamic member",
+                merge(json!({ "AUDIT": { "name": "cfg", "key": "value" } })),
+            ),
+            SemanticCase::rejected(
+                "member missing the required key",
+                "/extraEnvConfigMaps",
+                merge(json!({ "AUDIT": { "name": "cfg" } })),
+            ),
+            SemanticCase::rejected(
+                "scalar member cannot host field reads",
+                "/extraEnvConfigMaps",
+                merge(json!({ "AUDIT": 7 })),
+            ),
+        ],
+    )
+}
+
+/// F53: every `server.remoteWrite` member's `url` reaches `tpl` (a strict
+/// string consumer) inside the serverFiles dispatch, so a non-string URL
+/// terminates rendering while string URLs pass.
+#[test]
+fn prometheus_remote_write_urls_require_strings() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "prometheus",
+        vec![
+            SemanticCase::rejected(
+                "numeric remoteWrite url",
+                "/server/remoteWrite",
+                json!({ "server": { "remoteWrite": [{ "url": 7 }] } }),
+            ),
+            SemanticCase::rejected(
+                "member missing url",
+                "/server/remoteWrite",
+                json!({ "server": { "remoteWrite": [{ "name": "x" }] } }),
+            ),
+            SemanticCase::accepted(
+                "string remoteWrite url",
+                json!({ "server": { "remoteWrite": [{ "url": "http://mimir/push" }] } }),
+            ),
+        ],
+    )
+}

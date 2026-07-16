@@ -424,6 +424,19 @@ impl Interpreter<'_> {
                 .or_default()
                 .extend(hints.iter().cloned());
         }
+        for (path, hints) in &summary.fallback_type_hints {
+            if path.trim().is_empty() {
+                continue;
+            }
+            let sink = if self.hint_scope_is_unconditional(path) {
+                &mut self.fallback_type_hints
+            } else {
+                &mut self.guarded_type_hints
+            };
+            sink.entry(path.clone())
+                .or_default()
+                .extend(hints.iter().cloned());
+        }
         self.shape_erased_paths
             .extend(summary.shape_erased_paths.iter().cloned());
         self.yaml_serialized_paths

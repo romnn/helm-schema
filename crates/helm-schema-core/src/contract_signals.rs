@@ -6,13 +6,45 @@ use crate::{GuardValue, ProviderSchemaUse};
 /// conditionals.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ConditionalGuard {
-    Truthy { path: String },
-    With { path: String },
-    Eq { path: String, value: GuardValue },
-    NotEq { path: String, value: GuardValue },
-    Absent { path: String },
-    TypeIs { path: String, schema_type: String },
-    MatchesPattern { path: String, pattern: String },
+    Truthy {
+        path: String,
+    },
+    With {
+        path: String,
+    },
+    Eq {
+        path: String,
+        value: GuardValue,
+    },
+    NotEq {
+        path: String,
+        value: GuardValue,
+    },
+    Absent {
+        path: String,
+    },
+    TypeIs {
+        path: String,
+        schema_type: String,
+    },
+    MatchesPattern {
+        path: String,
+        pattern: String,
+    },
+    /// The path's RAW value is a JSON integer strictly greater than `bound`
+    /// — a sound SUBSET of the Sprig coercion (`gt (int64 x) bound`) it
+    /// stands in for, valid only where firing less often is safe.
+    IntGt {
+        path: String,
+        bound: i64,
+    },
+    /// The mapping at `path` contains the literal member `key`. The key is
+    /// an OPAQUE property name (it may contain dots), so it rides beside
+    /// the segmented path instead of being appended to it.
+    HasKey {
+        path: String,
+        key: String,
+    },
     Not(Box<ConditionalGuard>),
     AllOf(Vec<ConditionalGuard>),
     AnyOf(Vec<ConditionalGuard>),
@@ -34,7 +66,9 @@ impl ConditionalGuard {
             | Self::NotEq { path, .. }
             | Self::Absent { path }
             | Self::TypeIs { path, .. }
-            | Self::MatchesPattern { path, .. } => {
+            | Self::MatchesPattern { path, .. }
+            | Self::IntGt { path, .. }
+            | Self::HasKey { path, .. } => {
                 paths.insert(path.clone());
             }
             Self::Not(inner) => inner.collect_value_paths(paths),
@@ -84,6 +118,7 @@ impl ConditionalOverlayEvidence {
             metadata_field_kinds: self.metadata_field_kinds.clone(),
             type_hints: self.type_hints.clone(),
             guarded_type_hints: BTreeSet::new(),
+            fallback_type_hints: BTreeSet::new(),
             provider_schema_uses: self.provider_schema_uses.clone(),
             requiredness: ContractRequirednessEvidence::default(),
             conditional_overlays: Vec::new(),
@@ -124,6 +159,11 @@ pub struct ContractPathSchemaEvidence {
     /// base): `allOf` branches can narrow but never re-widen a base, so a
     /// branch-scoped domain alternative must surface here.
     pub guarded_type_hints: BTreeSet<String>,
+    /// Hints from literal `default`/`coalesce` fallbacks. The selection call
+    /// never consumes the raw value — every Helm-empty input takes the
+    /// fallback — so these type only the truthy arm and base lowering must
+    /// keep the whole Helm-falsy set open beside them (F42).
+    pub fallback_type_hints: BTreeSet<String>,
     pub provider_schema_uses: Vec<ProviderSchemaUse>,
     pub requiredness: ContractRequirednessEvidence,
     pub conditional_overlays: Vec<ConditionalPathOverlay>,
@@ -179,6 +219,14 @@ pub enum ContractRequirementTarget {
         guard_path: Vec<String>,
         value: GuardValue,
         target_path: Vec<String>,
+    },
+    /// Every ranged member must CONTAIN `target_path` and its value there
+    /// must satisfy the requirements — an unconditional per-member field
+    /// read by a strict consumer (`tpl $member.url` fails on a missing or
+    /// non-string field). `allow_integer` mirrors [`Self::Members`].
+    MembersAt {
+        target_path: Vec<String>,
+        allow_integer: bool,
     },
     /// Every key produced by ranging the path.
     Keys,

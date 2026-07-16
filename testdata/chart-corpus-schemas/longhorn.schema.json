@@ -391,6 +391,17 @@
     },
     "schema42": {
       "properties": {
+        "certificate": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "certificate"
+      ],
+      "type": "object"
+    },
+    "schema43": {
+      "properties": {
         "createStorageClass": {}
       },
       "required": [
@@ -398,13 +409,13 @@
       ],
       "type": "object"
     },
-    "schema44": {
+    "schema45": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema46": {
+    "schema47": {
       "additionalProperties": {
         "type": "string"
       },
@@ -1493,6 +1504,11 @@
                     "type": "array"
                   },
                   {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
                     "type": "string"
                   }
                 ],
@@ -2310,6 +2326,134 @@
                   {
                     "additionalProperties": {
                       "$ref": "#/$defs/schema41"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Secret that contains a TLS private key and certificate. Use secrets if you want to use your own certificates to secure ingresses."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ingress": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
+            "properties": {
+              "secrets": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "$ref": "#/$defs/schema42"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "additionalProperties": {
+                      "$ref": "#/$defs/schema42"
+                    },
+                    "type": "object"
+                  },
+                  {
+                    "maximum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Secret that contains a TLS private key and certificate. Use secrets if you want to use your own certificates to secure ingresses."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "ingress": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "ingress"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
+            "properties": {
+              "secrets": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "key"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "additionalProperties": {
+                      "properties": {
+                        "key": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "key"
+                      ],
+                      "type": "object"
                     },
                     "type": "object"
                   },
@@ -4248,6 +4392,11 @@
               "registrySecret": {
                 "anyOf": [
                   {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
                     "type": "null"
                   },
                   {
@@ -4365,10 +4514,10 @@
     "annotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema44"
+          "$ref": "#/$defs/schema45"
         },
         {
-          "$ref": "#/$defs/schema46"
+          "$ref": "#/$defs/schema47"
         },
         {
           "not": {
@@ -4826,8 +4975,17 @@
           "description": "Global override for image pull secrets for container registry."
         },
         "imageRegistry": {
-          "description": "Global override for container image registry.",
-          "type": "string"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Global override for container image registry."
         },
         "nodeSelector": {
           "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
@@ -4862,7 +5020,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema46"
+                    "$ref": "#/$defs/schema47"
                   },
                   {
                     "not": {
@@ -4871,6 +5029,38 @@
                   }
                 ],
                 "description": "Annotations for the HTTPRoute resource in the form of key-value pairs.\nExample:\nannotation-key1: \"annotation-value1\""
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "hostnames": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "List of hostnames for the HTTPRoute. Multiple hostnames are supported.\nExample:\n- longhorn.example.com\n- longhorn.example.org"
               }
             }
           }
@@ -4907,29 +5097,6 @@
             "properties": {
               "hostnames": {
                 "$ref": "#/$defs/schema16"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "hostnames": {
-                "description": "List of hostnames for the HTTPRoute. Multiple hostnames are supported.\nExample:\n- longhorn.example.com\n- longhorn.example.org",
-                "items": {},
-                "type": "array"
               }
             }
           }
@@ -5218,8 +5385,17 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the CSI attacher image. When unspecified, Longhorn uses the default value.",
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Registry for the CSI attacher image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
                   "description": "Repository for the CSI attacher image. When unspecified, Longhorn uses the default value."
@@ -5234,8 +5410,17 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the CSI liveness probe image. When unspecified, Longhorn uses the default value.",
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Registry for the CSI liveness probe image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
                   "description": "Repository for the CSI liveness probe image. When unspecified, Longhorn uses the default value."
@@ -5250,8 +5435,17 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value.",
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Registry for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
                   "description": "Repository for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value."
@@ -5266,8 +5460,17 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the CSI Provisioner image. When unspecified, Longhorn uses the default value.",
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Registry for the CSI Provisioner image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
                   "description": "Repository for the CSI Provisioner image. When unspecified, Longhorn uses the default value."
@@ -5282,8 +5485,17 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the CSI Resizer image. When unspecified, Longhorn uses the default value.",
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Registry for the CSI Resizer image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
                   "description": "Repository for the CSI Resizer image. When unspecified, Longhorn uses the default value."
@@ -5298,8 +5510,17 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the CSI Snapshotter image. When unspecified, Longhorn uses the default value.",
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Registry for the CSI Snapshotter image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
                   "description": "Repository for the CSI Snapshotter image. When unspecified, Longhorn uses the default value."
@@ -5320,8 +5541,17 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the Backing Image Manager image. When unspecified, Longhorn uses the default value.",
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Registry for the Backing Image Manager image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
                   "description": "Repository for the Backing Image Manager image. When unspecified, Longhorn uses the default value."
@@ -5336,8 +5566,17 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the Longhorn Engine image.",
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Registry for the Longhorn Engine image."
                 },
                 "repository": {
                   "description": "Repository for the Longhorn Engine image."
@@ -5352,8 +5591,17 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the Longhorn Instance Manager image.",
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Registry for the Longhorn Instance Manager image."
                 },
                 "repository": {
                   "description": "Repository for the Longhorn Instance Manager image."
@@ -5368,8 +5616,17 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the Longhorn Manager image.",
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Registry for the Longhorn Manager image."
                 },
                 "repository": {
                   "description": "Repository for the Longhorn Manager image."
@@ -5384,8 +5641,17 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the Longhorn Share Manager image.",
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Registry for the Longhorn Share Manager image."
                 },
                 "repository": {
                   "description": "Repository for the Longhorn Share Manager image."
@@ -5400,8 +5666,17 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the Longhorn Support Bundle Manager image.",
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Registry for the Longhorn Support Bundle Manager image."
                 },
                 "repository": {
                   "description": "Repository for the Longhorn Support Bundle Manager image."
@@ -5416,8 +5691,17 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the Longhorn UI image.",
-                  "type": "string"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Registry for the Longhorn UI image."
                 },
                 "repository": {
                   "description": "Repository for the Longhorn UI image."
@@ -5439,14 +5723,27 @@
                 {
                   "additionalProperties": {},
                   "properties": {
-                    "repository": {
-                      "description": "Repository for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
+                    "registry": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ],
+                      "description": "Registry for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
                     }
                   }
                 },
                 {
                   "additionalProperties": {},
                   "properties": {
+                    "repository": {
+                      "description": "Repository for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
+                    },
                     "tag": {
                       "description": "Tag for the OAuth Proxy image. Specify OCP/OKD version 4.1 or later (including version 4.18, which is available at quay.io/openshift/origin-oauth-proxy:4.18). This setting applies only to OpenShift users."
                     }
@@ -5485,7 +5782,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema46"
+                    "$ref": "#/$defs/schema47"
                   },
                   {
                     "not": {
@@ -5500,6 +5797,61 @@
                   }
                 ],
                 "description": "Ingress annotations in the form of key-value pairs.\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: true"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "extraHosts": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "Extra hostnames for TLS (Subject Alternative Names - SAN). Used when you need multiple FQDNs for the same ingress.\nExample:\nextraHosts:\n- longhorn.example.com\n- longhorn-ui.internal.local"
               }
             }
           }
@@ -5888,10 +6240,10 @@
         "serviceAnnotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema44"
+              "$ref": "#/$defs/schema45"
             },
             {
-              "$ref": "#/$defs/schema46"
+              "$ref": "#/$defs/schema47"
             },
             {
               "not": {
@@ -5904,10 +6256,10 @@
         "serviceLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema44"
+              "$ref": "#/$defs/schema45"
             },
             {
-              "$ref": "#/$defs/schema46"
+              "$ref": "#/$defs/schema47"
             },
             {
               "not": {
@@ -6046,7 +6398,7 @@
                       "additionalLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema46"
+                            "$ref": "#/$defs/schema47"
                           },
                           {
                             "not": {
@@ -6086,7 +6438,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema46"
+                            "$ref": "#/$defs/schema47"
                           },
                           {
                             "not": {
@@ -6124,8 +6476,17 @@
                     "additionalProperties": {},
                     "properties": {
                       "interval": {
-                        "description": "Interval at which Prometheus scrapes the metrics from the target.",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Interval at which Prometheus scrapes the metrics from the target."
                       }
                     }
                   }
@@ -6155,8 +6516,17 @@
                     "additionalProperties": {},
                     "properties": {
                       "sampleLimit": {
-                        "description": "Per-scrape sample limit. A value of 0 (default) omits sampleLimit.",
-                        "type": "integer"
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ],
+                        "description": "Per-scrape sample limit. A value of 0 (default) omits sampleLimit."
                       }
                     }
                   }
@@ -6186,8 +6556,17 @@
                     "additionalProperties": {},
                     "properties": {
                       "scrapeTimeout": {
-                        "description": "Timeout after which Prometheus considers the scrape to be failed.",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Timeout after which Prometheus considers the scrape to be failed."
                       }
                     }
                   }
@@ -6510,7 +6889,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema42"
+                  "$ref": "#/$defs/schema43"
                 }
               },
               {
@@ -6854,8 +7233,17 @@
                     "additionalProperties": {},
                     "properties": {
                       "loadBalancerClass": {
-                        "description": "Class of a load balancer implementation",
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ],
+                        "description": "Class of a load balancer implementation"
                       }
                     }
                   }
@@ -6923,10 +7311,10 @@
             "annotations": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema44"
+                  "$ref": "#/$defs/schema45"
                 },
                 {
-                  "$ref": "#/$defs/schema46"
+                  "$ref": "#/$defs/schema47"
                 },
                 {
                   "not": {
@@ -6939,10 +7327,10 @@
             "labels": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema44"
+                  "$ref": "#/$defs/schema45"
                 },
                 {
-                  "$ref": "#/$defs/schema46"
+                  "$ref": "#/$defs/schema47"
                 },
                 {
                   "not": {
@@ -6990,10 +7378,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema44"
+              "$ref": "#/$defs/schema45"
             },
             {
-              "$ref": "#/$defs/schema46"
+              "$ref": "#/$defs/schema47"
             },
             {
               "not": {

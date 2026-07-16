@@ -463,18 +463,7 @@
       },
       "type": "object"
     },
-    "schema130": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "schema134": {
+    "schema133": {
       "properties": {
         "create": {}
       },
@@ -483,13 +472,13 @@
       ],
       "type": "object"
     },
-    "schema136": {
+    "schema135": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema137": {
+    "schema136": {
       "anyOf": [
         {
           "type": "string"
@@ -499,15 +488,11 @@
         }
       ]
     },
-    "schema138": {
+    "schema137": {
       "additionalProperties": {},
       "type": "object"
     },
-    "schema16": {
-      "description": "Note: Configuration files are stored in ConfigMaps so sensitive data\nsuch as passwords should be either mounted through extraSecretEnvironmentVars\nor through a Kube secret. For more information see:\nhttps://developer.hashicorp.com/vault/docs/platform/k8s/helm/run#protecting-sensitive-vault-configurations",
-      "type": "string"
-    },
-    "schema18": {
+    "schema17": {
       "anyOf": [
         {
           "not": {
@@ -743,7 +728,7 @@
         }
       ]
     },
-    "schema21": {
+    "schema20": {
       "not": {
         "properties": {
           "csi": {
@@ -780,7 +765,7 @@
         "type": "object"
       }
     },
-    "schema23": {
+    "schema22": {
       "properties": {
         "csi": {
           "properties": {
@@ -815,7 +800,7 @@
       ],
       "type": "object"
     },
-    "schema26": {
+    "schema25": {
       "not": {
         "properties": {
           "csi": {
@@ -851,6 +836,10 @@
         ],
         "type": "object"
       }
+    },
+    "schema26": {
+      "description": "The externalTrafficPolicy can be set to either Cluster or Local\nand is only valid for LoadBalancer and NodePort service types.\nThe default value is Cluster.\nref: https://kubernetes.io/docs/concepts/services-networking/service/#external-traffic-policy",
+      "type": "string"
     },
     "schema27": {
       "properties": {
@@ -2305,7 +2294,12 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema138"
+                        "$ref": "#/$defs/schema137"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       },
                       {
                         "type": "string"
@@ -2405,7 +2399,7 @@
                   "extraLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema136"
+                        "$ref": "#/$defs/schema135"
                       },
                       {
                         "not": {
@@ -2452,7 +2446,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema23"
+            "$ref": "#/$defs/schema22"
           },
           {
             "$ref": "#/$defs/schema5"
@@ -2475,7 +2469,19 @@
                     "description": "Security context for the pod template and container in the csi provider\ndaemonSet. For OpenShift, the container securityContext defaults to\n`privileged: true`.",
                     "properties": {
                       "container": {
-                        "$ref": "#/$defs/schema130"
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema137"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
                       }
                     }
                   }
@@ -2525,7 +2531,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema23"
+            "$ref": "#/$defs/schema22"
           },
           {
             "$ref": "#/$defs/schema5"
@@ -2548,7 +2554,7 @@
                     "description": "Security context for the pod template and container in the csi provider\ndaemonSet. For OpenShift, the container securityContext defaults to\n`privileged: true`.",
                     "properties": {
                       "container": {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema136"
                       }
                     }
                   }
@@ -2586,7 +2592,19 @@
                     "description": "Security context for the pod template and container in the csi provider\ndaemonSet. For OpenShift, the container securityContext defaults to\n`privileged: true`.",
                     "properties": {
                       "pod": {
-                        "$ref": "#/$defs/schema130"
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema137"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
                       }
                     }
                   }
@@ -2659,7 +2677,7 @@
                     "description": "Security context for the pod template and container in the csi provider\ndaemonSet. For OpenShift, the container securityContext defaults to\n`privileged: true`.",
                     "properties": {
                       "pod": {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema136"
                       }
                     }
                   }
@@ -2711,7 +2729,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema23"
+                "$ref": "#/$defs/schema22"
               },
               {
                 "$ref": "#/$defs/schema5"
@@ -2756,7 +2774,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema21"
+                "$ref": "#/$defs/schema20"
               },
               {
                 "$ref": "#/$defs/schema5"
@@ -2888,7 +2906,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema26"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "$ref": "#/$defs/schema5"
@@ -2987,7 +3005,16 @@
                     "additionalProperties": {},
                     "properties": {
                       "maxUnavailable": {
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
                       }
                     }
                   }
@@ -3146,7 +3173,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "$ref": "#/$defs/schema5"
@@ -3191,7 +3218,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema21"
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "$ref": "#/$defs/schema5"
@@ -3323,7 +3350,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema26"
+                    "$ref": "#/$defs/schema25"
                   },
                   {
                     "$ref": "#/$defs/schema5"
@@ -3684,7 +3711,12 @@
                   "affinity": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema138"
+                        "$ref": "#/$defs/schema137"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       },
                       {
                         "type": "string"
@@ -3789,7 +3821,12 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema138"
+                        "$ref": "#/$defs/schema137"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       },
                       {
                         "type": "string"
@@ -3887,7 +3924,7 @@
                   "extraLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema136"
+                        "$ref": "#/$defs/schema135"
                       },
                       {
                         "not": {
@@ -3928,7 +3965,12 @@
                   "nodeSelector": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema138"
+                        "$ref": "#/$defs/schema137"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       },
                       {
                         "type": "string"
@@ -4037,7 +4079,56 @@
                         "type": "array"
                       },
                       {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
                         "type": "string"
+                      }
+                    ],
+                    "description": "Toleration Settings for provider pods\nThis should be either a multi-line string or YAML matching the Toleration array\nin a PodSpec."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/$defs/schema51"
+            }
+          },
+          {
+            "$ref": "#/$defs/schema5"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "description": "secrets-store-csi-driver-provider-vault",
+            "properties": {
+              "pod": {
+                "additionalProperties": {},
+                "properties": {
+                  "tolerations": {
+                    "anyOf": [
+                      {
+                        "items": {},
+                        "type": "array"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       }
                     ],
                     "description": "Toleration Settings for provider pods\nThis should be either a multi-line string or YAML matching the Toleration array\nin a PodSpec."
@@ -4117,41 +4208,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/$defs/schema51"
-            }
-          },
-          {
-            "$ref": "#/$defs/schema5"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "description": "secrets-store-csi-driver-provider-vault",
-            "properties": {
-              "pod": {
-                "additionalProperties": {},
-                "properties": {
-                  "tolerations": {
-                    "description": "Toleration Settings for provider pods\nThis should be either a multi-line string or YAML matching the Toleration array\nin a PodSpec.",
-                    "items": {},
-                    "type": "array"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/$defs/schema5"
       },
       "then": {
@@ -4162,8 +4218,17 @@
             "description": "secrets-store-csi-driver-provider-vault",
             "properties": {
               "priorityClassName": {
-                "description": "Priority class for csi pods",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Priority class for csi pods"
               }
             }
           }
@@ -4343,7 +4408,12 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema138"
+                        "$ref": "#/$defs/schema137"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       },
                       {
                         "type": "string"
@@ -4441,7 +4511,7 @@
                   "extraLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema136"
+                        "$ref": "#/$defs/schema135"
                       },
                       {
                         "not": {
@@ -5752,7 +5822,7 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/schema137"
+            "$ref": "#/$defs/schema136"
           }
         }
       }
@@ -5930,123 +6000,6 @@
           {
             "allOf": [
               {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "openshift": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "openshift"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "server": {
-                    "properties": {
-                      "serviceCA": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "serviceCA"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "server"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "injector": {
-                "properties": {
-                  "podDisruptionBudget": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "podDisruptionBudget"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "injector"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema9"
-              },
-              {
-                "$ref": "#/$defs/schema11"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema1"
-          },
-          {
-            "$ref": "#/$defs/schema5"
-          },
-          {
-            "$ref": "#/$defs/schema3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "properties": {
-              "namespace": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "The namespace to deploy to. Defaults to the `helm` installation namespace."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
                 "anyOf": [
                   {
                     "$ref": "#/$defs/schema92"
@@ -6196,6 +6149,94 @@
             ]
           },
           {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "openshift": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "openshift"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "server": {
+                    "properties": {
+                      "serviceCA": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceCA"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "server"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "injector": {
+                "properties": {
+                  "podDisruptionBudget": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "podDisruptionBudget"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "injector"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema9"
+              },
+              {
+                "$ref": "#/$defs/schema11"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema1"
+          },
+          {
+            "$ref": "#/$defs/schema5"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          },
+          {
             "anyOf": [
               {
                 "properties": {
@@ -6262,8 +6303,17 @@
             "additionalProperties": {},
             "properties": {
               "namespace": {
-                "description": "The namespace to deploy to. Defaults to the `helm` installation namespace.",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The namespace to deploy to. Defaults to the `helm` installation namespace."
               }
             }
           }
@@ -6303,6 +6353,57 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema17"
+              },
+              {
+                "$ref": "#/$defs/schema3"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/schema17"
+                }
+              },
+              {
+                "$ref": "#/$defs/schema3"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "affinity": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Affinity Settings for injector pods\nThis can either be a multi-line string or YAML matching the PodSpec's affinity field.\nCommenting out or setting as empty the affinity variable, will allow\ndeployment of multiple replicas to single node services such as Minikube."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -6331,7 +6432,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema17"
           },
           {
             "$ref": "#/$defs/schema3"
@@ -6354,48 +6455,6 @@
                   }
                 ],
                 "description": "Affinity Settings for injector pods\nThis can either be a multi-line string or YAML matching the PodSpec's affinity field.\nCommenting out or setting as empty the affinity variable, will allow\ndeployment of multiple replicas to single node services such as Minikube."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema18"
-              },
-              {
-                "$ref": "#/$defs/schema3"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/schema18"
-                }
-              },
-              {
-                "$ref": "#/$defs/schema3"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "injector": {
-            "additionalProperties": {},
-            "properties": {
-              "affinity": {
-                "description": "Affinity Settings for injector pods\nThis can either be a multi-line string or YAML matching the PodSpec's affinity field.\nCommenting out or setting as empty the affinity variable, will allow\ndeployment of multiple replicas to single node services such as Minikube.",
-                "type": "string"
               }
             }
           }
@@ -6722,7 +6781,12 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema138"
+                    "$ref": "#/$defs/schema137"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   },
                   {
                     "type": "string"
@@ -6931,7 +6995,7 @@
               "extraLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema136"
+                    "$ref": "#/$defs/schema135"
                   },
                   {
                     "not": {
@@ -7442,7 +7506,12 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema138"
+                    "$ref": "#/$defs/schema137"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   },
                   {
                     "type": "string"
@@ -7705,7 +7774,7 @@
               "objectSelector": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema138"
+                    "$ref": "#/$defs/schema137"
                   },
                   {
                     "type": "string"
@@ -7940,8 +8009,17 @@
             "additionalProperties": {},
             "properties": {
               "priorityClassName": {
-                "description": "Priority class for injector pods",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Priority class for injector pods"
               }
             }
           }
@@ -8159,7 +8237,19 @@
                 "description": "Security context for the pod template and the injector container\nThe default pod securityContext is:\nrunAsNonRoot: true\nrunAsGroup: {{ .Values.injector.gid | default 1000 }}\nrunAsUser: {{ .Values.injector.uid | default 100 }}\nfsGroup: {{ .Values.injector.gid | default 1000 }}\nand for container is\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL",
                 "properties": {
                   "container": {
-                    "$ref": "#/$defs/schema130"
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema137"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 }
               }
@@ -8217,7 +8307,7 @@
                 "description": "Security context for the pod template and the injector container\nThe default pod securityContext is:\nrunAsNonRoot: true\nrunAsGroup: {{ .Values.injector.gid | default 1000 }}\nrunAsUser: {{ .Values.injector.uid | default 100 }}\nfsGroup: {{ .Values.injector.gid | default 1000 }}\nand for container is\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL",
                 "properties": {
                   "container": {
-                    "$ref": "#/$defs/schema137"
+                    "$ref": "#/$defs/schema136"
                   }
                 }
               }
@@ -8248,7 +8338,19 @@
                 "description": "Security context for the pod template and the injector container\nThe default pod securityContext is:\nrunAsNonRoot: true\nrunAsGroup: {{ .Values.injector.gid | default 1000 }}\nrunAsUser: {{ .Values.injector.uid | default 100 }}\nfsGroup: {{ .Values.injector.gid | default 1000 }}\nand for container is\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL",
                 "properties": {
                   "pod": {
-                    "$ref": "#/$defs/schema130"
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema137"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 }
               }
@@ -8306,7 +8408,7 @@
                 "description": "Security context for the pod template and the injector container\nThe default pod securityContext is:\nrunAsNonRoot: true\nrunAsGroup: {{ .Values.injector.gid | default 1000 }}\nrunAsUser: {{ .Values.injector.uid | default 100 }}\nfsGroup: {{ .Values.injector.gid | default 1000 }}\nand for container is\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL",
                 "properties": {
                   "pod": {
-                    "$ref": "#/$defs/schema137"
+                    "$ref": "#/$defs/schema136"
                   }
                 }
               }
@@ -8582,7 +8684,12 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema138"
+                        "$ref": "#/$defs/schema137"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
                       },
                       {
                         "type": "string"
@@ -8961,7 +9068,12 @@
               "strategy": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema138"
+                    "$ref": "#/$defs/schema137"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   },
                   {
                     "type": "string"
@@ -9050,7 +9162,50 @@
                     "type": "array"
                   },
                   {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
                     "type": "string"
+                  }
+                ],
+                "description": "Toleration Settings for injector pods\nThis should be either a multi-line string or YAML matching the Toleration array\nin a PodSpec."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/$defs/schema66"
+            }
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "tolerations": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ],
                 "description": "Toleration Settings for injector pods\nThis should be either a multi-line string or YAML matching the Toleration array\nin a PodSpec."
@@ -9116,35 +9271,6 @@
       "if": {
         "allOf": [
           {
-            "not": {
-              "$ref": "#/$defs/schema66"
-            }
-          },
-          {
-            "$ref": "#/$defs/schema3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "injector": {
-            "additionalProperties": {},
-            "properties": {
-              "tolerations": {
-                "description": "Toleration Settings for injector pods\nThis should be either a multi-line string or YAML matching the Toleration array\nin a PodSpec.",
-                "items": {},
-                "type": "array"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/schema54"
           },
           {
@@ -9165,7 +9291,50 @@
                     "type": "array"
                   },
                   {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
                     "type": "string"
+                  }
+                ],
+                "description": "Topology settings for injector pods\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nThis should be either a multi-line string or YAML matching the topologySpreadConstraints array\nin a PodSpec."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "$ref": "#/$defs/schema54"
+            }
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "topologySpreadConstraints": {
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ],
                 "description": "Topology settings for injector pods\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nThis should be either a multi-line string or YAML matching the topologySpreadConstraints array\nin a PodSpec."
@@ -9221,35 +9390,6 @@
                   }
                 ],
                 "description": "Topology settings for injector pods\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nThis should be either a multi-line string or YAML matching the topologySpreadConstraints array\nin a PodSpec."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/$defs/schema54"
-            }
-          },
-          {
-            "$ref": "#/$defs/schema3"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "injector": {
-            "additionalProperties": {},
-            "properties": {
-              "topologySpreadConstraints": {
-                "description": "Topology settings for injector pods\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nThis should be either a multi-line string or YAML matching the topologySpreadConstraints array\nin a PodSpec.",
-                "items": {},
-                "type": "array"
               }
             }
           }
@@ -9351,8 +9491,17 @@
                 "additionalProperties": {},
                 "properties": {
                   "failurePolicy": {
-                    "description": "Configures failurePolicy of the webhook. The \"unspecified\" default behaviour depends on the\nAPI Version of the WebHook.\nTo block pod creation while the webhook is unavailable, set the policy to `Fail` below.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Configures failurePolicy of the webhook. The \"unspecified\" default behaviour depends on the\nAPI Version of the WebHook.\nTo block pod creation while the webhook is unavailable, set the policy to `Fail` below.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy"
                   }
                 }
               }
@@ -9386,6 +9535,188 @@
                       }
                     ],
                     "description": "matchPolicy specifies the approach to accepting changes based on the rules of\nthe MutatingWebhookConfiguration.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-matchpolicy\nfor more details."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema42"
+                      },
+                      {
+                        "properties": {
+                          "injector": {
+                            "properties": {
+                              "webhook": {
+                                "properties": {
+                                  "objectSelector": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "objectSelector"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "webhook"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "injector"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/schema12"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/schema59"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/schema42"
+                        },
+                        {
+                          "properties": {
+                            "injector": {
+                              "properties": {
+                                "webhook": {
+                                  "properties": {
+                                    "objectSelector": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  },
+                                  "required": [
+                                    "objectSelector"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "webhook"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "injector"
+                          ],
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "injector": {
+                    "properties": {
+                      "objectSelector": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "objectSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "injector"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema42"
+                  },
+                  {
+                    "properties": {
+                      "injector": {
+                        "properties": {
+                          "webhook": {
+                            "properties": {
+                              "objectSelector": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "objectSelector"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "webhook"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "injector"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "injector": {
+            "additionalProperties": {},
+            "properties": {
+              "webhook": {
+                "additionalProperties": {},
+                "properties": {
+                  "objectSelector": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "objectSelector is the selector for restricting the webhook to only\nspecific labels.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-objectselector\nfor more details.\nExample:\nobjectSelector:\nmatchLabels:\nvault-sidecar-injector: enabled"
                   }
                 }
               }
@@ -9600,179 +9931,6 @@
                       }
                     ],
                     "description": "objectSelector is the selector for restricting the webhook to only\nspecific labels.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-objectselector\nfor more details.\nExample:\nobjectSelector:\nmatchLabels:\nvault-sidecar-injector: enabled"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema42"
-                      },
-                      {
-                        "properties": {
-                          "injector": {
-                            "properties": {
-                              "webhook": {
-                                "properties": {
-                                  "objectSelector": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "objectSelector"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "webhook"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "injector"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/$defs/schema12"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/schema59"
-                  },
-                  {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema42"
-                        },
-                        {
-                          "properties": {
-                            "injector": {
-                              "properties": {
-                                "webhook": {
-                                  "properties": {
-                                    "objectSelector": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "objectSelector"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "webhook"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "injector"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema3"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "injector": {
-                    "properties": {
-                      "objectSelector": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "objectSelector"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "injector"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema42"
-                  },
-                  {
-                    "properties": {
-                      "injector": {
-                        "properties": {
-                          "webhook": {
-                            "properties": {
-                              "objectSelector": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "objectSelector"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "webhook"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "injector"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "injector": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "additionalProperties": {},
-                "properties": {
-                  "objectSelector": {
-                    "description": "objectSelector is the selector for restricting the webhook to only\nspecific labels.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#matching-requests-objectselector\nfor more details.\nExample:\nobjectSelector:\nmatchLabels:\nvault-sidecar-injector: enabled",
-                    "type": "string"
                   }
                 }
               }
@@ -11182,7 +11340,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/schema137"
+            "$ref": "#/$defs/schema136"
           }
         }
       }
@@ -11454,7 +11612,7 @@
                   "extraLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema136"
+                        "$ref": "#/$defs/schema135"
                       },
                       {
                         "not": {
@@ -11910,7 +12068,7 @@
                   "selectors": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema136"
+                        "$ref": "#/$defs/schema135"
                       },
                       {
                         "not": {
@@ -12162,7 +12320,7 @@
                   "selectors": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema136"
+                        "$ref": "#/$defs/schema135"
                       },
                       {
                         "not": {
@@ -12852,9 +13010,15 @@
           "description": "Injector serviceAccount specific config",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "Extra annotations to attach to the injector serviceAccount",
-              "type": "object"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/schema137"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Extra annotations to attach to the injector serviceAccount"
             }
           },
           "type": "object"
@@ -12940,7 +13104,7 @@
                             "anyOf": [
                               {
                                 "not": {
-                                  "$ref": "#/$defs/schema134"
+                                  "$ref": "#/$defs/schema133"
                                 }
                               },
                               {
@@ -13081,12 +13245,30 @@
           "description": "[Enterprise Only] This value refers to a Kubernetes secret that you have\ncreated that contains your enterprise license. If you are not using an\nenterprise image or if you plan to introduce the license key via another\nroute, then leave secretName blank (\"\") or set it to null.\nRequires Vault Enterprise 1.8 or later.",
           "properties": {
             "secretKey": {
-              "description": "The key within the Kubernetes secret that holds the enterprise license.",
-              "type": "string"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "The key within the Kubernetes secret that holds the enterprise license."
             },
             "secretName": {
-              "description": "The name of the Kubernetes secret that holds the enterprise license. The\nsecret must be in the same namespace that Vault is installed into.",
-              "type": "string"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "The name of the Kubernetes secret that holds the enterprise license. The\nsecret must be in the same namespace that Vault is installed into."
             }
           },
           "type": "object"
@@ -13148,7 +13330,17 @@
               "description": "Set the cluster_addr configuration for Vault HA\nSee https://developer.hashicorp.com/vault/docs/configuration#cluster_addr\nIf set to null, this will be set to https://$(HOSTNAME).{{ template \"vault.fullname\" . }}-internal:8201"
             },
             "config": {
-              "$ref": "#/$defs/schema16"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Note: Configuration files are stored in ConfigMaps so sensitive data\nsuch as passwords should be either mounted through extraSecretEnvironmentVars\nor through a Kube secret. For more information see:\nhttps://developer.hashicorp.com/vault/docs/platform/k8s/helm/run#protecting-sensitive-vault-configurations"
             },
             "disruptionBudget": {
               "additionalProperties": {},
@@ -13207,10 +13399,19 @@
               "description": "Additional custom rules that can be added to the route"
             },
             "annotations": {
-              "$ref": "#/$defs/schema138"
+              "$ref": "#/$defs/schema137"
             },
             "enabled": {
-              "type": "boolean"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
             },
             "filters": {
               "description": "Filters define the filters that are applied to requests that match this rule.",
@@ -13221,7 +13422,7 @@
               "description": "- host-example"
             },
             "labels": {
-              "$ref": "#/$defs/schema138"
+              "$ref": "#/$defs/schema137"
             },
             "matches": {
               "items": {
@@ -13269,8 +13470,17 @@
           "type": "object"
         },
         "includeConfigAnnotation": {
-          "description": "Add an annotation to the server configmap and the statefulset pods,\nvaultproject.io/config-checksum, that is a hash of the Vault configuration.\nThis can be used together with an OnDelete deployment strategy to help\nidentify which pods still need to be deleted during a deployment to pick up\nany configuration changes.",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Add an annotation to the server configmap and the statefulset pods,\nvaultproject.io/config-checksum, that is a hash of the Vault configuration.\nThis can be used together with an OnDelete deployment strategy to help\nidentify which pods still need to be deleted during a deployment to pick up\nany configuration changes."
         },
         "ingress": {
           "additionalProperties": {},
@@ -13285,7 +13495,16 @@
               "type": "object"
             },
             "enabled": {
-              "type": "boolean"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
             },
             "extraPaths": {
               "description": "Extra paths to prepend to the host configuration. This is useful when working with annotation based services.",
@@ -13295,36 +13514,32 @@
             "hosts": {
               "anyOf": [
                 {
-                  "additionalProperties": {
+                  "items": {
                     "additionalProperties": {},
                     "properties": {
-                      "host": {}
-                    }
-                  },
-                  "type": "object"
-                },
-                {
-                  "items": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "host": {}
-                        }
-                      },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "paths": {
+                      "host": {},
+                      "paths": {
+                        "anyOf": [
+                          {
                             "items": {},
                             "type": "array"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
                           }
-                        },
-                        "type": "object"
+                        ]
                       }
-                    ]
+                    },
+                    "type": "object"
                   },
                   "type": "array"
+                },
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 }
               ]
             },
@@ -13333,7 +13548,7 @@
               "type": "string"
             },
             "labels": {
-              "$ref": "#/$defs/schema138"
+              "$ref": "#/$defs/schema137"
             },
             "pathType": {
               "description": "As of Kubernetes 1.19, all Ingress Paths must have a pathType configured. The default value below should be sufficient in most cases.\nSee: https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types for other possible values.",
@@ -13364,12 +13579,30 @@
           "description": "Used to enable a livenessProbe for the pods",
           "properties": {
             "enabled": {
-              "type": "boolean"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
             },
             "execCommand": {
-              "description": "Used to define a liveness exec command. If provided, exec is preferred to httpGet (path) as the livenessProbe handler.",
-              "items": {},
-              "type": "array"
+              "anyOf": [
+                {
+                  "items": {},
+                  "type": "array"
+                },
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                }
+              ],
+              "description": "Used to define a liveness exec command. If provided, exec is preferred to httpGet (path) as the livenessProbe handler."
             },
             "failureThreshold": {
               "$ref": "#/$defs/schema104"
@@ -13423,7 +13656,7 @@
                       "additionalProperties": {},
                       "properties": {
                         "namespaceSelector": {
-                          "$ref": "#/$defs/schema138"
+                          "$ref": "#/$defs/schema137"
                         }
                       },
                       "type": "object"
@@ -13469,9 +13702,18 @@
           "type": "array"
         },
         "preStop": {
-          "description": "Used to define custom preStop exec commands to run before the pod is\nterminated. If not set, this will default to:\npreStop:\n- \"/bin/sh\"\n- \"-c\"\n- \"sleep {{ .Values.server.preStopSleepSeconds }} && kill -SIGTERM $(pidof vault)\"",
-          "items": {},
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            }
+          ],
+          "description": "Used to define custom preStop exec commands to run before the pod is\nterminated. If not set, this will default to:\npreStop:\n- \"/bin/sh\"\n- \"-c\"\n- \"sleep {{ .Values.server.preStopSleepSeconds }} && kill -SIGTERM $(pidof vault)\""
         },
         "preStopSleepSeconds": {
           "description": "Used to set the sleep time during the preStop step, if custom preStop\ncommands are not set.",
@@ -13486,8 +13728,17 @@
           "description": "Used to define custom readinessProbe settings",
           "properties": {
             "enabled": {
-              "description": "If you need to use a http path instead of the default exec\npath: /v1/sys/health?standbyok=true",
-              "type": "boolean"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ],
+              "description": "If you need to use a http path instead of the default exec\npath: /v1/sys/health?standbyok=true"
             },
             "failureThreshold": {
               "$ref": "#/$defs/schema104"
@@ -13525,16 +13776,25 @@
               "description": "When HA mode is enabled and K8s service registration is being used,\nconfigure the route to point to the Vault active service."
             },
             "annotations": {
-              "$ref": "#/$defs/schema138"
+              "$ref": "#/$defs/schema137"
             },
             "enabled": {
-              "type": "boolean"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
             },
             "host": {
               "type": "string"
             },
             "labels": {
-              "$ref": "#/$defs/schema138"
+              "$ref": "#/$defs/schema137"
             },
             "tls": {
               "additionalProperties": {},
@@ -13568,6 +13828,9 @@
               "additionalProperties": {},
               "properties": {
                 "enabled": {},
+                "externalTrafficPolicy": {
+                  "$ref": "#/$defs/schema26"
+                },
                 "instanceSelector": {
                   "additionalProperties": {},
                   "description": "If enabled, the service selectors will include `app.kubernetes.io/instance: {{ .Release.Name }}`\nWhen disabled, services may select Vault pods not deployed from the chart.\nDoes not affect the headless vault-internal service with `ClusterIP: None`",
@@ -13581,6 +13844,7 @@
                 "port": {
                   "description": "Port on which Vault server is listening"
                 },
+                "serviceType": {},
                 "standby": {
                   "additionalProperties": {},
                   "description": "Enable or disable the vault-standby service, which selects Vault pods that\nhave labeled themselves as a cluster follower with `vault-active: \"false\"`.",
@@ -13601,9 +13865,15 @@
           "description": "Definition of the serviceAccount used to run Vault.\nThese options are also used when using an external Vault server to validate\nKubernetes tokens.",
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "Extra annotations for the serviceAccount definition. This can either be\nYAML or a YAML-formatted multi-line templated string map of the\nannotations to apply to the serviceAccount.",
-              "type": "object"
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/schema137"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Extra annotations for the serviceAccount definition. This can either be\nYAML or a YAML-formatted multi-line templated string map of the\nannotations to apply to the serviceAccount."
             },
             "create": {
               "description": "Specifies whether a service account should be created"
@@ -13672,7 +13942,17 @@
           "description": "Run Vault in \"standalone\" mode. This is the default mode that will deploy if\nno arguments are given to helm. This requires a PVC for data storage to use\nthe \"file\" backend.  This mode is not highly available and should not be scaled\npast a single replica.",
           "properties": {
             "config": {
-              "$ref": "#/$defs/schema16"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Note: Configuration files are stored in ConfigMaps so sensitive data\nsuch as passwords should be either mounted through extraSecretEnvironmentVars\nor through a Kube secret. For more information see:\nhttps://developer.hashicorp.com/vault/docs/platform/k8s/helm/run#protecting-sensitive-vault-configurations"
             },
             "enabled": {}
           },
@@ -13692,10 +13972,35 @@
               "description": "Set the pod and container security contexts.\nIf not set, these will default to, and for *not* OpenShift:\npod:\nrunAsNonRoot: true\nrunAsGroup: {{ .Values.server.gid | default 1000 }}\nrunAsUser: {{ .Values.server.uid | default 100 }}\nfsGroup: {{ .Values.server.gid | default 1000 }}\ncontainer:\nallowPrivilegeEscalation: false\nIf not set, these will default to, and for OpenShift:\npod: {}\ncontainer: {}",
               "properties": {
                 "container": {
-                  "$ref": "#/$defs/schema138"
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema137"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
                 },
                 "pod": {
-                  "$ref": "#/$defs/schema138"
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "maxProperties": 0,
+                      "properties": {},
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/$defs/schema137"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
                 }
               },
               "type": "object"
@@ -13832,8 +14137,7 @@
           "type": "integer"
         },
         "externalTrafficPolicy": {
-          "description": "The externalTrafficPolicy can be set to either Cluster or Local\nand is only valid for LoadBalancer and NodePort service types.\nThe default value is Cluster.\nref: https://kubernetes.io/docs/concepts/services-networking/service/#external-traffic-policy",
-          "type": "string"
+          "$ref": "#/$defs/schema26"
         },
         "publishNotReadyAddresses": {
           "type": "boolean"

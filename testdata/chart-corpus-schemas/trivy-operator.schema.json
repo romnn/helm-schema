@@ -1426,35 +1426,6 @@
     },
     {
       "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "nameOverride override operator name"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "anyOf": [
@@ -1575,8 +1546,46 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "description": "nameOverride override operator name",
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "nameOverride override operator name"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "nameOverride override operator name"
           }
         }
       }
@@ -1736,64 +1745,6 @@
                   }
                 ],
                 "description": "namespace to install the operator, defaults to the .Release.Namespace"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "namespace": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "namespace"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
-            "additionalProperties": {},
-            "properties": {
-              "namespace": {
-                "description": "namespace to install the operator, defaults to the .Release.Namespace",
-                "type": "string"
               }
             }
           }
@@ -2488,6 +2439,70 @@
               "insecureRegistries": {
                 "anyOf": [
                   {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "The registry to which insecure connections are allowed. There can be multiple registries with different keys.\npocRegistry: poc.myregistry.harbor.com.pl\nqaRegistry: qa.registry.aquasec.com\ninternalRegistry: registry.registry.svc:5000"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema15"
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "createConfig": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "createConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "trivy": {
+            "additionalProperties": {},
+            "properties": {
+              "insecureRegistries": {
+                "anyOf": [
+                  {
                     "type": "array"
                   },
                   {
@@ -2693,6 +2708,70 @@
               "nonSslRegistries": {
                 "anyOf": [
                   {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "Registries without SSL. There can be multiple registries with different keys.\npocRegistry: poc.myregistry.harbor.com.pl\nqaRegistry: qa.registry.aquasec.com\ninternalRegistry: registry.registry.svc:5000"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema15"
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "createConfig": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "createConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "trivy": {
+            "additionalProperties": {},
+            "properties": {
+              "nonSslRegistries": {
+                "anyOf": [
+                  {
                     "type": "array"
                   },
                   {
@@ -2780,8 +2859,87 @@
             "additionalProperties": {},
             "properties": {
               "priorityClassName": {
-                "description": "priorityClassName is the name of the priority class used for trivy server",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "priorityClassName is the name of the priority class used for trivy server"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema15"
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "createConfig": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "createConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "trivy": {
+            "additionalProperties": {},
+            "properties": {
+              "registry": {
+                "additionalProperties": {},
+                "description": "Mirrored registries. There can be multiple registries with different keys.\nMake sure to quote registries containing dots",
+                "properties": {
+                  "mirror": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ],
+                    "description": "\"docker.io\": docker-mirror.example.com"
+                  }
+                }
               }
             }
           }
@@ -4414,8 +4572,17 @@
             "additionalProperties": {},
             "properties": {
               "valuesFromConfigMap": {
-                "description": "vaulesFromConfigMap name of a ConfigMap to apply TRIVY_* environment variables. Will override Helm values.",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "vaulesFromConfigMap name of a ConfigMap to apply TRIVY_* environment variables. Will override Helm values."
               }
             }
           }
@@ -4449,10 +4616,77 @@
             "additionalProperties": {},
             "properties": {
               "valuesFromSecret": {
-                "description": "valuesFromSecret name of a Secret to apply TRIVY_* environment variables. Will override Helm AND ConfigMap values.",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "valuesFromSecret name of a Secret to apply TRIVY_* environment variables. Will override Helm AND ConfigMap values."
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema15"
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "createConfig": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "createConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "trivy": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ]
           }
         }
       }
@@ -5390,8 +5624,17 @@
             "additionalProperties": {},
             "properties": {
               "storageClassName": {
-                "description": "storageClassName for the PVC (optional, uses cluster default if not specified)",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "storageClassName for the PVC (optional, uses cluster default if not specified)"
               }
             }
           }
@@ -5475,11 +5718,20 @@
           "description": "reportType this flag control the type of report generated (summary or all)"
         },
         "specs": {
-          "description": "specs is a list of compliance specs to be used by the cluster compliance scanner\n- k8s-cis-1.23\n- k8s-nsa-1.0\n- k8s-pss-baseline-0.1\n- k8s-pss-restricted-0.1\n- eks-cis-1.4\n- rke2-cis-1.24",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            }
+          ],
+          "description": "specs is a list of compliance specs to be used by the cluster compliance scanner\n- k8s-cis-1.23\n- k8s-nsa-1.0\n- k8s-pss-baseline-0.1\n- k8s-pss-restricted-0.1\n- eks-cis-1.4\n- rke2-cis-1.24"
         }
       },
       "type": "object"

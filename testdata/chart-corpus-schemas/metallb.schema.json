@@ -490,33 +490,15 @@
       }
     },
     "schema129": {
-      "additionalProperties": {},
-      "properties": {
-        "labels": {
-          "anyOf": [
-            {
-              "type": "array"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
-    "schema130": {
       "description": "Comma-separated list of TLS cipher suites. If empty, uses Go defaults. Only applies to TLS 1.2."
     },
-    "schema133": {
+    "schema132": {
       "description": "Minimum TLS version (VersionTLS12 or VersionTLS13). Defaults to VersionTLS13."
     },
-    "schema134": {
+    "schema133": {
       "description": "Scrape interval. If not set, the Prometheus default scrape interval is used."
     },
-    "schema137": {
+    "schema136": {
       "not": {
         "properties": {
           "rbacPrometheus": {}
@@ -527,8 +509,17 @@
         "type": "object"
       }
     },
-    "schema138": {
+    "schema137": {
       "description": "Minimum consecutive successes for the probe to be considered successful."
+    },
+    "schema139": {
+      "additionalProperties": {},
+      "properties": {
+        "severity": {
+          "type": "string"
+        }
+      },
+      "type": "object"
     },
     "schema14": {
       "not": {
@@ -565,16 +556,7 @@
         "type": "object"
       }
     },
-    "schema140": {
-      "additionalProperties": {},
-      "properties": {
-        "severity": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "schema142": {
+    "schema141": {
       "properties": {
         "namespace": {
           "enum": [
@@ -587,7 +569,7 @@
       ],
       "type": "object"
     },
-    "schema147": {
+    "schema146": {
       "additionalProperties": {},
       "properties": {
         "failureThreshold": {
@@ -630,7 +612,7 @@
         "type": "object"
       }
     },
-    "schema152": {
+    "schema151": {
       "additionalProperties": {},
       "properties": {
         "periodSeconds": {
@@ -638,7 +620,7 @@
         }
       }
     },
-    "schema153": {
+    "schema152": {
       "not": {
         "properties": {
           "enabled": {}
@@ -649,10 +631,10 @@
         "type": "object"
       }
     },
-    "schema154": {
+    "schema153": {
       "description": "Number of failures before the probe is considered failed."
     },
-    "schema156": {
+    "schema155": {
       "properties": {
         "namespace": {}
       },
@@ -661,7 +643,7 @@
       ],
       "type": "object"
     },
-    "schema159": {
+    "schema158": {
       "properties": {
         "create": {}
       },
@@ -670,23 +652,10 @@
       ],
       "type": "object"
     },
-    "schema160": {
-      "anyOf": [
-        {
-          "type": "array"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "schema161": {
+    "schema159": {
       "description": "How often (in seconds) to perform the probe."
     },
-    "schema162": {
+    "schema160": {
       "additionalProperties": {
         "type": "string"
       },
@@ -1815,7 +1784,17 @@
             "description": "controller contains configuration specific to the MetalLB cluster\ncontroller.",
             "properties": {
               "labels": {
-                "$ref": "#/$defs/schema160"
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             }
           }
@@ -2019,7 +1998,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema162"
+                    "$ref": "#/$defs/schema160"
                   },
                   {
                     "not": {
@@ -3881,6 +3860,77 @@
                         "type": "object"
                       }
                     ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema109"
+              },
+              {
+                "properties": {
+                  "frrk8s": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frrk8s"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema100"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "frr-k8s": {
+            "additionalProperties": {},
+            "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+            "properties": {
+              "frrk8s": {
+                "additionalProperties": {},
+                "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                "properties": {
+                  "labels": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Additional labels to add to the pod."
                   }
                 }
               }
@@ -5902,8 +5952,17 @@
                 "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
                 "properties": {
                   "runtimeClassName": {
-                    "description": "Runtime class name for the pod.",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Runtime class name for the pod."
                   }
                 }
               }
@@ -6055,7 +6114,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema162"
+                            "$ref": "#/$defs/schema160"
                           },
                           {
                             "not": {
@@ -7745,8 +7804,17 @@
             "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
             "properties": {
               "nameOverride": {
-                "description": "String to override the default chart name.",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "String to override the default chart name."
               }
             }
           }
@@ -8393,7 +8461,7 @@
                       "additionalLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema162"
+                            "$ref": "#/$defs/schema160"
                           },
                           {
                             "not": {
@@ -8542,7 +8610,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema162"
+                            "$ref": "#/$defs/schema160"
                           },
                           {
                             "not": {
@@ -8659,8 +8727,17 @@
                 "additionalProperties": {},
                 "properties": {
                   "metricsTLSSecret": {
-                    "description": "The name of the secret to be mounted in the pods to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated.",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "The name of the secret to be mounted in the pods to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
                   }
                 }
               }
@@ -9655,113 +9732,6 @@
       "if": {
         "anyOf": [
           {
-            "allOf": [
-              {
-                "properties": {
-                  "frr-k8s": {
-                    "properties": {
-                      "nameOverride": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nameOverride"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "frr-k8s"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema109"
-                  },
-                  {
-                    "properties": {
-                      "frrk8s": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "frrk8s"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "frr-k8s": {
-                    "properties": {
-                      "nameOverride": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "nameOverride"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "frr-k8s"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema100"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "nameOverride": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "nameOverride"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "anyOf": [
               {
                 "$ref": "#/$defs/schema94"
@@ -10006,7 +9976,123 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "frr-k8s": {
+                    "properties": {
+                      "nameOverride": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nameOverride"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frr-k8s"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema109"
+                  },
+                  {
+                    "properties": {
+                      "frrk8s": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "frrk8s"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "frr-k8s": {
+                    "properties": {
+                      "nameOverride": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "nameOverride"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "frr-k8s"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema100"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "nameOverride": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "nameOverride"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       }
@@ -10237,7 +10323,7 @@
                                 "labels": {
                                   "anyOf": [
                                     {
-                                      "$ref": "#/$defs/schema140"
+                                      "$ref": "#/$defs/schema139"
                                     },
                                     {
                                       "not": {
@@ -10259,7 +10345,7 @@
                                 "labels": {
                                   "anyOf": [
                                     {
-                                      "$ref": "#/$defs/schema140"
+                                      "$ref": "#/$defs/schema139"
                                     },
                                     {
                                       "not": {
@@ -11693,7 +11779,7 @@
                       "additionalLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema162"
+                            "$ref": "#/$defs/schema160"
                           },
                           {
                             "not": {
@@ -11786,7 +11872,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema162"
+                            "$ref": "#/$defs/schema160"
                           },
                           {
                             "not": {
@@ -14643,7 +14729,17 @@
             "description": "speaker contains configuration specific to the MetalLB speaker\ndaemonset.",
             "properties": {
               "labels": {
-                "$ref": "#/$defs/schema160"
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             }
           }
@@ -15198,7 +15294,7 @@
               "podAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema162"
+                    "$ref": "#/$defs/schema160"
                   },
                   {
                     "not": {
@@ -17795,8 +17891,17 @@
             "additionalProperties": {},
             "properties": {
               "controllerMetricsTLSSecret": {
-                "description": "The name of the secret to be mounted in the controller pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated.",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the secret to be mounted in the controller pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
               }
             }
           }
@@ -17837,8 +17942,17 @@
             "additionalProperties": {},
             "properties": {
               "speakerMetricsTLSSecret": {
-                "description": "The name of the secret to be mounted in the speaker pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated.",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the secret to be mounted in the speaker pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
               }
             }
           }
@@ -18261,7 +18375,7 @@
                     "not": {
                       "properties": {
                         "frrk8s": {
-                          "$ref": "#/$defs/schema156"
+                          "$ref": "#/$defs/schema155"
                         }
                       },
                       "required": [
@@ -18273,7 +18387,7 @@
                   {
                     "properties": {
                       "frrk8s": {
-                        "$ref": "#/$defs/schema142"
+                        "$ref": "#/$defs/schema141"
                       }
                     },
                     "required": [
@@ -18388,7 +18502,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema153"
+                "$ref": "#/$defs/schema152"
               },
               {
                 "properties": {
@@ -18404,7 +18518,27 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema129"
+            "additionalProperties": {},
+            "properties": {
+              "labels": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
           }
         },
         {
@@ -18413,7 +18547,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -18466,7 +18600,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -18519,7 +18653,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -18572,7 +18706,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -18625,7 +18759,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -18678,7 +18812,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -18731,7 +18865,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -18784,7 +18918,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -18837,7 +18971,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -18890,7 +19024,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -18943,7 +19077,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -18996,7 +19130,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -19047,7 +19181,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema153"
+                "$ref": "#/$defs/schema152"
               },
               {
                 "properties": {
@@ -19096,7 +19230,7 @@
                     "anyOf": [
                       {
                         "not": {
-                          "$ref": "#/$defs/schema159"
+                          "$ref": "#/$defs/schema158"
                         }
                       },
                       {
@@ -19118,7 +19252,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema162"
+                            "$ref": "#/$defs/schema160"
                           },
                           {
                             "not": {
@@ -19144,7 +19278,7 @@
                     "anyOf": [
                       {
                         "not": {
-                          "$ref": "#/$defs/schema159"
+                          "$ref": "#/$defs/schema158"
                         }
                       },
                       {
@@ -19425,16 +19559,16 @@
                   "description": "Enable liveness probe."
                 },
                 "failureThreshold": {
-                  "$ref": "#/$defs/schema154"
+                  "$ref": "#/$defs/schema153"
                 },
                 "initialDelaySeconds": {
                   "description": "Number of seconds after the container has started before liveness probes are initiated."
                 },
                 "periodSeconds": {
-                  "$ref": "#/$defs/schema161"
+                  "$ref": "#/$defs/schema159"
                 },
                 "successThreshold": {
-                  "$ref": "#/$defs/schema138"
+                  "$ref": "#/$defs/schema137"
                 },
                 "timeoutSeconds": {
                   "description": "Number of seconds after which the probe times out."
@@ -19467,16 +19601,16 @@
                   "description": "Enable readiness probe."
                 },
                 "failureThreshold": {
-                  "$ref": "#/$defs/schema154"
+                  "$ref": "#/$defs/schema153"
                 },
                 "initialDelaySeconds": {
                   "description": "Number of seconds after the container has started before readiness probes are initiated."
                 },
                 "periodSeconds": {
-                  "$ref": "#/$defs/schema161"
+                  "$ref": "#/$defs/schema159"
                 },
                 "successThreshold": {
-                  "$ref": "#/$defs/schema138"
+                  "$ref": "#/$defs/schema137"
                 },
                 "timeoutSeconds": {
                   "description": "Number of seconds after which the probe times out."
@@ -19543,10 +19677,10 @@
                   "description": "Enable startup probe."
                 },
                 "failureThreshold": {
-                  "$ref": "#/$defs/schema154"
+                  "$ref": "#/$defs/schema153"
                 },
                 "periodSeconds": {
-                  "$ref": "#/$defs/schema161"
+                  "$ref": "#/$defs/schema159"
                 }
               }
             },
@@ -19639,7 +19773,7 @@
                   "description": "Enable Prometheus ServiceMonitor for frr-k8s metrics.\nThe FRR-K8s BGP/BFD metrics are exposed with the \"frrk8s_\" prefix\n(e.g. frrk8s_bgp_session_up, frrk8s_bfd_session_up).\nTo rename them to the legacy \"metallb_\" prefix for backward compatibility\nwith existing dashboards or alerts, enable and configure metric relabelings:\nmetricRelabelings:\n- sourceLabels: [__name__]\nregex: \"frrk8s_bgp_(.*)\"\ntargetLabel: \"__name__\"\nreplacement: \"metallb_bgp_$1\"\n- sourceLabels: [__name__]\nregex: \"frrk8s_bfd_(.*)\"\ntargetLabel: \"__name__\"\nreplacement: \"metallb_bfd_$1\""
                 },
                 "interval": {
-                  "$ref": "#/$defs/schema134"
+                  "$ref": "#/$defs/schema133"
                 },
                 "jobLabel": {
                   "description": "Job label for scrape target."
@@ -19681,7 +19815,7 @@
           "additionalProperties": {},
           "properties": {
             "cipherSuites": {
-              "$ref": "#/$defs/schema130"
+              "$ref": "#/$defs/schema129"
             },
             "curvePreferences": {
               "$ref": "#/$defs/schema90"
@@ -19690,7 +19824,7 @@
               "description": "The name of the secret to be mounted in the pods to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
             },
             "minVersion": {
-              "$ref": "#/$defs/schema133"
+              "$ref": "#/$defs/schema132"
             }
           },
           "type": "object"
@@ -19707,7 +19841,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -19887,7 +20021,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema136"
                       },
                       {
                         "properties": {
@@ -19909,7 +20043,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema136"
                       },
                       {
                         "properties": {
@@ -19984,7 +20118,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema136"
                       },
                       {
                         "properties": {
@@ -20006,7 +20140,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema137"
+                        "$ref": "#/$defs/schema136"
                       },
                       {
                         "properties": {
@@ -20077,7 +20211,7 @@
                       "additionalLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema162"
+                            "$ref": "#/$defs/schema160"
                           },
                           {
                             "not": {
@@ -20118,7 +20252,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema162"
+                            "$ref": "#/$defs/schema160"
                           },
                           {
                             "not": {
@@ -20159,7 +20293,7 @@
                       "additionalLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema162"
+                            "$ref": "#/$defs/schema160"
                           },
                           {
                             "not": {
@@ -20273,7 +20407,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema162"
+                            "$ref": "#/$defs/schema160"
                           },
                           {
                             "not": {
@@ -20317,7 +20451,7 @@
                           "additionalLabels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema162"
+                                "$ref": "#/$defs/schema160"
                               },
                               {
                                 "not": {
@@ -20363,7 +20497,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema162"
+                                "$ref": "#/$defs/schema160"
                               },
                               {
                                 "not": {
@@ -20408,7 +20542,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema137"
+                    "$ref": "#/$defs/schema136"
                   },
                   {
                     "properties": {
@@ -20455,7 +20589,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema137"
+                    "$ref": "#/$defs/schema136"
                   },
                   {
                     "properties": {
@@ -20528,7 +20662,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema137"
+                    "$ref": "#/$defs/schema136"
                   },
                   {
                     "properties": {
@@ -20575,7 +20709,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema137"
+                    "$ref": "#/$defs/schema136"
                   },
                   {
                     "properties": {
@@ -20648,7 +20782,7 @@
               "description": "enable support for Prometheus Operator"
             },
             "interval": {
-              "$ref": "#/$defs/schema134"
+              "$ref": "#/$defs/schema133"
             },
             "jobLabel": {
               "description": "Job label for scrape target"
@@ -20881,7 +21015,7 @@
                   "description": "enable support for Prometheus Operator"
                 },
                 "interval": {
-                  "$ref": "#/$defs/schema134"
+                  "$ref": "#/$defs/schema133"
                 },
                 "jobLabel": {
                   "description": "Job label for scrape target"
@@ -20946,7 +21080,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema153"
+                        "$ref": "#/$defs/schema152"
                       },
                       {
                         "properties": {
@@ -21013,7 +21147,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema153"
+                        "$ref": "#/$defs/schema152"
                       },
                       {
                         "properties": {
@@ -21090,7 +21224,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema153"
+                "$ref": "#/$defs/schema152"
               },
               {
                 "properties": {
@@ -21106,7 +21240,27 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema129"
+            "additionalProperties": {},
+            "properties": {
+              "labels": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
           }
         },
         {
@@ -21115,7 +21269,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21168,7 +21322,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21221,7 +21375,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21274,7 +21428,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21327,7 +21481,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21380,7 +21534,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21433,7 +21587,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21486,7 +21640,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21539,7 +21693,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21592,7 +21746,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21645,7 +21799,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21698,7 +21852,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21749,7 +21903,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema153"
+                "$ref": "#/$defs/schema152"
               },
               {
                 "properties": {
@@ -21768,8 +21922,17 @@
             "additionalProperties": {},
             "properties": {
               "runtimeClassName": {
-                "description": "Selects which runtime class will be used by the pod.",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Selects which runtime class will be used by the pod."
               }
             }
           }
@@ -21780,7 +21943,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21834,7 +21997,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema162"
+                        "$ref": "#/$defs/schema160"
                       },
                       {
                         "not": {
@@ -21852,7 +22015,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema153"
+                "$ref": "#/$defs/schema152"
               },
               {
                 "properties": {
@@ -21897,7 +22060,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -21963,7 +22126,7 @@
             "additionalProperties": {},
             "properties": {
               "startupProbe": {
-                "$ref": "#/$defs/schema147"
+                "$ref": "#/$defs/schema146"
               }
             }
           }
@@ -21974,7 +22137,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   },
                   {
                     "properties": {
@@ -22040,7 +22203,7 @@
             "additionalProperties": {},
             "properties": {
               "startupProbe": {
-                "$ref": "#/$defs/schema152"
+                "$ref": "#/$defs/schema151"
               }
             }
           }
@@ -22386,7 +22549,7 @@
       "additionalProperties": {},
       "properties": {
         "cipherSuites": {
-          "$ref": "#/$defs/schema130"
+          "$ref": "#/$defs/schema129"
         },
         "controllerMetricsTLSSecret": {
           "description": "The name of the secret to be mounted in the controller pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
@@ -22395,7 +22558,7 @@
           "$ref": "#/$defs/schema90"
         },
         "minVersion": {
-          "$ref": "#/$defs/schema133"
+          "$ref": "#/$defs/schema132"
         },
         "speakerMetricsTLSSecret": {
           "description": "The name of the secret to be mounted in the speaker pod to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."

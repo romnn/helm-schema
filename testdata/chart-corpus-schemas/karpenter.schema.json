@@ -26,54 +26,85 @@
       ]
     },
     "schema1": {
-      "additionalProperties": {},
-      "properties": {
-        "preferredDuringSchedulingIgnoredDuringExecution": {
-          "anyOf": [
-            {
-              "items": {
-                "additionalProperties": {},
-                "properties": {
-                  "podAffinityTerm": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "labelSelector": {}
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "affinity": {
+                  "properties": {
+                    "podAntiAffinity": {
+                      "properties": {
+                        "preferredDuringSchedulingIgnoredDuringExecution": {}
+                      },
+                      "required": [
+                        "preferredDuringSchedulingIgnoredDuringExecution"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podAntiAffinity"
+                  ],
+                  "type": "object"
+                }
               },
-              "type": "array"
-            },
-            {
-              "additionalProperties": {
-                "additionalProperties": {},
-                "properties": {
-                  "podAffinityTerm": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "labelSelector": {}
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              },
+              "required": [
+                "affinity"
+              ],
               "type": "object"
-            },
-            {
-              "maximum": 0,
-              "type": "integer"
-            },
-            {
-              "type": "null"
             }
-          ]
-        }
+          },
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAntiAffinity": {
+                    "properties": {
+                      "preferredDuringSchedulingIgnoredDuringExecution": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "preferredDuringSchedulingIgnoredDuringExecution"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podAntiAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          }
+        ]
       }
     },
-    "schema10": {
+    "schema23": {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "preferredDuringSchedulingIgnoredDuringExecution": {}
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "requiredDuringSchedulingIgnoredDuringExecution": {}
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "schema26": {
       "not": {
         "properties": {
           "affinity": {
@@ -96,20 +127,7 @@
         "type": "object"
       }
     },
-    "schema12": {
-      "properties": {
-        "preferredDuringSchedulingIgnoredDuringExecution": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "preferredDuringSchedulingIgnoredDuringExecution"
-      ],
-      "type": "object"
-    },
-    "schema13": {
+    "schema29": {
       "properties": {
         "requiredDuringSchedulingIgnoredDuringExecution": {
           "enum": [
@@ -122,7 +140,69 @@
       ],
       "type": "object"
     },
-    "schema15": {
+    "schema3": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "affinity": {
+                  "properties": {
+                    "podAffinity": {
+                      "properties": {
+                        "preferredDuringSchedulingIgnoredDuringExecution": {}
+                      },
+                      "required": [
+                        "preferredDuringSchedulingIgnoredDuringExecution"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podAffinity"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "affinity"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "affinity": {
+                "properties": {
+                  "podAffinity": {
+                    "properties": {
+                      "preferredDuringSchedulingIgnoredDuringExecution": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "preferredDuringSchedulingIgnoredDuringExecution"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podAffinity"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "schema31": {
       "properties": {
         "settings": {
           "properties": {
@@ -143,7 +223,7 @@
       ],
       "type": "object"
     },
-    "schema16": {
+    "schema32": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -162,16 +242,7 @@
         "type": "object"
       }
     },
-    "schema19": {
-      "properties": {
-        "preferredDuringSchedulingIgnoredDuringExecution": {}
-      },
-      "required": [
-        "preferredDuringSchedulingIgnoredDuringExecution"
-      ],
-      "type": "object"
-    },
-    "schema22": {
+    "schema39": {
       "items": {
         "additionalProperties": {},
         "properties": {
@@ -186,7 +257,7 @@
       },
       "type": "array"
     },
-    "schema23": {
+    "schema40": {
       "anyOf": [
         {
           "type": "array"
@@ -203,7 +274,7 @@
       ],
       "description": "Additional sidecarContainer config"
     },
-    "schema24": {
+    "schema42": {
       "additionalProperties": {
         "additionalProperties": {},
         "properties": {
@@ -213,7 +284,7 @@
       },
       "type": "object"
     },
-    "schema27": {
+    "schema45": {
       "items": {
         "additionalProperties": {},
         "properties": {
@@ -223,7 +294,125 @@
       },
       "type": "array"
     },
-    "schema3": {
+    "schema5": {
+      "additionalProperties": {},
+      "properties": {
+        "preferredDuringSchedulingIgnoredDuringExecution": {
+          "anyOf": [
+            {
+              "items": {
+                "additionalProperties": {},
+                "properties": {
+                  "podAffinityTerm": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "labelSelector": {}
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "additionalProperties": {},
+                "properties": {
+                  "podAffinityTerm": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "labelSelector": {}
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "maximum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema51": {
+      "not": {
+        "properties": {
+          "affinity": {}
+        },
+        "required": [
+          "affinity"
+        ],
+        "type": "object"
+      }
+    },
+    "schema55": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema56": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema7": {
+      "additionalProperties": {},
+      "properties": {
+        "preferredDuringSchedulingIgnoredDuringExecution": {
+          "anyOf": [
+            {
+              "items": {
+                "properties": {
+                  "podAffinityTerm": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podAffinityTerm"
+                ],
+                "type": "object"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "properties": {
+                  "podAffinityTerm": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podAffinityTerm"
+                ],
+                "type": "object"
+              },
+              "type": "object"
+            },
+            {
+              "maximum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema8": {
       "additionalProperties": {},
       "properties": {
         "requiredDuringSchedulingIgnoredDuringExecution": {
@@ -259,33 +448,7 @@
         }
       }
     },
-    "schema32": {
-      "not": {
-        "properties": {
-          "affinity": {}
-        },
-        "required": [
-          "affinity"
-        ],
-        "type": "object"
-      }
-    },
-    "schema36": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema37": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "schema4": {
+    "schema9": {
       "not": {
         "anyOf": [
           {
@@ -330,23 +493,6 @@
           }
         ]
       }
-    },
-    "schema7": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "preferredDuringSchedulingIgnoredDuringExecution": {}
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "requiredDuringSchedulingIgnoredDuringExecution": {}
-          },
-          "type": "object"
-        }
-      ]
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -360,7 +506,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema16"
+                    "$ref": "#/$defs/schema32"
                   },
                   {
                     "properties": {
@@ -461,7 +607,7 @@
           "additionalAnnotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema37"
+                "$ref": "#/$defs/schema56"
               },
               {
                 "not": {
@@ -478,7 +624,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema16"
+            "$ref": "#/$defs/schema32"
           },
           {
             "properties": {
@@ -507,7 +653,7 @@
           "additionalLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema37"
+                "$ref": "#/$defs/schema56"
               },
               {
                 "not": {
@@ -526,7 +672,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema32"
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -549,53 +695,10 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema4"
+            "$ref": "#/$defs/schema9"
           },
           {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "affinity": {
-                        "properties": {
-                          "podAffinity": {
-                            "$ref": "#/$defs/schema19"
-                          }
-                        },
-                        "required": [
-                          "podAffinity"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "affinity"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "affinity": {
-                      "properties": {
-                        "podAffinity": {
-                          "$ref": "#/$defs/schema12"
-                        }
-                      },
-                      "required": [
-                        "podAffinity"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "affinity"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
+            "$ref": "#/$defs/schema3"
           }
         ]
       },
@@ -607,7 +710,7 @@
             "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAffinity": {
-                "$ref": "#/$defs/schema1"
+                "$ref": "#/$defs/schema5"
               }
             }
           }
@@ -620,7 +723,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema32"
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -643,7 +746,58 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema4"
+            "$ref": "#/$defs/schema9"
+          },
+          {
+            "$ref": "#/$defs/schema3"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAffinity": {
+                "$ref": "#/$defs/schema7"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema51"
+              },
+              {
+                "properties": {
+                  "affinity": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "affinity"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema9"
           },
           {
             "not": {
@@ -680,7 +834,7 @@
                     "affinity": {
                       "properties": {
                         "podAffinity": {
-                          "$ref": "#/$defs/schema13"
+                          "$ref": "#/$defs/schema29"
                         }
                       },
                       "required": [
@@ -707,7 +861,7 @@
             "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAffinity": {
-                "$ref": "#/$defs/schema3"
+                "$ref": "#/$defs/schema8"
               }
             }
           }
@@ -720,7 +874,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema32"
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -743,7 +897,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema4"
+            "$ref": "#/$defs/schema9"
           }
         ]
       },
@@ -775,7 +929,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema32"
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -798,53 +952,10 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema10"
+            "$ref": "#/$defs/schema26"
           },
           {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "properties": {
-                      "affinity": {
-                        "properties": {
-                          "podAntiAffinity": {
-                            "$ref": "#/$defs/schema19"
-                          }
-                        },
-                        "required": [
-                          "podAntiAffinity"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "affinity"
-                    ],
-                    "type": "object"
-                  }
-                },
-                {
-                  "properties": {
-                    "affinity": {
-                      "properties": {
-                        "podAntiAffinity": {
-                          "$ref": "#/$defs/schema12"
-                        }
-                      },
-                      "required": [
-                        "podAntiAffinity"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "affinity"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
+            "$ref": "#/$defs/schema1"
           }
         ]
       },
@@ -856,7 +967,7 @@
             "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAntiAffinity": {
-                "$ref": "#/$defs/schema1"
+                "$ref": "#/$defs/schema5"
               }
             }
           }
@@ -869,7 +980,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema32"
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -892,7 +1003,58 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema10"
+            "$ref": "#/$defs/schema26"
+          },
+          {
+            "$ref": "#/$defs/schema1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "affinity": {
+            "additionalProperties": {},
+            "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
+            "properties": {
+              "podAntiAffinity": {
+                "$ref": "#/$defs/schema7"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema51"
+              },
+              {
+                "properties": {
+                  "affinity": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "affinity"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema26"
           },
           {
             "not": {
@@ -900,7 +1062,7 @@
                 "affinity": {
                   "properties": {
                     "podAntiAffinity": {
-                      "$ref": "#/$defs/schema13"
+                      "$ref": "#/$defs/schema29"
                     }
                   },
                   "required": [
@@ -925,7 +1087,7 @@
             "description": "Affinity rules for scheduling the pod. If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAntiAffinity": {
-                "$ref": "#/$defs/schema3"
+                "$ref": "#/$defs/schema8"
               }
             }
           }
@@ -938,7 +1100,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema32"
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -961,7 +1123,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema10"
+            "$ref": "#/$defs/schema26"
           }
         ]
       },
@@ -991,7 +1153,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema32"
+            "$ref": "#/$defs/schema51"
           },
           {
             "properties": {
@@ -1038,7 +1200,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema32"
+                    "$ref": "#/$defs/schema51"
                   },
                   {
                     "properties": {
@@ -1061,7 +1223,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema4"
+                "$ref": "#/$defs/schema9"
               }
             ]
           },
@@ -1070,7 +1232,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema32"
+                    "$ref": "#/$defs/schema51"
                   },
                   {
                     "properties": {
@@ -1093,7 +1255,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema10"
+                "$ref": "#/$defs/schema26"
               }
             ]
           }
@@ -1367,7 +1529,7 @@
             "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
             "properties": {
               "sidecarContainer": {
-                "$ref": "#/$defs/schema23"
+                "$ref": "#/$defs/schema40"
               }
             }
           }
@@ -1387,7 +1549,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema16"
+            "$ref": "#/$defs/schema32"
           },
           {
             "properties": {
@@ -1460,38 +1622,9 @@
     },
     {
       "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Overrides the chart's name."
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema16"
+            "$ref": "#/$defs/schema32"
           },
           {
             "properties": {
@@ -1518,8 +1651,46 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "description": "Overrides the chart's name.",
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Overrides the chart's name."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Overrides the chart's name."
           }
         }
       }
@@ -1568,7 +1739,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema37"
+                    "$ref": "#/$defs/schema56"
                   },
                   {
                     "not": {
@@ -1589,7 +1760,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema32"
               },
               {
                 "properties": {
@@ -1657,7 +1828,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema37"
+                    "$ref": "#/$defs/schema56"
                   },
                   {
                     "not": {
@@ -1714,10 +1885,10 @@
           "topologySpreadConstraints": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema27"
+                "$ref": "#/$defs/schema45"
               },
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema42"
               },
               {
                 "maximum": 0,
@@ -1780,10 +1951,10 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema15"
+            "$ref": "#/$defs/schema31"
           },
           {
-            "$ref": "#/$defs/schema15"
+            "$ref": "#/$defs/schema31"
           }
         ]
       },
@@ -1799,7 +1970,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema37"
+          "$ref": "#/$defs/schema56"
         },
         {
           "not": {
@@ -1834,7 +2005,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema37"
+          "$ref": "#/$defs/schema56"
         },
         {
           "not": {
@@ -1860,7 +2031,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/schema22"
+                            "$ref": "#/$defs/schema39"
                           }
                         },
                         "type": "object"
@@ -1874,10 +2045,10 @@
               "type": "object"
             },
             "podAffinity": {
-              "$ref": "#/$defs/schema7"
+              "$ref": "#/$defs/schema23"
             },
             "podAntiAffinity": {
-              "$ref": "#/$defs/schema7"
+              "$ref": "#/$defs/schema23"
             }
           },
           "type": "object"
@@ -2010,7 +2181,7 @@
             "additionalProperties": {},
             "properties": {
               "sidecarContainer": {
-                "$ref": "#/$defs/schema23"
+                "$ref": "#/$defs/schema40"
               }
             }
           }
@@ -2276,7 +2447,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema37"
+          "$ref": "#/$defs/schema56"
         },
         {
           "not": {
@@ -2307,7 +2478,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema37"
+          "$ref": "#/$defs/schema56"
         },
         {
           "not": {
@@ -2376,7 +2547,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema36"
+                  "$ref": "#/$defs/schema55"
                 }
               },
               {
@@ -2454,8 +2625,17 @@
           "type": "object"
         },
         "enabled": {
-          "description": "Specifies whether a ServiceMonitor should be created.",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Specifies whether a ServiceMonitor should be created."
         },
         "endpointConfig": {
           "additionalProperties": {},
@@ -2584,7 +2764,7 @@
     "tolerations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema22"
+          "$ref": "#/$defs/schema39"
         },
         {
           "not": {

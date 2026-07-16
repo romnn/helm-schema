@@ -52,6 +52,9 @@ pub(crate) struct FragmentSummary {
     pub(crate) type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Input-type hints observed only under body branch predicates.
     pub(crate) guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Input-type hints from literal `default`/`coalesce` fallbacks in the
+    /// body: they type only the truthy arm of the path.
+    pub(crate) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Paths consumed as serialized YAML by `fromYaml` in the body.
     pub(crate) parsed_yaml_input_paths: BTreeSet<String>,
     /// Paths serialized with `toYaml` in the helper's projected output.
@@ -144,6 +147,7 @@ pub(crate) fn eval_bound_helper_fragment(
         suppress_predicate_paths: suppress,
         type_hints: interpreter.type_hints,
         guarded_type_hints: interpreter.guarded_type_hints,
+        fallback_type_hints: interpreter.fallback_type_hints,
         parsed_yaml_input_paths: interpreter.parsed_yaml_input_paths,
         yaml_serialized_paths: interpreter.yaml_serialized_paths,
         shape_erased_paths: interpreter.shape_erased_paths,

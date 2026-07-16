@@ -20,6 +20,10 @@ pub struct ContractIr {
     /// where those branches render, so they type conditional overlays but
     /// never the unconditional base.
     guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Input-type hints from literal `default`/`coalesce` fallbacks: they
+    /// type only the truthy arm of the path, so lowering must keep the
+    /// whole Helm-falsy set open beside them (F42).
+    fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Paths consumed through total stringifications (`quote`, `toString`,
     /// `join`, `printf`) anywhere in the interpretation: the chart tolerates
     /// any input type at them even when no placed row exists.
@@ -94,6 +98,12 @@ impl ContractIr {
         }
         for (path, schema_types) in other.guarded_type_hints {
             self.guarded_type_hints
+                .entry(path)
+                .or_default()
+                .extend(schema_types);
+        }
+        for (path, schema_types) in other.fallback_type_hints {
+            self.fallback_type_hints
                 .entry(path)
                 .or_default()
                 .extend(schema_types);
@@ -185,6 +195,14 @@ impl ContractIr {
                 .extend(schema_types);
         }
         self.guarded_type_hints = guarded_type_hints;
+        let mut fallback_type_hints: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+        for (path, schema_types) in std::mem::take(&mut self.fallback_type_hints) {
+            fallback_type_hints
+                .entry(map(&path))
+                .or_default()
+                .extend(schema_types);
+        }
+        self.fallback_type_hints = fallback_type_hints;
         self.shape_erased_value_paths = std::mem::take(&mut self.shape_erased_value_paths)
             .into_iter()
             .map(|path| map(&path))
@@ -243,6 +261,28 @@ impl ContractIr {
                 continue;
             }
             self.type_hints
+                .entry(path)
+                .or_default()
+                .extend(schema_types);
+        }
+    }
+
+    pub(crate) fn extend_fallback_type_hints(
+        &mut self,
+        type_hints: impl IntoIterator<Item = (String, BTreeSet<String>)>,
+    ) {
+        for (path, schema_types) in type_hints {
+            if path.trim().is_empty() {
+                continue;
+            }
+            let schema_types = schema_types
+                .into_iter()
+                .filter(|schema_type| !schema_type.trim().is_empty())
+                .collect::<BTreeSet<_>>();
+            if schema_types.is_empty() {
+                continue;
+            }
+            self.fallback_type_hints
                 .entry(path)
                 .or_default()
                 .extend(schema_types);
@@ -319,6 +359,7 @@ impl ContractIr {
             mut dependency_uses,
             type_hints,
             guarded_type_hints,
+            fallback_type_hints,
             shape_erased_value_paths,
             string_contract_value_paths,
             range_modes,
@@ -348,6 +389,7 @@ impl ContractIr {
             uses,
             type_hints,
             guarded_type_hints,
+            fallback_type_hints,
             shape_erased_value_paths,
             string_contract_value_paths,
             range_modes,

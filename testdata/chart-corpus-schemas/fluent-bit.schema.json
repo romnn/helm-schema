@@ -89,7 +89,7 @@
         "type": "object"
       }
     },
-    "schema11": {
+    "schema12": {
       "additionalProperties": {},
       "properties": {
         "hosts": {
@@ -110,7 +110,7 @@
         }
       }
     },
-    "schema13": {
+    "schema14": {
       "additionalProperties": {},
       "properties": {
         "containerPort": {},
@@ -121,7 +121,7 @@
       },
       "type": "object"
     },
-    "schema14": {
+    "schema15": {
       "anyOf": [
         {
           "type": "string"
@@ -131,11 +131,6 @@
         }
       ],
       "description": "This supports either a structured array or a templatable string"
-    },
-    "schema15": {
-      "description": "This supports either a structured array or a templatable string",
-      "items": {},
-      "type": "array"
     },
     "schema16": {
       "not": {
@@ -309,6 +304,26 @@
       ]
     },
     "schema7": {
+      "items": {
+        "anyOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "host": {}
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "port": {}
+            },
+            "type": "object"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "schema8": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -326,18 +341,6 @@
         ],
         "type": "object"
       }
-    },
-    "schema9": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "string"
-        }
-      ],
-      "description": "This supports either a structured array or a templatable string"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -484,7 +487,16 @@
             "description": "only available if kind is Deployment",
             "properties": {
               "targetCPUUtilizationPercentage": {
-                "type": "integer"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
               }
             }
           }
@@ -608,6 +620,196 @@
                   },
                   {
                     "type": "null"
+                  }
+                ],
+                "description": "This allows adding more files with arbitrary filenames to /fluent-bit/etc/conf by providing key/value pairs.\nThe key becomes the filename, the value becomes the file content.\nupstream.conf: |\n[UPSTREAM]\nupstream1\n[NODE]\nname       node-1\nhost       127.0.0.1\nport       43000\nexample.conf: |\n[OUTPUT]\nName example\nMatch foo.*\nHost bar"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema6"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "existingConfigMap": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingConfigMap"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "hotReload": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "hotReload"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "hotReload": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "hotReload"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "podAnnotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "podAnnotations"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema20"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "existingConfigMap": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingConfigMap"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "hotReload": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "hotReload"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "hotReload": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "hotReload"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "podAnnotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "podAnnotations"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "additionalProperties": {},
+            "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file",
+            "properties": {
+              "extraFiles": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
                   }
                 ],
                 "description": "This allows adding more files with arbitrary filenames to /fluent-bit/etc/conf by providing key/value pairs.\nThe key becomes the filename, the value becomes the file content.\nupstream.conf: |\n[UPSTREAM]\nupstream1\n[NODE]\nname       node-1\nhost       127.0.0.1\nport       43000\nexample.conf: |\n[OUTPUT]\nName example\nMatch foo.*\nHost bar"
@@ -1440,6 +1642,196 @@
               "upstream": {
                 "anyOf": [
                   {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/upstream-servers\nThis configuration is deprecated, please use `extraFiles` instead."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema6"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "existingConfigMap": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingConfigMap"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "hotReload": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "hotReload"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "hotReload": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "hotReload"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "podAnnotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "podAnnotations"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema20"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "existingConfigMap": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "existingConfigMap"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "hotReload": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "hotReload"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "hotReload": {
+                          "properties": {
+                            "enabled": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "hotReload"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "podAnnotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "podAnnotations"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "additionalProperties": {},
+            "description": "https://docs.fluentbit.io/manual/administration/configuring-fluent-bit/classic-mode/configuration-file",
+            "properties": {
+              "upstream": {
+                "anyOf": [
+                  {
                     "type": "array"
                   },
                   {
@@ -1753,6 +2145,123 @@
           "envWithTpl": {
             "anyOf": [
               {
+                "items": {
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "value"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": {
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "value"
+                  ],
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The envWithTpl array below has the same usage as \"env\", but is using the tpl function to support templatable string.\nThis can be useful when you want to pass dynamic values to the Chart using the helm argument \"--set <variable>=<value>\"\nhttps://helm.sh/docs/howto/charts_tips_and_tricks/#using-the-tpl-function\n- name: FOO_2\nvalue: \"{{ .Values.foo2 }}\"\nfoo2: bar2"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema6"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "env": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "envWithTpl": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "envWithTpl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema20"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "env": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "env"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "envWithTpl": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "envWithTpl"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "envWithTpl": {
+            "anyOf": [
+              {
                 "type": "array"
               },
               {
@@ -1869,8 +2378,17 @@
         "additionalProperties": {},
         "properties": {
           "existingConfigMap": {
-            "description": "Make use of a pre-defined configmap instead of the one templated here",
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Make use of a pre-defined configmap instead of the one templated here"
           }
         }
       }
@@ -1904,7 +2422,66 @@
         "additionalProperties": {},
         "properties": {
           "extraContainers": {
-            "$ref": "#/$defs/schema9"
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "This supports either a structured array or a templatable string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema6"
+              },
+              {
+                "$ref": "#/$defs/schema16"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema20"
+              },
+              {
+                "$ref": "#/$defs/schema16"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraContainers": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ],
+            "description": "This supports either a structured array or a templatable string"
           }
         }
       }
@@ -1951,40 +2528,6 @@
               },
               {
                 "$ref": "#/$defs/schema18"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "extraContainers": {
-            "$ref": "#/$defs/schema14"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema6"
-              },
-              {
-                "$ref": "#/$defs/schema16"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema20"
-              },
-              {
-                "$ref": "#/$defs/schema16"
               }
             ]
           }
@@ -2018,13 +2561,13 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/$defs/schema13"
+                  "$ref": "#/$defs/schema14"
                 },
                 "type": "array"
               },
               {
                 "additionalProperties": {
-                  "$ref": "#/$defs/schema13"
+                  "$ref": "#/$defs/schema14"
                 },
                 "type": "object"
               },
@@ -2168,7 +2711,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema7"
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -2397,6 +2940,92 @@
         "properties": {
           "hostNetwork": {
             "type": "boolean"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "hotReload": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hotReload"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema6"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "hotReload": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "hotReload"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema20"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "hotReload": {
+            "additionalProperties": {},
+            "properties": {
+              "extraWatchVolumes": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
           }
         }
       }
@@ -2998,11 +3627,11 @@
             "properties": {
               "tls": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/schema11"
+                  "$ref": "#/$defs/schema12"
                 },
                 "description": "- host: fluent-bit-extra.example.tld\nspecify extraPort number\nport: 5170\n- secretName: fluent-bit-example-tld\nhosts:\n- fluent-bit.example.tld",
                 "items": {
-                  "$ref": "#/$defs/schema11"
+                  "$ref": "#/$defs/schema12"
                 }
               }
             }
@@ -3121,7 +3750,21 @@
         "additionalProperties": {},
         "properties": {
           "initContainers": {
-            "$ref": "#/$defs/schema9"
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "This supports either a structured array or a templatable string"
           }
         }
       }
@@ -3132,42 +3775,20 @@
           {
             "allOf": [
               {
-                "properties": {
-                  "initContainers": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "initContainers"
-                ],
-                "type": "object"
-              },
-              {
                 "$ref": "#/$defs/schema6"
               },
               {
-                "$ref": "#/$defs/schema19"
+                "$ref": "#/$defs/schema17"
               }
             ]
           },
           {
             "allOf": [
               {
-                "properties": {
-                  "initContainers": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "initContainers"
-                ],
-                "type": "object"
-              },
-              {
                 "$ref": "#/$defs/schema20"
               },
               {
-                "$ref": "#/$defs/schema19"
+                "$ref": "#/$defs/schema17"
               }
             ]
           }
@@ -3177,7 +3798,18 @@
         "additionalProperties": {},
         "properties": {
           "initContainers": {
-            "$ref": "#/$defs/schema14"
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ],
+            "description": "This supports either a structured array or a templatable string"
           }
         }
       }
@@ -3188,20 +3820,42 @@
           {
             "allOf": [
               {
+                "properties": {
+                  "initContainers": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "initContainers"
+                ],
+                "type": "object"
+              },
+              {
                 "$ref": "#/$defs/schema6"
               },
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema19"
               }
             ]
           },
           {
             "allOf": [
               {
+                "properties": {
+                  "initContainers": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "initContainers"
+                ],
+                "type": "object"
+              },
+              {
                 "$ref": "#/$defs/schema20"
               },
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema19"
               }
             ]
           }
@@ -3403,6 +4057,66 @@
           "luaScripts": {
             "anyOf": [
               {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "See Lua script configuration example in README.md"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "hotReload": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "hotReload"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "luaScripts": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "luaScripts"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "luaScripts": {
+            "anyOf": [
+              {
                 "type": "array"
               },
               {
@@ -3426,34 +4140,6 @@
         "properties": {
           "metricsPort": {
             "type": "integer"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
           }
         }
       }
@@ -3585,7 +4271,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema7"
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -3667,7 +4353,44 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       }
@@ -4831,7 +5554,16 @@
         "additionalProperties": {},
         "properties": {
           "priorityClassName": {
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         }
       }
@@ -5058,7 +5790,16 @@
               "description": "Values that the vertical pod autoscaler can control. Allowed values are RequestsAndLimits and RequestsOnly. Default is RequestsAndLimits."
             },
             "enabled": {
-              "type": "boolean"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
             },
             "maxAllowed": {
               "additionalProperties": {},
@@ -5075,14 +5816,23 @@
               "type": "string"
             },
             "updatePolicy": {
-              "additionalProperties": {},
-              "properties": {
-                "updateMode": {
-                  "description": "Specifies whether recommended updates are applied when a Pod is started and whether recommended updates\nare applied during the life of a Pod. Possible values are \"Off\", \"Initial\", \"Recreate\", and \"Auto\".",
-                  "type": "string"
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "properties": {
+                    "updateMode": {
+                      "description": "Specifies whether recommended updates are applied when a Pod is started and whether recommended updates\nare applied during the life of a Pod. Possible values are \"Off\", \"Initial\", \"Recreate\", and \"Auto\".",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 }
-              },
-              "type": "object"
+              ]
             }
           },
           "type": "object"
@@ -5361,9 +6111,29 @@
           ]
         },
         "extraHosts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/schema7"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            }
+          ],
           "description": "- host: fluent-bit.example.tld"
         },
         "hosts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/schema7"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            }
+          ],
           "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
         },
         "ingressClassName": {
@@ -5627,7 +6397,16 @@
           "$ref": "#/$defs/schema26"
         },
         "create": {
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
         },
         "runAsUser": {
           "additionalProperties": {},
@@ -5656,9 +6435,19 @@
       "additionalProperties": {},
       "properties": {
         "enabled": {
-          "description": "namespace: \"\"\nadditionalLabels: {}\nrules:\n- alert: NoOutputBytesProcessed\nexpr: rate(fluentbit_output_proc_bytes_total[5m]) == 0\nannotations:\nmessage: |\nFluent Bit instance {{ $labels.instance }}'s output plugin {{ $labels.name }} has not processed any\nbytes for at least 15 minutes.\nsummary: No Output Bytes Processed\nfor: 15m\nlabels:\nseverity: critical",
-          "type": "boolean"
-        }
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "namespace: \"\"\nadditionalLabels: {}\nrules:\n- alert: NoOutputBytesProcessed\nexpr: rate(fluentbit_output_proc_bytes_total[5m]) == 0\nannotations:\nmessage: |\nFluent Bit instance {{ $labels.instance }}'s output plugin {{ $labels.name }} has not processed any\nbytes for at least 15 minutes.\nsummary: No Output Bytes Processed\nfor: 15m\nlabels:\nseverity: critical"
+        },
+        "rules": {}
       },
       "type": "object"
     },
@@ -5897,8 +6686,17 @@
           "type": "array"
         },
         "enabled": {
-          "description": "namespace: monitoring\ninterval: 10s\nscrapeTimeout: 10s\nselector:\nprometheus: my-prometheus\nmetric relabel configs to apply to samples before ingestion.\nmetricRelabelings:\n- sourceLabels: [__meta_kubernetes_service_label_cluster]\ntargetLabel: cluster\nregex: (.*)\nreplacement: ${1}\naction: replace\nrelabel configs to apply to samples after ingestion.\nrelabelings:\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace\nscheme: \"\"\ntlsConfig: {}",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "namespace: monitoring\ninterval: 10s\nscrapeTimeout: 10s\nselector:\nprometheus: my-prometheus\nmetric relabel configs to apply to samples before ingestion.\nmetricRelabelings:\n- sourceLabels: [__meta_kubernetes_service_label_cluster]\ntargetLabel: cluster\nregex: (.*)\nreplacement: ${1}\naction: replace\nrelabel configs to apply to samples after ingestion.\nrelabelings:\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace\nscheme: \"\"\ntlsConfig: {}"
         },
         "path": {}
       },

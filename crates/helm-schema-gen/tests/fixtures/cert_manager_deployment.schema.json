@@ -5490,59 +5490,69 @@
       ]
     },
     "image": {
-      "additionalProperties": {},
-      "properties": {
-        "digest": {},
-        "pullPolicy": {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "digest": {},
+            "pullPolicy": {
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                  }
+                }
+              ],
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "string"
             },
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-              }
-            }
-          ],
-          "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-          "type": "string"
+            "registry": {},
+            "repository": {},
+            "tag": {}
+          },
+          "type": "object"
         },
-        "registry": {},
-        "repository": {},
-        "tag": {}
-      },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        }
+      ],
       "type": "object"
     },
     "ingressShim": {

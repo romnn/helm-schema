@@ -322,3 +322,88 @@ fn helper_output_under_guarded_resource_does_not_become_api_version_candidate() 
     assert!(resource.api_version_candidates.is_empty());
     assert!(resource.api_version_branches.is_empty());
 }
+
+/// F83 (signoz HPA): a capability call piped into `ternary` selects one of
+/// two literal apiVersions exactly like an `if`/`else` pair, so the
+/// identity keeps guard-qualified branches instead of reporting an unknown
+/// apiVersion.
+#[test]
+fn decodes_capability_ternary_api_version_pipeline() {
+    let resource = detect(
+        indoc! {r#"
+            apiVersion: {{ .Capabilities.APIVersions.Has "autoscaling/v2" | ternary "autoscaling/v2" "autoscaling/v2beta2" }}
+            kind: HorizontalPodAutoscaler
+            metadata:
+              name: example
+        "#},
+        &DefineIndex::new(),
+    )
+    .expect("resource");
+
+    sim_assert_eq!(have: resource.kind, want: "HorizontalPodAutoscaler");
+    sim_assert_eq!(have: resource.api_version, want: "autoscaling/v2");
+    sim_assert_eq!(
+        have: resource.api_version_candidates,
+        want: vec!["autoscaling/v2beta2".to_string()]
+    );
+    sim_assert_eq!(have: resource.api_version_branches.len(), want: 2);
+    sim_assert_eq!(
+        have: resource.api_version_branches[0].guard,
+        want: Some(CapabilityGuard::Has {
+            api: "autoscaling/v2".to_string()
+        })
+    );
+    sim_assert_eq!(
+        have: resource.api_version_branches[1].body,
+        want: HelperBranchBody::literals(vec!["autoscaling/v2beta2".to_string()])
+    );
+}
+
+/// The direct-call `ternary "on" "off" COND` spelling decodes identically.
+#[test]
+fn decodes_capability_ternary_api_version_direct_call() {
+    let resource = detect(
+        indoc! {r#"
+            apiVersion: {{ ternary "autoscaling/v2" "autoscaling/v2beta2" (.Capabilities.APIVersions.Has "autoscaling/v2") }}
+            kind: HorizontalPodAutoscaler
+            metadata:
+              name: example
+        "#},
+        &DefineIndex::new(),
+    )
+    .expect("resource");
+
+    sim_assert_eq!(have: resource.api_version, want: "autoscaling/v2");
+    sim_assert_eq!(
+        have: resource.api_version_candidates,
+        want: vec!["autoscaling/v2beta2".to_string()]
+    );
+    sim_assert_eq!(
+        have: resource.api_version_branches[0].guard,
+        want: Some(CapabilityGuard::Has {
+            api: "autoscaling/v2".to_string()
+        })
+    );
+}
+
+/// A values-driven ternary condition is NOT a capability guard: the
+/// identity abstains instead of fabricating unguarded candidates.
+#[test]
+fn values_driven_ternary_api_version_abstains() {
+    let resource = detect(
+        indoc! {r#"
+            apiVersion: {{ .Values.useV2 | ternary "autoscaling/v2" "autoscaling/v2beta2" }}
+            kind: HorizontalPodAutoscaler
+            metadata:
+              name: example
+        "#},
+        &DefineIndex::new(),
+    )
+    .expect("resource");
+
+    sim_assert_eq!(have: resource.kind, want: "HorizontalPodAutoscaler");
+    assert!(
+        resource.api_version.is_empty() || resource.api_version_branches.is_empty(),
+        "a values-selected ternary must not fabricate capability branches: {resource:?}"
+    );
+}

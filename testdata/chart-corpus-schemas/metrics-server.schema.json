@@ -1074,34 +1074,6 @@
     },
     {
       "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -1244,7 +1216,44 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       }
@@ -1457,7 +1466,16 @@
             "additionalProperties": {},
             "properties": {
               "interval": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             }
           }
@@ -1514,7 +1532,16 @@
             "additionalProperties": {},
             "properties": {
               "scrapeTimeout": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             }
           }
@@ -2245,8 +2272,17 @@
             "additionalProperties": {},
             "properties": {
               "insecureSkipTLSVerify": {
-                "description": "Specifies whether to skip TLS verification",
-                "type": "boolean"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ],
+                "description": "Specifies whether to skip TLS verification"
               }
             }
           }
@@ -2864,8 +2900,17 @@
                 "additionalProperties": {},
                 "properties": {
                   "duration": {
-                    "description": "Set the requested duration (i.e. lifetime) of the Certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Set the requested duration (i.e. lifetime) of the Certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
                   }
                 }
               }
@@ -2993,8 +3038,17 @@
                 "additionalProperties": {},
                 "properties": {
                   "renewBefore": {
-                    "description": "How long before the currently issued certificate’s expiry cert-manager should renew the certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "How long before the currently issued certificate’s expiry cert-manager should renew the certificate.\nSee https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
                   }
                 }
               }
@@ -3019,8 +3073,17 @@
                 "additionalProperties": {},
                 "properties": {
                   "name": {
-                    "description": "Name of the existing Secret to use for TLS",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Name of the existing Secret to use for TLS"
                   }
                 }
               }

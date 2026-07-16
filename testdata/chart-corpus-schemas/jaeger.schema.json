@@ -629,6 +629,12 @@
       ]
     },
     "schema57": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema58": {
       "additionalProperties": {},
       "properties": {
         "concurrencyPolicy": {
@@ -636,19 +642,8 @@
         }
       }
     },
-    "schema58": {
-      "description": "Explicitly mounts the API credentials for the Service Account"
-    },
     "schema59": {
-      "not": {
-        "properties": {
-          "enabled": {}
-        },
-        "required": [
-          "enabled"
-        ],
-        "type": "object"
-      }
+      "description": "Explicitly mounts the API credentials for the Service Account"
     },
     "schema6": {
       "anyOf": [
@@ -694,7 +689,18 @@
         }
       ]
     },
-    "schema63": {
+    "schema60": {
+      "not": {
+        "properties": {
+          "enabled": {}
+        },
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
+      }
+    },
+    "schema64": {
       "anyOf": [
         {
           "type": "array"
@@ -706,12 +712,6 @@
           "type": "null"
         }
       ]
-    },
-    "schema65": {
-      "additionalProperties": {},
-      "properties": {
-        "annotations": {}
-      }
     },
     "schema66": {
       "additionalProperties": {
@@ -728,6 +728,10 @@
           "type": "null"
         }
       ]
+    },
+    "schema68": {
+      "additionalProperties": {},
+      "type": "object"
     },
     "schema8": {
       "additionalProperties": {},
@@ -4914,34 +4918,6 @@
     },
     {
       "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -5073,7 +5049,44 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       }
@@ -5187,7 +5200,7 @@
             "description": "https://github.com/jaegertracing/spark-dependencies",
             "properties": {
               "cmdlineParams": {
-                "$ref": "#/$defs/schema63"
+                "$ref": "#/$defs/schema64"
               }
             }
           }
@@ -6206,7 +6219,7 @@
                 "description": "Cassandra connection settings (for external Cassandra or customizing provisioned)",
                 "properties": {
                   "env": {
-                    "$ref": "#/$defs/schema63"
+                    "$ref": "#/$defs/schema64"
                   }
                 }
               }
@@ -6254,7 +6267,16 @@
                 "description": "Cassandra connection settings (for external Cassandra or customizing provisioned)",
                 "properties": {
                   "keyspace": {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
                   }
                 }
               }
@@ -7937,6 +7959,19 @@
       "type": "object"
     },
     "commonAnnotations": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/schema57"
+        },
+        {
+          "$ref": "#/$defs/schema68"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        }
+      ],
       "description": "Annotations to add to all resources"
     },
     "commonLabels": {
@@ -7973,7 +8008,27 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema42"
+            "additionalProperties": {},
+            "properties": {
+              "cmdlineParams": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
           }
         },
         {
@@ -7989,7 +8044,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema57"
+            "$ref": "#/$defs/schema58"
           }
         },
         {
@@ -8244,7 +8299,21 @@
       "properties": {
         "activeDeadlineSeconds": {},
         "affinity": {},
-        "annotations": {},
+        "annotations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/schema57"
+            },
+            {
+              "$ref": "#/$defs/schema68"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            }
+          ]
+        },
         "cmdlineParams": {},
         "concurrencyPolicy": {},
         "enabled": {
@@ -8285,13 +8354,30 @@
         "serviceAccount": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema65"
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema57"
+                    },
+                    {
+                      "$ref": "#/$defs/schema68"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    }
+                  ]
+                }
+              }
             },
             {
               "additionalProperties": {},
               "properties": {
                 "automountServiceAccountToken": {
-                  "$ref": "#/$defs/schema58"
+                  "$ref": "#/$defs/schema59"
                 },
                 "create": {
                   "anyOf": [
@@ -8333,7 +8419,27 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema42"
+            "additionalProperties": {},
+            "properties": {
+              "cmdlineParams": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
           }
         },
         {
@@ -8349,7 +8455,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema57"
+            "$ref": "#/$defs/schema58"
           }
         },
         {
@@ -8595,7 +8701,21 @@
       "properties": {
         "activeDeadlineSeconds": {},
         "affinity": {},
-        "annotations": {},
+        "annotations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/schema57"
+            },
+            {
+              "$ref": "#/$defs/schema68"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            }
+          ]
+        },
         "cmdlineParams": {},
         "concurrencyPolicy": {},
         "enabled": {
@@ -8629,13 +8749,30 @@
         "serviceAccount": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema65"
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema57"
+                    },
+                    {
+                      "$ref": "#/$defs/schema68"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    }
+                  ]
+                }
+              }
             },
             {
               "additionalProperties": {},
               "properties": {
                 "automountServiceAccountToken": {
-                  "$ref": "#/$defs/schema58"
+                  "$ref": "#/$defs/schema59"
                 },
                 "create": {
                   "anyOf": [
@@ -8678,7 +8815,27 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema42"
+            "additionalProperties": {},
+            "properties": {
+              "cmdlineParams": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
           }
         },
         {
@@ -8694,7 +8851,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema57"
+            "$ref": "#/$defs/schema58"
           }
         },
         {
@@ -8869,7 +9026,16 @@
                 "description": "ttlSecondsAfterFinished: 120",
                 "properties": {
                   "ttlSecondsAfterFinished": {
-                    "type": "integer"
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
                   }
                 }
               }
@@ -9039,7 +9205,21 @@
       "properties": {
         "activeDeadlineSeconds": {},
         "affinity": {},
-        "annotations": {},
+        "annotations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/schema57"
+            },
+            {
+              "$ref": "#/$defs/schema68"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            }
+          ]
+        },
         "cmdlineParams": {},
         "concurrencyPolicy": {},
         "enabled": {
@@ -9074,6 +9254,19 @@
               "additionalProperties": {},
               "properties": {
                 "annotations": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema57"
+                    },
+                    {
+                      "$ref": "#/$defs/schema68"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    }
+                  ],
                   "description": "- name: SHARDS\nvalue: \"3\""
                 },
                 "extraEnv": {},
@@ -9098,13 +9291,30 @@
         "serviceAccount": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema65"
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema57"
+                    },
+                    {
+                      "$ref": "#/$defs/schema68"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    }
+                  ]
+                }
+              }
             },
             {
               "additionalProperties": {},
               "properties": {
                 "automountServiceAccountToken": {
-                  "$ref": "#/$defs/schema58"
+                  "$ref": "#/$defs/schema59"
                 },
                 "create": {
                   "anyOf": [
@@ -9191,7 +9401,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema60"
               },
               {
                 "properties": {
@@ -9225,7 +9435,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema60"
               },
               {
                 "properties": {
@@ -9244,9 +9454,18 @@
             "additionalProperties": {},
             "properties": {
               "args": {
-                "description": "- name: OTEL_TRACES_SAMPLER\nvalue: \"always_off\"\ncommand line arguments / CLI flags\nSee https://www.jaegertracing.io/docs/cli/",
-                "items": {},
-                "type": "array"
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "- name: OTEL_TRACES_SAMPLER\nvalue: \"always_off\"\ncommand line arguments / CLI flags\nSee https://www.jaegertracing.io/docs/cli/"
               }
             }
           }
@@ -9257,7 +9476,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema59"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "properties": {
@@ -9321,7 +9540,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema60"
               },
               {
                 "properties": {
@@ -9344,7 +9563,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema60"
               },
               {
                 "properties": {
@@ -9367,7 +9586,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema60"
               },
               {
                 "properties": {
@@ -9406,7 +9625,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema59"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "properties": {
@@ -9451,7 +9670,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema60"
               },
               {
                 "properties": {
@@ -9486,7 +9705,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema59"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "properties": {
@@ -9575,7 +9794,21 @@
             "additionalRules": {
               "description": "additionalRules (templated) prepends custom HTTPRoute rules"
             },
-            "annotations": {},
+            "annotations": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/schema57"
+                },
+                {
+                  "$ref": "#/$defs/schema68"
+                },
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                }
+              ]
+            },
             "apiVersion": {
               "description": "HTTPRoute apiVersion (defaults to \"gateway.networking.k8s.io/v1\" when empty)"
             },
@@ -9645,6 +9878,19 @@
           "description": "- name: name\nport:\ntargetPort:\nprotocol: (optional)",
           "properties": {
             "annotations": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/schema57"
+                },
+                {
+                  "$ref": "#/$defs/schema68"
+                },
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                }
+              ],
               "description": "For Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress\ningressClassName: nginx"
             },
             "enabled": {},
@@ -9670,7 +9916,21 @@
         "service": {
           "additionalProperties": {},
           "properties": {
-            "annotations": {},
+            "annotations": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/schema57"
+                },
+                {
+                  "$ref": "#/$defs/schema68"
+                },
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                }
+              ]
+            },
             "extraPorts": {
               "allOf": [
                 {
@@ -9687,10 +9947,7 @@
             "labels": {
               "anyOf": [
                 {
-                  "additionalProperties": false,
-                  "maxProperties": 0,
-                  "properties": {},
-                  "type": "object"
+                  "$ref": "#/$defs/schema57"
                 },
                 {
                   "$ref": "#/$defs/schema66"
@@ -9721,7 +9978,21 @@
         "serviceAccount": {
           "additionalProperties": {},
           "properties": {
-            "annotations": {},
+            "annotations": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/schema57"
+                },
+                {
+                  "$ref": "#/$defs/schema68"
+                },
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                }
+              ]
+            },
             "automountServiceAccountToken": {}
           }
         },
@@ -9759,8 +10030,16 @@
             "additionalProperties": {},
             "properties": {
               "cmdlineParams": {
-                "additionalProperties": {},
-                "type": "object"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema68"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
               }
             }
           }
@@ -9809,7 +10088,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema57"
+            "$ref": "#/$defs/schema58"
           }
         },
         {
@@ -9858,7 +10137,7 @@
             "additionalProperties": {},
             "properties": {
               "extraConfigmapMounts": {
-                "$ref": "#/$defs/schema63"
+                "$ref": "#/$defs/schema64"
               }
             }
           }
@@ -9909,7 +10188,7 @@
             "additionalProperties": {},
             "properties": {
               "extraSecretMounts": {
-                "$ref": "#/$defs/schema63"
+                "$ref": "#/$defs/schema64"
               }
             }
           }
@@ -10126,7 +10405,21 @@
       "properties": {
         "activeDeadlineSeconds": {},
         "affinity": {},
-        "annotations": {},
+        "annotations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/schema57"
+            },
+            {
+              "$ref": "#/$defs/schema68"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            }
+          ]
+        },
         "cmdlineParams": {},
         "concurrencyPolicy": {},
         "enabled": {
@@ -10173,13 +10466,30 @@
         "serviceAccount": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema65"
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema57"
+                    },
+                    {
+                      "$ref": "#/$defs/schema68"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    }
+                  ]
+                }
+              }
             },
             {
               "additionalProperties": {},
               "properties": {
                 "automountServiceAccountToken": {
-                  "$ref": "#/$defs/schema58"
+                  "$ref": "#/$defs/schema59"
                 },
                 "create": {
                   "anyOf": [

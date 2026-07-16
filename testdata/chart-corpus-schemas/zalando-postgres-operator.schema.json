@@ -420,6 +420,35 @@
           "configAwsOrGcp": {
             "anyOf": [
               {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\""
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configAwsOrGcp": {
+            "anyOf": [
+              {
                 "type": "array"
               },
               {
@@ -492,6 +521,35 @@
         "properties": {
           "configConnectionPooler": {
             "$ref": "#/$defs/schema18"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configConnectionPooler": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "configure connection pooler deployment created by the operator"
           }
         }
       }
@@ -592,6 +650,35 @@
           "configDebug": {
             "anyOf": [
               {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "options to aid debugging of the operator itself"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configDebug": {
+            "anyOf": [
+              {
                 "type": "array"
               },
               {
@@ -664,6 +751,35 @@
         "properties": {
           "configGeneral": {
             "additionalProperties": {},
+            "description": "general configuration parameters"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configGeneral": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
             "description": "general configuration parameters"
           }
         }
@@ -806,6 +922,35 @@
           "configKubernetes": {
             "anyOf": [
               {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configKubernetes": {
+            "anyOf": [
+              {
                 "type": "array"
               },
               {
@@ -919,6 +1064,35 @@
         "properties": {
           "configLoadBalancer": {
             "additionalProperties": {},
+            "description": "configure behavior of load balancers"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLoadBalancer": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
             "description": "configure behavior of load balancers"
           }
         }
@@ -1062,6 +1236,35 @@
           "configLoggingRestApi": {
             "anyOf": [
               {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "parameters affecting logging and REST API listener"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLoggingRestApi": {
+            "anyOf": [
+              {
                 "type": "array"
               },
               {
@@ -1188,6 +1391,35 @@
           "configLogicalBackup": {
             "anyOf": [
               {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\""
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLogicalBackup": {
+            "anyOf": [
+              {
                 "type": "array"
               },
               {
@@ -1268,6 +1500,34 @@
           "configMajorVersionUpgrade": {
             "anyOf": [
               {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configMajorVersionUpgrade": {
+            "anyOf": [
+              {
                 "type": "array"
               },
               {
@@ -1333,6 +1593,34 @@
         "properties": {
           "configPatroni": {
             "additionalProperties": {}
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configPatroni": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ]
           }
         }
       }
@@ -1447,6 +1735,35 @@
           "configTeamsApi": {
             "anyOf": [
               {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "automate creation of human users with teams API service"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configTeamsApi": {
+            "anyOf": [
+              {
                 "type": "array"
               },
               {
@@ -1533,6 +1850,35 @@
           "configTimeouts": {
             "anyOf": [
               {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "timeouts related to some operator actions"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configTimeouts": {
+            "anyOf": [
+              {
                 "type": "array"
               },
               {
@@ -1605,6 +1951,35 @@
         "properties": {
           "configUsers": {
             "$ref": "#/$defs/schema7"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configUsers": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin"
           }
         }
       }
@@ -2270,8 +2645,17 @@
             "description": "priority class for database pods",
             "properties": {
               "name": {
-                "description": "If not set a name is generated using the fullname template and \"-pod\" suffix",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "If not set a name is generated using the fullname template and \"-pod\" suffix"
               }
             }
           }
@@ -2347,26 +2731,36 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema12"
-          },
-          {
-            "properties": {
-              "rbac": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema12"
+              },
+              {
                 "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "create"
+                  "rbac"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "rbac"
-            ],
-            "type": "object"
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema21"
+          },
+          {
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -2388,32 +2782,6 @@
                   }
                 ],
                 "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema21"
-          },
-          {
-            "$ref": "#/$defs/schema2"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podServiceAccount": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix",
-                "type": "string"
               }
             }
           }

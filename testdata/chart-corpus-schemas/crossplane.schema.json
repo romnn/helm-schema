@@ -26,56 +26,6 @@
       ]
     },
     "schema1": {
-      "additionalProperties": {},
-      "properties": {
-        "args": {
-          "anyOf": [
-            {
-              "type": "array"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Add custom arguments to the RBAC Manager pod."
-        }
-      }
-    },
-    "schema10": {
-      "properties": {
-        "deploy": {}
-      },
-      "required": [
-        "deploy"
-      ],
-      "type": "object"
-    },
-    "schema11": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema12": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "schema13": {
-      "additionalProperties": {},
-      "type": "object"
-    },
-    "schema2": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -94,7 +44,17 @@
         "type": "object"
       }
     },
-    "schema3": {
+    "schema10": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema11": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "schema2": {
       "not": {
         "properties": {
           "rbacManager": {
@@ -113,7 +73,7 @@
         "type": "object"
       }
     },
-    "schema5": {
+    "schema4": {
       "not": {
         "properties": {
           "webhooks": {
@@ -132,12 +92,30 @@
         "type": "object"
       }
     },
-    "schema9": {
+    "schema7": {
       "properties": {
         "enabled": {}
       },
       "required": [
         "enabled"
+      ],
+      "type": "object"
+    },
+    "schema8": {
+      "properties": {
+        "deploy": {}
+      },
+      "required": [
+        "deploy"
+      ],
+      "type": "object"
+    },
+    "schema9": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
       ],
       "type": "object"
     }
@@ -151,7 +129,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema3"
+                "$ref": "#/$defs/schema2"
               },
               {
                 "properties": {
@@ -177,7 +155,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema2"
+                "$ref": "#/$defs/schema1"
               },
               {
                 "properties": {
@@ -203,7 +181,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema5"
+                "$ref": "#/$defs/schema4"
               },
               {
                 "properties": {
@@ -234,7 +212,7 @@
           "customLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema12"
+                "$ref": "#/$defs/schema10"
               },
               {
                 "not": {
@@ -291,7 +269,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema3"
+            "$ref": "#/$defs/schema2"
           },
           {
             "properties": {
@@ -338,7 +316,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema3"
+            "$ref": "#/$defs/schema2"
           },
           {
             "properties": {
@@ -390,7 +368,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema3"
+                    "$ref": "#/$defs/schema2"
                   },
                   {
                     "properties": {
@@ -431,7 +409,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema2"
+                    "$ref": "#/$defs/schema1"
                   },
                   {
                     "properties": {
@@ -493,7 +471,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema2"
+            "$ref": "#/$defs/schema1"
           },
           {
             "properties": {
@@ -566,7 +544,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema3"
+            "$ref": "#/$defs/schema2"
           },
           {
             "properties": {
@@ -593,7 +571,26 @@
         "additionalProperties": {},
         "properties": {
           "rbacManager": {
-            "$ref": "#/$defs/schema1"
+            "additionalProperties": {},
+            "properties": {
+              "args": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Add custom arguments to the RBAC Manager pod."
+              }
+            }
           }
         }
       }
@@ -602,7 +599,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema5"
+            "$ref": "#/$defs/schema4"
           },
           {
             "properties": {
@@ -634,7 +631,7 @@
               "customAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema12"
+                    "$ref": "#/$defs/schema10"
                   },
                   {
                     "not": {
@@ -655,7 +652,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema5"
+                "$ref": "#/$defs/schema4"
               },
               {
                 "properties": {
@@ -746,7 +743,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema13"
+          "$ref": "#/$defs/schema11"
         }
       ],
       "description": "Add custom arguments to the Crossplane pod."
@@ -787,7 +784,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema12"
+          "$ref": "#/$defs/schema10"
         },
         {
           "not": {
@@ -805,7 +802,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema12"
+          "$ref": "#/$defs/schema10"
         },
         {
           "not": {
@@ -835,7 +832,7 @@
     "extraEnvVarsCrossplane": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema13"
+          "$ref": "#/$defs/schema11"
         },
         {
           "items": {},
@@ -845,7 +842,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema13"
+          "$ref": "#/$defs/schema11"
         }
       ],
       "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
@@ -853,7 +850,7 @@
     "extraEnvVarsCrossplaneInit": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema13"
+          "$ref": "#/$defs/schema11"
         },
         {
           "items": {},
@@ -863,7 +860,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema13"
+          "$ref": "#/$defs/schema11"
         }
       ],
       "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
@@ -1130,8 +1127,17 @@
             "additionalProperties": {},
             "properties": {
               "configMap": {
-                "description": "The name of a ConfigMap to use as the package cache. Disables the default package cache `emptyDir` Volume.",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of a ConfigMap to use as the package cache. Disables the default package cache `emptyDir` Volume."
               }
             }
           }
@@ -1310,7 +1316,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema10"
+                  "$ref": "#/$defs/schema8"
                 }
               },
               {
@@ -1327,7 +1333,31 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema1"
+            "additionalProperties": {},
+            "properties": {
+              "args": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "Add custom arguments to the RBAC Manager pod."
+              }
+            }
           }
         },
         {
@@ -1335,7 +1365,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema10"
+                  "$ref": "#/$defs/schema8"
                 }
               },
               {
@@ -1529,7 +1559,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema12"
+              "$ref": "#/$defs/schema10"
             },
             {
               "not": {
@@ -1591,7 +1621,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema11"
+                  "$ref": "#/$defs/schema9"
                 }
               },
               {
@@ -1613,7 +1643,7 @@
               "customAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema12"
+                    "$ref": "#/$defs/schema10"
                   },
                   {
                     "not": {
@@ -1632,7 +1662,7 @@
               "anyOf": [
                 {
                   "not": {
-                    "$ref": "#/$defs/schema11"
+                    "$ref": "#/$defs/schema9"
                   }
                 },
                 {
@@ -1728,7 +1758,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema9"
+                  "$ref": "#/$defs/schema7"
                 }
               },
               {

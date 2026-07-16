@@ -54,25 +54,6 @@
       ]
     },
     "schema10": {
-      "not": {
-        "properties": {
-          "serviceAccount": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceAccount"
-        ],
-        "type": "object"
-      }
-    },
-    "schema11": {
       "properties": {
         "service": {
           "properties": {
@@ -93,7 +74,7 @@
       ],
       "type": "object"
     },
-    "schema14": {
+    "schema13": {
       "additionalProperties": {},
       "properties": {
         "pullSecrets": {
@@ -114,7 +95,7 @@
         }
       }
     },
-    "schema15": {
+    "schema14": {
       "additionalProperties": {},
       "properties": {
         "protocols": {
@@ -131,7 +112,7 @@
         }
       }
     },
-    "schema18": {
+    "schema17": {
       "additionalProperties": {},
       "properties": {
         "path": {
@@ -143,7 +124,7 @@
       },
       "type": "object"
     },
-    "schema20": {
+    "schema18": {
       "additionalProperties": {},
       "properties": {
         "endpoint": {
@@ -158,10 +139,10 @@
         }
       }
     },
-    "schema21": {
+    "schema19": {
       "description": "requests:\ncpu: 1000m\nmemory: 4Gi\nlimits:\ncpu: 2000m\nmemory: 6Gi"
     },
-    "schema23": {
+    "schema21": {
       "additionalProperties": {},
       "properties": {
         "protocols": {
@@ -173,7 +154,7 @@
         }
       }
     },
-    "schema24": {
+    "schema22": {
       "anyOf": [
         {
           "type": "array"
@@ -189,13 +170,13 @@
         }
       ]
     },
-    "schema25": {
+    "schema23": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema27": {
+    "schema25": {
       "not": {
         "properties": {
           "create": {}
@@ -206,14 +187,14 @@
         "type": "object"
       }
     },
-    "schema28": {
+    "schema26": {
       "additionalProperties": {},
       "properties": {
         "endpoint": {}
       },
       "type": "object"
     },
-    "schema29": {
+    "schema27": {
       "not": {
         "properties": {
           "hosts": {}
@@ -224,12 +205,7 @@
         "type": "object"
       }
     },
-    "schema3": {
-      "enum": [
-        "memberlist:\n  cluster_label: \"{{ .Release.Name }}.{{ .Release.Namespace }}\"\nmultitenancy_enabled: {{ .Values.tempo.multitenancyEnabled }}\nusage_report:\n  reporting_enabled: {{ .Values.tempo.reportingEnabled }}\ncompactor:\n  compaction:\n    block_retention: {{ .Values.tempo.retention }}\ndistributor:\n  receivers:\n    {{- toYaml .Values.tempo.receivers | nindent 8 }}\ningester:\n  {{- toYaml .Values.tempo.ingester | nindent 6 }}\nserver:\n  {{- toYaml .Values.tempo.server | nindent 6 }}\nstorage:\n  {{- toYaml .Values.tempo.storage | nindent 6 }}\nquerier:\n  {{- toYaml .Values.tempo.querier | nindent 6 }}\nquery_frontend:\n  {{- toYaml .Values.tempo.queryFrontend | nindent 6 }}\noverrides:\n  {{- toYaml .Values.tempo.overrides | nindent 6 }}\n  {{- if .Values.tempo.metricsGenerator.enabled }}\nmetrics_generator:\n  {{- if .Values.tempo.metricsGenerator.processor }}\n  processor:\n    {{- toYaml .Values.tempo.metricsGenerator.processor | nindent 8 }}\n  {{- end }}\n  {{- if .Values.tempo.metricsGenerator.registry }}\n  registry:\n    {{- toYaml .Values.tempo.metricsGenerator.registry | nindent 8 }}\n  {{- end }}\n  storage:\n    path: {{ .Values.tempo.metricsGenerator.storage.path | quote }}\n    {{- if .Values.tempo.metricsGenerator.storage.remote_write }}\n    remote_write:\n      {{- toYaml .Values.tempo.metricsGenerator.storage.remote_write | nindent 10 }}\n    {{- else }}\n    remote_write:\n      - url: {{ .Values.tempo.metricsGenerator.remoteWriteUrl }}\n    {{- end }}\n  traces_storage:\n    path: {{ .Values.tempo.metricsGenerator.traces_storage.path | quote }}\n  {{- end }}\n"
-      ]
-    },
-    "schema30": {
+    "schema28": {
       "properties": {
         "endpoint": {}
       },
@@ -238,18 +214,23 @@
       ],
       "type": "object"
     },
-    "schema34": {
+    "schema3": {
+      "enum": [
+        "memberlist:\n  cluster_label: \"{{ .Release.Name }}.{{ .Release.Namespace }}\"\nmultitenancy_enabled: {{ .Values.tempo.multitenancyEnabled }}\nusage_report:\n  reporting_enabled: {{ .Values.tempo.reportingEnabled }}\ncompactor:\n  compaction:\n    block_retention: {{ .Values.tempo.retention }}\ndistributor:\n  receivers:\n    {{- toYaml .Values.tempo.receivers | nindent 8 }}\ningester:\n  {{- toYaml .Values.tempo.ingester | nindent 6 }}\nserver:\n  {{- toYaml .Values.tempo.server | nindent 6 }}\nstorage:\n  {{- toYaml .Values.tempo.storage | nindent 6 }}\nquerier:\n  {{- toYaml .Values.tempo.querier | nindent 6 }}\nquery_frontend:\n  {{- toYaml .Values.tempo.queryFrontend | nindent 6 }}\noverrides:\n  {{- toYaml .Values.tempo.overrides | nindent 6 }}\n  {{- if .Values.tempo.metricsGenerator.enabled }}\nmetrics_generator:\n  {{- if .Values.tempo.metricsGenerator.processor }}\n  processor:\n    {{- toYaml .Values.tempo.metricsGenerator.processor | nindent 8 }}\n  {{- end }}\n  {{- if .Values.tempo.metricsGenerator.registry }}\n  registry:\n    {{- toYaml .Values.tempo.metricsGenerator.registry | nindent 8 }}\n  {{- end }}\n  storage:\n    path: {{ .Values.tempo.metricsGenerator.storage.path | quote }}\n    {{- if .Values.tempo.metricsGenerator.storage.remote_write }}\n    remote_write:\n      {{- toYaml .Values.tempo.metricsGenerator.storage.remote_write | nindent 10 }}\n    {{- else }}\n    remote_write:\n      - url: {{ .Values.tempo.metricsGenerator.remoteWriteUrl }}\n    {{- end }}\n  traces_storage:\n    path: {{ .Values.tempo.metricsGenerator.traces_storage.path | quote }}\n  {{- end }}\n"
+      ]
+    },
+    "schema32": {
       "additionalProperties": {},
       "properties": {},
       "type": "object"
     },
-    "schema35": {
+    "schema33": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema36": {
+    "schema34": {
       "anyOf": [
         {
           "type": "string"
@@ -337,25 +318,6 @@
       "type": "object"
     },
     "schema8": {
-      "additionalProperties": {},
-      "properties": {
-        "extraArgs": {
-          "anyOf": [
-            {
-              "type": "array"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Additional container arguments"
-        }
-      }
-    },
-    "schema9": {
       "not": {
         "properties": {
           "service": {
@@ -374,6 +336,25 @@
         },
         "required": [
           "service"
+        ],
+        "type": "object"
+      }
+    },
+    "schema9": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
         ],
         "type": "object"
       }
@@ -408,7 +389,7 @@
           "annotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema35"
+                "$ref": "#/$defs/schema33"
               },
               {
                 "not": {
@@ -446,7 +427,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema10"
+                "$ref": "#/$defs/schema9"
               },
               {
                 "properties": {
@@ -504,7 +485,7 @@
           "extraLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema35"
+                "$ref": "#/$defs/schema33"
               },
               {
                 "not": {
@@ -542,7 +523,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema10"
+                "$ref": "#/$defs/schema9"
               },
               {
                 "properties": {
@@ -686,7 +667,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema10"
+                "$ref": "#/$defs/schema9"
               },
               {
                 "properties": {
@@ -747,7 +728,7 @@
               "commonLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema35"
+                    "$ref": "#/$defs/schema33"
                   },
                   {
                     "not": {
@@ -788,7 +769,7 @@
           "labels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema35"
+                "$ref": "#/$defs/schema33"
               },
               {
                 "not": {
@@ -797,35 +778,6 @@
               }
             ],
             "description": "labels for tempo"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Overrides the chart's name"
           }
         }
       }
@@ -855,7 +807,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema10"
+                "$ref": "#/$defs/schema9"
               },
               {
                 "properties": {
@@ -930,8 +882,46 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "description": "Overrides the chart's name",
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Overrides the chart's name"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Overrides the chart's name"
           }
         }
       }
@@ -1159,7 +1149,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema11"
+            "$ref": "#/$defs/schema10"
           }
         ]
       },
@@ -1272,7 +1262,7 @@
           "additionalProperties": {},
           "properties": {
             "type": {
-              "$ref": "#/$defs/schema36"
+              "$ref": "#/$defs/schema34"
             }
           }
         }
@@ -1699,14 +1689,14 @@
         "additionalProperties": {},
         "properties": {
           "tempo": {
-            "$ref": "#/$defs/schema14"
+            "$ref": "#/$defs/schema13"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -1840,7 +1830,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema9"
+            "$ref": "#/$defs/schema8"
           }
         ]
       },
@@ -1866,7 +1856,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -1879,7 +1869,7 @@
                 "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
                 "properties": {
                   "jaeger": {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema14"
                   }
                 }
               }
@@ -1890,7 +1880,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -1953,7 +1943,7 @@
                                 "protocols": {
                                   "properties": {
                                     "thrift_binary": {
-                                      "$ref": "#/$defs/schema30"
+                                      "$ref": "#/$defs/schema28"
                                     }
                                   },
                                   "required": [
@@ -2040,7 +2030,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema9"
+            "$ref": "#/$defs/schema8"
           }
         ]
       },
@@ -2061,7 +2051,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "thrift_binary": {
-                            "$ref": "#/$defs/schema20"
+                            "$ref": "#/$defs/schema18"
                           }
                         }
                       }
@@ -2076,7 +2066,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -2114,7 +2104,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -2177,7 +2167,7 @@
                                 "protocols": {
                                   "properties": {
                                     "thrift_compact": {
-                                      "$ref": "#/$defs/schema30"
+                                      "$ref": "#/$defs/schema28"
                                     }
                                   },
                                   "required": [
@@ -2264,7 +2254,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema9"
+            "$ref": "#/$defs/schema8"
           }
         ]
       },
@@ -2285,7 +2275,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "thrift_compact": {
-                            "$ref": "#/$defs/schema20"
+                            "$ref": "#/$defs/schema18"
                           }
                         }
                       }
@@ -2300,7 +2290,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -2338,7 +2328,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -2401,7 +2391,7 @@
                                 "protocols": {
                                   "properties": {
                                     "thrift_http": {
-                                      "$ref": "#/$defs/schema30"
+                                      "$ref": "#/$defs/schema28"
                                     }
                                   },
                                   "required": [
@@ -2488,7 +2478,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema9"
+            "$ref": "#/$defs/schema8"
           }
         ]
       },
@@ -2509,7 +2499,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "thrift_http": {
-                            "$ref": "#/$defs/schema20"
+                            "$ref": "#/$defs/schema18"
                           }
                         }
                       }
@@ -2524,7 +2514,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -2562,7 +2552,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -2575,7 +2565,7 @@
                 "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
                 "properties": {
                   "jaeger": {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema21"
                   }
                 }
               }
@@ -2586,7 +2576,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -2615,7 +2605,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -2643,7 +2633,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -2667,7 +2657,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -2801,7 +2791,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema9"
+            "$ref": "#/$defs/schema8"
           }
         ]
       },
@@ -2827,7 +2817,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -2840,7 +2830,7 @@
                 "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
                 "properties": {
                   "otlp": {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema14"
                   }
                 }
               }
@@ -2851,7 +2841,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -2914,7 +2904,7 @@
                                 "protocols": {
                                   "properties": {
                                     "http": {
-                                      "$ref": "#/$defs/schema30"
+                                      "$ref": "#/$defs/schema28"
                                     }
                                   },
                                   "required": [
@@ -3001,7 +2991,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema9"
+            "$ref": "#/$defs/schema8"
           }
         ]
       },
@@ -3022,7 +3012,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "http": {
-                            "$ref": "#/$defs/schema20"
+                            "$ref": "#/$defs/schema18"
                           }
                         }
                       }
@@ -3037,7 +3027,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -3075,7 +3065,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -3088,7 +3078,7 @@
                 "description": "this configuration will listen on all ports and protocols that tempo is capable of.\nthe receives all come from the OpenTelemetry collector.  more configuration information can\nbe found there: https://github.com/open-telemetry/opentelemetry-collector/tree/master/receiver",
                 "properties": {
                   "otlp": {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema21"
                   }
                 }
               }
@@ -3099,7 +3089,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -3128,7 +3118,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -3156,7 +3146,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -3180,7 +3170,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -3203,7 +3193,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema9"
+        "$ref": "#/$defs/schema8"
       },
       "then": {
         "additionalProperties": {},
@@ -3286,7 +3276,7 @@
             "additionalProperties": {},
             "properties": {
               "tag": {
-                "$ref": "#/$defs/schema36"
+                "$ref": "#/$defs/schema34"
               }
             }
           }
@@ -3325,7 +3315,23 @@
         "additionalProperties": {},
         "properties": {
           "tempoQuery": {
-            "$ref": "#/$defs/schema8"
+            "additionalProperties": {},
+            "properties": {
+              "extraArgs": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional container arguments"
+              }
+            }
           }
         }
       }
@@ -3407,7 +3413,7 @@
                         "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/schema35"
+                        "$ref": "#/$defs/schema33"
                       },
                       {
                         "type": "null"
@@ -3506,7 +3512,7 @@
                         "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/schema35"
+                        "$ref": "#/$defs/schema33"
                       },
                       {
                         "maximum": 0,
@@ -3627,7 +3633,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "hosts": {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema22"
                   }
                 }
               }
@@ -3748,7 +3754,7 @@
         "additionalProperties": {},
         "properties": {
           "tempoQuery": {
-            "$ref": "#/$defs/schema14"
+            "$ref": "#/$defs/schema13"
           }
         }
       }
@@ -3776,7 +3782,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema9"
+            "$ref": "#/$defs/schema8"
           }
         ]
       },
@@ -3824,7 +3830,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema9"
+                "$ref": "#/$defs/schema8"
               }
             ]
           },
@@ -3891,10 +3897,10 @@
     "annotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema34"
+          "$ref": "#/$defs/schema32"
         },
         {
-          "$ref": "#/$defs/schema35"
+          "$ref": "#/$defs/schema33"
         },
         {
           "not": {
@@ -3921,10 +3927,10 @@
     "extraLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema34"
+          "$ref": "#/$defs/schema32"
         },
         {
-          "$ref": "#/$defs/schema35"
+          "$ref": "#/$defs/schema33"
         },
         {
           "not": {
@@ -3970,10 +3976,10 @@
         "commonLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema34"
+              "$ref": "#/$defs/schema32"
             },
             {
-              "$ref": "#/$defs/schema35"
+              "$ref": "#/$defs/schema33"
             },
             {
               "not": {
@@ -4181,7 +4187,7 @@
             "additionalProperties": {},
             "properties": {
               "annotations": {
-                "$ref": "#/$defs/schema35"
+                "$ref": "#/$defs/schema33"
               }
             }
           }
@@ -4217,10 +4223,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema25"
+          "$ref": "#/$defs/schema23"
         },
         {
-          "$ref": "#/$defs/schema35"
+          "$ref": "#/$defs/schema33"
         },
         {
           "not": {
@@ -4233,10 +4239,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema25"
+          "$ref": "#/$defs/schema23"
         },
         {
-          "$ref": "#/$defs/schema35"
+          "$ref": "#/$defs/schema33"
         },
         {
           "not": {
@@ -4350,7 +4356,16 @@
             "additionalProperties": {},
             "properties": {
               "clusterIP": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             }
           }
@@ -4390,10 +4405,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema25"
+              "$ref": "#/$defs/schema23"
             },
             {
-              "$ref": "#/$defs/schema35"
+              "$ref": "#/$defs/schema33"
             },
             {
               "not": {
@@ -4407,10 +4422,10 @@
         "labels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema25"
+              "$ref": "#/$defs/schema23"
             },
             {
-              "$ref": "#/$defs/schema35"
+              "$ref": "#/$defs/schema33"
             },
             {
               "not": {
@@ -4424,11 +4439,17 @@
         },
         "loadBalancerSourceRanges": {},
         "protocol": {
-          "description": "If service type is LoadBalancer, the exposed protocol can either be \"UDP\", \"TCP\" or \"UDP,TCP\"",
-          "type": [
-            "string",
-            "null"
-          ]
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "If service type is LoadBalancer, the exposed protocol can either be \"UDP\", \"TCP\" or \"UDP,TCP\""
         },
         "targetPort": {},
         "type": {
@@ -4453,7 +4474,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema27"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -4474,7 +4495,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema35"
+                    "$ref": "#/$defs/schema33"
                   },
                   {
                     "not": {
@@ -4491,7 +4512,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema27"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -4519,7 +4540,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema27"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -4540,7 +4561,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema35"
+                    "$ref": "#/$defs/schema33"
                   },
                   {
                     "not": {
@@ -4557,7 +4578,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema27"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -4658,7 +4679,7 @@
               "additionalLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema35"
+                    "$ref": "#/$defs/schema33"
                   },
                   {
                     "not": {
@@ -4688,7 +4709,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema35"
+                    "$ref": "#/$defs/schema33"
                   },
                   {
                     "not": {
@@ -4717,7 +4738,16 @@
             "additionalProperties": {},
             "properties": {
               "interval": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             }
           }
@@ -4832,7 +4862,7 @@
               "type": "integer"
             },
             "httpGet": {
-              "$ref": "#/$defs/schema18"
+              "$ref": "#/$defs/schema17"
             },
             "initialDelaySeconds": {
               "type": "integer"
@@ -4949,7 +4979,7 @@
               "type": "integer"
             },
             "httpGet": {
-              "$ref": "#/$defs/schema18"
+              "$ref": "#/$defs/schema17"
             },
             "initialDelaySeconds": {
               "type": "integer"
@@ -4991,13 +5021,13 @@
                           "additionalProperties": {},
                           "properties": {
                             "thrift_binary": {
-                              "$ref": "#/$defs/schema28"
+                              "$ref": "#/$defs/schema26"
                             },
                             "thrift_compact": {
-                              "$ref": "#/$defs/schema28"
+                              "$ref": "#/$defs/schema26"
                             },
                             "thrift_http": {
-                              "$ref": "#/$defs/schema28"
+                              "$ref": "#/$defs/schema26"
                             }
                           },
                           "type": "object"
@@ -5018,10 +5048,10 @@
                       "additionalProperties": {},
                       "properties": {
                         "grpc": {
-                          "$ref": "#/$defs/schema28"
+                          "$ref": "#/$defs/schema26"
                         },
                         "http": {
-                          "$ref": "#/$defs/schema28"
+                          "$ref": "#/$defs/schema26"
                         }
                       },
                       "type": "object"
@@ -5042,7 +5072,7 @@
         },
         "repository": {},
         "resources": {
-          "$ref": "#/$defs/schema21"
+          "$ref": "#/$defs/schema19"
         },
         "retention": {
           "description": "search:\nconcurrent_jobs: 2000",
@@ -5119,7 +5149,28 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema8"
+            "additionalProperties": {},
+            "properties": {
+              "extraArgs": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ],
+                "description": "Additional container arguments"
+              }
+            }
           }
         },
         {
@@ -5218,7 +5269,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema35"
+                            "$ref": "#/$defs/schema33"
                           },
                           {
                             "not": {
@@ -5257,7 +5308,7 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema29"
+                            "$ref": "#/$defs/schema27"
                           },
                           {
                             "properties": {
@@ -5314,7 +5365,7 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema29"
+                            "$ref": "#/$defs/schema27"
                           },
                           {
                             "properties": {
@@ -5368,7 +5419,7 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema35"
+                            "$ref": "#/$defs/schema33"
                           },
                           {
                             "not": {
@@ -5408,7 +5459,7 @@
                         "not": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/schema29"
+                              "$ref": "#/$defs/schema27"
                             },
                             {
                               "properties": {
@@ -5430,7 +5481,16 @@
                     "additionalProperties": {},
                     "properties": {
                       "path": {
-                        "type": "string"
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
                       }
                     }
                   }
@@ -5519,7 +5579,7 @@
         "pullSecrets": {},
         "repository": {},
         "resources": {
-          "$ref": "#/$defs/schema21"
+          "$ref": "#/$defs/schema19"
         },
         "securityContext": {
           "description": "- name: extra-volume\nmountPath: /mnt/volume\nreadOnly: true\nexistingClaim: volume-claim\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: false # fails if true, do not enable"

@@ -17,6 +17,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     uses: &[ContractUse],
     type_hints: &BTreeMap<String, BTreeSet<String>>,
     guarded_type_hints: &BTreeMap<String, BTreeSet<String>>,
+    fallback_type_hints: &BTreeMap<String, BTreeSet<String>>,
     shape_erased_value_paths: &BTreeSet<String>,
     string_contract_value_paths: &BTreeSet<String>,
     range_modes: &crate::range_modes::RangeModes,
@@ -88,6 +89,20 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             acc.guarded_type_hints.extend(schema_types);
         }
     }
+    // Fallback hints type only the truthy arm of their path: the base
+    // lowering keeps the Helm-falsy set open beside them (F42).
+    for (value_path, schema_types) in fallback_type_hints {
+        let schema_types = schema_types
+            .iter()
+            .filter(|schema_type| !schema_type.trim().is_empty())
+            .cloned()
+            .collect::<BTreeSet<_>>();
+        if !value_path.trim().is_empty() && !schema_types.is_empty() {
+            let acc = path_accumulator(&mut paths, value_path);
+            acc.referenced = true;
+            acc.fallback_type_hints.extend(schema_types);
+        }
+    }
     finish_schema_signals(paths, terminal_clauses)
 }
 
@@ -105,6 +120,9 @@ struct ContractPathAccumulator {
     type_hints: BTreeSet<String>,
     /// Hints observed only under branch predicates: overlay typing only.
     guarded_type_hints: BTreeSet<String>,
+    /// Hints from literal `default`/`coalesce` fallbacks: they type only
+    /// the truthy arm, so base lowering keeps Helm-falsy inputs open.
+    fallback_type_hints: BTreeSet<String>,
     conditional_overlay_branches: BTreeMap<Vec<ConditionalGuard>, PathSchemaFactsAccumulator>,
     has_unconditional_overlay_peer: bool,
     saw_unsupported_overlay: bool,
@@ -200,11 +218,16 @@ impl PathSchemaFactsAccumulator {
         global_facts: ContractValuePathFacts,
         type_hints: BTreeSet<String>,
     ) -> ConditionalOverlayEvidence {
-        let facts = self.facts(
+        let mut facts = self.facts(
             global_facts.has_referenced_descendants,
             global_facts.has_item_descendants,
             global_facts.has_structured_item_descendants,
         );
+        // Iteration shape is a path-global fact (see the range-site record):
+        // a branch hosting the path's rows keeps it even when the range
+        // record landed under a differently keyed guard set.
+        facts.has_destructured_range_use |= global_facts.has_destructured_range_use;
+        facts.has_json_decoded_range_use |= global_facts.has_json_decoded_range_use;
         // A runtime string contract recorded by this branch's own rows
         // types the branch; mutually exclusive branches that render the
         // path without the contract stay unaffected.
@@ -286,9 +309,14 @@ fn record_contract_use_conjunction(
     predicates: &[Predicate],
     range_modes: &crate::range_modes::RangeModes,
 ) {
-    if predicates.iter().any(Predicate::contains_approximation) {
-        return;
-    }
+    // An approximate ambient conjunct means the row's exact firing states
+    // are unknown, so its NARROWING evidence (sink typing, provider uses,
+    // nullability) must abstain — but the conjunction's widen-only evidence
+    // survives: a positive self-type dispatch arm under an undecodable
+    // liveness header still proves the chart handles that type (F54:
+    // cluster-autoscaler's `kindIs "string"` expanderPriorities arm under
+    // an `include`-bearing condition).
+    let has_approximate = predicates.iter().any(Predicate::contains_approximation);
     if ranged_member_parent(&contract_use.source_expr).is_some_and(|parent| {
         !range_modes.mode(parent).direct
             && !predicates.is_empty()
@@ -370,7 +398,7 @@ fn record_contract_use_conjunction(
                 )
         });
 
-    if has_source {
+    if has_source && !has_approximate {
         let mut facts = ContractValuePathFacts {
             used_as_fragment: matches!(
                 contract_use.kind,
@@ -491,7 +519,7 @@ fn record_contract_use_conjunction(
             acc.facts.record_facts(facts);
         }
     }
-    if has_source {
+    if has_source && !has_approximate {
         for path in range_guard_paths {
             let direct = range_modes.mode(&path).direct;
             let outer_guards = direct
@@ -503,12 +531,12 @@ fn record_contract_use_conjunction(
             let facts = ContractValuePathFacts {
                 is_ranged_source: direct && unconditional,
                 is_direct_ranged_source: direct && unconditional,
-                has_destructured_range_use: direct
-                    && unconditional
-                    && range_modes.mode(&path).destructured,
-                has_json_decoded_range_use: direct
-                    && unconditional
-                    && range_modes.mode(&path).json_decoded,
+                // HOW the chart iterates the path (two-variable, JSON-decoded)
+                // is a property of the range site itself, not of the guards
+                // around it: a conditional `range $k, $v` still proves the
+                // member keys are user data wherever it runs (F30).
+                has_destructured_range_use: direct && range_modes.mode(&path).destructured,
+                has_json_decoded_range_use: direct && range_modes.mode(&path).json_decoded,
                 is_nullable: true,
                 ..ContractValuePathFacts::default()
             };
@@ -1021,12 +1049,42 @@ fn capture_outer_guards(
     capture: &crate::eval_effect::FailCapture,
 ) -> Option<Vec<ConditionalGuard>> {
     let conjunction = remove_redundant_approximate_conditions(&capture.conjunction);
-    if conjunction.iter().any(Predicate::contains_approximation) {
-        return None;
-    }
+    // A key-equality conjunct subsumes its companion iteration conjunct:
+    // the has-key lowering already implies the range reaches that member.
+    let key_equals_ranges: BTreeSet<&str> = conjunction
+        .iter()
+        .filter_map(|predicate| match predicate {
+            Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path.as_str()),
+            _ => None,
+        })
+        .collect();
     let mut guards = conjunction
         .iter()
-        .map(|predicate| predicate_to_guard(predicate, None))
+        .filter(|predicate| {
+            !matches!(
+                predicate,
+                Predicate::Guard(Guard::Range { path }) if key_equals_ranges.contains(path.as_str())
+            )
+        })
+        .map(|predicate| match predicate {
+            // A positive approximate conjunct with a recognized sound
+            // strengthening keeps the capture alive: firing on the subset
+            // never fires where the real condition is false. Negated or
+            // nested approximations still abstain (predicate_to_guard
+            // returns None for them), as does a bare approximation.
+            Predicate::Approximate { sound_subset, .. } if !sound_subset.is_empty() => {
+                let guards = sound_subset
+                    .iter()
+                    .map(|guard| guard_to_conditional_guard(guard, None))
+                    .collect::<Option<Vec<_>>>()?;
+                match guards.as_slice() {
+                    [guard] => Some(guard.clone()),
+                    _ => Some(ConditionalGuard::AllOf(guards)),
+                }
+            }
+            predicate if predicate.contains_approximation() => None,
+            predicate => predicate_to_guard(predicate, None),
+        })
         .collect::<Option<Vec<_>>>()?;
     if guards
         .iter()
@@ -1047,6 +1105,62 @@ fn record_value_requirement_capture(
     requirement: FailValueRequirement,
 ) {
     if path.trim().is_empty() {
+        return;
+    }
+    // `A.*.field` names one field of EVERY ranged member of `A`: the
+    // requirement lowers per member at that relative path (F53: prometheus's
+    // `tpl $remoteWrite.url` over `server.remoteWrite.*.url`). Deeper or
+    // repeated wildcards abstain below as before.
+    let member_field_split = path.split_once(".*.").filter(|(collection, suffix)| {
+        !collection.contains('*') && !suffix.is_empty() && !suffix.contains('*')
+    });
+    if let Some((collection_path, member_suffix)) = member_field_split {
+        let key_equals_ranges: BTreeSet<&str> = capture
+            .conjunction
+            .iter()
+            .filter_map(|predicate| match predicate {
+                Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path.as_str()),
+                _ => None,
+            })
+            .collect();
+        let mut outer_guards = Vec::new();
+        for predicate in &capture.conjunction {
+            match predicate {
+                Predicate::Guard(Guard::Range { path })
+                    if path == collection_path || key_equals_ranges.contains(path.as_str()) => {}
+                _ => {
+                    let Some(guard) = predicate_to_guard(predicate, None) else {
+                        return;
+                    };
+                    if guard
+                        .value_paths()
+                        .iter()
+                        .any(|path| path_contains_wildcard(path))
+                    {
+                        return;
+                    }
+                    outer_guards.push(guard);
+                }
+            }
+        }
+        outer_guards.sort();
+        outer_guards.dedup();
+        let allow_integer = {
+            let mode = capture.ranged.mode(collection_path);
+            mode.direct && !mode.destructured && !mode.json_decoded
+        };
+        let implication = ContractFailImplication {
+            outer_guards,
+            target: ContractRequirementTarget::MembersAt {
+                target_path: helm_schema_core::split_value_path(member_suffix),
+                allow_integer,
+            },
+            requirements: vec![requirement],
+        };
+        let acc = path_accumulator(paths, collection_path);
+        if !acc.fail_implications.contains(&implication) {
+            acc.fail_implications.push(implication);
+        }
         return;
     }
     let (target_path, target, outer_guards) = if let Some(collection_path) = path.strip_suffix(".*")
@@ -1773,6 +1887,7 @@ impl ContractPathAccumulator {
             requiredness,
             type_hints,
             guarded_type_hints,
+            fallback_type_hints,
             guarded_provider_schema_uses,
             guarded_metadata_field_kinds,
             conditional_overlay_branches,
@@ -1795,6 +1910,7 @@ impl ContractPathAccumulator {
         let overlay_type_hints: BTreeSet<String> = type_hints
             .iter()
             .chain(guarded_type_hints.iter())
+            .chain(fallback_type_hints.iter())
             .cloned()
             .collect();
         let mut evidence_groups: Vec<(PathSchemaFactsAccumulator, Vec<Vec<ConditionalGuard>>)> =
@@ -1869,6 +1985,7 @@ impl ContractPathAccumulator {
             metadata_field_kinds: path_facts.metadata_field_kinds,
             type_hints,
             guarded_type_hints,
+            fallback_type_hints,
             provider_schema_uses: path_facts.provider_schema_uses,
             requiredness,
             conditional_overlays,
@@ -1904,17 +2021,29 @@ fn lowerable_conditional_guard_set(
     contract_use: &ContractUse,
     predicates: &[Predicate],
 ) -> Option<Vec<ConditionalGuard>> {
+    // A key-equality conjunct subsumes its companion iteration conjunct:
+    // the has-key lowering already implies the range reaches that member
+    // (F53: prometheus's serverFiles dispatch around the remoteWrite rows).
+    let key_equals_ranges: BTreeSet<&str> = predicates
+        .iter()
+        .filter_map(|predicate| match predicate {
+            Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path.as_str()),
+            _ => None,
+        })
+        .collect();
     let mut guards = Vec::new();
     for predicate in predicates {
         // The row's own iteration (`range .Values.x` around a render of
         // `.Values.x` itself) is how the row fires, not a foreign
         // condition; the overlay keys on the residual conjuncts. A range
-        // over a DIFFERENT path stays unlowerable.
+        // over a DIFFERENT path stays unlowerable unless a key-equality
+        // pins the exact member the iteration must contain.
         if matches!(
             predicate,
             Predicate::Guard(Guard::Range { path })
                 if path == &contract_use.source_expr
                     || range_guard_is_iteration_ancestor(&contract_use.source_expr, path)
+                    || key_equals_ranges.contains(path.as_str())
         ) {
             continue;
         }
@@ -1965,9 +2094,20 @@ fn predicate_to_guard(
         // the target itself. Dropping a target conjunct from `not (a &&
         // target)` widens the branch into states where the render never
         // occurs (for example a `default` fallback shadowed by its primary).
-        Predicate::Not(inner) => Some(ConditionalGuard::Not(Box::new(predicate_to_guard(
-            inner, None,
-        )?))),
+        // A negated range-key equality has no document-level encoding: the
+        // else-arm runs for every OTHER member even when the named key is
+        // also present, so inverting the has-key lowering would be unsound.
+        Predicate::Not(inner) => {
+            if matches!(
+                inner.as_ref(),
+                Predicate::Guard(Guard::RangeKeyEquals { .. })
+            ) {
+                return None;
+            }
+            Some(ConditionalGuard::Not(Box::new(predicate_to_guard(
+                inner, None,
+            )?)))
+        }
         Predicate::And(predicates) => {
             let mut guards = predicates
                 .iter()
@@ -2131,6 +2271,30 @@ fn guard_to_conditional_guard(
                 path,
                 schema_type: schema_type.clone(),
             })))
+        }
+        Guard::IntGt {
+            path: value_path,
+            bound,
+        } => Some(ConditionalGuard::IntGt {
+            path: path(value_path)?,
+            bound: *bound,
+        }),
+        // The POSITIVE key-equality selects exactly one member, so at the
+        // document level it holds iff the collection HAS that key (F53:
+        // prometheus's `eq $key "prometheus.yml"` serverFiles arm). The
+        // negated form runs for every OTHER member and must not lower —
+        // `predicate_to_guard`'s Not arm rejects it.
+        Guard::RangeKeyEquals {
+            path: value_path,
+            key,
+        } => {
+            if key.is_empty() {
+                return None;
+            }
+            Some(ConditionalGuard::HasKey {
+                path: path(value_path)?,
+                key: key.clone(),
+            })
         }
         Guard::Range { .. }
         | Guard::With { .. }

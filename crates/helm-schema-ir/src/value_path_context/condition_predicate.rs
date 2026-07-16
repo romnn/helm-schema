@@ -177,7 +177,11 @@ impl ValuePathContext<'_> {
             return Predicate::approximate(marker, self.resolved_values_paths_from_expr(expr));
         };
         if function != "or" {
-            return Predicate::approximate(marker, self.resolved_values_paths_from_expr(expr));
+            return Predicate::approximate_with_sound_subset(
+                marker,
+                self.resolved_values_paths_from_expr(expr),
+                self.int_cast_comparison_sound_subset(expr),
+            );
         }
         let alternatives = args
             .iter()
@@ -186,9 +190,10 @@ impl ValuePathContext<'_> {
                 if self.condition_lowering_is_faithful(arg) {
                     self.condition_predicate_expr(arg)
                 } else {
-                    Predicate::approximate(
+                    Predicate::approximate_with_sound_subset(
                         format!("{marker}:{index}"),
                         self.resolved_values_paths_from_expr(arg),
+                        self.int_cast_comparison_sound_subset(arg),
                     )
                 }
             })
@@ -272,6 +277,41 @@ impl ValuePathContext<'_> {
             helm_schema_core::append_value_path(&path, key)
         });
         Some(Predicate::truthy_path(path))
+    }
+
+    /// `eq $key "literal"` (either operand order) where `$key` is a
+    /// destructured range key: the predicate selects exactly the member
+    /// with that key.
+    fn range_key_equals_predicate(
+        &self,
+        left: &TemplateExpr,
+        right: &TemplateExpr,
+        negated: bool,
+    ) -> Option<Predicate> {
+        let (key_expr, literal) = match (literal_string(left), literal_string(right)) {
+            (None, Some(literal)) => (left, literal),
+            (Some(literal), None) => (right, literal),
+            _ => return None,
+        };
+        let TemplateExpr::Variable(name) = key_expr.deparen() else {
+            return None;
+        };
+        let binding = self
+            .template_bindings
+            .get(name)
+            .or_else(|| self.template_bindings.get(name.trim_start_matches('$')))?;
+        let AbstractValue::RangeKey(path) = binding else {
+            return None;
+        };
+        let predicate = Predicate::from(Guard::RangeKeyEquals {
+            path: path.clone(),
+            key: literal.to_string(),
+        });
+        Some(if negated {
+            predicate.negated()
+        } else {
+            predicate
+        })
     }
 
     fn range_key_prefix_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
@@ -944,6 +984,37 @@ impl ValuePathContext<'_> {
         }
     }
 
+    /// `gt (int64 x) N` / `gt (int x) N` (and the flipped `lt N (…)`) with
+    /// an integer literal bound and one values-backed subject admits a
+    /// bounded sound strengthening: a RAW JSON integer above the bound
+    /// always satisfies the coercing comparison, so a fail-arm keyed on the
+    /// strengthened guard keeps firing there instead of abstaining
+    /// wholesale (F86: redis `gt (int64 .Values.master.count) 0`).
+    fn int_cast_comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
+        let TemplateExpr::Call { function, args } = expr.deparen() else {
+            return Vec::new();
+        };
+        let [left, right] = args.as_slice() else {
+            return Vec::new();
+        };
+        let (cast_expr, bound) = match (function.as_str(), left.deparen(), right.deparen()) {
+            ("gt", cast, TemplateExpr::Literal(Literal::Int(bound))) => (cast, *bound),
+            ("lt", TemplateExpr::Literal(Literal::Int(bound)), cast) => (cast, *bound),
+            _ => return Vec::new(),
+        };
+        let TemplateExpr::Call { function, args } = cast_expr else {
+            return Vec::new();
+        };
+        if !matches!(function.as_str(), "int" | "int64") || args.len() != 1 {
+            return Vec::new();
+        }
+        let Some(Predicate::Guard(Guard::Truthy { path })) = self.single_truthy_predicate(&args[0])
+        else {
+            return Vec::new();
+        };
+        vec![Guard::IntGt { path, bound }]
+    }
+
     fn single_truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
         if let TemplateExpr::Variable(name) = expr.deparen()
             && let Some(predicate) = self.template_truthy_reductions.get(name).or_else(|| {
@@ -985,6 +1056,11 @@ impl ValuePathContext<'_> {
         // `$tp := typeOf .Values.x`) is a TYPE TEST on the path, never a
         // value equality.
         if let Some(predicate) = self.type_descriptor_comparison(left, right, negated) {
+            return Some(predicate);
+        }
+        // `eq $key "name"` over a destructured range key selects exactly the
+        // member with that key (F53: prometheus's serverFiles dispatch).
+        if let Some(predicate) = self.range_key_equals_predicate(left, right, negated) {
             return Some(predicate);
         }
         // Only a DIRECT selector operand claims a value equality: seeing

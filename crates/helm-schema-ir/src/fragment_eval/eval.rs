@@ -81,6 +81,9 @@ pub struct EvaluatedDocument {
     /// Input-type hints observed only under branch predicates: they hold
     /// where those branches render, never at the unconditional base.
     pub(crate) guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Input-type hints from literal `default`/`coalesce` fallbacks: they
+    /// type only the truthy arm of the path, never its Helm-falsy states.
+    pub(crate) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Paths consumed through total stringifications (`quote`, `toString`,
     /// `join`, `printf`) anywhere in the source: the chart tolerates any
     /// input type at them even when no placed row exists.
@@ -137,6 +140,7 @@ pub(crate) fn eval_document(
         reads: interpreter.reads,
         type_hints: interpreter.type_hints,
         guarded_type_hints: interpreter.guarded_type_hints,
+        fallback_type_hints: interpreter.fallback_type_hints,
         shape_erased_paths: interpreter.shape_erased_paths,
         string_contract_paths: interpreter.string_contract_paths,
         range_modes: interpreter.range_modes,
@@ -536,6 +540,9 @@ pub(super) struct Interpreter<'a> {
     /// hold only where those branches render, so they may type conditional
     /// overlays but never the unconditional base.
     pub(super) guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
+    /// Input-type hints from literal `default`/`coalesce` fallbacks: they
+    /// type only the truthy arm of the path, never its Helm-falsy states.
+    pub(super) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Paths consumed only through total stringifications (`quote`,
     /// `toString`, `join`, `printf`): the chart tolerates any input type at
     /// them even when no placed row exists.
@@ -622,6 +629,7 @@ impl<'a> Interpreter<'a> {
             parsed_yaml_input_paths: BTreeSet::new(),
             yaml_serialized_paths: BTreeSet::new(),
             guarded_type_hints: BTreeMap::new(),
+            fallback_type_hints: BTreeMap::new(),
             shape_erased_paths: BTreeSet::new(),
             string_contract_paths: BTreeSet::new(),
             range_modes: crate::range_modes::RangeModes::default(),

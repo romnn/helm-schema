@@ -1096,6 +1096,78 @@
             ]
           },
           {
+            "not": {
+              "properties": {
+                "disableAutoApproval": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "disableAutoApproval"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "approveSignerNames": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ],
+            "description": "List of signer names that cert-manager will approve by default. CertificateRequests\nreferencing these signer names will be auto-approved by cert-manager. Defaults to just\napproving the cert-manager.io Issuer and ClusterIssuer issuers. When set to an empty\narray, ALL issuers will be auto-approved by cert-manager. To disable the auto-approval,\nbecause, e.g., you are using approver-policy, you can enable 'disableAutoApproval'.\nref: https://cert-manager.io/docs/concepts/certificaterequest/#approval\n+docs:property"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema21"
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
             "anyOf": [
               {
                 "not": {
@@ -1155,69 +1227,6 @@
               }
             ],
             "description": "List of signer names that cert-manager will approve by default. CertificateRequests\nreferencing these signer names will be auto-approved by cert-manager. Defaults to just\napproving the cert-manager.io Issuer and ClusterIssuer issuers. When set to an empty\narray, ALL issuers will be auto-approved by cert-manager. To disable the auto-approval,\nbecause, e.g., you are using approver-policy, you can enable 'disableAutoApproval'.\nref: https://cert-manager.io/docs/concepts/certificaterequest/#approval\n+docs:property"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema21"
-              },
-              {
-                "properties": {
-                  "global": {
-                    "properties": {
-                      "rbac": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "rbac"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "global"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "properties": {
-                "disableAutoApproval": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              "required": [
-                "disableAutoApproval"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "approveSignerNames": {
-            "description": "List of signer names that cert-manager will approve by default. CertificateRequests\nreferencing these signer names will be auto-approved by cert-manager. Defaults to just\napproving the cert-manager.io Issuer and ClusterIssuer issuers. When set to an empty\narray, ALL issuers will be auto-approved by cert-manager. To disable the auto-approval,\nbecause, e.g., you are using approver-policy, you can enable 'disableAutoApproval'.\nref: https://cert-manager.io/docs/concepts/certificaterequest/#approval\n+docs:property",
-            "items": {},
-            "type": "array"
           }
         }
       }
@@ -4118,6 +4127,33 @@
             "type": "object"
           },
           {
+            "properties": {
+              "global": {
+                "properties": {
+                  "podSecurityPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podSecurityPolicy"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "global"
+            ],
+            "type": "object"
+          },
+          {
             "anyOf": [
               {
                 "$ref": "#/$defs/schema21"
@@ -4224,35 +4260,6 @@
                   "prometheus"
                 ],
                 "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "podmonitor": {
-                          "properties": {
-                            "namespace": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "namespace"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "podmonitor"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
               },
               {
                 "not": {
@@ -4400,35 +4407,6 @@
                   "prometheus"
                 ],
                 "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "prometheus": {
-                      "properties": {
-                        "servicemonitor": {
-                          "properties": {
-                            "namespace": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "namespace"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "servicemonitor"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
               },
               {
                 "not": {
@@ -4680,405 +4658,6 @@
                 "type": "object"
               }
             ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespace": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "This namespace allows you to define where the services are installed into.\nIf not set then they use the namespace of the release.\nThis is helpful when installing cert manager as a chart dependency (sub chart)."
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "global": {
-                "properties": {
-                  "podSecurityPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "podSecurityPolicy"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "global"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema31"
-                  },
-                  {
-                    "properties": {
-                      "prometheus": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "prometheus"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "podmonitor": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "podmonitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "podmonitor": {
-                        "properties": {
-                          "namespace": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "namespace"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "podmonitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema31"
-                        },
-                        {
-                          "properties": {
-                            "prometheus": {
-                              "properties": {
-                                "enabled": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "prometheus"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "properties": {
-                            "prometheus": {
-                              "properties": {
-                                "podmonitor": {
-                                  "properties": {
-                                    "enabled": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "podmonitor"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "prometheus"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "properties": {
-                            "prometheus": {
-                              "properties": {
-                                "servicemonitor": {
-                                  "properties": {
-                                    "enabled": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "servicemonitor"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "prometheus"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema31"
-                  },
-                  {
-                    "properties": {
-                      "prometheus": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "prometheus"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "servicemonitor": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "servicemonitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "prometheus": {
-                    "properties": {
-                      "servicemonitor": {
-                        "properties": {
-                          "namespace": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "namespace"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "servicemonitor"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "prometheus"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/schema31"
-                        },
-                        {
-                          "properties": {
-                            "prometheus": {
-                              "properties": {
-                                "enabled": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              "required": [
-                                "enabled"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "prometheus"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "properties": {
-                            "prometheus": {
-                              "properties": {
-                                "podmonitor": {
-                                  "properties": {
-                                    "enabled": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "podmonitor"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "prometheus"
-                          ],
-                          "type": "object"
-                        },
-                        {
-                          "properties": {
-                            "prometheus": {
-                              "properties": {
-                                "servicemonitor": {
-                                  "properties": {
-                                    "enabled": {
-                                      "$ref": "#/$defs/helm-truthy"
-                                    }
-                                  },
-                                  "required": [
-                                    "enabled"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "servicemonitor"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "prometheus"
-                          ],
-                          "type": "object"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            ]
           },
           {
             "not": {
@@ -5115,8 +4694,17 @@
         "additionalProperties": {},
         "properties": {
           "namespace": {
-            "description": "This namespace allows you to define where the services are installed into.\nIf not set then they use the namespace of the release.\nThis is helpful when installing cert manager as a chart dependency (sub chart).",
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "This namespace allows you to define where the services are installed into.\nIf not set then they use the namespace of the release.\nThis is helpful when installing cert manager as a chart dependency (sub chart)."
           }
         }
       }
@@ -9272,15 +8860,27 @@
           "description": "This is used to configure options for the cainjector pod.\nIt allows setting options that are usually provided via flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `cainjector.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: cainjector.config.cert-manager.io/v1alpha1\nkind: CAInjectorConfiguration\nlogging:\nverbosity: 2\nformat: text\nleaderElectionConfig:\nnamespace: kube-system\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
           "properties": {
             "apiVersion": {
-              "type": [
-                "string",
-                "null"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "kind": {
-              "type": [
-                "string",
-                "null"
+              "anyOf": [
+                {
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "metricsTLSConfig": {
@@ -9328,19 +8928,29 @@
           "description": "Comma separated list of feature gates that should be enabled on the\ncainjector pod."
         },
         "image": {
-          "additionalProperties": {},
-          "description": "The container registry to pull the cainjector image from.\n+docs:property\nregistry: quay.io",
-          "properties": {
-            "digest": {},
-            "pullPolicy": {
-              "description": "Kubernetes imagePullPolicy on Deployment."
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "digest": {},
+                "pullPolicy": {
+                  "description": "Kubernetes imagePullPolicy on Deployment."
+                },
+                "registry": {},
+                "repository": {
+                  "description": "The container image for the cert-manager cainjector\n+docs:property"
+                },
+                "tag": {}
+              },
+              "type": "object"
             },
-            "registry": {},
-            "repository": {
-              "description": "The container image for the cert-manager cainjector\n+docs:property"
-            },
-            "tag": {}
-          }
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            }
+          ],
+          "description": "The container registry to pull the cainjector image from.\n+docs:property\nregistry: quay.io"
         },
         "nodeSelector": {
           "anyOf": [
@@ -9443,15 +9053,27 @@
       "description": "This property is used to configure options for the controller pod.\nThis allows setting options that would usually be provided using flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `controller.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\nconfig:\napiVersion: controller.config.cert-manager.io/v1alpha1\nkind: ControllerConfiguration\nlogging:\nverbosity: 2\nformat: text\nleaderElectionConfig:\nnamespace: kube-system\nkubernetesAPIQPS: 9000\nkubernetesAPIBurst: 9000\nnumberOfConcurrentWorkers: 200\nenableGatewayAPI: true\nFeature gates as of v1.20.0. Listed with their default values.\nSee https://cert-manager.io/docs/cli/controller/\nfeatureGates:\nAllAlpha: false # ALPHA - default=false\nAllBeta: false # BETA - default=false\nACMEHTTP01IngressPathTypeExact: true # BETA - default=true\nExperimentalCertificateSigningRequestControllers: false # ALPHA - default=false\nExperimentalGatewayAPISupport: true # BETA - default=true\nLiteralCertificateSubject: true # BETA - default=true\nNameConstraints: true # BETA - default=true\nOtherNames: true # BETA - default=true\nSecretsFilteredCaching: true # BETA - default=true\nServerSideApply: false # ALPHA - default=false\nStableCertificateRequestName: true # BETA - default=true\nUseCertificateRequestBasicConstraints: false # ALPHA - default=false\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
       "properties": {
         "apiVersion": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
           ]
         },
         "kind": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
           ]
         }
       }
@@ -9845,19 +9467,29 @@
     "http_proxy": {},
     "https_proxy": {},
     "image": {
-      "additionalProperties": {},
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "properties": {
+            "digest": {},
+            "pullPolicy": {
+              "$ref": "#/$defs/schema54"
+            },
+            "registry": {},
+            "repository": {
+              "description": "The container image for the cert-manager controller.\n+docs:property"
+            },
+            "tag": {}
+          },
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        }
+      ],
       "description": "The container registry to pull the manager image from.\n+docs:property\nregistry: quay.io",
-      "properties": {
-        "digest": {},
-        "pullPolicy": {
-          "$ref": "#/$defs/schema54"
-        },
-        "registry": {},
-        "repository": {
-          "description": "The container image for the cert-manager controller.\n+docs:property"
-        },
-        "tag": {}
-      },
       "type": "object"
     },
     "ingressShim": {
@@ -11601,8 +11233,17 @@
                 "additionalProperties": {},
                 "properties": {
                   "interval": {
-                    "description": "The interval to scrape metrics.",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "The interval to scrape metrics."
                   }
                 }
               }
@@ -12110,8 +11751,17 @@
                 "additionalProperties": {},
                 "properties": {
                   "prometheusInstance": {
-                    "description": "Specifies the `prometheus` label on the created ServiceMonitor. This is\nused when different Prometheus instances have label selectors matching\ndifferent ServiceMonitors.",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Specifies the `prometheus` label on the created ServiceMonitor. This is\nused when different Prometheus instances have label selectors matching\ndifferent ServiceMonitors."
                   }
                 }
               }
@@ -12233,8 +11883,17 @@
                 "additionalProperties": {},
                 "properties": {
                   "scrapeTimeout": {
-                    "description": "The timeout before a metrics scrape fails.",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "The timeout before a metrics scrape fails."
                   }
                 }
               }
@@ -13284,19 +12943,29 @@
           "description": "Additional environment variables to pass to cert-manager startupapicheck binary.\nFor example:\nextraEnv:\n- name: SOME_VAR\nvalue: 'some value'"
         },
         "image": {
-          "additionalProperties": {},
-          "description": "The container registry to pull the startupapicheck image from.\n+docs:property\nregistry: quay.io",
-          "properties": {
-            "digest": {},
-            "pullPolicy": {
-              "description": "Kubernetes imagePullPolicy on Deployment."
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "digest": {},
+                "pullPolicy": {
+                  "description": "Kubernetes imagePullPolicy on Deployment."
+                },
+                "registry": {},
+                "repository": {
+                  "description": "The container image for the cert-manager startupapicheck.\n+docs:property"
+                },
+                "tag": {}
+              },
+              "type": "object"
             },
-            "registry": {},
-            "repository": {
-              "description": "The container image for the cert-manager startupapicheck.\n+docs:property"
-            },
-            "tag": {}
-          }
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            }
+          ],
+          "description": "The container registry to pull the startupapicheck image from.\n+docs:property\nregistry: quay.io"
         },
         "jobAnnotations": {
           "description": "Optional additional annotations to add to the startupapicheck Job.\n+docs:property"
@@ -13607,9 +13276,15 @@
               "additionalProperties": {},
               "properties": {
                 "apiVersion": {
-                  "type": [
-                    "string",
-                    "null"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
                   ]
                 }
               }
@@ -13619,9 +13294,15 @@
               "properties": {
                 "healthzPort": {},
                 "kind": {
-                  "type": [
-                    "string",
-                    "null"
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
                   ]
                 },
                 "metricsTLSConfig": {
@@ -13725,19 +13406,29 @@
           "description": "Specifies if the webhook should be started in hostNetwork mode.\nRequired for use in some managed kubernetes clusters (such as AWS EKS) with custom\nCNI (such as calico), because control-plane managed by AWS cannot communicate\nwith pods' IP CIDR and admission webhooks are not working\nSince the default port for the webhook conflicts with kubelet on the host\nnetwork, `webhook.securePort` should be changed to an available port if\nrunning in hostNetwork mode."
         },
         "image": {
-          "additionalProperties": {},
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "digest": {},
+                "pullPolicy": {
+                  "$ref": "#/$defs/schema54"
+                },
+                "registry": {},
+                "repository": {
+                  "description": "The container image for the cert-manager webhook\n+docs:property"
+                },
+                "tag": {}
+              },
+              "type": "object"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            }
+          ],
           "description": "The container registry to pull the webhook image from.\n+docs:property\nregistry: quay.io",
-          "properties": {
-            "digest": {},
-            "pullPolicy": {
-              "$ref": "#/$defs/schema54"
-            },
-            "registry": {},
-            "repository": {
-              "description": "The container image for the cert-manager webhook\n+docs:property"
-            },
-            "tag": {}
-          },
           "type": "object"
         },
         "livenessProbe": {

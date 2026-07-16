@@ -1949,6 +1949,103 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "autoscalingGroups": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "autoscalingGroups"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "clusterName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "labels": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "labels"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "autoscalingGroups": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ],
+            "description": "- color: green\n- shape: circle\nautoscalingGroups -- For AWS, Azure AKS, Exoscale or Magnum. At least one element is required if not using `autoDiscovery`. For example:\n<pre>\n- name: asg1<br />\nmaxSize: 2<br />\nminSize: 1\n</pre>\nFor Hetzner Cloud, the `instanceType` and `region` keys are also required.\n<pre>\n- name: mypool<br />\nmaxSize: 2<br />\nminSize: 1<br />\ninstanceType: CPX21<br />\nregion: FSN1\n</pre>\n- name: asg1\nmaxSize: 2\nminSize: 1\n- name: asg2\nmaxSize: 2\nminSize: 1"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -2170,94 +2267,6 @@
               }
             ],
             "description": "- color: green\n- shape: circle\nautoscalingGroups -- For AWS, Azure AKS, Exoscale or Magnum. At least one element is required if not using `autoDiscovery`. For example:\n<pre>\n- name: asg1<br />\nmaxSize: 2<br />\nminSize: 1\n</pre>\nFor Hetzner Cloud, the `instanceType` and `region` keys are also required.\n<pre>\n- name: mypool<br />\nmaxSize: 2<br />\nminSize: 1<br />\ninstanceType: CPX21<br />\nregion: FSN1\n</pre>\n- name: asg1\nmaxSize: 2\nminSize: 1\n- name: asg2\nmaxSize: 2\nminSize: 1"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "autoscalingGroups": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "autoscalingGroups"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "autoDiscovery": {
-                    "properties": {
-                      "clusterName": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "clusterName"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "autoDiscovery"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "autoDiscovery": {
-                    "properties": {
-                      "labels": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "labels"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "autoDiscovery"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "autoDiscovery": {
-                    "properties": {
-                      "namespace": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "namespace"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "autoDiscovery"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "autoscalingGroups": {
-            "description": "- color: green\n- shape: circle\nautoscalingGroups -- For AWS, Azure AKS, Exoscale or Magnum. At least one element is required if not using `autoDiscovery`. For example:\n<pre>\n- name: asg1<br />\nmaxSize: 2<br />\nminSize: 1\n</pre>\nFor Hetzner Cloud, the `instanceType` and `region` keys are also required.\n<pre>\n- name: mypool<br />\nmaxSize: 2<br />\nminSize: 1<br />\ninstanceType: CPX21<br />\nregion: FSN1\n</pre>\n- name: asg1\nmaxSize: 2\nminSize: 1\n- name: asg2\nmaxSize: 2\nminSize: 1",
-            "items": {},
-            "type": "array"
           }
         }
       }
@@ -2617,6 +2626,257 @@
           "autoscalingGroupsnamePrefix": {
             "anyOf": [
               {
+                "items": {
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "additionalProperties": {
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                },
+                "type": "object"
+              },
+              {
+                "maximum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "autoscalingGroupsnamePrefix -- For GCE. At least one element is required if not using `autoDiscovery`. For example:\n<pre>\n- name: ig01<br />\nmaxSize: 10<br />\nminSize: 0\n</pre>\n- name: ig01\nmaxSize: 10\nminSize: 0\n- name: ig02\nmaxSize: 10\nminSize: 0"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/schema36"
+          },
+          {
+            "$ref": "#/$defs/schema5"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "autoscalingGroups"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "autoscalingGroupsnamePrefix": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              }
+            ],
+            "description": "autoscalingGroupsnamePrefix -- For GCE. At least one element is required if not using `autoDiscovery`. For example:\n<pre>\n- name: ig01<br />\nmaxSize: 10<br />\nminSize: 0\n</pre>\n- name: ig01\nmaxSize: 10\nminSize: 0\n- name: ig02\nmaxSize: 10\nminSize: 0"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "autoscalingGroupsnamePrefix": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "autoscalingGroupsnamePrefix"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema36"
+          },
+          {
+            "$ref": "#/$defs/schema5"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "autoscalingGroups"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "autoscalingGroupsnamePrefix": {
+            "anyOf": [
+              {
                 "type": "array"
               },
               {
@@ -2748,104 +3008,6 @@
               }
             ],
             "description": "autoscalingGroupsnamePrefix -- For GCE. At least one element is required if not using `autoDiscovery`. For example:\n<pre>\n- name: ig01<br />\nmaxSize: 10<br />\nminSize: 0\n</pre>\n- name: ig01\nmaxSize: 10\nminSize: 0\n- name: ig02\nmaxSize: 10\nminSize: 0"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/schema36"
-          },
-          {
-            "$ref": "#/$defs/schema5"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "autoscalingGroups": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "autoscalingGroups"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "clusterName": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "clusterName"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "labels": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "labels"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "namespace": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "namespace"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "autoscalingGroupsnamePrefix": {
-            "description": "autoscalingGroupsnamePrefix -- For GCE. At least one element is required if not using `autoDiscovery`. For example:\n<pre>\n- name: ig01<br />\nmaxSize: 10<br />\nminSize: 0\n</pre>\n- name: ig01\nmaxSize: 10\nminSize: 0\n- name: ig02\nmaxSize: 10\nminSize: 0",
-            "items": {},
-            "type": "array"
           }
         }
       }
@@ -5888,8 +6050,17 @@
         "additionalProperties": {},
         "properties": {
           "clusterAPIKubeconfigSecret": {
-            "description": "clusterAPIKubeconfigSecret -- Secret containing kubeconfig for connecting to Cluster API managed workloadcluster\nRequired if `cloudProvider=clusterapi` and `clusterAPIMode=kubeconfig-kubeconfig,kubeconfig-incluster or incluster-kubeconfig`",
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "clusterAPIKubeconfigSecret -- Secret containing kubeconfig for connecting to Cluster API managed workloadcluster\nRequired if `cloudProvider=clusterapi` and `clusterAPIMode=kubeconfig-kubeconfig,kubeconfig-incluster or incluster-kubeconfig`"
           }
         }
       }
@@ -6412,6 +6583,111 @@
           "customArgs": {
             "anyOf": [
               {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "customArgs -- Additional custom container arguments.\nRefer to https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-are-the-parameters-to-ca for the full list of cluster autoscaler\nparameters and their default values.\nList of arguments as strings."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "autoscalingGroups": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "autoscalingGroups"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "clusterName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "labels": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "labels"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "customArgs": {
+            "anyOf": [
+              {
                 "type": "array"
               },
               {
@@ -6635,8 +6911,17 @@
         "additionalProperties": {},
         "properties": {
           "envFromConfigMap": {
-            "description": "envFromConfigMap -- ConfigMap name to use as envFrom.",
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "envFromConfigMap -- ConfigMap name to use as envFrom."
           }
         }
       }
@@ -6752,8 +7037,17 @@
         "additionalProperties": {},
         "properties": {
           "envFromSecret": {
-            "description": "envFromSecret -- Secret name to use as envFrom.",
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "envFromSecret -- Secret name to use as envFrom."
           }
         }
       }
@@ -6939,6 +7233,108 @@
                 ]
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "autoscalingGroups": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "autoscalingGroups"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "clusterName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "labels": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "labels"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraArgs": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "description": "extraArgs -- Additional container arguments.\nRefer to https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-are-the-parameters-to-ca for the full list of cluster autoscaler\nparameters and their default values.\nEverything after the first _ will be ignored allowing the use of multi-string arguments."
           }
         }
       }
@@ -7457,10 +7853,8 @@
         "additionalProperties": {},
         "properties": {
           "extraEnvConfigMaps": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "extraEnvConfigMaps -- Additional container environment variables from ConfigMaps.",
-            "maxProperties": 0,
-            "properties": {},
             "type": "object"
           }
         }
@@ -7838,10 +8232,8 @@
         "additionalProperties": {},
         "properties": {
           "extraEnvSecrets": {
-            "additionalProperties": false,
+            "additionalProperties": {},
             "description": "extraEnvSecrets -- Additional container environment variables from Secrets.",
-            "maxProperties": 0,
-            "properties": {},
             "type": "object"
           }
         }
@@ -9782,20 +10174,12 @@
         "anyOf": [
           {
             "properties": {
-              "rbac": {
-                "properties": {
-                  "pspEnabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "pspEnabled"
-                ],
-                "type": "object"
+              "autoscalingGroups": {
+                "$ref": "#/$defs/helm-truthy"
               }
             },
             "required": [
-              "rbac"
+              "autoscalingGroups"
             ],
             "type": "object"
           },
@@ -9803,79 +10187,103 @@
             "anyOf": [
               {
                 "properties": {
-                  "autoscalingGroups": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "autoDiscovery": {
+                    "properties": {
+                      "clusterName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterName"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "autoscalingGroups"
+                  "autoDiscovery"
                 ],
                 "type": "object"
               },
               {
-                "anyOf": [
-                  {
+                "properties": {
+                  "autoDiscovery": {
                     "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "clusterName": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "clusterName"
-                        ],
-                        "type": "object"
+                      "labels": {
+                        "$ref": "#/$defs/helm-truthy"
                       }
                     },
                     "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "labels": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "labels"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "autoDiscovery": {
-                        "properties": {
-                          "namespace": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "namespace"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "autoDiscovery"
+                      "labels"
                     ],
                     "type": "object"
                   }
-                ]
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
               }
             ]
           }
         ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "hostNetwork": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "description": "hostNetwork -- Whether to expose network interfaces of the host machine to pods."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "pspEnabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "pspEnabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
       },
       "then": {
         "additionalProperties": {},
@@ -10747,8 +11155,17 @@
         "additionalProperties": {},
         "properties": {
           "magnumCABundlePath": {
-            "description": "magnumCABundlePath -- Path to the host's CA bundle, from `ca-file` in the cloud-config file.",
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "magnumCABundlePath -- Path to the host's CA bundle, from `ca-file` in the cloud-config file."
           }
         }
       }
@@ -12434,8 +12851,17 @@
       "description": "awsAccessKeyID -- AWS access key ID ([if AWS user keys used](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md#using-aws-credentials))"
     },
     "awsRegion": {
-      "description": "awsRegion -- AWS region (required if `cloudProvider=aws`)",
-      "type": "string"
+      "anyOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "awsRegion -- AWS region (required if `cloudProvider=aws`)"
     },
     "awsSecretAccessKey": {
       "description": "awsSecretAccessKey -- AWS access secret key ([if AWS user keys used](https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md#using-aws-credentials))"
@@ -12571,9 +12997,27 @@
       "description": "envFromSecret -- Secret name to use as envFrom."
     },
     "expanderPriorities": {
-      "additionalProperties": {},
-      "description": "Priorities Expander\nexpanderPriorities -- The expanderPriorities is used if `extraArgs.expander` contains `priority` and expanderPriorities is also set with the priorities.\nIf `extraArgs.expander` contains `priority`, then expanderPriorities is used to define cluster-autoscaler-priority-expander priorities.\nSee: https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/expander/priority/readme.md",
-      "type": "object"
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "description": "Priorities Expander\nexpanderPriorities -- The expanderPriorities is used if `extraArgs.expander` contains `priority` and expanderPriorities is also set with the priorities.\nIf `extraArgs.expander` contains `priority`, then expanderPriorities is used to define cluster-autoscaler-priority-expander priorities.\nSee: https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/expander/priority/readme.md"
     },
     "extraArgs": {
       "additionalProperties": {},
@@ -12757,8 +13201,17 @@
             "additionalProperties": {},
             "properties": {
               "maxUnavailable": {
-                "description": "minAvailable: 2",
-                "type": "integer"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ],
+                "description": "minAvailable: 2"
               }
             }
           }

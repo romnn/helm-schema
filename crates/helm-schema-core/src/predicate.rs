@@ -13,6 +13,12 @@ pub enum Predicate {
     Approximate {
         marker: String,
         paths: BTreeSet<String>,
+        /// Guards whose conjunction IMPLIES the real condition (a sound
+        /// subset). Usable only in POSITIVE polarity where firing less
+        /// often is safe — a fail-arm's outer condition — never through a
+        /// negation, which would invert the containment. Empty when no
+        /// bounded strengthening was recognized.
+        sound_subset: Vec<Guard>,
     },
     Guard(Guard),
     Not(Box<Predicate>),
@@ -49,6 +55,22 @@ impl Predicate {
         Self::Approximate {
             marker: marker.into(),
             paths,
+            sound_subset: Vec::new(),
+        }
+    }
+
+    /// Marks an unlowerable condition that still admits a bounded sound
+    /// strengthening: `guards` hold only in states where the real condition
+    /// holds too.
+    pub fn approximate_with_sound_subset(
+        marker: impl Into<String>,
+        paths: BTreeSet<String>,
+        sound_subset: Vec<Guard>,
+    ) -> Self {
+        Self::Approximate {
+            marker: marker.into(),
+            paths,
+            sound_subset,
         }
     }
 
@@ -150,6 +172,7 @@ impl Predicate {
             Self::Guard(
                 Guard::Range { .. }
                 | Guard::RangeKeyPrefix { .. }
+                | Guard::RangeKeyEquals { .. }
                 | Guard::Absent { .. }
                 | Guard::With { .. }
                 | Guard::Default { .. }
@@ -157,7 +180,8 @@ impl Predicate {
                 | Guard::NotTypeIs { .. }
                 | Guard::Not { .. }
                 | Guard::Or { .. }
-                | Guard::AnyOf { .. },
+                | Guard::AnyOf { .. }
+                | Guard::IntGt { .. },
             ) => vec![self],
         }
     }
@@ -254,6 +278,7 @@ impl Predicate {
                 | Guard::Eq { .. }
                 | Guard::MatchesPattern { .. }
                 | Guard::RangeKeyPrefix { .. }
+                | Guard::RangeKeyEquals { .. }
                 | Guard::Range { .. }
                 | Guard::With { .. }
                 | Guard::Default { .. }
@@ -261,7 +286,8 @@ impl Predicate {
                 | Guard::NotTypeIs { .. }
                 | Guard::Not { .. }
                 | Guard::Or { .. }
-                | Guard::AnyOf { .. },
+                | Guard::AnyOf { .. }
+                | Guard::IntGt { .. },
             ) => {}
         }
     }
@@ -286,9 +312,17 @@ impl Predicate {
         match self {
             Self::True => Self::True,
             Self::False => Self::False,
-            Self::Approximate { marker, paths } => Self::Approximate {
+            Self::Approximate {
+                marker,
+                paths,
+                sound_subset,
+            } => Self::Approximate {
                 marker,
                 paths: paths.into_iter().map(|path| map(&path)).collect(),
+                sound_subset: sound_subset
+                    .into_iter()
+                    .map(|guard| guard.map_value_paths(map))
+                    .collect(),
             },
             Self::Guard(guard) => Self::Guard(guard.map_value_paths(map)),
             Self::Not(inner) => Self::Not(Box::new(inner.map_value_paths(map))),

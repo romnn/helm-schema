@@ -88,6 +88,11 @@
                 "type": "object"
               },
               {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
                 "type": "string"
               }
             ]
@@ -340,6 +345,11 @@
                   {
                     "additionalProperties": {},
                     "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   },
                   {
                     "type": "string"
@@ -1173,17 +1183,6 @@
       "allOf": [
         {
           "if": {
-            "not": {
-              "type": "string"
-            }
-          },
-          "then": {
-            "additionalProperties": {},
-            "type": "object"
-          }
-        },
-        {
-          "if": {
             "type": "string"
           },
           "then": {
@@ -1193,7 +1192,32 @@
                 "type": "object"
               },
               {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
                 "type": "string"
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "type": "string"
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "type": "object"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
               }
             ]
           }
@@ -1714,6 +1738,11 @@
                     "type": "array"
                   },
                   {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
                     "type": "string"
                   }
                 ]
@@ -1726,8 +1755,17 @@
                 }
               },
               "then": {
-                "items": {},
-                "type": "array"
+                "anyOf": [
+                  {
+                    "items": {},
+                    "type": "array"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
               }
             }
           ]
@@ -1834,17 +1872,6 @@
           "allOf": [
             {
               "if": {
-                "not": {
-                  "type": "string"
-                }
-              },
-              "then": {
-                "additionalProperties": {},
-                "type": "object"
-              }
-            },
-            {
-              "if": {
                 "type": "string"
               },
               "then": {
@@ -1854,7 +1881,32 @@
                     "type": "object"
                   },
                   {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
                     "type": "string"
+                  }
+                ]
+              }
+            },
+            {
+              "if": {
+                "not": {
+                  "type": "string"
+                }
+              },
+              "then": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
                   }
                 ]
               }

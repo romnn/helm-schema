@@ -40,6 +40,7 @@ pub fn is_string_transform_function(function: &str) -> bool {
             | "indent"
             | "nindent"
             | "trunc"
+            | "substr"
             | "trim"
             | "trimAll"
             | "trimPrefix"
@@ -89,8 +90,9 @@ pub fn string_operand_indices(function: &str, argument_count: usize) -> Vec<usiz
         | "split" => (0..argument_count).collect(),
         // The duration is the first argument; the second is a time value.
         "mustDateModify" if argument_count >= 2 => vec![0],
-        // The string subject is final; `trunc`'s preceding width is numeric.
-        "trunc" | "trim" | "lower" | "indent" | "nindent" | "repeat" => {
+        // The string subject is final; `trunc`'s preceding width and
+        // `substr`'s start/end offsets are numeric.
+        "trunc" | "substr" | "trim" | "lower" | "indent" | "nindent" | "repeat" => {
             vec![argument_count - 1]
         }
         // `splitn separator count subject` has a non-string middle argument.

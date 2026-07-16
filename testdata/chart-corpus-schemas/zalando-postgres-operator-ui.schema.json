@@ -882,8 +882,17 @@
             "additionalProperties": {},
             "properties": {
               "ingressClassName": {
-                "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
               }
             }
           }

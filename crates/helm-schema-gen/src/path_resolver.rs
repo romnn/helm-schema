@@ -236,6 +236,7 @@ fn build_path_schema_inputs(
             ),
             type_hint_schema: type_hint_schema(&evidence.type_hints),
             guarded_type_hint_schema: type_hint_schema(&evidence.guarded_type_hints),
+            fallback_type_hint_schema: type_hint_schema(&evidence.fallback_type_hints),
         },
         provider_schema_candidate,
     )
@@ -364,6 +365,26 @@ pub(crate) fn fail_requirement_schema<'a>(
                         { "type": "null" },
                     ]
                 }));
+            }
+            helm_schema_core::ContractRequirementTarget::MembersAt {
+                target_path,
+                allow_integer,
+            } => {
+                let member = required_object_path_schema(target_path, requirement);
+                let mut arms = vec![
+                    serde_json::json!({ "type": "array", "items": member }),
+                    serde_json::json!({
+                        "type": "object",
+                        "additionalProperties": member,
+                    }),
+                ];
+                if *allow_integer {
+                    // Integer iteration yields int members, which can never
+                    // host the required field; only zero iterations pass.
+                    arms.push(serde_json::json!({ "type": "integer", "maximum": 0 }));
+                }
+                arms.push(serde_json::json!({ "type": "null" }));
+                parts.push(serde_json::json!({ "anyOf": arms }));
             }
             helm_schema_core::ContractRequirementTarget::MembersWhereEquals {
                 guard_path,

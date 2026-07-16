@@ -604,7 +604,11 @@ impl HelperOutputEvaluator {
         match node_action(source, node) {
             NodeAction::Text => {
                 if let Ok(text) = node.utf8_text(source.as_bytes()) {
-                    let trimmed = text.trim();
+                    // The helper's text lands in a YAML scalar position of
+                    // the consuming document, so a body literal written as
+                    // `"policy/v1"` (quotes included) denotes the unquoted
+                    // scalar once the composed manifest is parsed (F83).
+                    let trimmed = unquote_yaml_scalar(text.trim());
                     if !trimmed.is_empty() {
                         parts.literals.push(trimmed.to_string());
                     }
@@ -691,6 +695,10 @@ impl HelperOutputEvaluator {
                 }
             }
             return nonempty_body(parts.literals, parts.branches);
+        }
+
+        if let Some(body) = capability_ternary_body(exprs) {
+            return Some(body);
         }
 
         let literals =
@@ -785,6 +793,62 @@ fn dedup_preserve_order(items: Vec<String>) -> Vec<String> {
         }
     }
     out
+}
+
+/// `COND | ternary "on" "off"` (and `ternary "on" "off" COND`) selects one
+/// of two literal scalars exactly like an `if COND`/`else` pair, so a
+/// decodable capability condition yields guard-qualified branch literals
+/// instead of an unresolvable two-way choice (F83: signoz's HPA apiVersion
+/// pipeline). An undecodable condition abstains — the identity stays
+/// unresolved rather than fabricating an unguarded candidate pair.
+fn capability_ternary_body(exprs: &[TemplateExpr]) -> Option<HelperBranchBody> {
+    let [expr] = exprs else {
+        return None;
+    };
+    let literal_string = |expr: &TemplateExpr| match expr.deparen() {
+        TemplateExpr::Literal(Literal::String(text) | Literal::RawString(text)) => {
+            Some(text.clone())
+        }
+        _ => None,
+    };
+    let (condition, on_true, on_false) = match expr.deparen() {
+        TemplateExpr::Pipeline(stages) => {
+            let (last, condition_stages) = stages.split_last()?;
+            let TemplateExpr::Call { function, args } = last.deparen() else {
+                return None;
+            };
+            if function != "ternary" || args.len() != 2 || condition_stages.is_empty() {
+                return None;
+            }
+            (
+                TemplateExpr::Pipeline(condition_stages.to_vec()),
+                literal_string(&args[0])?,
+                literal_string(&args[1])?,
+            )
+        }
+        TemplateExpr::Call { function, args } if function == "ternary" && args.len() == 3 => (
+            args[2].clone(),
+            literal_string(&args[0])?,
+            literal_string(&args[1])?,
+        ),
+        _ => return None,
+    };
+    let guard = decode_guard_expr(&condition, "")?;
+    if matches!(guard, CapabilityGuard::Opaque { .. }) {
+        return None;
+    }
+    Some(HelperBranchBody::Nested {
+        branches: vec![
+            HelperBranch {
+                guard: Some(guard),
+                body: HelperBranchBody::literals(vec![on_true]),
+            },
+            HelperBranch {
+                guard: None,
+                body: HelperBranchBody::literals(vec![on_false]),
+            },
+        ],
+    })
 }
 
 fn static_literal_outputs(expr: &TemplateExpr) -> Vec<String> {

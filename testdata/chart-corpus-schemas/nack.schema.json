@@ -1255,6 +1255,23 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "nameOverride": {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
       "if": {
         "properties": {
           "nameOverride": {
@@ -1279,14 +1296,6 @@
               }
             ]
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "nameOverride": {
-          "type": "string"
         }
       }
     },

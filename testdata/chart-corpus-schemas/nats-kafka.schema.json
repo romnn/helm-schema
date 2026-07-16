@@ -177,35 +177,6 @@
     },
     {
       "if": {
-        "properties": {
-          "nameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "nameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "nameOverride": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "nameOverride overrides nats-kafka.name"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -267,8 +238,46 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "description": "nameOverride overrides nats-kafka.name",
-            "type": "string"
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "nameOverride overrides nats-kafka.name"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "nameOverride": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        "required": [
+          "nameOverride"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "nameOverride overrides nats-kafka.name"
           }
         }
       }
@@ -791,8 +800,17 @@
                     "additionalProperties": {},
                     "properties": {
                       "httpPort": {
-                        "description": "0 means no monitoring, -1 means some available port",
-                        "type": "integer"
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ],
+                        "description": "0 means no monitoring, -1 means some available port"
                       }
                     }
                   }
@@ -837,7 +855,16 @@
                     "additionalProperties": {},
                     "properties": {
                       "httpsPort": {
-                        "type": "integer"
+                        "anyOf": [
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          {
+                            "type": "integer"
+                          }
+                        ]
                       }
                     }
                   }

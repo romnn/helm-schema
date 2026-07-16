@@ -192,6 +192,37 @@ fn append_conditional_at_parts(
         return;
     }
 
+    // A `*` segment addresses EACH member value of a ranged map: the
+    // conditional lands inside the node's `additionalProperties` member
+    // slot, mirroring `insert_map_member_row` — a literal `"*"` property
+    // would constrain nothing a chart can render, silently dropping the
+    // guarded member contract (F59/F93: velero `schedules.*` rows).
+    if path_segments[0] == "*" {
+        if node.is_empty_slot() {
+            *node = SchemaNode::untyped_member_host();
+        }
+        if let SchemaNode::Object {
+            additional_properties,
+            ..
+        } = node
+        {
+            let member = additional_properties.get_or_insert_with(|| Box::new(SchemaNode::empty()));
+            if !member.is_false_schema() {
+                if path_segments.len() == 1 {
+                    push_conditional_entry(member, condition, then_schema, true);
+                } else {
+                    append_conditional_at_parts(
+                        member,
+                        &path_segments[1..],
+                        condition,
+                        then_schema,
+                    );
+                }
+                return;
+            }
+        }
+    }
+
     if matches!(node, SchemaNode::Foreign(_)) && !node.is_empty_slot() {
         let mut fragment = SchemaNode::empty();
         append_conditional_at_parts(&mut fragment, path_segments, condition, then_schema);

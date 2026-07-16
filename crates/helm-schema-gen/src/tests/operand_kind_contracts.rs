@@ -706,6 +706,101 @@ fn semver_parser_binds_lexical_operand_contract() {
     );
 }
 
+/// F45: `substr` slices a Go string subject, so non-string inputs abort
+/// rendering. The subject is the LAST argument in both the direct and the
+/// pipeline spelling; the leading start/end offsets are numeric.
+#[test]
+fn substr_binds_string_subject_contract() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if eq (substr 0 7 .Values.tag) "sha256:" }}
+          digest: "true"
+          {{- end }}
+          piped: {{ .Values.ref | substr 0 7 }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("tag: v1.2.3\nref: v1.2.3\n"));
+
+    for instance in [
+        serde_json::json!({ "tag": "sha256:abc", "ref": "v1.2.3" }),
+        serde_json::json!({ "tag": "v1.2.3", "ref": "sha256:abc" }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "any string subject slices fine: instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({ "tag": { "bad": true } }),
+        serde_json::json!({ "tag": [1] }),
+        serde_json::json!({ "ref": { "bad": true } }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a non-string substr subject aborts rendering: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// F45 (flux2 `template.image`): the substr subject contract survives a
+/// helper called with a values sub-object whose body reads a RELATIVE
+/// selector, and the derived substring output does not leak a later strict
+/// parser's lexical domain back onto the raw input.
+#[test]
+fn substr_contract_projects_through_helper_arguments() {
+    let helpers = indoc! {r#"
+        {{- define "template.image" -}}
+        {{- if eq (substr 0 7 .tag) "sha256:" -}}
+        {{- printf "%s@%s" .image .tag -}}
+        {{- else -}}
+        {{- printf "%s:%s" .image .tag -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          image: {{ template "template.image" .Values.cli }}
+          {{- if semverCompare ">=1.0.0" (substr 1 7 .Values.cli.tag) }}
+          modern: "true"
+          {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("cli:\n  image: repo/cli\n  tag: v1.2.3\n"),
+    );
+
+    for instance in [
+        serde_json::json!({ "cli": { "tag": "sha256:abc" } }),
+        serde_json::json!({ "cli": { "tag": "v1.2.3" } }),
+        // The semver parser sees the DERIVED substring, not the raw tag, so
+        // the raw path keeps the full string domain.
+        serde_json::json!({ "cli": { "tag": "not-a-semver" } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "string tags reach substr through the helper argument: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({ "cli": { "tag": { "bad": true } } }),
+        serde_json::json!({ "cli": { "tag": [1] } }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a non-string tag aborts substr inside the helper: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// A local selected from several source paths does not identify which raw
 /// path reaches the parser. Until that value remains branch-partitioned, the
 /// lexical contract must abstain instead of constraining inactive candidates.
@@ -1259,6 +1354,164 @@ fn range_key_prefix_scopes_member_contract_to_matching_keys() {
         assert!(
             schema_accepts_instance(&schema, &instance),
             "only matching keys execute the value contract: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// F86 (bitnami-redis master): the standalone/replication partition guard
+/// sits under an outer `gt (int64 .Values.master.count) 0` header. The
+/// coercing comparison cannot lower exactly, but a raw positive integer (or
+/// an absent key whose declared default is one) provably satisfies it, so
+/// the ternary's Boolean operand contract keeps firing there instead of
+/// vanishing with the whole capture. (The scale-to-zero acceptance side —
+/// `master.count: 0` keeps a non-Boolean input valid — is pinned on the
+/// real chart in `chart_reaudit`, where the base stays open through the
+/// chart's other serialized uses.)
+#[test]
+fn int_cast_guard_keeps_strict_operand_contract_alive() {
+    let src = indoc! {r#"
+        {{- if gt (int64 .Values.master.count) 0 -}}
+        {{- if or (not (eq .Values.architecture "replication")) (not .Values.sentinel.enabled) }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: m
+        data:
+          allow: {{ ternary "no" "yes" .Values.auth.enabled | quote }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        master:
+          count: 1
+        architecture: replication
+        sentinel:
+          enabled: false
+        auth:
+          enabled: false
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({ "architecture": "standalone", "auth": { "enabled": true } }),
+        serde_json::json!({ "auth": { "enabled": true } }),
+        serde_json::json!({ "auth": { "enabled": false } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "boolean operands and dead partitions render: instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({ "auth": { "enabled": "true" } }),
+        serde_json::json!({ "architecture": "standalone", "auth": { "enabled": "true" } }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a live ternary condition requires a Go bool: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// F54 (cluster-autoscaler `expanderPriorities`): a `kindIs "string"` arm
+/// inside a block scalar proves the chart handles the raw-string form even
+/// when the surrounding liveness header carries an undecodable `include`
+/// condition — the dispatch alternative widens the declared-map base
+/// instead of vanishing with the unlowerable guard set.
+#[test]
+fn type_dispatch_survives_approximate_liveness_guard() {
+    let src = indoc! {r#"
+        {{- if and (.Values.expanderPriorities) (include "ca.enabled" .) }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: x
+        data:
+          priorities: |-
+        {{- if kindIs "string" .Values.expanderPriorities }}
+        {{ .Values.expanderPriorities | indent 4 }}
+        {{- else }}
+        {{- range $k,$v := .Values.expanderPriorities }}
+            {{ $k | int }}:
+              {{- toYaml $v | nindent 6 }}
+        {{- end -}}
+        {{- end -}}
+        {{- end }}
+    "#};
+    let helpers = indoc! {r#"
+        {{- define "ca.enabled" -}}
+        {{- if .Values.enabled -}}
+        true
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("expanderPriorities: {}\nenabled: true\n"),
+    );
+    for instance in [
+        serde_json::json!({ "expanderPriorities": "10:\n  - .*" }),
+        serde_json::json!({ "expanderPriorities": { "10": [".*"] } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "both dispatch arms render: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// F53 (prometheus `server.remoteWrite`): the URL of every ranged member
+/// reaches `tpl`, a strict string consumer, even though the consuming
+/// include sits inside a foreign `range` selected by `eq $key
+/// "prometheus.yml"` — the key-equality lowers to a has-key condition
+/// instead of abstaining with the foreign iteration.
+#[test]
+fn ranged_member_field_contract_survives_foreign_key_selected_range() {
+    let helpers = indoc! {r#"
+        {{- define "prometheus.server.remoteWrite" -}}
+        {{- $remoteWrites := list }}
+        {{- range $remoteWrite := .Values.server.remoteWrite }}
+          {{- $remoteWrites = tpl $remoteWrite.url $ | set $remoteWrite "url" | append $remoteWrites }}
+        {{- end -}}
+        {{ toYaml $remoteWrites }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: x
+        data:
+          {{- $root := . -}}
+          {{- range $key, $value := .Values.serverFiles }}
+          {{ $key }}: |
+          {{- if eq $key "prometheus.yml" }}
+          {{- if $root.Values.server.remoteWrite }}
+          {{- include "prometheus.server.remoteWrite" $root | nindent 4 }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("server:\n  remoteWrite: []\nserverFiles:\n  prometheus.yml: {}\n"),
+    );
+    for instance in [
+        serde_json::json!({ "server": { "remoteWrite": [{ "url": "http://x" }] } }),
+        serde_json::json!({ "server": { "remoteWrite": [] } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "string urls render through tpl: instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({ "server": { "remoteWrite": [{ "url": 7 }] } }),
+        serde_json::json!({ "server": { "remoteWrite": [{}] } }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "tpl requires a string url on every member: instance={instance}; schema={schema}"
         );
     }
 }

@@ -33,14 +33,18 @@ pub(super) fn eval_default(
     // Only a LITERAL fallback types the path: `default "x" .Values.name`
     // documents a string-shaped input. A call fallback (`default (include
     // …) .Values.ns`) only proves the fallback renders text; the path
-    // itself accepts whatever the render site accepts.
+    // itself accepts whatever the render site accepts. The hint rides its
+    // own channel: `default` itself never consumes the raw value — every
+    // Helm-empty input selects the fallback and renders — so the fallback's
+    // kind types only the truthy arm and must not close the base against
+    // Helm-empty inputs (F42).
     if let Some(schema_type) = fallback_args
         .first()
         .map(TemplateExpr::deparen)
         .filter(|expr| matches!(expr, TemplateExpr::Literal(_)))
         .and_then(expression_schema_type)
     {
-        effects.add_type_hints(primary_paths, schema_type);
+        effects.add_fallback_type_hints(primary_paths, schema_type);
     }
     let mut values = primary.value.into_iter().collect::<Vec<_>>();
     let mut fallback_paths = BTreeSet::new();

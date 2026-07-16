@@ -618,3 +618,33 @@ fn single_literal_helper_is_not_branched() {
         "single-literal helper must not be Nested; got {out:?}"
     );
 }
+
+/// F83 (datadog `policy.poddisruptionbudget.apiVersion`): a helper body that
+/// writes its literal as a QUOTED YAML scalar (`"policy/v1"`, quotes
+/// included) denotes the unquoted scalar once the composed manifest is
+/// parsed, so provider lookup must see `policy/v1`.
+#[test]
+fn quoted_text_literals_decode_as_yaml_scalars() {
+    let helpers = index_with(indoc! {r#"
+        {{- define "policy.pdb.apiVersion" -}}
+        {{- if .Capabilities.APIVersions.Has "policy/v1/PodDisruptionBudget" -}}
+        "policy/v1"
+        {{- else -}}
+        "policy/v1beta1"
+        {{- end -}}
+        {{- end -}}
+    "#});
+    let out = evaluate_helper("policy.pdb.apiVersion", &helpers);
+    let HelperBranchBody::Nested { branches } = out else {
+        panic!("expected Nested; got {out:?}");
+    };
+    sim_assert_eq!(have: branches.len(), want: 2, "expected 2 branches; got {branches:?}");
+    sim_assert_eq!(
+        have: literals_of(&branches[0]),
+        want: vec!["policy/v1".to_string()]
+    );
+    sim_assert_eq!(
+        have: literals_of(&branches[1]),
+        want: vec!["policy/v1beta1".to_string()]
+    );
+}
