@@ -5429,3 +5429,160 @@ remains at its adjudicated 4/119 rejection baseline. Eighteen whole-chart
 fixtures and the SigNoz Zookeeper statefulset gen fixture changed; the large
 textual diffs are dominated by conditional-definition insertion and stable
 `$defs` renumbering.
+
+## Final open/partial implementation round (2026-07-16)
+
+This is the authoritative reconciliation for the plan. It supersedes every
+earlier status inventory in this document. Every previously open or partial
+finding not listed under **Bounded residuals** below is implemented and treated
+as fixed on the current tree. F12 remains an intentional policy adjudication,
+and F14 remains historical because its original downstream chart revision is
+not present.
+
+The final implementation round completed the remaining structurally
+recoverable work rather than adding chart-name or source-text heuristics:
+
+- Short-circuiting `and`/`or`, ternary selection, helper-return alternatives,
+  literal membership, `invalid` kind tests, and nested type dispatch now retain
+  the selected value together with the exact predicate under which it was
+  selected. Provider constraints therefore stay partitioned instead of leaking
+  across mutually exclusive alternatives.
+- `break` and `continue` are modeled per loop and per iteration. Finite helper
+  ranges bind exact entries, and monotone `append` accumulators can reach
+  terminal clauses. This closes the Falco removed-key validator while
+  preserving the zero-iteration and dormant-branch domains.
+- Statically selected `.Files.Get` template programs, BasePath-named partials,
+  constructed finite `tpl` programs, and chart-authored string defaults chosen
+  by `tpl` are executed through the existing typed template evaluator. NATS
+  Operator, Minio, Istiod, and Loki now expose the contracts hidden in those
+  programs.
+- Literal `index` and selected `split` elements carry structural cardinality
+  requirements. Collection call signatures now cover the audited strict
+  functions, nested list members, key-prefix predicates, and selector
+  projections. Parser domains propagate through exact helper/local candidate
+  partitions for the audited semver, duration, URL, and related consumers.
+- Resource identity preserves finite inline and values-selected `kind`
+  alternatives and crosses them with finite apiVersion candidates. Provider
+  lookup and conditional lowering consume those partitions directly, so the
+  matching schema applies only in the matching branch.
+- YAML-serialized mapping values retain their structural provider projection.
+  Direct plain-scalar sinks now use a bounded lexical preimage that excludes
+  YAML indicators, comments, line breaks, implicit null/Boolean tokens, and
+  numeric tokens that would reparse with the wrong kind. Numeric and Boolean
+  scalar sinks admit their exact safe textual preimages when no range keyword
+  makes that projection unsound. A chart-authored empty-string default is
+  preserved only at this generated lexical boundary, including inside
+  conjunctive conditional fragments; unrelated conditional defaults and
+  terminal `false` branches are not widened.
+- One-variable integer ranges now emit an explicit
+  `InputChannelNumericRangeAmbiguity` diagnostic when Draft-07 cannot
+  distinguish a values-file number from Helm's `--set` integer channel.
+
+Targeted whole-chart assertions cover the repaired behavior in Airflow,
+Bitnami Redis, Cilium, CoreDNS, External DNS, Falco, Istiod, Jaeger, Loki,
+Minio, NATS Operator, Prometheus, Sealed Secrets, Traefik, Trivy Operator,
+Vault, and Velero. The IR and generator corpora were regenerated only after
+their semantic, rendered-manifest, and shipped-values checks passed.
+
+### Bounded residuals
+
+These findings remain valid, but only beyond the exact increments now
+implemented. They are deliberately not "completed" with a heuristic or an
+over-constraining Draft-07 approximation.
+
+- **F31 — coercion-aware numeric/cardinality validators (partial).** Finite
+  literal append accumulators and their terminal presence clauses are fixed.
+  Generic validators over converted values remain: Jenkins, for example,
+  validates `int (default 1 .Values.controller.replicas)`. Raw maps and junk
+  strings coerce to zero and render, while numeric `2` fails. Applying a raw
+  `minimum`/`maximum` would reject valid coercible inputs. Completing this
+  requires a typed conversion-preimage IR, not a direct bound on the source.
+- **F51 — dynamic existential range sentinels (partial).** Direct, finite, and
+  statically traversed `required`/fail paths are fixed. A sentinel accumulated
+  across an arbitrary runtime collection needs a quantified collection fact
+  (and sometimes a relation to another path). The current per-path contract IR
+  cannot express that without either dropping valid members or inventing a
+  global `contains` constraint.
+- **F61 — long-tail call signatures (partial).** The audited strict collection
+  and nested-element signatures are implemented. Uncatalogued Sprig/Helm
+  functions continue to abstain. Treating every unknown function as strict, or
+  copying an output type back to every operand, would recreate the false
+  rejections this plan removed.
+- **F70 — dynamic cross-path indexing (partial).** Literal indices and literal
+  split positions now impose exact cardinality. When the index is supplied by
+  another value path, the necessary `length(source) > index` relation is not
+  expressible in Draft-07 as an ordinary property schema.
+- **F71 — optional helper availability (partial).** Disabled dependencies are
+  pruned correctly. Modeling “this dependency is active, therefore this named
+  helper exists” for optional library helpers still needs activation ownership
+  on the define index and helper call graph. A global helper-name probe would
+  be order-dependent and would violate chart isolation.
+- **F74 — remaining strict parser languages (partial).** Exact audited parser
+  domains now include semver, duration, and URL-shaped consumers and propagate
+  through finite candidate identities. Base64 and other long-tail parsers, plus
+  opaque helper-return languages, need typed parser-result alternatives before
+  their lexical domains can be projected safely.
+- **F75 — indirect collection projections (partial).** `first`, `last`,
+  `initial`, `rest`, `compact`, and the audited nested member paths are
+  structural. Dynamic `slice` bounds and identities hidden behind opaque
+  locals/helpers remain relational and intentionally abstain.
+- **F76 — derived/manual scalar YAML emission (partial).** Direct plain-scalar
+  provider sinks have a bounded exact lexical preimage. Scalars assembled from
+  multiple expressions or manually emitted into ambiguous YAML contexts need a
+  structured YAML-emission IR; applying the direct-token exclusions to each raw
+  fragment would reject templates whose completed scalar is safe.
+- **F80 — key-level map transform provenance (open architecture debt).** Map
+  `merge`/`mergeOverwrite`/`omit` precedence is still flattened when an operand
+  is an open values-backed map. Correct completion requires a typed map value
+  that retains per-key provenance and overwrite order through provider
+  projection. Unioning operand schemas is observably wrong for overwritten and
+  removed keys.
+- **F84 — typed selected-substring preimages (partial).** Split cardinality and
+  string source requirements are fixed. Projecting an arbitrary provider
+  numeric enum/range onto the nth substring of a raw string cannot be encoded
+  faithfully as a general Draft-07 regex, especially once signs, bases,
+  coercion, and arbitrary separators are involved.
+- **F93 — dynamic cross-map entry identity (partial).** Literal and prefix-key
+  member requirements are preserved. Draft-07 cannot correlate “the same
+  dynamic property name” across two independent maps; doing so needs a
+  relational extension or a finite statically known key set.
+- **F95 — input-channel numeric kinds (diagnosed limitation).** JSON Schema
+  sees the same JSON number for values that Helm may materialize as different
+  Go runtime kinds depending on whether they came from YAML, JSON, or `--set`.
+  No Draft-07 schema can accept/reject one channel while rejecting/accepting the
+  identical JSON instance from another. The analyzer now reports this case
+  explicitly instead of silently presenting a channel-dependent answer as
+  exact.
+
+The residuals above are the smallest honest boundary of the current semantic
+model. F80 and F71 are future compiler-phase changes; F70/F84/F93/F95 require
+relational or channel-aware output capabilities; and the remaining partial
+catalogs intentionally abstain outside the functions and value flows whose
+preimages are structurally proven.
+
+Verification for this round: 1160/1160 tests pass under
+`cargo nextest run --workspace`; `cargo test --doc --workspace` passes; all 55
+chart-corpus fixtures accept their shipped defaults (apart from the three
+already adjudicated chart-authored install failures) and match their generated
+fixtures; the expanded chart re-audit passes; `task lint` is warning-free; and
+`git diff --check` is clean.
+
+### F76 follow-up: empty-scalar defaults under member projection
+
+Post-round review surfaced a false rejection in a downstream chart
+(`postgres-cluster`): a `range`d map (`migrations.databases`) whose members
+carry a plain-scalar sink with a chart-authored empty default
+(`secretName: ""`) was rejected against its own shipped `values.yaml`. The
+declared-default preservation walk (`preserve_declared_default_in_schema`)
+descended `properties`/`items`/`allOf`/`then`/`else` but not the
+member-projection keywords `additionalProperties`/`anyOf`/`oneOf`, so a
+map/list member schema never received its members' declared empty scalar
+defaults; the nullable-sink case additionally hid the exclusion under an
+`anyOf` wrapper that `has_plain_scalar_implicit_token_exclusion` did not
+inspect. Both are structural coverage gaps, not new heuristics: the walk still
+preserves exactly the empty literal the chart declares, at exactly the schema
+position that would otherwise reject it. The fix extends the same lockstep
+values/schema walk to the member-projection keywords and detects the exclusion
+through `anyOf`/`oneOf`. No corpus fixture changed (the pattern is unique to the
+downstream chart); a focused regression pins the member-projection and
+nullable-wrapper cases.
