@@ -5969,3 +5969,111 @@ install failures aside).
   empty, so provider-dependent contracts (F49, F83's PDB/HPA effects)
   only manifest with a warm cache or network; the strict-provider gen
   tests pin them instead of the corpus fixtures.
+
+## Residual-findings round (2026-07-16, second follow-up)
+
+This round works the four residuals the previous section left open: F74,
+F76, and F56/F62/F63. All 1203 workspace tests pass, `cargo test --doc`
+passes, `task lint` is warning-free, `git diff --check` is clean, and the
+downstream luup2 `check:local` pipeline (schema generation, `jv`
+meta-validation, `helm lint --strict`, kubeconform, kube-score across all
+active charts) exits green with the rebuilt release binary. Downstream
+validation now targets `~/dev/branches/luup2` (no longer luup3).
+
+### F74 — fixed
+
+Two independent preimage mechanisms:
+
+- **Conditional literal reassignment (datadog).** An `if` arm that
+  reassigns a local away from its `.Values` identity to values-independent
+  content (`$version = "1.20.0"` under `eq $version "latest"`) now attaches
+  an exclusion to the arms that KEPT the identity: the raw value reaches
+  downstream strict-operand captures only where the reassigning arm's
+  condition is false. The exclusion rides a new
+  `HelperOutputMeta.capture_exclusions` channel consumed ONLY by the parser
+  capture conjunctions (guard decoding and row lowering see the joined
+  value choice as before), and is carried as an F86-style approximate
+  predicate whose sound subset negates one exactly decoded equality
+  conjunct of the losing arm's header (`¬E` implies `¬(… ∧ E)`); with no
+  such conjunct the captures abstain. Datadog accepts
+  `clusterAgent.image.tag: latest` while `garbage` still terminates; both
+  pinned at the gen level and in `chart_reaudit`.
+- **Lexical escape tokens (traefik).** `replace OLD NEW` with a literal OLD
+  and `(split SEP …)._0` with a literal separator are the identity on raw
+  strings that contain no token, so the raw identity now flows through
+  those transforms qualified by a new `lexical_escapes` set on
+  `HelperOutputMeta`/`SpliceMeta` (carried through local bindings, helper
+  summaries, and the include boundary). Parser captures weaken their
+  pattern to `tok1|tok2|(?:P)`; a later dynamic transform in the same
+  chain poisons the escape identity (`derive_value_text`), and equality
+  conditions abstain on escape-qualified bindings. Traefik accepts
+  `latest-v3.6.0`, `experimental-v3.6.0`, `master`, and the
+  `<version>@<digest>` combo while `latest` and `audit` still terminate;
+  datadog's agent digest-split path gained the `@` escape. Pinned at the
+  gen level (replace chain, split prefix, helper boundary,
+  dynamic-transform abstention) and in `chart_reaudit`.
+
+### F76 — fixed (aws-lbc adjudicated)
+
+- **Minio** was already correct: the int-or-string provider preimage
+  accepts `service.port: "9000"` and rejects `"audit"` (F49-era work).
+- **Zalando (manual double quotes)** and **tempo (list-in-scalar)**: a new
+  completed-token contract records fail captures at the interpreter's
+  scalar-parts assembly (`record_completed_token_contracts`): a raw splice
+  OPENING an unquoted token excludes lists (whose rendering opens a flow
+  sequence), and a raw splice inside manual double quotes excludes strings
+  containing `"` or `\`. Claims fire only for untransformed splices, only
+  when every scalar arm agrees, and ride the fail channel so ambient
+  conditions scope them. This surfaced correct new conditionals across
+  ~46 corpus charts (quoted image scalars are a pervasive idiom); Helm
+  ground truth spot-checks (zalando quote, tempo list, velero/jaeger
+  member arms) all confirm the rejections.
+- **Flux2 (`--log-level=` prefix slot)**: branch-scoped fallback hints now
+  keep their fallback identity through a dedicated
+  `guarded_fallback_type_hints` channel (interpreter → contract →
+  builder); a conditional overlay whose renders ALL totally format drops
+  fallback-grade typing while contract-grade hints (flux2's own `substr`
+  tag check) keep typing it. Maps and lists are accepted; the substr
+  string contract still rejects non-string tags.
+- **AWS LBC `nameOverride: "null"` — audit claim adjudicated WRONG.**
+  Rendering it produces `app.kubernetes.io/name: null` on every resource
+  and the actual v1.35.0 strict schemas reject a null label value
+  (`labels.additionalProperties` is `string`); re-validation of the
+  rendered manifests confirms every resource INVALID. The plain-token
+  exclusion correctly keeps rejecting it; pinned as rejected in
+  `chart_reaudit`. As part of this, the plain-scalar token-class
+  exclusions became class-aware (`ImplicitTokenAllowance`): a slot that
+  also allows null/boolean/number no longer excludes raw strings spelling
+  those tokens (the completed document reparses into a kind the slot
+  accepts), and the combined implicit-token pattern split into null and
+  boolean classes.
+
+### F56/F62/F63 — fixed
+
+- **Jaeger's three gaps were already fixed** by this round's earlier work
+  (provider projection through bare `toYaml` fragments with a warm cache).
+- **`tpl (toYaml …)` placement (cloudnative-pg, airflow):** `eval_tpl` now
+  passes the serialized identity through instead of widening to opaque
+  text — template-free content round-trips and templated scalar leaves
+  stay scalars — so the fragment keeps its `YamlSerialized` rows and the
+  sequence/provider slots project exactly like a bare `toYaml` splice.
+  CloudNativePG rejects scalar `additionalEnv` (offline, structural);
+  airflow's scheduler `command`/`extraContainers` rejections are
+  provider-slot facts pinned by a provider-backed gen test.
+- **External-secrets header member (F63):** the header's chained selector
+  captures were folded correctly, but the member-host arm was skipped by
+  the `base_enforces_requirement` shortcut, which trusts the resolved base
+  while the EMITTED base can drop `type: object` (open-map merge). The
+  skip now applies only to unconditional implications; guarded ones keep
+  their own arm. Truthy non-object `webhook.podDisruptionBudget` is
+  rejected, the object form renders, and `create: false` plus a scalar
+  stays accepted (sound: Go's lazy `and` skips the access; Helm still
+  fails there via another read, so acceptance under-rejects).
+
+### Still open
+
+- **F93 (signoz variant).** `range keys .` + `pluck | first` dispatch does
+  not establish member identity; unchanged from the previous section.
+- **F74 (datadog agents half).** `agents.image.tag: garbage` is still
+  accepted: `get-agent-version` composes through `printf`, which is
+  genuinely derived text; the audited `latest`/traefik cases are fixed.
