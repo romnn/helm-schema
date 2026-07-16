@@ -341,8 +341,10 @@ pub enum OpaqueKind {
     TemplateComment,
     /// A `{{ $x := … }}` / `{{ $x = … }}` assignment action.
     Assignment,
-    /// A `{{ break }}` / `{{ continue }}` atom.
-    ControlAtom,
+    /// A `{{ break }}` atom.
+    Break,
+    /// A `{{ continue }}` atom.
+    Continue,
     /// A control region that opened mid-line inside YAML content; the whole
     /// region is preserved as one raw span.
     InlineRegion,

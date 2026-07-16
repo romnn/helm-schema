@@ -24,9 +24,11 @@ pub(crate) struct ParsedHelperBody<'a> {
 
 pub(crate) struct IrAnalysisDb {
     define_bodies: HashMap<String, CachedDefineBody>,
+    implicit_template_names: BTreeMap<String, String>,
     /// Raw template file sources by index path (static `files/*` templates
     /// requested through `.Files.Get` resolve here).
     file_sources: HashMap<String, String>,
+    chart_default_strings: BTreeMap<String, String>,
     define_trees: RefCell<HashMap<String, tree_sitter::Tree>>,
     /// Source-only evaluation facts per helper body (control headers,
     /// resource spans), shared across memoized-summary misses.
@@ -42,10 +44,30 @@ pub(crate) struct BoundHelperCallSummary {
 impl IrAnalysisDb {
     #[tracing::instrument(skip_all)]
     pub(crate) fn new(defines: &DefineIndex) -> Self {
+        Self::with_chart_default_strings(defines, BTreeMap::new())
+    }
+
+    pub(crate) fn with_chart_default_strings(
+        defines: &DefineIndex,
+        chart_default_strings: BTreeMap<String, String>,
+    ) -> Self {
         let mut define_bodies = HashMap::new();
+        let mut implicit_template_names = BTreeMap::new();
         let mut file_sources = HashMap::new();
         for (path, src) in defines.file_sources() {
             file_sources.insert(path.to_string(), src.to_string());
+            if let Some(template_relative_path) = template_relative_path(path) {
+                let name = format!("@file:{path}");
+                implicit_template_names.insert(template_relative_path, name.clone());
+                define_bodies.insert(
+                    name,
+                    CachedDefineBody {
+                        source: src.to_string(),
+                        source_path: path.to_string(),
+                        body_offset: 0,
+                    },
+                );
+            }
             for block in extract_define_blocks(src) {
                 define_bodies.insert(
                     block.name,
@@ -59,7 +81,9 @@ impl IrAnalysisDb {
         }
         Self {
             define_bodies,
+            implicit_template_names,
             file_sources,
+            chart_default_strings,
             define_trees: RefCell::new(HashMap::new()),
             body_eval_facts: RefCell::new(HashMap::new()),
             bound_helper_calls: RefCell::new(BTreeMap::new()),
@@ -70,8 +94,23 @@ impl IrAnalysisDb {
         self.define_bodies.contains_key(name)
     }
 
+    pub(crate) fn implicit_template_name(&self, suffix: &str) -> Option<&str> {
+        let suffix = suffix.trim_start_matches('/');
+        let mut matches = self
+            .implicit_template_names
+            .iter()
+            .filter(|(path, _)| path.as_str() == suffix)
+            .map(|(_, name)| name.as_str());
+        let first = matches.next()?;
+        matches.next().is_none().then_some(first)
+    }
+
     pub(crate) fn file_source(&self, path: &str) -> Option<&str> {
         self.file_sources.get(path).map(String::as_str)
+    }
+
+    pub(crate) fn chart_default_string(&self, path: &str) -> Option<&str> {
+        self.chart_default_strings.get(path).map(String::as_str)
     }
 
     /// Indexed chart file paths (templates plus `.Files.Get` sources),
@@ -178,6 +217,12 @@ impl IrAnalysisDb {
             argument_effects: resolved.argument_effects,
         }
     }
+}
+
+fn template_relative_path(path: &str) -> Option<String> {
+    let marker = "templates/";
+    let index = path.rfind(marker)?;
+    Some(path[(index + marker.len())..].to_string())
 }
 
 /// One dot (`.`) binding as the two evaluation flavors see it: value

@@ -20,7 +20,7 @@ pub(crate) struct ValuePathContext<'a> {
     pub(crate) template_default_paths: &'a HashMap<String, BTreeSet<String>>,
     pub(crate) template_output_meta: &'a HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     pub(crate) template_truthy_reductions: &'a HashMap<String, Predicate>,
-    pub(crate) typeof_bindings: &'a HashMap<String, String>,
+    pub(crate) typeof_bindings: &'a HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     pub(crate) fragment_context: FragmentEvalContext<'a>,
     pub(crate) current_dot_fragment: Option<AbstractValue>,
     pub(crate) current_dot_binding: Option<AbstractValue>,

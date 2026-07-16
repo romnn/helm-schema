@@ -12,6 +12,14 @@ use helm_schema_core::Predicate;
 pub(crate) trait HelperCallValueResolver {
     fn resolve_helper_call(&mut self, name: &str, arg: Option<&TemplateExpr>)
     -> Option<EvalResult>;
+
+    fn resolve_implicit_template_call(
+        &mut self,
+        _suffix: &str,
+        _arg: Option<&TemplateExpr>,
+    ) -> Option<EvalResult> {
+        None
+    }
 }
 
 struct NoHelperCallResolver;

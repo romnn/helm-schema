@@ -253,13 +253,29 @@ fn record_contract_use(
     contract_use: &ContractUse,
     range_modes: &crate::range_modes::RangeModes,
 ) {
-    let conjunctions = contract_use
-        .condition
-        .disjuncts()
+    let disjuncts = contract_use.condition.disjuncts();
+    let has_approximate_disjunct = disjuncts
+        .iter()
+        .any(|conjunction| conjunction.iter().any(Predicate::contains_approximation));
+    let conjunctions = disjuncts
         .iter()
         .map(|conjunction| conjunction.iter().cloned().collect::<Vec<_>>())
         .collect::<Vec<_>>();
     for predicates in conjunctions {
+        // A constructed template projection adds self-presence to the path
+        // alternatives it can still identify. When a sibling alternative is
+        // approximate, that presence proves only that the selected candidate
+        // exists, not that the candidate is a root values path. Promoting the
+        // pathless read would turn recursive member sentinels into root keys.
+        if has_approximate_disjunct
+            && contract_use.path.0.is_empty()
+            && !predicates.is_empty()
+            && predicates
+                .iter()
+                .all(|predicate| predicate_is_self_presence(predicate, &contract_use.source_expr))
+        {
+            continue;
+        }
         record_contract_use_conjunction(paths, contract_use, &predicates, range_modes);
     }
 }
@@ -360,7 +376,10 @@ fn record_contract_use_conjunction(
                 contract_use.kind,
                 ValueKind::Fragment | ValueKind::YamlSerialized
             ),
-            used_as_serialized: contract_use.kind == ValueKind::Serialized || type_dispatched,
+            used_as_serialized: matches!(
+                contract_use.kind,
+                ValueKind::PartialScalar | ValueKind::Serialized
+            ) || type_dispatched,
             used_as_yaml_serialized: contract_use.kind == ValueKind::YamlSerialized,
             has_string_contract: contract_use.has_string_contract && !type_dispatched,
             used_as_pathless_fragment: matches!(
@@ -391,7 +410,11 @@ fn record_contract_use_conjunction(
             });
         // A serialized splice renders text the sink cannot type back onto
         // the input, so it contributes no metadata field kind either.
-        let metadata_field_kind = if contract_use.kind == ValueKind::Serialized || type_dispatched {
+        let metadata_field_kind = if matches!(
+            contract_use.kind,
+            ValueKind::PartialScalar | ValueKind::Serialized
+        ) || type_dispatched
+        {
             None
         } else {
             metadata_field_kind_from_yaml_path(&contract_use.path.0)
@@ -645,6 +668,61 @@ fn record_fail_conjunction(
         record_range_key_string_requirements(paths, capture, range_key_string_paths, range_modes);
         return;
     }
+    if let crate::eval_effect::CaptureKind::CollectionItems {
+        paths: collection_paths,
+        schema_type,
+    } = &capture.kind
+    {
+        record_collection_item_requirements(paths, capture, collection_paths, schema_type);
+        return;
+    }
+    if let crate::eval_effect::CaptureKind::IndexAccess { path, index } = &capture.kind {
+        record_index_access_requirement(paths, capture, path, *index);
+        return;
+    }
+    if let crate::eval_effect::CaptureKind::SplitIndexAccess {
+        paths: source_paths,
+        separator,
+        index,
+        total_text_preimage,
+    } = &capture.kind
+    {
+        record_split_index_access_requirement(
+            paths,
+            capture,
+            source_paths,
+            separator,
+            *index,
+            *total_text_preimage,
+        );
+        return;
+    }
+    if let crate::eval_effect::CaptureKind::ValueType { path, schema_type } = &capture.kind {
+        record_value_requirement_capture(
+            paths,
+            capture,
+            path,
+            FailValueRequirement::SchemaType(schema_type.clone()),
+        );
+        return;
+    }
+    if let crate::eval_effect::CaptureKind::ValuePattern {
+        path,
+        pattern,
+        templated,
+    } = &capture.kind
+    {
+        record_value_requirement_capture(
+            paths,
+            capture,
+            path,
+            FailValueRequirement::MatchesPattern {
+                pattern: pattern.clone(),
+                templated: *templated,
+            },
+        );
+        return;
+    }
     // An approximate enclosing condition could gate anything (even one with
     // no resolvable paths), and a `$local` name leaking into predicate paths
     // means the condition lowering lost the real subject: both make negation
@@ -658,6 +736,9 @@ fn record_fail_conjunction(
         .flat_map(Predicate::value_paths)
         .any(|path| path.starts_with('$'))
     {
+        return;
+    }
+    if record_range_key_prefix_requirement(paths, &capture.kind, &conjunction) {
         return;
     }
     if let crate::eval_effect::CaptureKind::MemberAccess { handled_kinds } = &capture.kind {
@@ -841,6 +922,362 @@ fn record_fail_conjunction(
         requirements,
     };
     let acc = path_accumulator(paths, &target);
+    acc.referenced = true;
+    if !acc.fail_implications.contains(&implication) {
+        acc.fail_implications.push(implication);
+    }
+}
+
+fn record_range_key_prefix_requirement(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    kind: &crate::eval_effect::CaptureKind,
+    conjunction: &[Predicate],
+) -> bool {
+    if !matches!(kind, crate::eval_effect::CaptureKind::Fail) {
+        return false;
+    }
+    let prefixes = conjunction
+        .iter()
+        .filter_map(|predicate| match predicate {
+            Predicate::Guard(Guard::RangeKeyPrefix { path, prefix }) => {
+                Some((path.as_str(), prefix.as_str()))
+            }
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    let [(collection_path, prefix)] = prefixes.as_slice() else {
+        return !prefixes.is_empty();
+    };
+    let member_scope = format!("{collection_path}.*");
+    let has_matching_range = conjunction.iter().any(|predicate| {
+        matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == collection_path)
+    });
+    if !has_matching_range {
+        return true;
+    }
+
+    let mut outer_guards = Vec::new();
+    let mut requirements = Vec::new();
+    for predicate in conjunction {
+        match predicate {
+            Predicate::Guard(Guard::RangeKeyPrefix {
+                path,
+                prefix: candidate,
+            }) if path == collection_path && candidate == prefix => {}
+            Predicate::Guard(Guard::Range { path }) if path == collection_path => {}
+            _ if {
+                let predicate_paths = predicate.value_paths();
+                !predicate_paths.is_empty()
+                    && predicate_paths.iter().all(|path| {
+                        path == &member_scope
+                            || helm_schema_core::values_path_is_descendant(path, &member_scope)
+                    })
+            } =>
+            {
+                let Some(mut required) = requirements_from_negation(predicate, &member_scope)
+                else {
+                    return true;
+                };
+                requirements.append(&mut required);
+            }
+            _ => {
+                let Some(guard) = predicate_to_guard(predicate, None) else {
+                    return true;
+                };
+                if guard
+                    .value_paths()
+                    .iter()
+                    .any(|path| path_contains_wildcard(path))
+                {
+                    return true;
+                }
+                outer_guards.push(guard);
+            }
+        }
+    }
+    if requirements.is_empty() {
+        return true;
+    }
+    outer_guards.sort();
+    outer_guards.dedup();
+    requirements.sort();
+    requirements.dedup();
+    let implication = ContractFailImplication {
+        outer_guards,
+        target: ContractRequirementTarget::MembersMatchingPrefix {
+            prefix: (*prefix).to_string(),
+        },
+        requirements,
+    };
+    let acc = path_accumulator(paths, collection_path);
+    acc.referenced = true;
+    if !acc.fail_implications.contains(&implication) {
+        acc.fail_implications.push(implication);
+    }
+    true
+}
+
+fn capture_outer_guards(
+    capture: &crate::eval_effect::FailCapture,
+) -> Option<Vec<ConditionalGuard>> {
+    let conjunction = remove_redundant_approximate_conditions(&capture.conjunction);
+    if conjunction.iter().any(Predicate::contains_approximation) {
+        return None;
+    }
+    let mut guards = conjunction
+        .iter()
+        .map(|predicate| predicate_to_guard(predicate, None))
+        .collect::<Option<Vec<_>>>()?;
+    if guards
+        .iter()
+        .flat_map(ConditionalGuard::value_paths)
+        .any(|path| path_contains_wildcard(&path))
+    {
+        return None;
+    }
+    guards.sort();
+    guards.dedup();
+    Some(guards)
+}
+
+fn record_value_requirement_capture(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    capture: &crate::eval_effect::FailCapture,
+    path: &str,
+    requirement: FailValueRequirement,
+) {
+    if path.trim().is_empty() {
+        return;
+    }
+    let (target_path, target, outer_guards) = if let Some(collection_path) = path.strip_suffix(".*")
+    {
+        let mut outer_guards = Vec::new();
+        let mut prefix = None;
+        for predicate in &capture.conjunction {
+            match predicate {
+                Predicate::Guard(Guard::Range { path }) if path == collection_path => {}
+                Predicate::Guard(Guard::RangeKeyPrefix {
+                    path,
+                    prefix: candidate,
+                }) if path == collection_path => {
+                    if prefix.replace(candidate.clone()).is_some() {
+                        return;
+                    }
+                }
+                _ => {
+                    let Some(guard) = predicate_to_guard(predicate, None) else {
+                        return;
+                    };
+                    if guard
+                        .value_paths()
+                        .iter()
+                        .any(|path| path_contains_wildcard(path))
+                    {
+                        return;
+                    }
+                    outer_guards.push(guard);
+                }
+            }
+        }
+        outer_guards.sort();
+        outer_guards.dedup();
+        let allow_integer = {
+            let mode = capture.ranged.mode(collection_path);
+            mode.direct && !mode.destructured && !mode.json_decoded
+        };
+        let target = prefix.map_or(
+            ContractRequirementTarget::Members { allow_integer },
+            |prefix| ContractRequirementTarget::MembersMatchingPrefix { prefix },
+        );
+        (collection_path, target, outer_guards)
+    } else {
+        if path_contains_wildcard(path) {
+            return;
+        }
+        let Some(outer_guards) = capture_outer_guards(capture) else {
+            return;
+        };
+        (path, ContractRequirementTarget::Value, outer_guards)
+    };
+    let implication = ContractFailImplication {
+        outer_guards,
+        target,
+        requirements: vec![requirement],
+    };
+    let acc = path_accumulator(paths, target_path);
+    acc.referenced = true;
+    if !acc.fail_implications.contains(&implication) {
+        acc.fail_implications.push(implication);
+    }
+}
+
+fn record_collection_item_requirements(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    capture: &crate::eval_effect::FailCapture,
+    collection_paths: &BTreeSet<String>,
+    schema_type: &str,
+) {
+    let Some(outer_guards) = capture_outer_guards(capture) else {
+        return;
+    };
+    for path in collection_paths {
+        if path_contains_wildcard(path) {
+            continue;
+        }
+        let implication = ContractFailImplication {
+            outer_guards: outer_guards.clone(),
+            target: ContractRequirementTarget::Members {
+                allow_integer: false,
+            },
+            requirements: vec![FailValueRequirement::SchemaType(schema_type.to_string())],
+        };
+        let acc = path_accumulator(paths, path);
+        acc.referenced = true;
+        if !acc.fail_implications.contains(&implication) {
+            acc.fail_implications.push(implication);
+        }
+    }
+}
+
+fn record_index_access_requirement(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    capture: &crate::eval_effect::FailCapture,
+    path: &str,
+    index: usize,
+) {
+    if path.trim().is_empty() || path_contains_wildcard(path) {
+        return;
+    }
+    let Some(outer_guards) = capture_outer_guards(capture) else {
+        return;
+    };
+    let implication = ContractFailImplication {
+        outer_guards,
+        target: ContractRequirementTarget::Value,
+        requirements: vec![FailValueRequirement::IndexableAt(index)],
+    };
+    let acc = path_accumulator(paths, path);
+    acc.referenced = true;
+    if !acc.fail_implications.contains(&implication) {
+        acc.fail_implications.push(implication);
+    }
+}
+
+fn record_split_index_access_requirement(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    capture: &crate::eval_effect::FailCapture,
+    source_paths: &BTreeSet<String>,
+    separator: &str,
+    index: usize,
+    allow_non_string: bool,
+) {
+    if index == 0 || separator.is_empty() {
+        return;
+    }
+    let outer_guards = capture_outer_guards(capture);
+    for path in source_paths {
+        if path.trim().is_empty() {
+            continue;
+        }
+        if path_contains_wildcard(path) {
+            record_member_relative_split_requirement(
+                paths,
+                capture,
+                path,
+                separator,
+                index,
+                allow_non_string,
+            );
+            continue;
+        }
+        let Some(outer_guards) = outer_guards.clone() else {
+            continue;
+        };
+        let implication = ContractFailImplication {
+            outer_guards,
+            target: ContractRequirementTarget::Value,
+            requirements: vec![FailValueRequirement::SplitSegmentsAtLeast {
+                separator: separator.to_string(),
+                segments: index + 1,
+                allow_non_string,
+            }],
+        };
+        let acc = path_accumulator(paths, path);
+        acc.referenced = true;
+        if !acc.fail_implications.contains(&implication) {
+            acc.fail_implications.push(implication);
+        }
+    }
+}
+
+fn record_member_relative_split_requirement(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    capture: &crate::eval_effect::FailCapture,
+    source_path: &str,
+    separator: &str,
+    index: usize,
+    allow_non_string: bool,
+) {
+    let segments = helm_schema_core::split_value_path(source_path);
+    let Some(member_index) = segments.iter().rposition(|segment| segment == "*") else {
+        return;
+    };
+    if member_index == 0 || member_index + 1 >= segments.len() {
+        return;
+    }
+    let collection_path = helm_schema_core::join_value_path(segments[..member_index].to_vec());
+    let member_scope = helm_schema_core::join_value_path(segments[..=member_index].to_vec());
+    let target_path = segments[(member_index + 1)..].to_vec();
+    let mut member_guards = Vec::new();
+    let mut outer_guards = Vec::new();
+
+    for predicate in &capture.conjunction {
+        if matches!(predicate, Predicate::Guard(Guard::Range { path })
+            if path == &collection_path
+                || helm_schema_core::values_path_is_descendant(&member_scope, path))
+        {
+            continue;
+        }
+        if let Predicate::Guard(Guard::Eq { path, value }) = predicate
+            && let Some(relative) =
+                helm_schema_core::split_value_path(path).strip_prefix(&segments[..=member_index])
+            && !relative.is_empty()
+            && !relative.iter().any(|segment| segment == "*")
+        {
+            member_guards.push((relative.to_vec(), value.clone()));
+            continue;
+        }
+        let Some(guard) = predicate_to_guard(predicate, None) else {
+            return;
+        };
+        if guard
+            .value_paths()
+            .iter()
+            .any(|path| path_contains_wildcard(path))
+        {
+            return;
+        }
+        outer_guards.push(guard);
+    }
+    let [(guard_path, value)] = member_guards.as_slice() else {
+        return;
+    };
+    outer_guards.sort();
+    outer_guards.dedup();
+    let implication = ContractFailImplication {
+        outer_guards,
+        target: ContractRequirementTarget::MembersWhereEquals {
+            guard_path: guard_path.clone(),
+            value: value.clone(),
+            target_path,
+        },
+        requirements: vec![FailValueRequirement::SplitSegmentsAtLeast {
+            separator: separator.to_string(),
+            segments: index + 1,
+            allow_non_string,
+        }],
+    };
+    let acc = path_accumulator(paths, &collection_path);
     acc.referenced = true;
     if !acc.fail_implications.contains(&implication) {
         acc.fail_implications.push(implication);
@@ -1394,33 +1831,27 @@ impl ContractPathAccumulator {
                 }
             }
         }
-        // An overlay whose guards could not be lowered poisons every overlay
-        // for the path: emitting only the lowerable branches would understate
-        // the conditional shape.
-        let conditional_overlays = if saw_unsupported_overlay {
-            Vec::new()
-        } else {
-            conditional_overlay_branches
-                .into_iter()
-                .map(|(guards, branch)| {
-                    // A branch keyed on the path's own type partition hosts
-                    // only the hints compatible with that partition: the
-                    // map arm's object hint must never type the slice arm's
-                    // `then` (and vice versa), or a live arm becomes
-                    // internally contradictory.
-                    let branch_hints = partition_compatible_hints(
-                        &overlay_type_hints,
-                        &guards,
-                        value_path.as_str(),
-                    );
-                    ConditionalPathOverlay {
-                        guards,
-                        evidence: branch.conditional_overlay_evidence(facts, branch_hints),
-                        preserve_base_schema: has_unconditional_overlay_peer,
-                    }
-                })
-                .collect()
-        };
+        // Exact branches remain useful when a sibling guard is unlowerable.
+        // The unknown sibling is represented by preserving the base domain;
+        // discarding exact branches as well would lose structural facts that
+        // are sound whenever their own guards hold.
+        let conditional_overlays = conditional_overlay_branches
+            .into_iter()
+            .map(|(guards, branch)| {
+                // A branch keyed on the path's own type partition hosts
+                // only the hints compatible with that partition: the
+                // map arm's object hint must never type the slice arm's
+                // `then` (and vice versa), or a live arm becomes
+                // internally contradictory.
+                let branch_hints =
+                    partition_compatible_hints(&overlay_type_hints, &guards, value_path.as_str());
+                ConditionalPathOverlay {
+                    guards,
+                    evidence: branch.conditional_overlay_evidence(facts, branch_hints),
+                    preserve_base_schema: has_unconditional_overlay_peer || saw_unsupported_overlay,
+                }
+            })
+            .collect();
         // Branch-scoped hints ride the overlays' evidence copies. When no
         // overlay can host them (none lowered, or an unsupported or
         // approximate guard poisoned them), they stay branch-scoped
@@ -1658,9 +2089,15 @@ fn guard_to_conditional_guard(
         Guard::Absent { path: value_path } => Some(ConditionalGuard::Absent {
             path: path(value_path)?,
         }),
-        // Pattern guards have no if/then spelling in the overlay
-        // vocabulary; implications guarded by one abstain.
-        Guard::MatchesPattern { .. } => None,
+        Guard::MatchesPattern {
+            path: value_path,
+            pattern,
+            templated: false,
+        } => Some(ConditionalGuard::MatchesPattern {
+            path: path(value_path)?,
+            pattern: pattern.clone(),
+        }),
+        Guard::MatchesPattern { .. } | Guard::RangeKeyPrefix { .. } => None,
         Guard::TypeIs {
             path: value_path,
             schema_type,
@@ -1714,6 +2151,17 @@ fn predicate_is_self_guarding(predicate: &Predicate, source_expr: &str) -> bool 
                 | Guard::With { path }
                 | Guard::Default { path }
         ) if path == source_expr
+    )
+}
+
+fn predicate_is_self_presence(predicate: &Predicate, source_expr: &str) -> bool {
+    matches!(
+        predicate,
+        Predicate::Not(inner)
+            if matches!(
+                inner.as_ref(),
+                Predicate::Guard(Guard::Absent { path }) if path == source_expr
+            )
     )
 }
 

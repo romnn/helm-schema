@@ -63,7 +63,7 @@ use helm_schema_core::{GuardDnf, Predicate};
 
 use super::domain::{
     AbstractFragment, AbstractString, EntryKey, Guarded, Mapping, MappingEntry, PathCondition,
-    Sequence, SiteFacts, StringPart,
+    Sequence, SiteFacts, StringPart, and_conditions,
 };
 
 /// The result of evaluating one template source: the abstract rendered
@@ -275,6 +275,48 @@ pub(super) struct Contributions {
     /// whose indent is shallower than `N`, floating up past deeper open
     /// containers exactly like the attribution index's open-slot query.
     pub(super) floating: Vec<FloatingOutput>,
+    pub(super) loop_control: LoopControl,
+}
+
+#[derive(Default)]
+pub(super) struct LoopControl {
+    pub(super) breaks: Vec<PathCondition>,
+    pub(super) continues: Vec<PathCondition>,
+}
+
+impl LoopControl {
+    pub(super) fn exit_condition(&self) -> PathCondition {
+        any_conditions(self.breaks.iter().chain(&self.continues).cloned().collect())
+    }
+
+    pub(super) fn break_condition(&self) -> PathCondition {
+        any_conditions(self.breaks.clone())
+    }
+
+    fn guard_all(&mut self, condition: &PathCondition) {
+        for exit in self.breaks.iter_mut().chain(&mut self.continues) {
+            *exit = and_conditions(condition.clone(), exit.clone());
+        }
+    }
+
+    fn extend(&mut self, other: Self) {
+        self.breaks.extend(other.breaks);
+        self.continues.extend(other.continues);
+    }
+}
+
+fn any_conditions(mut conditions: Vec<PathCondition>) -> PathCondition {
+    conditions.retain(|condition| *condition != Predicate::False);
+    if conditions.contains(&Predicate::True) {
+        return Predicate::True;
+    }
+    conditions.sort();
+    conditions.dedup();
+    match conditions.as_slice() {
+        [] => Predicate::False,
+        [condition] => condition.clone(),
+        _ => Predicate::Or(conditions),
+    }
 }
 
 /// One explicitly-indented fragment output looking for its container.
@@ -315,6 +357,7 @@ impl Contributions {
         for floating in &mut self.floating {
             floating.value.guard_all(condition);
         }
+        self.loop_control.guard_all(condition);
     }
 
     pub(super) fn extend(&mut self, other: Self) {
@@ -324,6 +367,11 @@ impl Contributions {
         self.items.extend(other.items);
         self.values.extend(other.values);
         self.floating.extend(other.floating);
+        self.loop_control.extend(other.loop_control);
+    }
+
+    pub(super) fn take_loop_control(&mut self) -> LoopControl {
+        std::mem::take(&mut self.loop_control)
     }
 
     /// Split off the floating output that renders *inside* a container of
@@ -974,9 +1022,7 @@ impl<'a> Interpreter<'a> {
         let helper_condition = if meta.predicates.is_empty() {
             GuardDnf::unconditional()
         } else {
-            GuardDnf::from_contract_predicate_disjunction_preserving_evidence(
-                meta.predicates.iter().map(|branch| branch.iter().cloned()),
-            )
+            GuardDnf::from_disjunction(meta.predicates.iter().map(|branch| branch.iter().cloned()))
         };
         let mut provenance: Vec<ContractProvenance> = self
             .current_site
@@ -1143,7 +1189,14 @@ impl<'a> Interpreter<'a> {
         let nodes = &ordered;
         let mut out = Contributions::default();
         let mut index = 0;
+        let mut remaining = Predicate::True;
         while let Some(view) = nodes.get(index) {
+            if remaining == Predicate::False {
+                break;
+            }
+            let entry_predicates = self.active_predicates.len();
+            self.push_predicate(remaining.clone());
+            let mut next = Contributions::default();
             match view.node {
                 Node::Control(region) => {
                     // Re-adopt siblings that escaped an ill-nested region:
@@ -1192,10 +1245,10 @@ impl<'a> Interpreter<'a> {
                             &mut escaped,
                         );
                     }
-                    out.extend(self.eval_control(region, &adopted, escaped));
+                    next.extend(self.eval_control(region, &adopted, escaped));
                 }
                 Node::Output(action) => {
-                    let consumed = self.eval_output_with_lookahead(action, nodes, index, &mut out);
+                    let consumed = self.eval_output_with_lookahead(action, nodes, index, &mut next);
                     index += consumed;
                 }
                 _ => {
@@ -1215,10 +1268,18 @@ impl<'a> Interpreter<'a> {
                                 .map_or(region_start, |limit| limit.min(region_start)),
                         );
                     }
-                    let contributions = self.eval_node(bounded);
-                    out.extend(contributions);
+                    next.extend(self.eval_node(bounded));
                 }
             }
+            self.active_predicates.truncate(entry_predicates);
+            let exit_condition = next.loop_control.exit_condition();
+            next.guard_all(&remaining);
+            out.extend(next);
+            remaining = match exit_condition {
+                Predicate::False => remaining,
+                Predicate::True => Predicate::False,
+                exit => and_conditions(remaining, exit.negated()),
+            };
             index += 1;
         }
         out
@@ -1458,6 +1519,7 @@ impl<'a> Interpreter<'a> {
                     let marked_at = content_child_mark(&entry.children, entry.indent);
                     value.extend(child.take_floating_below(entry.indent, opened_empty, marked_at));
                     out.floating.append(&mut child.floating);
+                    out.loop_control.extend(child.take_loop_control());
                     value.extend(child.assemble());
                 }
                 out.merge_entry(key, value);
@@ -1480,6 +1542,7 @@ impl<'a> Interpreter<'a> {
                     // query pushes item frames without that allowance).
                     value.extend(child.take_floating_below(item.indent, false, None));
                     out.floating.append(&mut child.floating);
+                    out.loop_control.extend(child.take_loop_control());
                     value.extend(child.assemble());
                 }
                 out.items.push(value);
@@ -1500,6 +1563,12 @@ impl<'a> Interpreter<'a> {
             }
             Node::Opaque(opaque) if opaque.kind == OpaqueKind::Assignment => {
                 self.eval_assignment_span(opaque.span);
+            }
+            Node::Opaque(opaque) if opaque.kind == OpaqueKind::Break => {
+                out.loop_control.breaks.push(Predicate::True);
+            }
+            Node::Opaque(opaque) if opaque.kind == OpaqueKind::Continue => {
+                out.loop_control.continues.push(Predicate::True);
             }
             Node::Control(_) | Node::Output(_) | Node::Comment(_) | Node::Opaque(_) => {}
         }

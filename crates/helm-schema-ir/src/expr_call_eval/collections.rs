@@ -197,6 +197,50 @@ pub(super) fn eval_list(
     EvalResult::with_effects(Some(AbstractValue::List(items)), effects)
 }
 
+pub(super) fn eval_concat(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut items = Vec::new();
+    let mut effects = Effects::default();
+    for arg in args {
+        let result = eval_expr_with_helper_calls(arg, env, resolver);
+        effects.merge(result.effects);
+        match result.value {
+            Some(AbstractValue::List(mut values)) => items.append(&mut values),
+            Some(value) => {
+                if let Some(item) = value.fragment_range_item() {
+                    items.push(item);
+                }
+            }
+            None => {}
+        }
+    }
+    EvalResult::with_effects(Some(AbstractValue::List(items)), effects)
+}
+
+pub(super) fn eval_prepend(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut list = eval_expr_with_helper_calls(&args[0], env, resolver);
+    let item = eval_expr_with_helper_calls(&args[1], env, resolver);
+    list.effects.merge(item.effects);
+    let mut items = item.value.into_iter().collect::<Vec<_>>();
+    match list.value {
+        Some(AbstractValue::List(mut values)) => items.append(&mut values),
+        Some(value) => {
+            if let Some(item) = value.fragment_range_item() {
+                items.push(item);
+            }
+        }
+        None => {}
+    }
+    EvalResult::with_effects(Some(AbstractValue::List(items)), list.effects)
+}
+
 pub(super) fn eval_first(
     args: &[TemplateExpr],
     env: &EvalEnv,
@@ -260,6 +304,19 @@ pub(super) fn eval_split_list(
         _ => return eval_all_args(args, env, resolver),
     };
     let mut result = eval_expr_with_helper_calls(&args[1], env, resolver);
+    let source_paths = result
+        .value
+        .as_ref()
+        .map(AbstractValue::paths)
+        .unwrap_or_default();
+    let total_text_preimage = source_paths.iter().all(|path| {
+        result.effects.shape_erased_paths.contains(path)
+            || result
+                .effects
+                .local_output_meta
+                .get(path)
+                .is_some_and(|meta| meta.shape_erased || meta.derived_text)
+    });
     // The subject must be a Go string at runtime whatever the split
     // produces: the literal-split fast path below is value refinement on
     // top of that contract, not a replacement for it.
@@ -267,14 +324,78 @@ pub(super) fn eval_split_list(
     let value = result.value.clone();
     record_range_key_string_consumer_effects(&value, &mut result.effects);
     let Some(strings) = result.value.as_ref().map(AbstractValue::strings) else {
-        return EvalResult::with_effects(None, result.effects);
+        let value = (!source_paths.is_empty()).then_some(AbstractValue::SplitList {
+            source_paths,
+            separator: separator.clone(),
+            total_text_preimage,
+        });
+        return EvalResult::with_effects(value, result.effects);
     };
     if strings.is_empty() {
-        return EvalResult::with_effects(None, result.effects);
+        let value = (!source_paths.is_empty()).then_some(AbstractValue::SplitList {
+            source_paths,
+            separator: separator.clone(),
+            total_text_preimage,
+        });
+        return EvalResult::with_effects(value, result.effects);
     }
 
     let split_values = split_string_set(separator, strings);
     EvalResult::with_effects(split_values, result.effects)
+}
+
+pub(super) fn eval_regex_split(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let mut subject = eval_expr_with_helper_calls(&args[1], env, resolver);
+    let source_paths = subject
+        .value
+        .as_ref()
+        .map(AbstractValue::paths)
+        .unwrap_or_default();
+    let total_text_preimage = source_paths.iter().all(|path| {
+        subject.effects.shape_erased_paths.contains(path)
+            || subject
+                .effects
+                .local_output_meta
+                .get(path)
+                .is_some_and(|meta| meta.shape_erased || meta.derived_text)
+    });
+    for arg in [&args[0], &args[2]] {
+        subject
+            .effects
+            .merge(eval_expr_with_helper_calls(arg, env, resolver).effects);
+    }
+    record_string_call_consumers("regexSplit", args, env, resolver, &mut subject.effects);
+
+    let separator = match args[0].deparen() {
+        TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value))
+            if is_literal_regex(value) =>
+        {
+            value.clone()
+        }
+        _ => {
+            return EvalResult::with_effects(AbstractValue::widened(source_paths), subject.effects);
+        }
+    };
+    let value = (!source_paths.is_empty()).then_some(AbstractValue::SplitList {
+        source_paths,
+        separator,
+        total_text_preimage,
+    });
+    EvalResult::with_effects(value, subject.effects)
+}
+
+fn is_literal_regex(pattern: &str) -> bool {
+    !pattern.is_empty()
+        && !pattern.chars().any(|character| {
+            matches!(
+                character,
+                '\\' | '.' | '^' | '$' | '|' | '?' | '*' | '+' | '(' | ')' | '[' | ']' | '{' | '}'
+            )
+        })
 }
 
 pub(super) fn eval_nonempty_split(
@@ -282,10 +403,15 @@ pub(super) fn eval_nonempty_split(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let result = eval_all_args(args, env, resolver);
-    let mut effects = result.effects;
+    let separator = eval_expr_with_helper_calls(&args[0], env, resolver);
+    let mut subject = eval_expr_with_helper_calls(&args[1], env, resolver);
+    subject.effects.merge(separator.effects);
+    let mut effects = subject.effects;
     record_string_call_consumers("split", args, env, resolver, &mut effects);
-    EvalResult::with_effects(nonempty_split_map(result.value.as_ref()), effects)
+    let separator = value_strings(&separator.value);
+    let value = single_string(separator)
+        .and_then(|separator| nonempty_split_map(subject.value.as_ref(), &separator));
+    EvalResult::with_effects(value, effects)
 }
 
 pub(super) fn eval_nonempty_split_pipeline(
@@ -302,7 +428,13 @@ pub(super) fn eval_nonempty_split_pipeline(
         env,
         resolver,
     );
-    let value = nonempty_split_map(current.value.as_ref());
+    let separator = args
+        .first()
+        .map(|arg| eval_expr_with_helper_calls(arg, env, resolver))
+        .and_then(|result| single_string(value_strings(&result.value)));
+    let value = separator
+        .as_deref()
+        .and_then(|separator| nonempty_split_map(current.value.as_ref(), separator));
     let mut effects = current.effects;
     merge_arg_effects(args, env, resolver, &mut effects);
     record_string_consumer_effects(&string_paths, &mut effects);
@@ -310,13 +442,42 @@ pub(super) fn eval_nonempty_split_pipeline(
     EvalResult::with_effects(value, effects)
 }
 
-pub(super) fn nonempty_split_map(source: Option<&AbstractValue>) -> Option<AbstractValue> {
-    let paths = source.map(AbstractValue::paths).unwrap_or_default();
-    let first = AbstractValue::widened(paths).unwrap_or(AbstractValue::Unknown);
-    Some(AbstractValue::Overlay {
-        entries: BTreeMap::from([("_0".to_string(), first)]),
-        fallback: Box::new(AbstractValue::Unknown),
-    })
+pub(super) fn nonempty_split_map(
+    source: Option<&AbstractValue>,
+    separator: &str,
+) -> Option<AbstractValue> {
+    let strings = source.map(AbstractValue::strings).unwrap_or_default();
+    if strings.is_empty() {
+        return Some(AbstractValue::Overlay {
+            entries: BTreeMap::from([("_0".to_string(), AbstractValue::Unknown)]),
+            fallback: Box::new(AbstractValue::Unknown),
+        });
+    }
+    AbstractValue::choice(
+        strings
+            .into_iter()
+            .map(|value| {
+                AbstractValue::Dict(
+                    value
+                        .split(separator)
+                        .enumerate()
+                        .map(|(index, part)| {
+                            (
+                                format!("_{index}"),
+                                AbstractValue::StringSet(BTreeSet::from([part.to_string()])),
+                            )
+                        })
+                        .collect(),
+                )
+            })
+            .collect(),
+    )
+}
+
+fn single_string(strings: BTreeSet<String>) -> Option<String> {
+    let mut strings = strings.into_iter();
+    let first = strings.next()?;
+    strings.next().is_none().then_some(first)
 }
 
 pub(super) fn is_nonempty_string_literal(expr: &TemplateExpr) -> bool {

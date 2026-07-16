@@ -24,11 +24,17 @@ fn traefik_plugin_validator_holds() -> color_eyre::eyre::Result<()> {
             "plugins without moduleName+version objects fail rendering: {bad}"
         );
     }
+    let complete = plugins(serde_json::json!({
+        "ok": { "moduleName": "github.com/x/y", "version": "v1.0.0" }
+    }));
+    let errors = validator
+        .iter_errors(&complete)
+        .map(|error| format!("{}: {error}", error.instance_path()))
+        .collect::<Vec<_>>();
     assert!(
-        validator.is_valid(&plugins(serde_json::json!({
-            "ok": { "moduleName": "github.com/x/y", "version": "v1.0.0" }
-        }))),
-        "a complete plugin renders"
+        errors.is_empty(),
+        "a complete plugin renders: {errors:#?}; schema={:#?}",
+        schema.pointer("/properties/experimental/properties/plugins")
     );
     assert!(
         validator.is_valid(&plugins(serde_json::json!({}))),

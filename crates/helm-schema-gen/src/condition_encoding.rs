@@ -122,6 +122,22 @@ fn build_single_condition_fragment(
                     .is_some_and(|value| matches_yaml_schema_type(value, schema_type)),
             )
         }
+        ConditionalGuard::MatchesPattern { path, pattern } => {
+            let default_matches = yaml_value_at_path(values_yaml_doc, path)
+                .and_then(YamlValue::as_str)
+                .is_some_and(|value| {
+                    regex::Regex::new(pattern).is_ok_and(|regex| regex.is_match(value))
+                });
+            build_default_aware_leaf_condition_fragment(
+                path,
+                ancestor_segments,
+                SchemaNode::foreign(serde_json::json!({
+                    "pattern": pattern,
+                    "type": "string",
+                })),
+                default_matches,
+            )
+        }
         ConditionalGuard::Not(inner) => Some(SchemaNode::not(build_single_condition_fragment(
             inner,
             ancestor_segments,
@@ -276,6 +292,12 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
                 return Some(false);
             };
             Some(matches_yaml_schema_type(value, schema_type))
+        }
+        ConditionalGuard::MatchesPattern { path, pattern } => {
+            let value = yaml_value_at_path(values_yaml_doc, path)?.as_str()?;
+            regex::Regex::new(pattern)
+                .ok()
+                .map(|regex| regex.is_match(value))
         }
         ConditionalGuard::Not(inner) => {
             evaluate_guard_on_values(inner, values_yaml_doc).map(|v| !v)

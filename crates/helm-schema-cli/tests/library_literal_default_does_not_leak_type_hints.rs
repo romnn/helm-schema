@@ -124,20 +124,12 @@ fn library_literal_default_does_not_leak_type_to_sibling_chart() -> color_eyre::
         .pointer("/properties/app/properties/replicas")
         .expect("/properties/app/properties/replicas present");
 
-    // The app's quoted interpolation accepts any scalar. The unused library's integer default
-    // must not narrow that chart-owned domain.
+    // The app's quoted interpolation accepts every input kind. The unused library's integer
+    // default must not narrow that chart-owned domain.
     sim_assert_eq!(
         have: app_replicas,
-        want: &serde_json::json!({
-            "anyOf": [
-                { "const": null },
-                { "type": "boolean" },
-                { "type": "integer" },
-                { "type": "number" },
-                { "type": "string" },
-            ],
-        }),
-        "app.replicas must retain only its generic quoted-scalar domain; the unused library \
+        want: &serde_json::json!({}),
+        "app.replicas must retain its unconstrained quoted-text domain; the unused library \
          helper must not narrow it with an integer default: {app_replicas}",
     );
 

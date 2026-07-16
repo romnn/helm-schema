@@ -38,6 +38,31 @@
       }
     },
     "schema11": {
+      "not": {
+        "properties": {
+          "customResourceState": {
+            "properties": {
+              "name": {
+                "not": {
+                  "enum": [
+                    ""
+                  ]
+                }
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "customResourceState"
+        ],
+        "type": "object"
+      }
+    },
+    "schema12": {
       "additionalProperties": {},
       "properties": {
         "targetLimit": {
@@ -46,7 +71,7 @@
         }
       }
     },
-    "schema15": {
+    "schema16": {
       "not": {
         "properties": {
           "customResourceState": {
@@ -65,7 +90,7 @@
         "type": "object"
       }
     },
-    "schema16": {
+    "schema18": {
       "properties": {
         "networkPolicy": {
           "properties": {
@@ -150,83 +175,34 @@
       }
     },
     "schema23": {
-      "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
-    },
-    "schema24": {
-      "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
-    },
-    "schema28": {
-      "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
-    },
-    "schema3": {
-      "anyOf": [
-        {
-          "not": {
+      "not": {
+        "properties": {
+          "rbac": {
             "properties": {
-              "kubeRBACProxy": {
-                "properties": {
-                  "enabled": {}
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
+              "useClusterRole": {}
             },
             "required": [
-              "kubeRBACProxy"
+              "useClusterRole"
             ],
             "type": "object"
           }
         },
-        {
-          "properties": {
-            "kubeRBACProxy": {
-              "properties": {
-                "enabled": {
-                  "enum": [
-                    false
-                  ]
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "kubeRBACProxy"
-          ],
-          "type": "object"
-        }
-      ]
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
     },
-    "schema32": {
-      "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted."
+    "schema24": {
+      "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
     },
-    "schema34": {
-      "description": "If false then the user will opt out of automounting API credentials.",
-      "type": "boolean"
+    "schema25": {
+      "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
     },
-    "schema35": {
-      "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted."
+    "schema29": {
+      "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
     },
-    "schema36": {
-      "additionalProperties": {},
-      "properties": {
-        "httpHeaders": {},
-        "scheme": {}
-      },
-      "type": "object"
-    },
-    "schema39": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "schema4": {
+    "schema3": {
       "additionalProperties": {},
       "properties": {
         "httpHeaders": {
@@ -260,7 +236,105 @@
         }
       }
     },
+    "schema31": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema36": {
+      "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted."
+    },
+    "schema38": {
+      "description": "If false then the user will opt out of automounting API credentials.",
+      "type": "boolean"
+    },
+    "schema39": {
+      "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted."
+    },
+    "schema4": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "rbac": {
+                "properties": {
+                  "create": {}
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "rbac": {
+              "properties": {
+                "create": {
+                  "enum": [
+                    true
+                  ]
+                }
+              },
+              "required": [
+                "create"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "rbac"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "schema41": {
+      "additionalProperties": {},
+      "properties": {
+        "httpHeaders": {},
+        "scheme": {}
+      },
+      "type": "object"
+    },
+    "schema44": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema46": {
+      "not": {
+        "properties": {
+          "create": {}
+        },
+        "required": [
+          "create"
+        ],
+        "type": "object"
+      }
+    },
+    "schema47": {
       "additionalProperties": {},
       "properties": {
         "scheme": {
@@ -268,25 +342,7 @@
         }
       }
     },
-    "schema42": {
-      "properties": {
-        "enabled": {}
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "schema43": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema44": {
+    "schema50": {
       "additionalProperties": {
         "type": "string"
       },
@@ -328,15 +384,47 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "affinity": {
-            "$ref": "#/$defs/helm-truthy"
+        "allOf": [
+          {
+            "properties": {
+              "affinity": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "affinity"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "affinity": {}
+                    },
+                    "required": [
+                      "affinity"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "affinity": {
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "affinity"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           }
-        },
-        "required": [
-          "affinity"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -344,13 +432,10 @@
           "affinity": {
             "anyOf": [
               {
-                "type": "null"
-              },
-              {
-                "type": "object"
-              },
-              {
                 "type": "string"
+              },
+              {
+                "type": "null"
               }
             ],
             "description": "Affinity settings for pod assignment\nCan be defined as either a dict or string. String is useful for `tpl` templating.\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/\naffinity: |\npodAntiAffinity:\nrequiredDuringSchedulingIgnoredDuringExecution:\n- labelSelector:\nmatchLabels:\n{{- include \"kube-state-metrics.selectorLabels\" . | indent 10 }}\ntopologyKey: kubernetes.io/hostname"
@@ -366,7 +451,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema16"
                   },
                   {
                     "properties": {
@@ -451,7 +536,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema18"
               }
             ]
           },
@@ -489,7 +574,7 @@
           "annotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema44"
+                "$ref": "#/$defs/schema50"
               },
               {
                 "not": {
@@ -506,42 +591,7 @@
       "if": {
         "allOf": [
           {
-            "anyOf": [
-              {
-                "not": {
-                  "properties": {
-                    "rbac": {
-                      "$ref": "#/$defs/schema43"
-                    }
-                  },
-                  "required": [
-                    "rbac"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {
-                        "enum": [
-                          true
-                        ]
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema4"
           },
           {
             "not": {
@@ -591,7 +641,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema16"
                   },
                   {
                     "properties": {
@@ -751,6 +801,435 @@
                 "description": "Name of the ConfigMap that holds the config. If empty, name will be generated based on the release name."
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "autosharding": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "autosharding"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema16"
+                  },
+                  {
+                    "properties": {
+                      "customResourceState": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "customResourceState"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "customResourceState": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "customResourceState"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema11"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "customResourceState": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "customResourceState"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema11"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "customResourceState": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "customResourceState"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "kubeRBACProxy": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubeRBACProxy"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "kubeconfig": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kubeconfig"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "volumes": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "volumes"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kubeRBACProxy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kubeRBACProxy"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kubeconfig": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kubeconfig"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema18"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema2"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "prometheus": {
+                "properties": {
+                  "monitor": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "monitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "prometheus": {
+                "properties": {
+                  "scrapeconfig": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "scrapeconfig"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema31"
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema23"
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "useClusterRole": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "useClusterRole"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema21"
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         }
       }
@@ -1025,7 +1504,7 @@
             "description": "Liveness probe",
             "properties": {
               "httpGet": {
-                "$ref": "#/$defs/schema4"
+                "$ref": "#/$defs/schema3"
               }
             }
           }
@@ -1062,7 +1541,7 @@
             "description": "Liveness probe",
             "properties": {
               "httpGet": {
-                "$ref": "#/$defs/schema41"
+                "$ref": "#/$defs/schema47"
               }
             }
           }
@@ -1113,6 +1592,376 @@
             "allOf": [
               {
                 "properties": {
+                  "autosharding": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autosharding"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema31"
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema16"
+                  },
+                  {
+                    "properties": {
+                      "customResourceState": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "customResourceState"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "customResourceState": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "customResourceState"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kubeRBACProxy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kubeRBACProxy"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kubeconfig": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kubeconfig"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema18"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema2"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "prometheus": {
+                "properties": {
+                  "monitor": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "monitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "prometheus": {
+                "properties": {
+                  "scrapeconfig": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "scrapeconfig"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema21"
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Override the deployment namespace"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema31"
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema23"
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "useClusterRole": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "useClusterRole"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "description": "Override the deployment namespace",
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
                   "networkPolicy": {
                     "properties": {
                       "cilium": {
@@ -1177,12 +2026,31 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema18"
               }
             ]
           },
           {
             "allOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "cilium": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "cilium"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
               {
                 "properties": {
                   "networkPolicy": {
@@ -1203,7 +2071,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema18"
               }
             ]
           }
@@ -1229,22 +2097,43 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "networkPolicy": {
-          "additionalProperties": {},
-          "description": "Configure network policy for kube-state-metrics",
-          "properties": {
-            "flavor": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "networkPolicy.flavor -- Flavor of the network policy to use.\nCan be:\n* kubernetes for networking.k8s.io/v1/NetworkPolicy\n* cilium     for cilium.io/v2/CiliumNetworkPolicy"
+      "if": {
+        "properties": {
+          "networkPolicy": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "networkPolicy"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "networkPolicy": {
+            "additionalProperties": {},
+            "description": "Configure network policy for kube-state-metrics",
+            "properties": {
+              "flavor": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "networkPolicy.flavor -- Flavor of the network policy to use.\nCan be:\n* kubernetes for networking.k8s.io/v1/NetworkPolicy\n* cilium     for cilium.io/v2/CiliumNetworkPolicy"
+              }
             }
           }
         }
@@ -1321,12 +2210,31 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema18"
               }
             ]
           },
           {
             "allOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "cilium": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "cilium"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
               {
                 "properties": {
                   "networkPolicy": {
@@ -1347,7 +2255,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema18"
               }
             ]
           }
@@ -2242,21 +3150,51 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "rbac": {
-          "additionalProperties": {},
-          "properties": {
-            "useClusterRole": {
-              "anyOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "null"
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/schema4"
+          },
+          {
+            "not": {
+              "properties": {
+                "rbac": {
+                  "properties": {
+                    "useExistingRole": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "useExistingRole"
+                  ],
+                  "type": "object"
                 }
+              },
+              "required": [
+                "rbac"
               ],
-              "description": "If set to false - Run without Cluteradmin privs needed - ONLY works if namespace is also set (if useExistingRole is set this name is used as ClusterRole or Role to bind to)"
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "rbac": {
+            "additionalProperties": {},
+            "properties": {
+              "useClusterRole": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "If set to false - Run without Cluteradmin privs needed - ONLY works if namespace is also set (if useExistingRole is set this name is used as ClusterRole or Role to bind to)"
+              }
             }
           }
         }
@@ -2298,7 +3236,7 @@
             "description": "Readiness probe",
             "properties": {
               "httpGet": {
-                "$ref": "#/$defs/schema4"
+                "$ref": "#/$defs/schema3"
               }
             }
           }
@@ -2335,7 +3273,7 @@
             "description": "Readiness probe",
             "properties": {
               "httpGet": {
-                "$ref": "#/$defs/schema41"
+                "$ref": "#/$defs/schema47"
               }
             }
           }
@@ -2358,7 +3296,13 @@
             "not": {
               "properties": {
                 "securityContext": {
-                  "$ref": "#/$defs/schema42"
+                  "properties": {
+                    "enabled": {}
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
                 }
               },
               "required": [
@@ -2406,55 +3350,359 @@
     },
     {
       "if": {
-        "not": {
-          "properties": {
-            "kubeRBACProxy": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "autosharding": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autosharding"
+                ],
+                "type": "object"
               },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema31"
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
           },
-          "required": [
-            "kubeRBACProxy"
-          ],
-          "type": "object"
-        }
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema16"
+                  },
+                  {
+                    "properties": {
+                      "customResourceState": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "customResourceState"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "customResourceState": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "customResourceState"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kubeRBACProxy": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kubeRBACProxy"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "kubeconfig": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kubeconfig"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema18"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "networkPolicy": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "networkPolicy"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema2"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "prometheus": {
+                "properties": {
+                  "monitor": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "monitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "prometheus": {
+                "properties": {
+                  "scrapeconfig": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "scrapeconfig"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "prometheus"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema31"
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema23"
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "useClusterRole": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "useClusterRole"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema21"
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "selfMonitor": {
-            "additionalProperties": {},
-            "description": "Enable self metrics configuration for service and Service Monitor\nDefault values for telemetry configuration can be overridden\nIf you set telemetryNodePort, you must also set service.type to NodePort",
-            "properties": {
-              "telemetryHost": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+          "selectorOverride": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema50"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
               }
-            }
+            ],
+            "description": "Override selector labels"
           }
         }
       }
@@ -2545,78 +3793,30 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema18"
               }
             ]
           },
           {
-            "allOf": [
-              {
-                "properties": {
-                  "networkPolicy": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "networkPolicy"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "selfMonitor": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "selfMonitor"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema2"
-              },
-              {
-                "not": {
+            "not": {
+              "properties": {
+                "kubeRBACProxy": {
                   "properties": {
-                    "networkPolicy": {
-                      "properties": {
-                        "ingress": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "ingress"
-                      ],
-                      "type": "object"
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
                     }
                   },
                   "required": [
-                    "networkPolicy"
+                    "enabled"
                   ],
                   "type": "object"
                 }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema3"
+              },
+              "required": [
+                "kubeRBACProxy"
+              ],
+              "type": "object"
+            }
           }
         ]
       },
@@ -2636,60 +3836,6 @@
                   },
                   {
                     "type": "integer"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "not": {
-          "properties": {
-            "autosharding": {
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "autosharding"
-          ],
-          "type": "object"
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "properties": {
-              "clusterIP": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
                   }
                 ]
               }
@@ -2769,7 +3915,48 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema3"
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "kubeRBACProxy": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "kubeRBACProxy"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "kubeRBACProxy": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          false
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "kubeRBACProxy"
+                ],
+                "type": "object"
+              }
+            ]
           }
         ]
       },
@@ -2874,7 +4061,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema18"
               }
             ]
           }
@@ -3020,6 +4207,140 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "autosharding": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autosharding"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema31"
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema31"
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema23"
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "useClusterRole": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "useClusterRole"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "serviceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -3077,7 +4398,7 @@
             "description": "Startup probe can optionally be enabled.",
             "properties": {
               "httpGet": {
-                "$ref": "#/$defs/schema4"
+                "$ref": "#/$defs/schema3"
               }
             }
           }
@@ -3137,7 +4458,7 @@
             "description": "Startup probe can optionally be enabled.",
             "properties": {
               "httpGet": {
-                "$ref": "#/$defs/schema41"
+                "$ref": "#/$defs/schema47"
               }
             }
           }
@@ -3467,10 +4788,12 @@
     "annotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema39"
+          "additionalProperties": {},
+          "properties": {},
+          "type": "object"
         },
         {
-          "$ref": "#/$defs/schema44"
+          "$ref": "#/$defs/schema50"
         },
         {
           "not": {
@@ -3491,7 +4814,7 @@
       "type": "object"
     },
     "automountServiceAccountToken": {
-      "$ref": "#/$defs/schema34"
+      "$ref": "#/$defs/schema38"
     },
     "autosharding": {
       "additionalProperties": {},
@@ -3571,43 +4894,6 @@
     },
     "customResourceState": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "key": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "ConfigMap key that holds the config."
-              }
-            }
-          }
-        }
-      ],
       "description": "Enabling support for customResourceState, will create a configMap including your config that will be read from kube-state-metrics",
       "properties": {
         "config": {
@@ -3861,23 +5147,7 @@
         "containerSecurityContext": {
           "description": "Specify security settings for a Container\nAllows overrides and additional options compared to (Pod) securityContext\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
         },
-        "enabled": {
-          "anyOf": [
-            {
-              "enum": [
-                false
-              ]
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
+        "enabled": {},
         "extraArgs": {
           "description": "List of additional cli arguments to configure kube-rbac-prxy\nfor example: --tls-cipher-suites, --log-file, etc.\nall the possible args can be found here: https://github.com/brancz/kube-rbac-proxy#usage"
         },
@@ -3897,13 +5167,7 @@
           "type": "object"
         },
         "port": {
-          "description": "Configure specific upstream port for kube-state-metrics container",
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "description": "Configure specific upstream port for kube-state-metrics container"
         },
         "proxyEndpointsPort": {
           "description": "Configure specific proxy endpoints port\nThis port is for healthz on readinessProbe kube-rbac-proxy-http container"
@@ -3919,35 +5183,6 @@
     },
     "kubeconfig": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "secret": {
-                "description": "base64 encoded kube-config file",
-                "type": [
-                  "boolean",
-                  "integer",
-                  "number",
-                  "string"
-                ]
-              }
-            }
-          }
-        }
-      ],
       "description": "Enabling kubeconfig will pass the --kubeconfig argument to the container",
       "properties": {
         "enabled": {
@@ -3971,10 +5206,10 @@
     "labels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema39"
+          "$ref": "#/$defs/schema44"
         },
         {
-          "$ref": "#/$defs/schema44"
+          "$ref": "#/$defs/schema50"
         },
         {
           "not": {
@@ -4017,7 +5252,7 @@
           "type": "integer"
         },
         "httpGet": {
-          "$ref": "#/$defs/schema36"
+          "$ref": "#/$defs/schema41"
         },
         "initialDelaySeconds": {
           "type": "integer"
@@ -4048,21 +5283,8 @@
     },
     "nameOverride": {},
     "namespaceOverride": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
-      "description": "Override the deployment namespace"
+      "description": "Override the deployment namespace",
+      "type": "string"
     },
     "namespaces": {
       "description": "Comma-separated list(string) or yaml list of namespaces to be enabled for collecting resources. By default all namespaces are collected."
@@ -4127,10 +5349,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema39"
+          "$ref": "#/$defs/schema44"
         },
         {
-          "$ref": "#/$defs/schema44"
+          "$ref": "#/$defs/schema50"
         },
         {
           "not": {
@@ -4146,10 +5368,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema39"
+          "$ref": "#/$defs/schema44"
         },
         {
-          "$ref": "#/$defs/schema44"
+          "$ref": "#/$defs/schema50"
         },
         {
           "not": {
@@ -4766,7 +5988,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "$ref": "#/$defs/schema11"
+                    "$ref": "#/$defs/schema12"
                   }
                 }
               ]
@@ -4989,7 +6211,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema47"
                   }
                 }
               ],
@@ -5077,7 +6299,7 @@
                     "type": "object"
                   },
                   "then": {
-                    "$ref": "#/$defs/schema11"
+                    "$ref": "#/$defs/schema12"
                   }
                 }
               ],
@@ -5139,13 +6361,13 @@
             "interval": {},
             "jobLabel": {},
             "labelLimit": {
-              "$ref": "#/$defs/schema28"
+              "$ref": "#/$defs/schema29"
             },
             "labelNameLengthLimit": {
-              "$ref": "#/$defs/schema24"
+              "$ref": "#/$defs/schema25"
             },
             "labelValueLengthLimit": {
-              "$ref": "#/$defs/schema23"
+              "$ref": "#/$defs/schema24"
             },
             "metricRelabelings": {},
             "metrics": {
@@ -5184,14 +6406,14 @@
             "proxyUrl": {},
             "relabelings": {},
             "sampleLimit": {
-              "$ref": "#/$defs/schema32"
+              "$ref": "#/$defs/schema36"
             },
             "scheme": {},
             "scrapeTimeout": {},
             "selectorOverride": {},
             "targetLabels": {},
             "targetLimit": {
-              "$ref": "#/$defs/schema35"
+              "$ref": "#/$defs/schema39"
             },
             "tlsConfig": {}
           },
@@ -5224,19 +6446,19 @@
             },
             "jobName": {},
             "labelLimit": {
-              "$ref": "#/$defs/schema28"
+              "$ref": "#/$defs/schema29"
             },
             "labelNameLengthLimit": {
-              "$ref": "#/$defs/schema24"
+              "$ref": "#/$defs/schema25"
             },
             "labelValueLengthLimit": {
-              "$ref": "#/$defs/schema23"
+              "$ref": "#/$defs/schema24"
             },
             "metricRelabelings": {},
             "proxyUrl": {},
             "relabelings": {},
             "sampleLimit": {
-              "$ref": "#/$defs/schema32"
+              "$ref": "#/$defs/schema36"
             },
             "scheme": {},
             "scrapeInterval": {},
@@ -5245,7 +6467,7 @@
               "description": "StaticConfigLabels defines the labels to be used in the Prometheus static configuration for scraping."
             },
             "targetLimit": {
-              "$ref": "#/$defs/schema35"
+              "$ref": "#/$defs/schema39"
             },
             "tlsConfig": {}
           },
@@ -5255,25 +6477,6 @@
       "type": "object"
     },
     "prometheusScrape": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Default values for kube-state-metrics."
     },
     "rbac": {
@@ -5357,7 +6560,7 @@
           "type": "integer"
         },
         "httpGet": {
-          "$ref": "#/$defs/schema36"
+          "$ref": "#/$defs/schema41"
         },
         "initialDelaySeconds": {
           "type": "integer"
@@ -5422,10 +6625,12 @@
     "selectorOverride": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema39"
+          "additionalProperties": {},
+          "properties": {},
+          "type": "object"
         },
         {
-          "$ref": "#/$defs/schema44"
+          "$ref": "#/$defs/schema50"
         },
         {
           "not": {
@@ -5593,10 +6798,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema39"
+              "$ref": "#/$defs/schema44"
             },
             {
-              "$ref": "#/$defs/schema44"
+              "$ref": "#/$defs/schema50"
             },
             {
               "not": {
@@ -5626,27 +6831,7 @@
           },
           "type": "object"
         },
-        "loadBalancerIP": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "loadBalancerIP": {},
         "loadBalancerSourceRanges": {
           "anyOf": [
             {
@@ -5678,9 +6863,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "$ref": "#/$defs/schema43"
-                }
+                "$ref": "#/$defs/schema46"
               },
               {
                 "properties": {
@@ -5701,7 +6884,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema44"
+                    "$ref": "#/$defs/schema50"
                   },
                   {
                     "not": {
@@ -5718,9 +6901,7 @@
           "if": {
             "anyOf": [
               {
-                "not": {
-                  "$ref": "#/$defs/schema43"
-                }
+                "$ref": "#/$defs/schema46"
               },
               {
                 "properties": {
@@ -5739,7 +6920,45 @@
             "additionalProperties": {},
             "properties": {
               "automountServiceAccountToken": {
-                "$ref": "#/$defs/schema34"
+                "$ref": "#/$defs/schema38"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema46"
+              },
+              {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
               }
             }
           }

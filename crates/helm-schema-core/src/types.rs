@@ -26,6 +26,8 @@ pub struct ResourceRef {
     pub api_version: String,
     pub kind: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub kind_candidates: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub api_version_candidates: Vec<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub api_version_branches: Vec<HelperBranch>,
@@ -39,6 +41,7 @@ impl ResourceRef {
         Self {
             api_version,
             kind,
+            kind_candidates: Vec::new(),
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
         }

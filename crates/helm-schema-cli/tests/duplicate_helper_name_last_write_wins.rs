@@ -148,16 +148,8 @@ fn duplicate_helper_name_losing_body_does_not_contaminate_type_hints()
 
     sim_assert_eq!(
         have: replicas,
-        want: &serde_json::json!({
-            "anyOf": [
-                { "const": null },
-                { "type": "boolean" },
-                { "type": "integer" },
-                { "type": "number" },
-                { "type": "string" },
-            ],
-        }),
-        "root.replicas must retain only the generic quoted-scalar domain; \
+        want: &serde_json::json!({}),
+        "root.replicas must retain its unconstrained quoted-text domain; \
          the losing define must not narrow it with its integer default: {replicas}",
     );
 

@@ -73,7 +73,72 @@
         }
       }
     },
-    "schema11": {
+    "schema10": {
+      "not": {
+        "properties": {
+          "provider": {
+            "properties": {
+              "webhook": {
+                "properties": {
+                  "image": {}
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "type": "object"
+      }
+    },
+    "schema16": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "enum": [
+                "webhook"
+              ]
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "name": {
+                  "enum": [
+                    "webhook"
+                  ]
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            },
+            {
+              "not": {
+                "type": "string"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "schema18": {
       "additionalProperties": {},
       "properties": {
         "preferredDuringSchedulingIgnoredDuringExecution": {
@@ -94,28 +159,7 @@
         }
       }
     },
-    "schema12": {
-      "additionalProperties": {},
-      "properties": {
-        "requiredDuringSchedulingIgnoredDuringExecution": {
-          "anyOf": [
-            {
-              "type": "array"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
-    "schema13": {
+    "schema19": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -134,28 +178,77 @@
         "type": "object"
       }
     },
-    "schema15": {
-      "properties": {
-        "provider": {
-          "properties": {
-            "name": {
-              "enum": [
-                "webhook"
-              ]
+    "schema2": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "properties": {
+                "provider": {
+                  "enum": [
+                    "webhook"
+                  ]
+                }
+              },
+              "required": [
+                "provider"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "provider": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "provider"
+              ],
+              "type": "object"
             }
-          },
-          "required": [
-            "name"
-          ],
-          "type": "object"
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "provider": {
+                  "properties": {
+                    "name": {
+                      "enum": [
+                        "webhook"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "provider"
+              ],
+              "type": "object"
+            },
+            {
+              "not": {
+                "properties": {
+                  "provider": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "provider"
+                ],
+                "type": "object"
+              }
+            }
+          ]
         }
-      },
-      "required": [
-        "provider"
-      ],
-      "type": "object"
+      ]
     },
-    "schema18": {
+    "schema24": {
       "not": {
         "properties": {
           "provider": {
@@ -174,7 +267,7 @@
         "type": "object"
       }
     },
-    "schema20": {
+    "schema26": {
       "not": {
         "properties": {
           "rbac": {
@@ -193,7 +286,7 @@
         "type": "object"
       }
     },
-    "schema21": {
+    "schema27": {
       "properties": {
         "webhook": {
           "properties": {
@@ -210,7 +303,7 @@
       ],
       "type": "object"
     },
-    "schema24": {
+    "schema31": {
       "additionalProperties": {},
       "properties": {
         "path": {
@@ -222,7 +315,7 @@
       },
       "type": "object"
     },
-    "schema26": {
+    "schema34": {
       "not": {
         "properties": {
           "provider": {
@@ -235,117 +328,51 @@
         "type": "object"
       }
     },
-    "schema27": {
-      "additionalProperties": {
-        "type": [
-          "boolean",
-          "integer",
-          "number",
-          "string"
-        ]
-      },
-      "type": "object"
-    },
-    "schema28": {
-      "properties": {
-        "provider": {
-          "enum": [
-            "webhook"
-          ]
-        }
-      },
-      "required": [
-        "provider"
-      ],
-      "type": "object"
-    },
-    "schema29": {
+    "schema4": {
       "anyOf": [
         {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "preferredDuringSchedulingIgnoredDuringExecution": {}
+          }
         },
         {
-          "type": "string"
-        }
-      ]
-    },
-    "schema3": {
-      "allOf": [
-        {
+          "additionalProperties": {},
           "properties": {
-            "provider": {
-              "enum": [
-                "webhook"
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "labelSelector": {}
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "items": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "labelSelector": {}
+                    }
+                  },
+                  "type": "array"
+                }
               ]
             }
           },
-          "required": [
-            "provider"
-          ],
-          "type": "object"
-        },
-        {
-          "properties": {
-            "provider": {
-              "properties": {
-                "name": {
-                  "enum": [
-                    "webhook"
-                  ]
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "provider"
-          ],
           "type": "object"
         }
       ]
     },
-    "schema30": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "schema34": {
-      "properties": {
-        "name": {
-          "enum": [
-            "webhook"
-          ]
-        }
-      },
-      "required": [
-        "name"
-      ],
-      "type": "object"
-    },
-    "schema35": {
+    "schema40": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema36": {
+    "schema41": {
       "not": {
         "properties": {
           "create": {}
@@ -356,18 +383,7 @@
         "type": "object"
       }
     },
-    "schema37": {
-      "items": {
-        "type": [
-          "boolean",
-          "integer",
-          "number",
-          "string"
-        ]
-      },
-      "type": "array"
-    },
-    "schema38": {
+    "schema42": {
       "properties": {
         "webhook": {}
       },
@@ -376,7 +392,26 @@
       ],
       "type": "object"
     },
-    "schema4": {
+    "schema46": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema48": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema7": {
       "not": {
         "properties": {
           "provider": {
@@ -403,43 +438,7 @@
         "type": "object"
       }
     },
-    "schema41": {
-      "anyOf": [
-        {
-          "type": "array"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "schema43": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "schema5": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "preferredDuringSchedulingIgnoredDuringExecution": {}
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "requiredDuringSchedulingIgnoredDuringExecution": {}
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "schema7": {
+    "schema9": {
       "not": {
         "properties": {
           "provider": {
@@ -583,50 +582,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAffinity": {
-                "$ref": "#/$defs/schema11"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "affinity": {
-            "properties": {
-              "podAffinity": {
-                "properties": {
-                  "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "requiredDuringSchedulingIgnoredDuringExecution"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podAffinity"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "affinity"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
-            "additionalProperties": {},
-            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-            "properties": {
-              "podAffinity": {
-                "$ref": "#/$defs/schema12"
+                "$ref": "#/$defs/schema18"
               }
             }
           }
@@ -800,50 +756,7 @@
             "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
             "properties": {
               "podAntiAffinity": {
-                "$ref": "#/$defs/schema11"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "affinity": {
-            "properties": {
-              "podAntiAffinity": {
-                "properties": {
-                  "requiredDuringSchedulingIgnoredDuringExecution": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "requiredDuringSchedulingIgnoredDuringExecution"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podAntiAffinity"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "affinity"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "affinity": {
-            "additionalProperties": {},
-            "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels.",
-            "properties": {
-              "podAntiAffinity": {
-                "$ref": "#/$defs/schema12"
+                "$ref": "#/$defs/schema18"
               }
             }
           }
@@ -1032,7 +945,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema20"
+                "$ref": "#/$defs/schema26"
               },
               {
                 "properties": {
@@ -1077,7 +990,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema13"
+                "$ref": "#/$defs/schema19"
               },
               {
                 "properties": {
@@ -1127,7 +1040,7 @@
           "commonLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema48"
               },
               {
                 "not": {
@@ -1164,7 +1077,7 @@
                 "type": "array"
               },
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema48"
               },
               {
                 "type": "null"
@@ -1228,7 +1141,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema20"
+                "$ref": "#/$defs/schema26"
               },
               {
                 "properties": {
@@ -1273,7 +1186,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema13"
+                "$ref": "#/$defs/schema19"
               },
               {
                 "properties": {
@@ -1396,46 +1309,6 @@
     },
     {
       "if": {
-        "properties": {
-          "namespaced": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "namespaced"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "(string) Override the namespace that chart resources are rendered into.\nDefaults to the release namespace. Useful when installing the chart as a\nsubchart that should live in its own namespace, separate from the umbrella\nrelease namespace."
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -1459,7 +1332,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema13"
+                "$ref": "#/$defs/schema19"
               },
               {
                 "properties": {
@@ -1526,7 +1399,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema20"
+            "$ref": "#/$defs/schema26"
           },
           {
             "properties": {
@@ -1570,7 +1443,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema20"
+            "$ref": "#/$defs/schema26"
           },
           {
             "properties": {
@@ -1644,7 +1517,7 @@
           "podAnnotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema43"
+                "$ref": "#/$defs/schema48"
               },
               {
                 "not": {
@@ -1659,45 +1532,127 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
+            "allOf": [
               {
-                "$ref": "#/$defs/schema18"
-              },
-              {
-                "properties": {
-                  "provider": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema24"
+                  },
+                  {
                     "properties": {
-                      "webhook": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
+                      "provider": {
+                        "properties": {
+                          "webhook": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
                           }
-                        ]
+                        },
+                        "required": [
+                          "webhook"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "webhook"
+                      "provider"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "provider"
-                ],
-                "type": "object"
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema10"
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "properties": {
+                          "webhook": {
+                            "properties": {
+                              "image": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "image"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "webhook"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/schema2"
               }
             ]
           },
           {
-            "$ref": "#/$defs/schema28"
-          },
-          {
-            "$ref": "#/$defs/schema15"
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema24"
+                  },
+                  {
+                    "properties": {
+                      "provider": {
+                        "properties": {
+                          "webhook": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "webhook"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "provider"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/schema2"
+              }
+            ]
           }
         ]
       },
@@ -1730,7 +1685,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema7"
+                "$ref": "#/$defs/schema9"
               },
               {
                 "properties": {
@@ -1769,10 +1724,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema28"
-          },
-          {
-            "$ref": "#/$defs/schema15"
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -1824,7 +1776,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema4"
+                "$ref": "#/$defs/schema7"
               },
               {
                 "properties": {
@@ -1863,10 +1815,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema28"
-          },
-          {
-            "$ref": "#/$defs/schema15"
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -1963,7 +1912,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema4"
+                "$ref": "#/$defs/schema7"
               },
               {
                 "properties": {
@@ -2037,10 +1986,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema28"
-          },
-          {
-            "$ref": "#/$defs/schema15"
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -2081,7 +2027,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema4"
+                "$ref": "#/$defs/schema7"
               },
               {
                 "properties": {
@@ -2139,10 +2085,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema28"
-          },
-          {
-            "$ref": "#/$defs/schema15"
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -2177,7 +2120,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema18"
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "properties": {
@@ -2235,10 +2178,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema28"
-              },
-              {
-                "$ref": "#/$defs/schema15"
+                "$ref": "#/$defs/schema2"
               }
             ]
           },
@@ -2247,7 +2187,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema18"
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "properties": {
@@ -2278,10 +2218,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema28"
-              },
-              {
-                "$ref": "#/$defs/schema15"
+                "$ref": "#/$defs/schema2"
               }
             ]
           },
@@ -2307,15 +2244,12 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema28"
-              },
-              {
-                "$ref": "#/$defs/schema15"
+                "$ref": "#/$defs/schema2"
               }
             ]
           },
           {
-            "$ref": "#/$defs/schema3"
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -2345,50 +2279,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema18"
-                  },
-                  {
-                    "properties": {
-                      "provider": {
-                        "properties": {
-                          "webhook": {
-                            "anyOf": [
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            ]
-                          }
-                        },
-                        "required": [
-                          "webhook"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "provider"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema28"
-              },
-              {
-                "$ref": "#/$defs/schema15"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema7"
+                    "$ref": "#/$defs/schema9"
                   },
                   {
                     "properties": {
@@ -2427,10 +2318,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema28"
-              },
-              {
-                "$ref": "#/$defs/schema15"
+                "$ref": "#/$defs/schema2"
               }
             ]
           },
@@ -2439,7 +2327,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema4"
+                    "$ref": "#/$defs/schema7"
                   },
                   {
                     "properties": {
@@ -2497,10 +2385,132 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema28"
+                "$ref": "#/$defs/schema2"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema24"
+                      },
+                      {
+                        "properties": {
+                          "provider": {
+                            "properties": {
+                              "webhook": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "webhook"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "provider"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema10"
+                      },
+                      {
+                        "properties": {
+                          "provider": {
+                            "properties": {
+                              "webhook": {
+                                "properties": {
+                                  "image": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object"
+                                      },
+                                      {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "image"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "webhook"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "provider"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/schema2"
+                  }
+                ]
               },
               {
-                "$ref": "#/$defs/schema15"
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema24"
+                      },
+                      {
+                        "properties": {
+                          "provider": {
+                            "properties": {
+                              "webhook": {
+                                "anyOf": [
+                                  {
+                                    "type": "object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "webhook"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "provider"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/schema2"
+                  }
+                ]
               }
             ]
           }
@@ -2545,10 +2555,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema28"
-              },
-              {
-                "$ref": "#/$defs/schema15"
+                "$ref": "#/$defs/schema34"
               }
             ]
           },
@@ -2574,15 +2581,15 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema26"
+                "$ref": "#/$defs/schema2"
               }
             ]
           },
           {
-            "$ref": "#/$defs/schema3"
+            "$ref": "#/$defs/schema34"
           },
           {
-            "$ref": "#/$defs/schema26"
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -2607,7 +2614,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema18"
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "properties": {
@@ -2665,10 +2672,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema28"
-              },
-              {
-                "$ref": "#/$defs/schema15"
+                "$ref": "#/$defs/schema2"
               }
             ]
           },
@@ -2677,7 +2681,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema18"
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "properties": {
@@ -2708,10 +2712,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema28"
-              },
-              {
-                "$ref": "#/$defs/schema15"
+                "$ref": "#/$defs/schema2"
               }
             ]
           },
@@ -2737,15 +2738,12 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema28"
-              },
-              {
-                "$ref": "#/$defs/schema15"
+                "$ref": "#/$defs/schema2"
               }
             ]
           },
           {
-            "$ref": "#/$defs/schema3"
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -2861,15 +2859,12 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/schema30"
+                      "type": "string"
                     },
                     "type": "array"
                   },
                   {
-                    "additionalProperties": {
-                      "$ref": "#/$defs/schema30"
-                    },
-                    "type": "object"
+                    "$ref": "#/$defs/schema48"
                   },
                   {
                     "type": "null"
@@ -3260,7 +3255,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema13"
+                "$ref": "#/$defs/schema19"
               },
               {
                 "properties": {
@@ -3319,7 +3314,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/schema43"
+                    "$ref": "#/$defs/schema48"
                   },
                   {
                     "type": "null"
@@ -3338,7 +3333,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema13"
+                "$ref": "#/$defs/schema19"
               },
               {
                 "properties": {
@@ -3412,7 +3407,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema20"
+            "$ref": "#/$defs/schema26"
           },
           {
             "properties": {
@@ -3545,46 +3540,6 @@
     },
     {
       "if": {
-        "properties": {
-          "namespaced": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "namespaced"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "sourceNamespace": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Source namespace to watch for Kubernetes resources other than Gateway API gateways.\nUsed only when `namespaced=true`. Defaults to Release.Namespace"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "properties": {
@@ -3600,7 +3555,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema20"
+                "$ref": "#/$defs/schema26"
               },
               {
                 "properties": {
@@ -3648,7 +3603,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema20"
+            "$ref": "#/$defs/schema26"
           },
           {
             "properties": {
@@ -3707,12 +3662,20 @@
             "anyOf": [
               {
                 "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "labelSelector": {}
+                  },
                   "type": "object"
                 },
                 "type": "array"
               },
               {
                 "additionalProperties": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "labelSelector": {}
+                  },
                   "type": "object"
                 },
                 "type": "object"
@@ -3732,45 +3695,165 @@
     },
     {
       "if": {
-        "not": {
-          "properties": {
-            "txtPrefix": {
-              "$ref": "#/$defs/helm-truthy"
-            }
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema10"
+              },
+              {
+                "properties": {
+                  "provider": {
+                    "properties": {
+                      "webhook": {
+                        "properties": {
+                          "image": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "webhook"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "provider"
+                ],
+                "type": "object"
+              }
+            ]
           },
-          "required": [
-            "txtPrefix"
-          ],
-          "type": "object"
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "txtSuffix": {
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema24"
+              },
+              {
+                "properties": {
+                  "provider": {
+                    "properties": {
+                      "webhook": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "webhook"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "provider"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/helm-truthy"
+                  "properties": {
+                    "provider": {
+                      "properties": {
+                        "webhook": {
+                          "properties": {
+                            "image": {
+                              "properties": {
+                                "repository": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "repository"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webhook"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "provider"
+                  ],
+                  "type": "object"
                 }
               },
               {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "string"
+                "not": {
+                  "properties": {
+                    "provider": {
+                      "properties": {
+                        "webhook": {
+                          "properties": {
+                            "image": {
+                              "properties": {
+                                "tag": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "tag"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "image"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "webhook"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "provider"
+                  ],
+                  "type": "object"
+                }
               }
-            ],
-            "description": "(string) Specify a suffix for the domain names of TXT records created for the `txt` registry.\nMutually exclusive with `txtPrefix`."
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema2"
           }
-        }
-      }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -3818,29 +3901,7 @@
                         "$ref": "#/$defs/helm-truthy"
                       },
                       "then": {
-                        "$ref": "#/$defs/schema41"
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "podAffinity": {
-              "additionalProperties": {},
-              "properties": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "$ref": "#/$defs/helm-truthy"
-                      },
-                      "then": {
-                        "$ref": "#/$defs/schema41"
+                        "$ref": "#/$defs/schema46"
                       }
                     }
                   ]
@@ -3862,29 +3923,7 @@
                         "$ref": "#/$defs/helm-truthy"
                       },
                       "then": {
-                        "$ref": "#/$defs/schema41"
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "podAntiAffinity": {
-              "additionalProperties": {},
-              "properties": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "$ref": "#/$defs/helm-truthy"
-                      },
-                      "then": {
-                        "$ref": "#/$defs/schema41"
+                        "$ref": "#/$defs/schema46"
                       }
                     }
                   ]
@@ -3896,17 +3935,17 @@
       ],
       "anyOf": [
         {
-          "$ref": "#/$defs/schema35"
+          "$ref": "#/$defs/schema40"
         },
         {
           "additionalProperties": {},
           "properties": {
             "nodeAffinity": {},
             "podAffinity": {
-              "$ref": "#/$defs/schema5"
+              "$ref": "#/$defs/schema4"
             },
             "podAntiAffinity": {
-              "$ref": "#/$defs/schema5"
+              "$ref": "#/$defs/schema4"
             }
           },
           "type": "object"
@@ -3920,53 +3959,9 @@
       "description": "Affinity settings for `Pod` [scheduling](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/). If an explicit label selector is not provided for pod affinity or pod anti-affinity one will be created from the pod selector labels."
     },
     "annotationFilter": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Filter resources queried for endpoints by annotation selector."
     },
     "annotationPrefix": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Annotation prefix for external-dns annotations (useful for split horizon DNS with multiple instances)."
     },
     "automountServiceAccountToken": {
@@ -3975,10 +3970,12 @@
     "commonLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema35"
+          "additionalProperties": {},
+          "properties": {},
+          "type": "object"
         },
         {
-          "$ref": "#/$defs/schema43"
+          "$ref": "#/$defs/schema48"
         },
         {
           "not": {
@@ -3991,10 +3988,10 @@
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema35"
+          "$ref": "#/$defs/schema40"
         },
         {
-          "$ref": "#/$defs/schema43"
+          "$ref": "#/$defs/schema48"
         },
         {
           "not": {
@@ -4023,10 +4020,11 @@
     "domainFilters": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema37"
+          "items": {},
+          "type": "array"
         },
         {
-          "$ref": "#/$defs/schema37"
+          "type": "array"
         },
         {
           "type": "integer"
@@ -4035,7 +4033,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema27"
+          "type": "object"
         }
       ],
       "description": "Limit possible target zones by domain suffixes."
@@ -4067,10 +4065,11 @@
     "excludeDomains": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema37"
+          "items": {},
+          "type": "array"
         },
         {
-          "$ref": "#/$defs/schema37"
+          "type": "array"
         },
         {
           "type": "integer"
@@ -4079,7 +4078,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema27"
+          "type": "object"
         }
       ],
       "description": "Intentionally exclude domains from being managed."
@@ -4121,7 +4120,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema41"
+            "$ref": "#/$defs/schema46"
           }
         }
       ],
@@ -4167,28 +4166,6 @@
       "description": "(string) Override the full name of the chart."
     },
     "gatewayNamespace": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "_Gateway API_ gateway namespace to watch.\nWhen `namespaced=true`, setting this value avoids creating any cluster-scoped RBAC\n(no ClusterRole/ClusterRoleBinding) for Gateway sources."
     },
     "global": {
@@ -4232,37 +4209,9 @@
       "description": "[Init containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) to add to the `Pod` definition."
     },
     "interval": {
-      "description": "Interval for DNS updates.",
-      "type": [
-        "boolean",
-        "integer",
-        "number",
-        "string"
-      ]
+      "description": "Interval for DNS updates."
     },
     "labelFilter": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Filter resources queried for endpoints by label selector."
     },
     "livenessProbe": {
@@ -4273,7 +4222,7 @@
           "type": "integer"
         },
         "httpGet": {
-          "$ref": "#/$defs/schema24"
+          "$ref": "#/$defs/schema31"
         },
         "initialDelaySeconds": {
           "type": "integer"
@@ -4291,30 +4240,19 @@
       "type": "object"
     },
     "logFormat": {
-      "description": "Log format.",
-      "type": [
-        "boolean",
-        "integer",
-        "number",
-        "string"
-      ]
+      "description": "Log format."
     },
     "logLevel": {
-      "description": "Log level.",
-      "type": [
-        "boolean",
-        "integer",
-        "number",
-        "string"
-      ]
+      "description": "Log level."
     },
     "managedRecordTypes": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema37"
+          "items": {},
+          "type": "array"
         },
         {
-          "$ref": "#/$defs/schema37"
+          "type": "array"
         },
         {
           "type": "integer"
@@ -4323,25 +4261,12 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema27"
+          "type": "object"
         }
       ],
       "description": "Record types to manage (default: A, AAAA, CNAME)"
     },
     "nameOverride": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "(string) Override the name of the chart."
     },
     "namespaceOverride": {
@@ -4372,10 +4297,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema35"
+          "$ref": "#/$defs/schema40"
         },
         {
-          "$ref": "#/$defs/schema43"
+          "$ref": "#/$defs/schema48"
         },
         {
           "not": {
@@ -4417,18 +4342,13 @@
       "description": "[Pod security context](https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.22/#podsecuritycontext-v1-core), this supports full customisation."
     },
     "policy": {
-      "description": "How DNS records are synchronized between sources and providers; available values are `create-only`, `sync`, & `upsert-only`.",
-      "type": [
-        "boolean",
-        "integer",
-        "number",
-        "string"
-      ]
+      "description": "How DNS records are synchronized between sources and providers; available values are `create-only`, `sync`, & `upsert-only`."
     },
     "priorityClassName": {
       "description": "(string) Priority class name for the `Pod`."
     },
     "provider": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -4437,7 +4357,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/schema38"
+                      "$ref": "#/$defs/schema42"
                     }
                   },
                   {
@@ -4461,12 +4381,7 @@
                 ]
               },
               {
-                "enum": [
-                  "webhook"
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema34"
+                "$ref": "#/$defs/schema16"
               }
             ]
           },
@@ -4496,7 +4411,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/schema21"
+                      "$ref": "#/$defs/schema27"
                     }
                   },
                   {
@@ -4528,12 +4443,7 @@
                 ]
               },
               {
-                "enum": [
-                  "webhook"
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema34"
+                "$ref": "#/$defs/schema16"
               }
             ]
           },
@@ -4555,114 +4465,6 @@
               }
             }
           }
-        }
-      ],
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "name": {
-              "anyOf": [
-                {
-                  "enum": [
-                    "webhook"
-                  ]
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            },
-            "webhook": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "args": {},
-                    "env": {},
-                    "extraVolumeMounts": {},
-                    "image": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "pullPolicy": {}
-                      }
-                    },
-                    "livenessProbe": {},
-                    "readinessProbe": {},
-                    "resources": {},
-                    "securityContext": {},
-                    "service": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {},
-                          "properties": {
-                            "port": {}
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        }
-                      ]
-                    },
-                    "serviceMonitor": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": {},
-                          "properties": {
-                            "bearerTokenFile": {},
-                            "interval": {},
-                            "metricRelabelings": {},
-                            "relabelings": {},
-                            "scheme": {},
-                            "scrapeTimeout": {},
-                            "tlsConfig": {}
-                          },
-                          "type": "object"
-                        },
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        }
-                      ]
-                    }
-                  },
-                  "type": "object"
-                },
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                }
-              ]
-            }
-          },
-          "type": "object"
-        },
-        {
-          "enum": [
-            "webhook"
-          ]
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "string"
         }
       ]
     },
@@ -4693,7 +4495,7 @@
           "type": "integer"
         },
         "httpGet": {
-          "$ref": "#/$defs/schema24"
+          "$ref": "#/$defs/schema31"
         },
         "initialDelaySeconds": {
           "type": "integer"
@@ -4711,13 +4513,7 @@
       "type": "object"
     },
     "registry": {
-      "description": "Specify the registry for storing ownership and labels.\nValid values are `txt`, `aws-sd`, `dynamodb` & `noop`.",
-      "type": [
-        "boolean",
-        "integer",
-        "number",
-        "string"
-      ]
+      "description": "Specify the registry for storing ownership and labels.\nValid values are `txt`, `aws-sd`, `dynamodb` & `noop`."
     },
     "resources": {
       "description": "[Resources](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) for the `external-dns` container."
@@ -4835,10 +4631,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema35"
+              "$ref": "#/$defs/schema40"
             },
             {
-              "$ref": "#/$defs/schema43"
+              "$ref": "#/$defs/schema48"
             },
             {
               "not": {
@@ -4884,7 +4680,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema36"
+                    "$ref": "#/$defs/schema41"
                   },
                   {
                     "properties": {
@@ -4917,11 +4713,11 @@
             "properties": {
               "annotations": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/schema29"
+                  "type": "string"
                 },
                 "description": "Annotations to add to the service account. Templates are allowed in both the key and the value. Example: `example.com/annotation/{{ .Values.nameOverride }}: {{ .Values.nameOverride }}`",
                 "items": {
-                  "$ref": "#/$defs/schema29"
+                  "type": "string"
                 }
               }
             }
@@ -4933,7 +4729,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema36"
+                    "$ref": "#/$defs/schema41"
                   },
                   {
                     "properties": {
@@ -4976,7 +4772,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema36"
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -5005,7 +4801,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema36"
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -5026,7 +4822,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema43"
+                    "$ref": "#/$defs/schema48"
                   },
                   {
                     "not": {
@@ -5043,7 +4839,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema36"
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -5141,7 +4937,7 @@
               "additionalLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema43"
+                    "$ref": "#/$defs/schema48"
                   },
                   {
                     "not": {
@@ -5172,7 +4968,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema43"
+                    "$ref": "#/$defs/schema48"
                   },
                   {
                     "not": {
@@ -5317,10 +5113,11 @@
     "sources": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema37"
+          "items": {},
+          "type": "array"
         },
         {
-          "$ref": "#/$defs/schema37"
+          "type": "array"
         },
         {
           "type": "integer"
@@ -5329,7 +5126,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema27"
+          "type": "object"
         }
       ],
       "description": "_Kubernetes_ resources to monitor for DNS entries."
@@ -5373,53 +5170,9 @@
       "type": "boolean"
     },
     "txtOwnerId": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "(string) Specify an identifier for this instance of _ExternalDNS_ when using a registry other than `noop`."
     },
     "txtPrefix": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "(string) Specify a prefix for the domain names of TXT records created for the `txt` registry.\nMutually exclusive with `txtSuffix`."
     },
     "txtSuffix": {

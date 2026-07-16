@@ -1,5 +1,5 @@
 use helm_schema_ir::{Guard, ResourceRef, YamlPath};
-use helm_schema_k8s::{ChartLocalCrdSchemaProvider, K8sSchemaProvider};
+use helm_schema_k8s::{ChartLocalCrdSchemaProvider, Diagnostic, DiagnosticSink, K8sSchemaProvider};
 use serde_json::json;
 use vfs::VfsPath;
 
@@ -16,6 +16,112 @@ macro_rules! contract_schema_signals {
             .finalize()
             .into_schema_signals()
     };
+}
+
+#[test]
+fn one_variable_integer_range_emits_input_channel_diagnostic() {
+    let defines = helm_schema_ast::DefineIndex::new();
+    let signals = helm_schema_ir::SymbolicIrContext::new(&defines)
+        .generate_contract_ir(
+            r#"{{- range .Values.servers }}
+{{ . | quote }}
+{{- end }}"#,
+        )
+        .finalize()
+        .into_schema_signals();
+    let diagnostics = DiagnosticSink::new();
+
+    crate::session::emit_input_channel_diagnostics(&signals, &diagnostics);
+
+    sim_assert_eq!(
+        have: diagnostics.snapshot(),
+        want: vec![Diagnostic::InputChannelNumericRangeAmbiguity {
+            value_path: "servers".to_string(),
+        }]
+    );
+}
+
+#[test]
+fn two_variable_range_has_no_numeric_input_channel_ambiguity() {
+    let defines = helm_schema_ast::DefineIndex::new();
+    let signals = helm_schema_ir::SymbolicIrContext::new(&defines)
+        .generate_contract_ir(
+            r#"{{- range $key, $value := .Values.servers }}
+{{ $key }}={{ $value }}
+{{- end }}"#,
+        )
+        .finalize()
+        .into_schema_signals();
+    let diagnostics = DiagnosticSink::new();
+
+    crate::session::emit_input_channel_diagnostics(&signals, &diagnostics);
+
+    sim_assert_eq!(have: diagnostics.snapshot(), want: Vec::<Diagnostic>::new());
+}
+
+#[test]
+fn airflow_break_scopes_the_deprecated_security_context_candidate() -> color_eyre::eyre::Result<()>
+{
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("airflow");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
+    let collection = analyze_charts(
+        &charts,
+        &defines,
+        false,
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
+    )?;
+    let signals = contract_schema_signals!(collection);
+    let evidence = signals
+        .evidence_for("workers.securityContext")
+        .expect("workers.securityContext evidence");
+
+    assert!(
+        evidence.provider_schema_uses.is_empty()
+            && evidence
+                .conditional_overlays
+                .iter()
+                .any(|overlay| { !overlay.evidence.provider_schema_uses.is_empty() }),
+        "the later candidate must only carry provider evidence behind its no-prior-break guard: {evidence:#?}"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn loki_selected_htpasswd_default_program_reaches_required_credentials()
+-> color_eyre::eyre::Result<()> {
+    let chart_dir = test_util::workspace_testdata().join("charts").join("loki");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
+    let values_yaml = chart::build_composed_values_yaml(&charts, true)?;
+    let values_roots = crate::values_roots::ValuesRoots::from_values_yaml(values_yaml.as_deref());
+    assert!(
+        values_roots
+            .string_defaults
+            .contains_key("gateway.basicAuth.htpasswd"),
+        "the composed values document must preserve the chart-authored program"
+    );
+    let collection = analyze_charts(&charts, &defines, false, &values_roots)?;
+    let signals = contract_schema_signals!(collection);
+
+    for path in ["gateway.basicAuth.username", "gateway.basicAuth.password"] {
+        assert!(
+            signals.terminal_clauses().iter().any(|clause| clause
+                .iter()
+                .flat_map(helm_schema_core::ConditionalGuard::value_paths)
+                .any(|guard_path| guard_path == path)),
+            "the selected htpasswd default must retain its required call for {path}: {signals:#?}"
+        );
+    }
+
+    Ok(())
 }
 
 #[test]
@@ -77,8 +183,7 @@ spec:
 }
 
 #[test]
-fn signoz_root_service_account_helper_type_hint_flows_into_contract_schema_signals()
--> color_eyre::eyre::Result<()> {
+fn signoz_zookeeper_printf_does_not_type_its_format_operand() -> color_eyre::eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("signoz-signoz");
@@ -94,25 +199,20 @@ fn signoz_root_service_account_helper_type_hint_flows_into_contract_schema_signa
     )?;
     let path = "clickhouse.zookeeper.nameOverride";
 
-    // The `printf … | trunc 63` string contract sits behind
-    // `else if .Values.zookeeper.nameOverride`, so it surfaces as
-    // branch-scoped fail implications (truthy ⇒ string) rather than an
-    // unconditional type hint that would also bind short-circuited states.
+    // `%s` formatting reports a mismatch in its derived output instead of
+    // rejecting the input value. The following `trunc` consumes that text,
+    // so it must not become a string contract on the raw format operand.
     assert!(
         contract_schema_signals!(collection)
             .evidence_for(path)
             .is_some_and(
-                |evidence| evidence.fail_implications.iter().any(|implication| {
+                |evidence| !evidence.fail_implications.iter().any(|implication| {
                     implication.requirements.contains(
                         &helm_schema_core::FailValueRequirement::SchemaType("string".to_string()),
-                    ) && implication.outer_guards.contains(
-                        &helm_schema_core::ConditionalGuard::Truthy {
-                            path: path.to_string(),
-                        },
                     )
                 })
             ),
-        "expected a branch-scoped structural string requirement for {path}; evidence={:?}",
+        "printf's format operand must stay untyped for {path}; evidence={:?}",
         contract_schema_signals!(collection).evidence_for(path),
     );
 
@@ -146,6 +246,41 @@ fn signoz_clickhouse_operator_image_helper_printf_binds_no_string_contract()
             .is_some_and(|evidence| !evidence.type_hints.contains("string")),
         "printf must not bind a string contract on {path}; contract_hints={:?}",
         contract_schema_signals!(collection).schema_evidence_by_value_path(),
+    );
+
+    Ok(())
+}
+
+#[test]
+fn promtail_helper_string_consumer_reaches_the_image_tag_contract() -> color_eyre::eyre::Result<()>
+{
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("promtail");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
+    let collection = analyze_charts(
+        &charts,
+        &defines,
+        false,
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
+    )?;
+    let path = "image.tag";
+    let signals = contract_schema_signals!(collection);
+    let evidence = signals.evidence_for(path);
+
+    assert!(
+        evidence.is_some_and(|evidence| {
+            evidence.type_hints.contains("string")
+                || evidence.fail_implications.iter().any(|implication| {
+                    implication.requirements.contains(
+                        &helm_schema_core::FailValueRequirement::SchemaType("string".to_string()),
+                    )
+                })
+        }),
+        "the helper's regex replacement must retain its string subject contract: {evidence:#?}"
     );
 
     Ok(())
@@ -349,6 +484,69 @@ fn signoz_clickhouse_operator_service_account_name_keeps_helper_and_else_branch_
             })
         }),
         "expected a create=false conditional overlay for {path}; overlays={overlays:#?}"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn traefik_host_users_keeps_provider_sink_under_invalid_kind_guard() -> color_eyre::eyre::Result<()>
+{
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("traefik");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
+    let collection = analyze_charts(
+        &charts,
+        &defines,
+        false,
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
+    )?;
+    let path = "deployment.hostUsers";
+    let signals = contract_schema_signals!(collection);
+    let evidence = signals
+        .evidence_for(path)
+        .unwrap_or_else(|| panic!("missing schema evidence for {path}"));
+
+    assert!(
+        !evidence.provider_schema_uses.is_empty()
+            || evidence
+                .conditional_overlays
+                .iter()
+                .any(|overlay| !overlay.evidence.provider_schema_uses.is_empty()),
+        "expected provider sink evidence for {path}; evidence={evidence:#?}",
+    );
+
+    Ok(())
+}
+
+#[test]
+fn prometheus_namespace_helper_keeps_join_conversion_boundary() -> color_eyre::eyre::Result<()> {
+    let chart_dir = test_util::workspace_testdata()
+        .join("charts")
+        .join("prometheus");
+    let chart_dir_str = chart_dir.to_string_lossy().to_string();
+    let chart_dir = VfsPath::new(vfs::PhysicalFS::new(&chart_dir_str));
+    let charts = chart::discover_chart_contexts(&chart_dir)?;
+    let defines = chart::build_define_index(&charts, false)?;
+    let collection = analyze_charts(
+        &charts,
+        &defines,
+        false,
+        &crate::values_roots::ValuesRoots::from_values_yaml(None),
+    )?;
+    let path = "server.namespaces";
+    let signals = contract_schema_signals!(collection);
+    let evidence = signals
+        .evidence_for(path)
+        .unwrap_or_else(|| panic!("missing schema evidence for {path}"));
+
+    assert!(
+        evidence.facts.used_as_serialized,
+        "join inside the namespace helper must keep its conversion boundary; evidence={evidence:#?}",
     );
 
     Ok(())
@@ -1069,6 +1267,86 @@ child: auth.enabled
     assert!(
         terminal_clauses.is_empty(),
         "the conditional validator must not terminate the activated chart: {terminal_clauses:#?}"
+    );
+
+    Ok(())
+}
+
+#[test]
+fn tpl_executes_only_the_selected_chart_authored_default_program() -> color_eyre::eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    let program = r#"{{ required "username required" .Values.auth.username }}:{{ required "password required" .Values.auth.password }}"#;
+
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        "apiVersion: v2\nname: root\nversion: 0.1.0\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        format!(
+            "auth:\n  enabled: true\n  username: \"\"\n  password: \"\"\n  program: |-\n    {}\n",
+            program
+        ),
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/secret.yaml")?,
+        r#"apiVersion: v1
+kind: Secret
+metadata:
+  name: test
+{{- with .Values.auth }}
+{{- if .enabled }}
+stringData:
+  credentials: |
+    {{- tpl .program $ | nindent 4 }}
+{{- end }}
+{{- end }}
+"#,
+    )?;
+
+    let schema = crate::AnalysisSession::new(crate::GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        provider: crate::provider::ProviderOptions {
+            disable_k8s_schemas: true,
+            allow_net: false,
+            ..Default::default()
+        },
+    })
+    .generated_schema()?
+    .schema;
+    let validator = jsonschema::validator_for(&schema)?;
+    let default_auth = json!({
+        "username": "",
+        "password": "",
+        "program": program
+    });
+
+    assert!(
+        !validator.is_valid(&json!({ "auth": default_auth })),
+        "the selected default program executes both required calls: {schema}"
+    );
+    assert!(validator.is_valid(&json!({
+        "auth": {
+            "username": "user",
+            "password": "pass",
+            "program": program
+        }
+    })));
+    assert!(
+        validator.is_valid(&json!({
+            "auth": { "username": "", "password": "", "program": "fixed" }
+        })),
+        "an override replaces the chart-authored program and its requirements: {schema}"
+    );
+    assert!(
+        !validator.is_valid(&json!({
+            "auth": { "username": "", "password": "", "program": program }
+        })),
+        "explicitly selecting the same program keeps its requirements: {schema}"
     );
 
     Ok(())

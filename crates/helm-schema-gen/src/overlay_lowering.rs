@@ -146,7 +146,7 @@ pub(crate) fn collect_conditional_schemas(
                 continue;
             }
             if matches!(
-                implication.target,
+                &implication.target,
                 helm_schema_core::ContractRequirementTarget::Value
             ) && let Some(default) = yaml_value_at_path(values_yaml_doc, target_value_path)
             {
@@ -154,8 +154,9 @@ pub(crate) fn collect_conditional_schemas(
             }
             let target_segments = split_value_path(target_value_path);
             if matches!(
-                implication.target,
+                &implication.target,
                 helm_schema_core::ContractRequirementTarget::Members { .. }
+                    | helm_schema_core::ContractRequirementTarget::MembersWhereEquals { .. }
             ) {
                 for descendant in member_descendants
                     .get(target_segments.as_slice())
@@ -198,105 +199,188 @@ pub(crate) fn collect_conditional_schemas(
             });
         }
 
-        for overlay in &evidence.conditional_overlays {
-            if is_unconditional_self_presence_overlay(target_value_path, overlay) {
-                continue;
-            }
-            if !guards_supported_for_conditional_lowering(
-                &overlay.guards,
-                &resolved_by_path,
-                values_yaml_doc,
-            ) {
-                continue;
-            }
-
-            let target_segments = split_value_path(target_value_path);
-            let ancestor_segments =
-                conditional_ancestor_segments(&target_segments, &overlay.guards);
-            let active_by_defaults = evaluate_guard_set_on_values(&overlay.guards, values_yaml_doc);
-            let resolved_overlay =
-                resolve_overlay_target_schema(target_value_path, overlay, provider);
-            // A ranged branch's runtime domain is structural evidence, not
-            // a declared-default placeholder. Add it before conditional
-            // policy so a fixed map default cannot reintroduce literal
-            // member typing that the loop body erased (for example through
-            // `quote`).
-            let member_implication_owns_range_domain = overlay.evidence.facts.is_ranged_source
-                && crate::schema_model::is_empty_schema(&resolved_overlay.schema)
-                && member_implication_covers_range_domain(
-                    &evidence.fail_implications,
-                    &overlay.guards,
-                );
-            let branch_schema = if overlay.evidence.facts.is_ranged_source
-                && !member_implication_owns_range_domain
-            {
-                crate::merge::merge_schema_list(vec![
-                    resolved_overlay.schema,
-                    crate::runtime_iterable_schema(
-                        !overlay.evidence.facts.has_structured_item_descendants
-                            && !overlay.evidence.facts.has_destructured_range_use
-                            && !overlay.evidence.facts.has_string_contract_items,
-                    ),
-                ])
-            } else {
-                resolved_overlay.schema
-            };
-            let target_schema = conditional_target_schema(
-                target_value_path,
-                overlay,
-                values_yaml_doc,
-                branch_schema,
-                resolved_target.values_yaml_schema.clone(),
-                resolved_target.schema.clone(),
-                active_by_defaults,
-            );
-            if crate::schema_model::is_empty_schema(&target_schema) {
-                // A branch whose renders are all serialized proves the wider
-                // contract inside that branch, so it carries no schema; it
-                // stays a conditional TARGET so base classification still
-                // uncloses/opens the base the way the guarded renders
-                // demand. Mixed branches resolve their own evidence above,
-                // so a stringified occurrence never erases an independent
-                // stricter sibling.
-                if overlay.evidence.facts.used_as_serialized
-                    || overlay.evidence.facts.used_as_yaml_serialized
-                {
-                    conditionals.push(ConditionalResolvedSchema {
-                        target_value_path: target_value_path.clone(),
-                        relative_target_segments: target_segments[ancestor_segments.len()..]
-                            .to_vec(),
-                        ancestor_segments,
-                        guards: overlay.guards.clone(),
-                        target_schema,
-                        provider_schema_candidate: None,
-                        preserve_base_schema: overlay.preserve_base_schema
-                            || has_unconditional_self_presence_contract,
-                        fold_unconditional_object_host_into_base: false,
-                        arm_only: false,
-                    });
+        for source_overlay in &evidence.conditional_overlays {
+            for overlay in kind_partitioned_overlays(source_overlay) {
+                if is_unconditional_self_presence_overlay(target_value_path, &overlay) {
+                    continue;
                 }
-                continue;
-            }
-            let provider_schema_candidate = resolved_overlay
-                .provider_schema_candidate
-                .filter(|candidate| candidate.survives_as(&target_schema));
+                if !guards_supported_for_conditional_lowering(
+                    &overlay.guards,
+                    &resolved_by_path,
+                    values_yaml_doc,
+                ) {
+                    continue;
+                }
 
-            conditionals.push(ConditionalResolvedSchema {
-                target_value_path: target_value_path.clone(),
-                relative_target_segments: target_segments[ancestor_segments.len()..].to_vec(),
-                ancestor_segments,
-                guards: overlay.guards.clone(),
-                target_schema,
-                provider_schema_candidate,
-                preserve_base_schema: overlay.preserve_base_schema
-                    || has_unconditional_self_presence_contract,
-                fold_unconditional_object_host_into_base: false,
-                arm_only: false,
-            });
+                let target_segments = split_value_path(target_value_path);
+                let ancestor_segments =
+                    conditional_ancestor_segments(&target_segments, &overlay.guards);
+                let active_by_defaults =
+                    evaluate_guard_set_on_values(&overlay.guards, values_yaml_doc);
+                let resolved_overlay =
+                    resolve_overlay_target_schema(target_value_path, &overlay, provider);
+                // A ranged branch's runtime domain is structural evidence, not
+                // a declared-default placeholder. Add it before conditional
+                // policy so a fixed map default cannot reintroduce literal
+                // member typing that the loop body erased (for example through
+                // `quote`).
+                let member_implication_owns_range_domain = overlay.evidence.facts.is_ranged_source
+                    && crate::schema_model::is_empty_schema(&resolved_overlay.schema)
+                    && member_implication_covers_range_domain(
+                        &evidence.fail_implications,
+                        &overlay.guards,
+                    );
+                let branch_schema = if overlay.evidence.facts.is_ranged_source
+                    && !member_implication_owns_range_domain
+                {
+                    crate::merge::merge_schema_list(vec![
+                        resolved_overlay.schema,
+                        crate::runtime_iterable_schema(
+                            !overlay.evidence.facts.has_structured_item_descendants
+                                && !overlay.evidence.facts.has_destructured_range_use
+                                && !overlay.evidence.facts.has_string_contract_items,
+                        ),
+                    ])
+                } else {
+                    resolved_overlay.schema
+                };
+                let target_schema = conditional_target_schema(
+                    target_value_path,
+                    &overlay,
+                    values_yaml_doc,
+                    branch_schema,
+                    resolved_target.values_yaml_schema.clone(),
+                    resolved_target.schema.clone(),
+                    active_by_defaults,
+                );
+                if crate::schema_model::is_empty_schema(&target_schema) {
+                    // A branch whose renders are all serialized proves the wider
+                    // contract inside that branch, so it carries no schema; it
+                    // stays a conditional TARGET so base classification still
+                    // uncloses/opens the base the way the guarded renders
+                    // demand. Mixed branches resolve their own evidence above,
+                    // so a stringified occurrence never erases an independent
+                    // stricter sibling.
+                    if overlay.evidence.facts.used_as_serialized
+                        || overlay.evidence.facts.used_as_yaml_serialized
+                    {
+                        conditionals.push(ConditionalResolvedSchema {
+                            target_value_path: target_value_path.clone(),
+                            relative_target_segments: target_segments[ancestor_segments.len()..]
+                                .to_vec(),
+                            ancestor_segments,
+                            guards: overlay.guards.clone(),
+                            target_schema,
+                            provider_schema_candidate: None,
+                            preserve_base_schema: overlay.preserve_base_schema
+                                || has_unconditional_self_presence_contract,
+                            fold_unconditional_object_host_into_base: false,
+                            arm_only: false,
+                        });
+                    }
+                    continue;
+                }
+                let provider_schema_candidate = resolved_overlay
+                    .provider_schema_candidate
+                    .filter(|candidate| candidate.survives_as(&target_schema));
+
+                conditionals.push(ConditionalResolvedSchema {
+                    target_value_path: target_value_path.clone(),
+                    relative_target_segments: target_segments[ancestor_segments.len()..].to_vec(),
+                    ancestor_segments,
+                    guards: overlay.guards.clone(),
+                    target_schema,
+                    provider_schema_candidate,
+                    preserve_base_schema: overlay.preserve_base_schema
+                        || has_unconditional_self_presence_contract,
+                    fold_unconditional_object_host_into_base: false,
+                    arm_only: false,
+                });
+            }
         }
     }
 
     conditionals
+}
+
+fn kind_partitioned_overlays(overlay: &ConditionalPathOverlay) -> Vec<ConditionalPathOverlay> {
+    let mut kinds = BTreeSet::new();
+    for use_ in &overlay.evidence.provider_schema_uses {
+        if !use_.resource.kind_candidates.is_empty() {
+            kinds.insert(use_.resource.kind.clone());
+            kinds.extend(use_.resource.kind_candidates.iter().cloned());
+        }
+    }
+    if kinds.is_empty() {
+        return vec![overlay.clone()];
+    }
+    let Some(selector) = kind_selector_path(&overlay.guards, &kinds) else {
+        return vec![overlay.clone()];
+    };
+
+    kinds
+        .into_iter()
+        .filter_map(|kind| {
+            let mut partition = overlay.clone();
+            partition.guards.push(ConditionalGuard::Eq {
+                path: selector.clone(),
+                value: GuardValue::string(kind.clone()),
+            });
+            partition.guards.sort();
+            partition.guards.dedup();
+            partition.evidence.provider_schema_uses.retain_mut(|use_| {
+                if use_.resource.kind_candidates.is_empty() {
+                    return true;
+                }
+                let supports_kind =
+                    use_.resource.kind == kind || use_.resource.kind_candidates.contains(&kind);
+                if supports_kind {
+                    use_.resource.kind = kind.clone();
+                    use_.resource.kind_candidates.clear();
+                }
+                supports_kind
+            });
+            (!partition.evidence.provider_schema_uses.is_empty()).then_some(partition)
+        })
+        .collect()
+}
+
+fn kind_selector_path(guards: &[ConditionalGuard], kinds: &BTreeSet<String>) -> Option<String> {
+    fn collect(guard: &ConditionalGuard, kinds: &BTreeSet<String>, paths: &mut BTreeSet<String>) {
+        match guard {
+            ConditionalGuard::Eq {
+                path,
+                value: GuardValue::String(value),
+            }
+            | ConditionalGuard::NotEq {
+                path,
+                value: GuardValue::String(value),
+            } if kinds.contains(value) => {
+                paths.insert(path.clone());
+            }
+            ConditionalGuard::Not(inner) => collect(inner, kinds, paths),
+            ConditionalGuard::AllOf(inner) | ConditionalGuard::AnyOf(inner) => {
+                for guard in inner {
+                    collect(guard, kinds, paths);
+                }
+            }
+            ConditionalGuard::Truthy { .. }
+            | ConditionalGuard::With { .. }
+            | ConditionalGuard::Eq { .. }
+            | ConditionalGuard::NotEq { .. }
+            | ConditionalGuard::Absent { .. }
+            | ConditionalGuard::TypeIs { .. }
+            | ConditionalGuard::MatchesPattern { .. } => {}
+        }
+    }
+
+    let mut paths = BTreeSet::new();
+    for guard in guards {
+        collect(guard, kinds, &mut paths);
+    }
+    let mut paths = paths.into_iter();
+    let path = paths.next()?;
+    paths.next().is_none().then_some(path)
 }
 
 fn is_unconditional_self_presence_overlay(
@@ -315,7 +399,7 @@ fn is_unconditional_self_presence_overlay(
 
 fn is_bare_iterable_implication(implication: &helm_schema_core::ContractFailImplication) -> bool {
     matches!(
-        implication.target,
+        &implication.target,
         helm_schema_core::ContractRequirementTarget::Value
     ) && matches!(
         implication.requirements.as_slice(),
@@ -330,8 +414,9 @@ fn member_implication_covers_range_domain(
     implications.iter().any(|implication| {
         implication.outer_guards == guards
             && matches!(
-                implication.target,
+                &implication.target,
                 helm_schema_core::ContractRequirementTarget::Members { .. }
+                    | helm_schema_core::ContractRequirementTarget::MembersWhereEquals { .. }
             )
     })
 }
@@ -355,13 +440,19 @@ fn fail_requirement_runtime_types(
             "array", "boolean", "integer", "null", "number", "object", "string",
         ])
     };
-    match implication.target {
+    match &implication.target {
         ContractRequirementTarget::Members { allow_integer } => {
             let mut types = BTreeSet::from(["array", "null", "object"]);
-            if allow_integer {
+            if *allow_integer {
                 types.insert("integer");
             }
             types
+        }
+        ContractRequirementTarget::MembersMatchingPrefix { .. } => {
+            BTreeSet::from(["array", "null", "object"])
+        }
+        ContractRequirementTarget::MembersWhereEquals { .. } => {
+            BTreeSet::from(["array", "null", "object"])
         }
         ContractRequirementTarget::Keys => BTreeSet::from(["array", "null", "object"]),
         ContractRequirementTarget::Value => {
@@ -387,6 +478,12 @@ fn fail_requirement_runtime_types(
                         matches!(*runtime_type, "array" | "null" | "object")
                             || *allow_integer && *runtime_type == "integer"
                     }
+                    FailValueRequirement::IndexableAt(_) => {
+                        matches!(*runtime_type, "array" | "string")
+                    }
+                    FailValueRequirement::SplitSegmentsAtLeast {
+                        allow_non_string, ..
+                    } => *runtime_type == "string" || *allow_non_string,
                 });
             }
             types
@@ -553,7 +650,8 @@ fn implication_guards_supported(
             ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
             | ConditionalGuard::Absent { .. }
-            | ConditionalGuard::TypeIs { .. } => true,
+            | ConditionalGuard::TypeIs { .. }
+            | ConditionalGuard::MatchesPattern { .. } => true,
             ConditionalGuard::Not(inner) => implication_guards_supported(
                 std::slice::from_ref(inner),
                 target_value_path,
@@ -586,7 +684,8 @@ fn guards_supported_with_self_path(
             ConditionalGuard::Eq { .. }
             | ConditionalGuard::NotEq { .. }
             | ConditionalGuard::Absent { .. }
-            | ConditionalGuard::TypeIs { .. } => true,
+            | ConditionalGuard::TypeIs { .. }
+            | ConditionalGuard::MatchesPattern { .. } => true,
             ConditionalGuard::Not(inner) => guards_supported_with_self_path(
                 std::slice::from_ref(inner),
                 self_path,
@@ -652,7 +751,8 @@ fn guard_holds_vacuously(guard: &ConditionalGuard) -> bool {
     match guard {
         ConditionalGuard::Truthy { .. }
         | ConditionalGuard::With { .. }
-        | ConditionalGuard::TypeIs { .. } => false,
+        | ConditionalGuard::TypeIs { .. }
+        | ConditionalGuard::MatchesPattern { .. } => false,
         ConditionalGuard::Eq { value, .. } => matches!(value, GuardValue::Null),
         ConditionalGuard::NotEq { .. }
         | ConditionalGuard::Absent { .. }

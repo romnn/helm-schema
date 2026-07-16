@@ -48,43 +48,15 @@
       }
     },
     "schema10": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "schema11": {
-      "not": {
-        "properties": {
-          "deploy": {}
-        },
-        "required": [
-          "deploy"
-        ],
-        "type": "object"
-      }
-    },
-    "schema12": {
-      "items": {
-        "type": [
-          "boolean",
-          "integer",
-          "number",
-          "string"
-        ]
-      },
-      "type": "array"
-    },
-    "schema13": {
       "properties": {
-        "enabled": {}
+        "deploy": {}
       },
       "required": [
-        "enabled"
+        "deploy"
       ],
       "type": "object"
     },
-    "schema15": {
+    "schema11": {
       "properties": {
         "create": {}
       },
@@ -93,13 +65,13 @@
       ],
       "type": "object"
     },
-    "schema16": {
+    "schema12": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema18": {
+    "schema13": {
       "additionalProperties": {},
       "type": "object"
     },
@@ -161,14 +133,12 @@
       }
     },
     "schema9": {
-      "additionalProperties": {
-        "type": [
-          "boolean",
-          "integer",
-          "number",
-          "string"
-        ]
+      "properties": {
+        "enabled": {}
       },
+      "required": [
+        "enabled"
+      ],
       "type": "object"
     }
   },
@@ -264,7 +234,7 @@
           "customLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema12"
               },
               {
                 "not": {
@@ -523,82 +493,26 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema3"
-              },
-              {
-                "properties": {
-                  "rbacManager": {
-                    "properties": {
-                      "deploy": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "deploy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "rbacManager"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema2"
           },
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema2"
-              },
-              {
+            "properties": {
+              "serviceAccount": {
                 "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "serviceAccount"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema5"
-              },
-              {
-                "properties": {
-                  "webhooks": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "webhooks"
-                ],
-                "type": "object"
-              }
-            ]
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -720,7 +634,7 @@
               "customAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema16"
+                    "$ref": "#/$defs/schema12"
                   },
                   {
                     "not": {
@@ -832,7 +746,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema18"
+          "$ref": "#/$defs/schema13"
         }
       ],
       "description": "Add custom arguments to the Crossplane pod."
@@ -843,10 +757,11 @@
         "packages": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema12"
+              "items": {},
+              "type": "array"
             },
             {
-              "$ref": "#/$defs/schema12"
+              "type": "array"
             },
             {
               "type": "integer"
@@ -855,7 +770,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/schema9"
+              "type": "object"
             }
           ],
           "description": "A list of Configuration packages to install."
@@ -866,10 +781,13 @@
     "customAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema10"
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
         },
         {
-          "$ref": "#/$defs/schema16"
+          "$ref": "#/$defs/schema12"
         },
         {
           "not": {
@@ -882,10 +800,12 @@
     "customLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema10"
+          "additionalProperties": {},
+          "properties": {},
+          "type": "object"
         },
         {
-          "$ref": "#/$defs/schema16"
+          "$ref": "#/$defs/schema12"
         },
         {
           "not": {
@@ -915,7 +835,7 @@
     "extraEnvVarsCrossplane": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema18"
+          "$ref": "#/$defs/schema13"
         },
         {
           "items": {},
@@ -925,7 +845,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema18"
+          "$ref": "#/$defs/schema13"
         }
       ],
       "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
@@ -933,7 +853,7 @@
     "extraEnvVarsCrossplaneInit": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema18"
+          "$ref": "#/$defs/schema13"
         },
         {
           "items": {},
@@ -943,7 +863,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema18"
+          "$ref": "#/$defs/schema13"
         }
       ],
       "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
@@ -984,10 +904,11 @@
         "packages": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema12"
+              "items": {},
+              "type": "array"
             },
             {
-              "$ref": "#/$defs/schema12"
+              "type": "array"
             },
             {
               "type": "integer"
@@ -996,7 +917,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/schema9"
+              "type": "object"
             }
           ],
           "description": "A list of Function packages to install"
@@ -1085,117 +1006,6 @@
     },
     "image": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "properties": {
-                  "ignoreTag": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "ignoreTag"
-                ],
-                "type": "object"
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "tag": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "tag"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "ignoreTag": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "ignoreTag"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "repository": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Repository for the Crossplane pod image."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "not": {
-              "properties": {
-                "ignoreTag": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              "required": [
-                "ignoreTag"
-              ],
-              "type": "object"
-            }
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "tag": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "The Crossplane image tag. Defaults to the value of `appVersion` in `Chart.yaml`."
-              }
-            }
-          }
-        }
-      ],
       "properties": {
         "ignoreTag": {
           "anyOf": [
@@ -1227,13 +1037,7 @@
       "description": "The imagePullSecret names to add to the Crossplane ServiceAccount."
     },
     "leaderElection": {
-      "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the Crossplane pod.",
-      "type": [
-        "boolean",
-        "integer",
-        "number",
-        "string"
-      ]
+      "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the Crossplane pod."
     },
     "metrics": {
       "additionalProperties": {},
@@ -1456,10 +1260,11 @@
         "defaultActivations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema12"
+              "items": {},
+              "type": "array"
             },
             {
-              "$ref": "#/$defs/schema12"
+              "type": "array"
             },
             {
               "type": "integer"
@@ -1468,7 +1273,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/schema9"
+              "type": "object"
             }
           ],
           "description": "Define entries for the default managed resource activation policy. If defined, a default MRAP will contain these activations."
@@ -1476,10 +1281,11 @@
         "packages": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema12"
+              "items": {},
+              "type": "array"
             },
             {
-              "$ref": "#/$defs/schema12"
+              "type": "array"
             },
             {
               "type": "integer"
@@ -1488,7 +1294,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/schema9"
+              "type": "object"
             }
           ],
           "description": "A list of Provider packages to install."
@@ -1503,7 +1309,9 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema11"
+                "not": {
+                  "$ref": "#/$defs/schema10"
+                }
               },
               {
                 "properties": {
@@ -1526,49 +1334,9 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema11"
-              },
-              {
-                "properties": {
-                  "deploy": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "deploy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "leaderElection": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Enable [leader election](https://docs.crossplane.io/latest/guides/pods/#leader-election) for the RBAC Manager pod."
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema11"
+                "not": {
+                  "$ref": "#/$defs/schema10"
+                }
               },
               {
                 "properties": {
@@ -1650,16 +1418,7 @@
               }
             },
             {
-              "type": "boolean"
-            },
-            {
               "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "string"
             }
           ],
           "description": "The port the readyz server listens on."
@@ -1695,13 +1454,7 @@
       ],
       "properties": {
         "key": {
-          "description": "The ConfigMap key containing a custom CA bundle to enable fetching packages from registries with unknown or untrusted certificates.",
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "description": "The ConfigMap key containing a custom CA bundle to enable fetching packages from registries with unknown or untrusted certificates."
         },
         "name": {
           "anyOf": [
@@ -1770,10 +1523,13 @@
         "customAnnotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema10"
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
             },
             {
-              "$ref": "#/$defs/schema16"
+              "$ref": "#/$defs/schema12"
             },
             {
               "not": {
@@ -1835,7 +1591,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema15"
+                  "$ref": "#/$defs/schema11"
                 }
               },
               {
@@ -1857,7 +1613,7 @@
               "customAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema16"
+                    "$ref": "#/$defs/schema12"
                   },
                   {
                     "not": {
@@ -1876,7 +1632,7 @@
               "anyOf": [
                 {
                   "not": {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema11"
                   }
                 },
                 {
@@ -1972,7 +1728,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema13"
+                  "$ref": "#/$defs/schema9"
                 }
               },
               {

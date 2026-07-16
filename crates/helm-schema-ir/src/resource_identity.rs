@@ -20,8 +20,8 @@
 use std::collections::HashSet;
 
 use helm_schema_ast::{
-    ResourceSpan, TemplateExpr, TemplateHeader, children_with_field, decode_guard,
-    decode_guard_expr, parse_expr_text, unquote_yaml_scalar,
+    Literal, ResourceSpan, TemplateExpr, TemplateHeader, children_with_field, decode_guard,
+    decode_guard_expr, parse_expr_text, parse_go_template, unquote_yaml_scalar,
 };
 use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody, ResourceRef};
 use helm_schema_syntax::{
@@ -83,7 +83,19 @@ fn collect_window_spans(
     };
     let mut parts = HeaderParts::default();
     collect_header_parts(nodes, window, top_indent, source, analysis_db, &mut parts);
-    let Some(resource) = resource_from_parts(parts.kind.take(), parts.into_api_version_body())
+    if parts.kind.is_none()
+        && let Some(selector) = parts.kind_selector.as_deref()
+    {
+        let mut candidates = Vec::new();
+        collect_kind_partition_literals(nodes, window, source, selector, &mut candidates);
+        if !candidates.is_empty() {
+            parts.kind = Some(candidates.remove(0));
+            parts.kind_candidates.extend(candidates);
+        }
+    }
+    let kind = parts.kind.take();
+    let kind_candidates = std::mem::take(&mut parts.kind_candidates);
+    let Some(resource) = resource_from_parts(kind, kind_candidates, parts.into_api_version_body())
     else {
         return;
     };
@@ -154,6 +166,8 @@ struct HeaderParts {
     literals: Vec<String>,
     branches: Vec<HelperBranch>,
     kind: Option<String>,
+    kind_candidates: Vec<String>,
+    kind_selector: Option<String>,
 }
 
 impl HeaderParts {
@@ -243,8 +257,17 @@ fn collect_if_region(
         let mut sub = HeaderParts::default();
         let children = sorted_nodes(&branch.body);
         collect_header_parts(&children, window, top_indent, source, analysis_db, &mut sub);
-        if parts.kind.is_none() {
-            parts.kind = sub.kind.take();
+        if let Some(kind) = sub.kind.take() {
+            if parts.kind.is_none() {
+                parts.kind = Some(kind);
+            } else if parts.kind.as_ref() != Some(&kind) && !parts.kind_candidates.contains(&kind) {
+                parts.kind_candidates.push(kind);
+            }
+        }
+        for candidate in &sub.kind_candidates {
+            if !parts.kind_candidates.contains(candidate) {
+                parts.kind_candidates.push(candidate.clone());
+            }
         }
         if sub.is_empty() {
             continue;
@@ -278,22 +301,117 @@ fn capture_header_entry(
             }
         }
         "kind" => {
-            if parts.kind.is_none()
-                && let Some(text) = value
-            {
-                parts.kind = Some(unquote_yaml_scalar(text).to_string());
+            if let Some(text) = value {
+                let mut kinds = scalar_value_body(text, analysis_db).all_literals();
+                kinds.retain(|kind| !kind.is_empty());
+                if parts.kind.is_none() && !kinds.is_empty() {
+                    parts.kind = Some(kinds.remove(0));
+                }
+                for kind in kinds {
+                    if parts.kind.as_ref() != Some(&kind) && !parts.kind_candidates.contains(&kind)
+                    {
+                        parts.kind_candidates.push(kind);
+                    }
+                }
+                if parts.kind.is_none() {
+                    parts.kind_selector = parse_expr_text(text)
+                        .iter()
+                        .find_map(crate::expr_eval::direct_values_path);
+                }
             }
         }
         _ => {}
     }
 }
 
+fn collect_kind_partition_literals(
+    nodes: &[&CstNode],
+    window: Span,
+    source: &str,
+    selector: &str,
+    out: &mut Vec<String>,
+) {
+    for node in nodes {
+        if !node_intersects(node, window) {
+            continue;
+        }
+        match node {
+            CstNode::Control(region) => {
+                for branch in &region.branches {
+                    if let Some(text) = source.get(branch.header.start..branch.header.end)
+                        && let Some(condition) = action_condition_text(text)
+                    {
+                        let header = TemplateHeader::parse_control(condition);
+                        header.expr().walk(|expr| {
+                            let TemplateExpr::Call { function, args } = expr.deparen() else {
+                                return;
+                            };
+                            if !matches!(function.as_str(), "eq" | "ne") || args.len() != 2 {
+                                return;
+                            }
+                            let candidate = match (args[0].deparen(), args[1].deparen()) {
+                                (
+                                    path,
+                                    TemplateExpr::Literal(
+                                        Literal::String(value) | Literal::RawString(value),
+                                    ),
+                                ) if crate::expr_eval::direct_values_path(path).as_deref()
+                                    == Some(selector) =>
+                                {
+                                    Some(value)
+                                }
+                                (
+                                    TemplateExpr::Literal(
+                                        Literal::String(value) | Literal::RawString(value),
+                                    ),
+                                    path,
+                                ) if crate::expr_eval::direct_values_path(path).as_deref()
+                                    == Some(selector) =>
+                                {
+                                    Some(value)
+                                }
+                                _ => None,
+                            };
+                            if let Some(candidate) = candidate
+                                && !candidate.is_empty()
+                                && !out.contains(candidate)
+                            {
+                                out.push(candidate.clone());
+                            }
+                        });
+                    }
+                    let children = sorted_nodes(&branch.body);
+                    collect_kind_partition_literals(&children, window, source, selector, out);
+                }
+            }
+            CstNode::Mapping(entry) => {
+                let children = sorted_nodes(&entry.children);
+                collect_kind_partition_literals(&children, window, source, selector, out);
+            }
+            CstNode::Sequence(item) => {
+                let children = sorted_nodes(&item.children);
+                collect_kind_partition_literals(&children, window, source, selector, out);
+            }
+            CstNode::Output(_) | CstNode::Comment(_) | CstNode::Scalar(_) | CstNode::Opaque(_) => {}
+        }
+    }
+}
+
 fn api_version_value_body(value: &str, analysis_db: &IrAnalysisDb) -> HelperBranchBody {
+    scalar_value_body(value, analysis_db)
+}
+
+fn scalar_value_body(value: &str, analysis_db: &IrAnalysisDb) -> HelperBranchBody {
     if value.contains("{{") || value.contains("}}") {
-        let exprs = parse_expr_text(value);
-        return HelperOutputEvaluator::default()
-            .action_body(&exprs, analysis_db, 0)
-            .unwrap_or_else(|| HelperBranchBody::literals(Vec::new()));
+        if let Some(tree) = parse_go_template(value) {
+            return HelperOutputEvaluator::default().evaluate_body(
+                value,
+                tree.root_node(),
+                analysis_db,
+                0,
+            );
+        }
+        return HelperBranchBody::literals(Vec::new());
     }
     HelperBranchBody::literals(vec![unquote_yaml_scalar(value).to_string()])
 }
@@ -328,6 +446,7 @@ fn action_condition_text(text: &str) -> Option<&str> {
 
 fn is_kubernetes_list_envelope(resource: &ResourceRef) -> bool {
     resource.kind == "List"
+        && resource.kind_candidates.is_empty()
         && resource.api_version == "v1"
         && resource.api_version_candidates.is_empty()
         && resource.api_version_branches.is_empty()
@@ -369,6 +488,7 @@ fn items_entry<'nodes>(
 
 fn resource_from_parts(
     kind: Option<String>,
+    kind_candidates: Vec<String>,
     api_version_output: HelperBranchBody,
 ) -> Option<ResourceRef> {
     let kind = kind.filter(|kind| !kind.is_empty())?;
@@ -386,6 +506,7 @@ fn resource_from_parts(
     Some(ResourceRef {
         api_version,
         kind,
+        kind_candidates,
         api_version_candidates: api_versions,
         api_version_branches,
     })

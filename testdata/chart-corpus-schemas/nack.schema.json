@@ -26,33 +26,108 @@
       ]
     },
     "schema1": {
-      "additionalProperties": {},
-      "properties": {
-        "secret": {
-          "additionalProperties": {},
-          "properties": {
-            "key": {
-              "type": [
-                "boolean",
-                "integer",
-                "number",
-                "string"
-              ]
-            }
+      "not": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "tls": {
+                "properties": {
+                  "settings": {
+                    "properties": {
+                      "client_cert": {}
+                    },
+                    "required": [
+                      "client_cert"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "settings"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
           }
-        }
+        },
+        "required": [
+          "jetstream"
+        ],
+        "type": "object"
+      }
+    },
+    "schema2": {
+      "not": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "tls": {
+                "properties": {
+                  "settings": {
+                    "properties": {
+                      "client_key": {}
+                    },
+                    "required": [
+                      "client_key"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "settings"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "jetstream"
+        ],
+        "type": "object"
       }
     },
     "schema3": {
-      "additionalProperties": {},
-      "properties": {
-        "secret": {
-          "anyOf": [
-            {
-              "type": "object"
-            }
-          ]
-        }
+      "not": {
+        "properties": {
+          "jetstream": {
+            "properties": {
+              "tls": {
+                "properties": {
+                  "settings": {
+                    "properties": {
+                      "client_ca": {}
+                    },
+                    "required": [
+                      "client_ca"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "settings"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tls"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "jetstream"
+        ],
+        "type": "object"
       }
     }
   },
@@ -60,21 +135,44 @@
   "additionalProperties": false,
   "allOf": [
     {
-      "additionalProperties": {},
-      "properties": {
-        "jetstream": {
-          "additionalProperties": {},
+      "if": {
+        "not": {
           "properties": {
-            "additionalArgs": {
-              "anyOf": [
-                {
-                  "type": "array"
-                },
-                {
-                  "type": "null"
+            "jetstream": {
+              "properties": {
+                "controlLoop": {
+                  "$ref": "#/$defs/helm-truthy"
                 }
+              },
+              "required": [
+                "controlLoop"
               ],
-              "description": "Additional arguments to pass to the controller process"
+              "type": "object"
+            }
+          },
+          "required": [
+            "jetstream"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "additionalArgs": {
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Additional arguments to pass to the controller process"
+              }
             }
           }
         }
@@ -102,6 +200,100 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "jetstream": {
+                      "properties": {
+                        "image": {}
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "jetstream"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "jetstream": {
+                    "properties": {
+                      "image": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "jetstream": {
+                "properties": {
+                  "image": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "jetstream": {
             "properties": {
@@ -139,7 +331,16 @@
                 "description": "NATS URL",
                 "properties": {
                   "credentials": {
-                    "$ref": "#/$defs/schema3"
+                    "additionalProperties": {},
+                    "properties": {
+                      "secret": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
                   }
                 }
               }
@@ -290,7 +491,16 @@
                 "description": "NATS URL",
                 "properties": {
                   "nkey": {
-                    "$ref": "#/$defs/schema3"
+                    "additionalProperties": {},
+                    "properties": {
+                      "secret": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
                   }
                 }
               }
@@ -495,14 +705,542 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "jetstream": {
-          "additionalProperties": {},
-          "properties": {
-            "tls": {
-              "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
-              "type": "object"
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "jetstream": {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "jetstream": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema3"
+                  },
+                  {
+                    "properties": {
+                      "jetstream": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "settings": {
+                                "properties": {
+                                  "client_ca": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "client_ca"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "settings"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jetstream"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "jetstream": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  {
+                    "properties": {
+                      "jetstream": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "settings": {
+                                "properties": {
+                                  "client_cert": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "client_cert"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "settings"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jetstream"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "jetstream": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema2"
+                  },
+                  {
+                    "properties": {
+                      "jetstream": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "settings": {
+                                "properties": {
+                                  "client_key": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "client_key"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "settings"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jetstream"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
+                "properties": {
+                  "settings": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      }
+                    ],
+                    "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "jetstream": {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "jetstream": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema3"
+                  },
+                  {
+                    "properties": {
+                      "jetstream": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "settings": {
+                                "properties": {
+                                  "client_ca": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "client_ca"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "settings"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jetstream"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "jetstream": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  {
+                    "properties": {
+                      "jetstream": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "settings": {
+                                "properties": {
+                                  "client_cert": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "client_cert"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "settings"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jetstream"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "jetstream": {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "jetstream"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema2"
+                  },
+                  {
+                    "properties": {
+                      "jetstream": {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "settings": {
+                                "properties": {
+                                  "client_key": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "client_key"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "settings"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jetstream"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "jetstream": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
+                "type": "object"
+              }
             }
           }
         }
@@ -549,45 +1287,6 @@
       "properties": {
         "nameOverride": {
           "type": "string"
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "namespaced": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "namespaced"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "integer"
-              },
-              {
-                "type": "number"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
         }
       }
     },
@@ -663,16 +1362,6 @@
           }
         }
       }
-    },
-    {
-      "anyOf": [
-        {
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ]
     }
   ],
   "properties": {
@@ -763,219 +1452,6 @@
     },
     "jetstream": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "nats": {
-              "additionalProperties": {},
-              "description": "NATS URL",
-              "properties": {
-                "credentials": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "$ref": "#/$defs/helm-truthy"
-                      },
-                      "then": {
-                        "$ref": "#/$defs/schema1"
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "nats": {
-              "additionalProperties": {},
-              "description": "NATS URL",
-              "properties": {
-                "nkey": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "$ref": "#/$defs/helm-truthy"
-                      },
-                      "then": {
-                        "$ref": "#/$defs/schema1"
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "tls": {
-              "allOf": [
-                {
-                  "if": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "settings": {
-                        "additionalProperties": {},
-                        "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
-                        "properties": {
-                          "client_ca": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              ],
-              "description": "TLS\nEnabled must be true, and a secret name specified for this to work"
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "tls": {
-              "allOf": [
-                {
-                  "if": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "settings": {
-                        "additionalProperties": {},
-                        "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
-                        "properties": {
-                          "client_cert": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              ],
-              "description": "TLS\nEnabled must be true, and a secret name specified for this to work"
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "tls": {
-              "allOf": [
-                {
-                  "if": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "settings": {
-                        "additionalProperties": {},
-                        "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
-                        "properties": {
-                          "client_key": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              ],
-              "description": "TLS\nEnabled must be true, and a secret name specified for this to work"
-            }
-          }
-        }
-      ],
       "properties": {
         "additionalArgs": {
           "anyOf": [
@@ -1004,27 +1480,7 @@
         "image": {
           "additionalProperties": {}
         },
-        "klogLevel": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
+        "klogLevel": {},
         "nats": {
           "anyOf": [
             {
@@ -1071,30 +1527,7 @@
                   },
                   "type": "object"
                 },
-                "url": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    },
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "type": "number"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                }
+                "url": {}
               },
               "type": "object"
             }
@@ -1104,59 +1537,46 @@
         },
         "pullPolicy": {},
         "tls": {
-          "additionalProperties": {},
-          "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
-          "properties": {
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
-            "secretName": {
-              "description": "the secret containing the client ca.crt, tls.crt, and tls.key for NATS"
-            },
-            "settings": {
+          "anyOf": [
+            {
               "additionalProperties": {},
-              "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
               "properties": {
-                "client_ca": {},
-                "client_cert": {},
-                "client_key": {},
-                "timeout": {
-                  "type": "integer"
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
                 }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "secretName": {
+                  "description": "the secret containing the client ca.crt, tls.crt, and tls.key for NATS"
+                },
+                "settings": {
+                  "additionalProperties": {},
+                  "description": "Reference\nhttps://docs.nats.io/nats-streaming-server/configuring/cfgfile#tls-configuration",
+                  "properties": {
+                    "client_ca": {},
+                    "client_cert": {},
+                    "client_key": {}
+                  },
+                  "type": "object"
+                },
+                "tlsFirst": {}
               },
               "type": "object"
-            },
-            "tlsFirst": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "string"
-                }
-              ]
             }
-          },
+          ],
+          "description": "TLS\nEnabled must be true, and a secret name specified for this to work",
           "type": "object"
         }
       },
@@ -1180,15 +1600,6 @@
           "not": {
             "$ref": "#/$defs/helm-truthy"
           }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "number"
         },
         {
           "type": "string"
@@ -1240,25 +1651,6 @@
       "type": "string"
     },
     "readOnly": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Toggle to prevent the controller making changes to NATS streams/consumers."
     },
     "resources": {
@@ -1273,15 +1665,6 @@
           "not": {
             "$ref": "#/$defs/helm-truthy"
           }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "number"
         },
         {
           "type": "string"

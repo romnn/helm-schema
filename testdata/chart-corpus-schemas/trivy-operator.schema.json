@@ -269,26 +269,19 @@
       ],
       "type": "object"
     },
-    "schema34": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "schema37": {
+    "schema36": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
+      "type": "object"
+    },
+    "schema39": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
       "type": "object"
     },
     "schema4": {
@@ -321,15 +314,6 @@
       "type": "object"
     },
     "schema40": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema41": {
       "additionalProperties": {
         "type": "string"
       },
@@ -850,120 +834,6 @@
               }
             ],
             "description": "fullnameOverride override operator full name"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "image": {
-                "properties": {
-                  "tag": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "tag"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "operator": {
-                "properties": {
-                  "builtInTrivyServer": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "builtInTrivyServer"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema15"
-                  },
-                  {
-                    "properties": {
-                      "trivy": {
-                        "properties": {
-                          "createConfig": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "createConfig"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivy"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema1"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "description": "global values provide a centralized configuration for 'image.registry', reducing the potential for errors.\nIf left blank, the chart will default to the individually set 'image.registry' values",
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "registry": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
           }
         }
       }
@@ -1713,132 +1583,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "operator": {
-                "properties": {
-                  "builtInTrivyServer": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "builtInTrivyServer"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema15"
-              },
-              {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "createConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createConfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema1"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
-            "additionalProperties": {},
-            "properties": {
-              "builtInServerRegistryInsecure": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "builtInServerRegistryInsecure is the flag to enable insecure connection from the built-in Trivy server to the registry."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "fullnameOverride": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        "required": [
-          "fullnameOverride"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
-            "additionalProperties": {},
-            "properties": {
-              "namespace": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "namespace to install the operator, defaults to the .Release.Namespace"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -2229,22 +1973,66 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "description": "service only expose a metrics endpoint for prometheus to scrape,\ntrivy-operator does not have a user interface.",
-          "properties": {
-            "type": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "headless": {}
+                  },
+                  "required": [
+                    "headless"
+                  ],
+                  "type": "object"
                 }
+              },
+              "required": [
+                "service"
               ],
-              "description": "the Service type"
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "headless": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "headless"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "description": "service only expose a metrics endpoint for prometheus to scrape,\ntrivy-operator does not have a user interface.",
+            "properties": {
+              "type": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "the Service type"
+              }
             }
           }
         }
@@ -2318,102 +2106,6 @@
                   }
                 ],
                 "description": "name specifies the name of the k8s Service Account. If not set and create is\ntrue, a name is generated using the fullname template."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema15"
-              },
-              {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "createConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createConfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema1"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "trivy": {
-            "additionalProperties": {},
-            "properties": {
-              "dbRegistry": {
-                "$ref": "#/$defs/schema34"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema15"
-              },
-              {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "createConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createConfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema1"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "trivy": {
-            "additionalProperties": {},
-            "properties": {
-              "dbRepository": {
-                "$ref": "#/$defs/schema34"
               }
             }
           }
@@ -2742,239 +2434,6 @@
             "additionalProperties": {},
             "properties": {
               "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "registry": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "registry of the Trivy image"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "operator": {
-                "properties": {
-                  "builtInTrivyServer": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "builtInTrivyServer"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema15"
-                  },
-                  {
-                    "properties": {
-                      "trivy": {
-                        "properties": {
-                          "createConfig": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "createConfig"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivy"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema1"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "trivy": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "repository": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "repository of the Trivy image"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "operator": {
-            "properties": {
-              "builtInTrivyServer": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "builtInTrivyServer"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "operator"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "trivy": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "tag": {
-                    "anyOf": [
-                      {
-                        "type": "boolean"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "tag version of the Trivy image"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "operator": {
-                "properties": {
-                  "builtInTrivyServer": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "builtInTrivyServer"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema15"
-                  },
-                  {
-                    "properties": {
-                      "trivy": {
-                        "properties": {
-                          "createConfig": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "createConfig"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "trivy"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema1"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "trivy": {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
                 "anyOf": [
                   {
                     "type": "object"
@@ -3047,116 +2506,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema15"
-              },
-              {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "createConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createConfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema1"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "trivy": {
-            "additionalProperties": {},
-            "properties": {
-              "javaDbRegistry": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "javaDbRegistry is the registry for the Java vulnerability database."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema15"
-              },
-              {
-                "properties": {
-                  "trivy": {
-                    "properties": {
-                      "createConfig": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createConfig"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "trivy"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema1"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "trivy": {
-            "additionalProperties": {},
-            "properties": {
-              "javaDbRepository": {
-                "$ref": "#/$defs/schema34"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "properties": {
           "operator": {
             "properties": {
@@ -3184,7 +2533,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema40"
                   },
                   {
                     "not": {
@@ -3389,7 +2738,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema40"
                   },
                   {
                     "not": {
@@ -5148,6 +4497,65 @@
           "trivy": {
             "anyOf": [
               {
+                "patternProperties": {
+                  "^ignorePolicy": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema15"
+              },
+              {
+                "properties": {
+                  "trivy": {
+                    "properties": {
+                      "createConfig": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "createConfig"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "trivy"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "trivy": {
+            "anyOf": [
+              {
                 "type": "array"
               },
               {
@@ -6116,27 +5524,7 @@
         "image": {
           "additionalProperties": {},
           "properties": {
-            "registry": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "string"
-                }
-              ]
-            }
+            "registry": {}
           }
         }
       },
@@ -6161,50 +5549,6 @@
     },
     "image": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "tag": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "tag"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "registry": {
-                "$ref": "#/$defs/schema34"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "tag": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "tag"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "repository": {
-                "$ref": "#/$defs/schema34"
-              }
-            }
-          }
-        }
-      ],
       "properties": {
         "pullPolicy": {
           "anyOf": [
@@ -6239,25 +5583,6 @@
         "registry": {},
         "repository": {},
         "tag": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "tag is an override of the image tag, which is by default set by the\nappVersion field in Chart.yaml."
         }
       },
@@ -6276,56 +5601,16 @@
           "description": "excludeNodes comma-separated node labels that the node-collector job should exclude from scanning (example kubernetes.io/arch=arm64,team=dev)"
         },
         "imagePullSecret": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "imagePullSecret is the secret name to be used when pulling node-collector image from private registries example : reg-secret\nIt is the user responsibility to create the secret for the private registry in `trivy-operator` namespace"
         },
         "registry": {
-          "description": "registry of the node-collector image",
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "description": "registry of the node-collector image"
         },
         "repository": {
-          "description": "repository of the node-collector image",
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "description": "repository of the node-collector image"
         },
         "tag": {
-          "description": "tag version of the node-collector image",
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "description": "tag version of the node-collector image"
         },
         "tolerations": {
           "description": "tolerations to be applied to the node-collector so that they can run on nodes with matching taints"
@@ -6397,7 +5682,7 @@
               "serverAdditionalAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema40"
                   },
                   {
                     "not": {
@@ -6418,10 +5703,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema37"
+              "$ref": "#/$defs/schema36"
             },
             {
-              "$ref": "#/$defs/schema41"
+              "$ref": "#/$defs/schema40"
             },
             {
               "not": {
@@ -6476,10 +5761,10 @@
         "labels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema37"
+              "$ref": "#/$defs/schema36"
             },
             {
-              "$ref": "#/$defs/schema41"
+              "$ref": "#/$defs/schema40"
             },
             {
               "not": {
@@ -6541,10 +5826,10 @@
         "podLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema37"
+              "$ref": "#/$defs/schema36"
             },
             {
-              "$ref": "#/$defs/schema41"
+              "$ref": "#/$defs/schema40"
             },
             {
               "not": {
@@ -6650,10 +5935,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema37"
+          "$ref": "#/$defs/schema36"
         },
         {
-          "$ref": "#/$defs/schema41"
+          "$ref": "#/$defs/schema40"
         },
         {
           "not": {
@@ -6754,13 +6039,7 @@
           "description": "insecure is the flag to enable insecure connection to the policy bundle registry"
         },
         "registry": {
-          "description": "registry of the policies bundle",
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "description": "registry of the policies bundle"
         },
         "registryPassword": {
           "description": "registryPassword is the password for the registry"
@@ -6769,22 +6048,10 @@
           "description": "registryUser is the user for the registry"
         },
         "repository": {
-          "description": "repository of the policies bundle",
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "description": "repository of the policies bundle"
         },
         "tag": {
-          "description": "tag version of the policies bundle",
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "description": "tag version of the policies bundle"
         }
       },
       "type": "object"
@@ -6865,10 +6132,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema37"
+              "$ref": "#/$defs/schema36"
             },
             {
-              "$ref": "#/$defs/schema41"
+              "$ref": "#/$defs/schema40"
             },
             {
               "not": {
@@ -6894,16 +6161,6 @@
           "description": "the nodeport to use when service type is LoadBalancer or NodePort. If not set, Kubernetes automatically select one."
         },
         "type": {
-          "anyOf": [
-            {
-              "enum": [
-                "ClusterIP"
-              ]
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "the Service type"
         }
       },
@@ -6917,7 +6174,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema40"
+                  "$ref": "#/$defs/schema39"
                 }
               },
               {
@@ -6939,7 +6196,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema40"
                   },
                   {
                     "not": {
@@ -6956,7 +6213,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema40"
+                  "$ref": "#/$defs/schema39"
                 }
               },
               {
@@ -7044,7 +6301,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema40"
                   },
                   {
                     "not": {
@@ -7097,7 +6354,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema40"
                   },
                   {
                     "not": {

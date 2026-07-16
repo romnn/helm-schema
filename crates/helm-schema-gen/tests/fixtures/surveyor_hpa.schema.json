@@ -119,12 +119,54 @@
           "fullnameOverride": {
             "anyOf": [
               {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[-?:]([ \\t]|$)"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
-              },
-              {
-                "type": "string"
               }
             ]
           }
@@ -214,6 +256,8 @@
                     "additionalProperties": {
                       "type": "string"
                     },
+                    "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: http://kubernetes.io/docs/user-guide/labels",
+                    "properties": {},
                     "type": "object"
                   },
                   {
@@ -306,12 +350,54 @@
           "nameOverride": {
             "anyOf": [
               {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[-?:]([ \\t]|$)"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                    }
+                  }
+                ],
+                "type": "string"
+              },
+              {
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
-              },
-              {
-                "type": "string"
               }
             ]
           }
@@ -390,9 +476,17 @@
             "additionalProperties": {},
             "properties": {
               "maxReplicas": {
-                "description": "maxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up. It cannot be less that minReplicas.",
-                "format": "int32",
-                "type": "integer"
+                "anyOf": [
+                  {
+                    "description": "maxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up. It cannot be less that minReplicas.",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "pattern": "^-?(0|[1-9][0-9]*)$",
+                    "type": "string"
+                  }
+                ]
               }
             }
           }
@@ -413,9 +507,17 @@
             "additionalProperties": {},
             "properties": {
               "minReplicas": {
-                "description": "minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.",
-                "format": "int32",
-                "type": "integer"
+                "anyOf": [
+                  {
+                    "description": "minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down.  It defaults to 1 pod.  minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.  Scaling is active as long as at least one metric value is available.",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "pattern": "^-?(0|[1-9][0-9]*)$",
+                    "type": "string"
+                  }
+                ]
               }
             }
           }
@@ -446,6 +548,10 @@
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
+                  },
+                  {
+                    "pattern": "^-?(0|[1-9][0-9]*)$",
+                    "type": "string"
                   }
                 ]
               }
@@ -478,6 +584,10 @@
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
+                  },
+                  {
+                    "pattern": "^-?(0|[1-9][0-9]*)$",
+                    "type": "string"
                   }
                 ]
               }

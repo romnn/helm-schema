@@ -7,7 +7,7 @@ use helm_schema_core::{
 };
 use helm_schema_gen::{ValuesSchemaInput, generate_values_schema};
 use helm_schema_ir::{ContractDocument, ContractIr, FinalizedContract};
-use helm_schema_k8s::{DiagnosticSink, LocalSchemaUniverse};
+use helm_schema_k8s::{Diagnostic, DiagnosticSink, LocalSchemaUniverse};
 use serde_json::Value;
 
 use crate::analysis::analyze_charts;
@@ -289,7 +289,9 @@ impl AnalysisSession {
     fn finalized_contract(&self) -> EngineResult<Arc<FinalizedContract>> {
         self.finalized_contract.get_or_try_init(|| {
             let prepared = self.prepared()?;
-            Ok(prepared.analysis.contract.clone().finalize())
+            let finalized = prepared.analysis.contract.clone().finalize();
+            emit_input_channel_diagnostics(finalized.schema_signals(), &self.diagnostics);
+            Ok(finalized)
         })
     }
 
@@ -313,6 +315,27 @@ impl AnalysisSession {
                 subchart_value_prefixes: prepared.subchart_value_prefixes.clone(),
             })
         })
+    }
+}
+
+pub(crate) fn emit_input_channel_diagnostics(
+    signals: &ContractSchemaSignals,
+    diagnostics: &DiagnosticSink,
+) {
+    for (value_path, evidence) in signals.schema_evidence_by_value_path() {
+        let base_is_ambiguous = evidence.facts.is_direct_ranged_source
+            && !evidence.facts.has_destructured_range_use
+            && !evidence.facts.has_json_decoded_range_use;
+        let guarded_is_ambiguous = evidence.conditional_overlays.iter().any(|overlay| {
+            overlay.evidence.facts.is_direct_ranged_source
+                && !overlay.evidence.facts.has_destructured_range_use
+                && !overlay.evidence.facts.has_json_decoded_range_use
+        });
+        if base_is_ambiguous || guarded_is_ambiguous {
+            diagnostics.push(Diagnostic::InputChannelNumericRangeAmbiguity {
+                value_path: value_path.clone(),
+            });
+        }
     }
 }
 

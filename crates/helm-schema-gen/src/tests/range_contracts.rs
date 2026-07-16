@@ -130,7 +130,7 @@ fn range_alternative_does_not_bypass_member_contract() {
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
     for instance in [
-        serde_json::json!({ "secret": { "ALERT_ON_RELOAD": "true" } }),
+        serde_json::json!({ "secret": { "ALERT_ON_RELOAD": "enabled" } }),
         serde_json::json!({ "secret": {} }),
         serde_json::json!({ "secret": [] }),
     ] {
@@ -229,11 +229,11 @@ fn slice_partition_overlay_accepts_arrays() {
     );
 }
 
-/// F56: `toYaml` into a MAPPING-VALUE slot is total — falsy values skip
-/// the `with`, and truthy scalars render as plain scalars (promtail
-/// `affinity` shape).
+/// `toYaml` preserves its input kind at a mapping-value provider sink:
+/// falsy values skip the `with`, while a truthy scalar renders an invalid
+/// Pod affinity value.
 #[test]
-fn mapping_value_fragment_accepts_all_types() {
+fn mapping_value_yaml_serialization_keeps_provider_shape() {
     let src = indoc! {r#"
         apiVersion: v1
         kind: Pod
@@ -250,15 +250,18 @@ fn mapping_value_fragment_accepts_all_types() {
 
     for instance in [
         serde_json::json!({ "affinity": false }),
-        serde_json::json!({ "affinity": 7 }),
         serde_json::json!({ "affinity": {} }),
         serde_json::json!({ "affinity": { "nodeAffinity": {} } }),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance),
-            "toYaml is total in a mapping-value slot: instance={instance}; schema={schema}"
+            "a skipped or provider-valid affinity must validate: instance={instance}; schema={schema}"
         );
     }
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!({ "affinity": 7 })),
+        "a truthy scalar reaches the object-typed affinity sink: {schema}"
+    );
 }
 
 /// F56: a shape-neutral `toYaml` input still inherits the sequence domain of
@@ -327,7 +330,7 @@ fn member_read_beside_serialize_requires_object_when_truthy() {
     for instance in [
         serde_json::json!({ "podDisruptionBudget": false }),
         serde_json::json!({ "podDisruptionBudget": 0 }),
-        serde_json::json!({ "podDisruptionBudget": { "selector": "x" } }),
+        serde_json::json!({ "podDisruptionBudget": { "selector": {} } }),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance),

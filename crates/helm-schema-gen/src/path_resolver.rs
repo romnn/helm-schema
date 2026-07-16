@@ -321,14 +321,14 @@ pub(crate) fn fail_requirement_schema<'a>(
         let requirement = fail_value_requirement_schema(
             &implication.requirements,
             !matches!(
-                implication.target,
+                &implication.target,
                 helm_schema_core::ContractRequirementTarget::Value
             ),
         );
         if is_empty_schema(&requirement) {
             continue;
         }
-        match implication.target {
+        match &implication.target {
             helm_schema_core::ContractRequirementTarget::Value => parts.push(requirement),
             helm_schema_core::ContractRequirementTarget::Members { allow_integer } => {
                 let mut arms = vec![
@@ -338,7 +338,7 @@ pub(crate) fn fail_requirement_schema<'a>(
                         "additionalProperties": requirement,
                     }),
                 ];
-                if allow_integer {
+                if *allow_integer {
                     let integer =
                         if requirements_allow_runtime_kind(&implication.requirements, "integer") {
                             serde_json::json!({ "type": "integer" })
@@ -351,6 +351,43 @@ pub(crate) fn fail_requirement_schema<'a>(
                 }
                 arms.push(serde_json::json!({ "type": "null" }));
                 parts.push(serde_json::json!({ "anyOf": arms }));
+            }
+            helm_schema_core::ContractRequirementTarget::MembersMatchingPrefix { prefix } => {
+                let pattern = format!("^{}", regex::escape(prefix));
+                parts.push(serde_json::json!({
+                    "anyOf": [
+                        {
+                            "type": "object",
+                            "patternProperties": { (pattern): requirement },
+                        },
+                        { "type": "array", "maxItems": 0 },
+                        { "type": "null" },
+                    ]
+                }));
+            }
+            helm_schema_core::ContractRequirementTarget::MembersWhereEquals {
+                guard_path,
+                value,
+                target_path,
+            } => {
+                let Some(value) = serde_json::to_value(value).ok() else {
+                    continue;
+                };
+                let guard =
+                    required_object_path_schema(guard_path, serde_json::json!({ "const": value }));
+                let target = crate::schema_tree::insert_path_schema_value(
+                    empty_schema(),
+                    target_path,
+                    requirement,
+                );
+                let member = serde_json::json!({ "if": guard, "then": target });
+                parts.push(serde_json::json!({
+                    "anyOf": [
+                        { "type": "array", "items": member },
+                        { "type": "object", "additionalProperties": member },
+                        { "type": "null" },
+                    ]
+                }));
             }
             helm_schema_core::ContractRequirementTarget::Keys => {
                 let object = if requirements_allow_runtime_kind(&implication.requirements, "string")
@@ -374,6 +411,16 @@ pub(crate) fn fail_requirement_schema<'a>(
         }
     }
     merge_schema_list(parts)
+}
+
+fn required_object_path_schema(path: &[String], leaf: Value) -> Value {
+    path.iter().rev().fold(leaf, |schema, segment| {
+        serde_json::json!({
+            "type": "object",
+            "properties": { (segment.clone()): schema },
+            "required": [segment],
+        })
+    })
 }
 
 /// Translate a Go/RE2 pattern into an ECMA 262 equivalent for the JSON
@@ -476,6 +523,10 @@ fn requirements_allow_runtime_kind(
         FailValueRequirement::MemberHost { handled_kinds } => {
             schema_type == "object" || handled_kinds.iter().any(|kind| kind == schema_type)
         }
+        FailValueRequirement::IndexableAt(_) => matches!(schema_type, "array" | "string"),
+        FailValueRequirement::SplitSegmentsAtLeast {
+            allow_non_string, ..
+        } => schema_type == "string" || *allow_non_string,
     })
 }
 
@@ -538,6 +589,33 @@ fn fail_value_requirement_schema(
             }
             FailValueRequirement::Iterable { allow_integer } => {
                 parts.push(crate::runtime_iterable_schema(*allow_integer));
+            }
+            FailValueRequirement::IndexableAt(index) => {
+                parts.push(serde_json::json!({
+                    "anyOf": [
+                        { "type": "array", "minItems": index + 1 },
+                        { "type": "string" },
+                    ]
+                }));
+            }
+            FailValueRequirement::SplitSegmentsAtLeast {
+                separator,
+                segments,
+                allow_non_string,
+            } => {
+                let occurrences = segments.saturating_sub(1);
+                let pattern = format!(
+                    "^(?:[\\s\\S]*{}){{{occurrences}}}",
+                    regex::escape(separator)
+                );
+                let string = serde_json::json!({ "type": "string", "pattern": pattern });
+                if *allow_non_string {
+                    parts.push(serde_json::json!({
+                        "anyOf": [string, { "not": { "type": "string" } }]
+                    }));
+                } else {
+                    parts.push(string);
+                }
             }
         }
     }

@@ -16,16 +16,33 @@ fn velero_storage_locations_type_dispatch_holds() -> color_eyre::eyre::Result<()
 
     for path in ["backupStorageLocation", "volumeSnapshotLocation"] {
         let instance = |value: serde_json::Value| {
+            let mut configuration = serde_json::json!({
+                "backupStorageLocation": [
+                    { "name": "default", "provider": "aws", "bucket": "b" }
+                ],
+                "volumeSnapshotLocation": [
+                    { "name": "default", "provider": "aws" }
+                ]
+            });
+            configuration
+                .as_object_mut()
+                .expect("configuration object")
+                .insert(path.to_string(), value);
             chart_instances::with_override(
                 "velero",
-                serde_json::json!({ "configuration": { path: value } }),
+                serde_json::json!({ "configuration": configuration }),
             )
         };
+        let valid_location = instance(serde_json::json!([
+            { "name": "default", "provider": "aws", "bucket": "b" }
+        ]))?;
+        let valid_location_errors = validator
+            .iter_errors(&valid_location)
+            .map(|error| format!("{}: {error}", error.instance_path()))
+            .collect::<Vec<_>>();
         assert!(
-            validator.is_valid(&instance(serde_json::json!([
-                { "name": "default", "bucket": "b" }
-            ]))?),
-            "a valid location list renders ({path})"
+            valid_location_errors.is_empty(),
+            "a valid location list renders ({path}): {valid_location_errors:#?}"
         );
         assert!(
             validator.is_valid(&instance(serde_json::json!("ignored"))?),

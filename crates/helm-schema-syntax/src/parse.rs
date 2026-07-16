@@ -339,7 +339,8 @@ impl<'src> Parser<'src> {
             TokenKind::TemplateComment => {
                 self.attach_opaque(token.span, OpaqueKind::TemplateComment);
             }
-            TokenKind::ControlAtom => self.attach_opaque(token.span, OpaqueKind::ControlAtom),
+            TokenKind::Break => self.attach_opaque(token.span, OpaqueKind::Break),
+            TokenKind::Continue => self.attach_opaque(token.span, OpaqueKind::Continue),
             TokenKind::Error => self.attach_opaque(token.span, OpaqueKind::ParseError),
             TokenKind::RegionOpen {
                 region,

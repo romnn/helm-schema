@@ -402,8 +402,8 @@ fn static_chart_crds_type_custom_resource_values() -> color_eyre::eyre::Result<(
         "chart-local CRD should type widget.spec.size as integer, got {size}"
     );
     assert!(
-        !schema_accepts_type(size, "string"),
-        "values default does not type widget.spec.size as string, got {size}"
+        schema_accepts_type(size, "string"),
+        "an unquoted numeric string reparses to the CRD's integer field, got {size}"
     );
 
     Ok(())

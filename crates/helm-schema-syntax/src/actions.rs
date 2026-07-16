@@ -32,8 +32,10 @@ pub(crate) enum TokenKind {
     Assign,
     /// `{{/* … */}}`.
     TemplateComment,
-    /// `{{ break }}` / `{{ continue }}`.
-    ControlAtom,
+    /// `{{ break }}`.
+    Break,
+    /// `{{ continue }}`.
+    Continue,
     /// Header of a control region; `region_end` is the byte end of the whole
     /// `{{ … }}…{{ end }}` construct.
     RegionOpen {
@@ -124,9 +126,13 @@ fn dispatch_body_child<'tree>(
                 expr_span: node_span(child),
             },
         }),
-        "break_action" | "continue_action" => out.push(ActionToken {
+        "break_action" => out.push(ActionToken {
             span: node_span(child),
-            kind: TokenKind::ControlAtom,
+            kind: TokenKind::Break,
+        }),
+        "continue_action" => out.push(ActionToken {
+            span: node_span(child),
+            kind: TokenKind::Continue,
         }),
         "ERROR" => walk_body(child, next_region, out),
         _ => {

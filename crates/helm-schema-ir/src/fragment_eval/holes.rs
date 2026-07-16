@@ -468,6 +468,7 @@ impl Interpreter<'_> {
             return Vec::new();
         }
         self.record_required_subjects(&exprs);
+        let _ = self.inline_static_file_fragments(&exprs);
         // Fragment-rendering holes (`toYaml … | nindent`) keep fragment
         // evidence even inside scalar text; everything else is a partial
         // scalar contribution.
@@ -693,6 +694,7 @@ impl Interpreter<'_> {
             return;
         }
         self.record_required_subjects(&exprs);
+        let _ = self.inline_static_file_fragments(&exprs);
         let hole = self.eval_hole_exprs(&exprs);
         self.absorb_hole_effects(&hole.effects, RenderedDemotion::Document);
         self.push_effects_reads(&hole, ValueKind::Fragment);

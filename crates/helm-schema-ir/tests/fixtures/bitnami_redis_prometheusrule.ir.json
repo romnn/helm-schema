@@ -14,6 +14,12 @@
           {
             "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
+          },
+          {
+            "path": "commonAnnotations",
+            "pattern": "\\{\\{",
+            "templated": false,
+            "type": "matches_pattern"
           }
         ]
       ],
@@ -31,6 +37,28 @@
           "template_path": "<inline:2>"
         }
       ],
+      "resource": null,
+      "source_expr": "commonAnnotations"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "commonAnnotations",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "monitoring.coreos.com/v1",
         "kind": "PrometheusRule"
@@ -411,6 +439,12 @@
           {
             "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.additionalLabels",
+            "pattern": "\\{\\{",
+            "templated": false,
+            "type": "matches_pattern"
           }
         ]
       ],
@@ -428,6 +462,28 @@
           "template_path": "<inline:2>"
         }
       ],
+      "resource": null,
+      "source_expr": "metrics.prometheusRule.additionalLabels"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.additionalLabels",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "monitoring.coreos.com/v1",
         "kind": "PrometheusRule"
@@ -557,6 +613,12 @@
           {
             "path": "metrics.prometheusRule.enabled",
             "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.rules",
+            "pattern": "\\{\\{",
+            "templated": false,
+            "type": "matches_pattern"
           }
         ]
       ],
@@ -753,7 +815,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "Scalar",
       "path": [
         "metadata",
         "labels",

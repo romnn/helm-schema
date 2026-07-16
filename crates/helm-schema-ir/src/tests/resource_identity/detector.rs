@@ -36,6 +36,53 @@ fn detects_kind_before_api_version() {
 }
 
 #[test]
+fn preserves_inline_conditional_kind_candidates() {
+    let resource = detect(
+        indoc! {r#"
+            apiVersion: apps/v1
+            kind: {{ if .Values.persistence }}StatefulSet{{ else }}Deployment{{ end }}
+            metadata:
+              name: example
+        "#},
+        &DefineIndex::new(),
+    )
+    .expect("resource");
+
+    sim_assert_eq!(have: resource.kind, want: "StatefulSet");
+    sim_assert_eq!(have: resource.kind_candidates, want: vec!["Deployment"]);
+}
+
+#[test]
+fn recovers_values_selected_kind_candidates_from_body_partitions() {
+    let resource = detect(
+        indoc! {r#"
+            apiVersion: apps/v1
+            kind: {{ .Values.workloadKind }}
+            metadata:
+              name: example
+            spec:
+              {{- if not (eq .Values.workloadKind "DaemonSet") }}
+              replicas: 1
+              {{- end }}
+              {{- if eq .Values.workloadKind "StatefulSet" }}
+              serviceName: example
+              {{- end }}
+              {{- if eq .Values.workloadKind "Deployment" }}
+              strategy: {}
+              {{- end }}
+        "#},
+        &DefineIndex::new(),
+    )
+    .expect("resource");
+
+    sim_assert_eq!(have: resource.kind, want: "DaemonSet");
+    sim_assert_eq!(
+        have: resource.kind_candidates,
+        want: vec!["StatefulSet", "Deployment"]
+    );
+}
+
+#[test]
 fn detects_resources_inside_template_control_bodies_after_preamble() {
     let source = indoc! {r#"
         {{- $name := include "x.name" . }}

@@ -14,6 +14,9 @@ pub(crate) enum AbstractValue {
     OutputPath(String, HelperOutputMeta),
     RootContext,
     StringSet(BTreeSet<String>),
+    /// Boolean result computed from other values. Its influences are not
+    /// the Boolean's raw runtime identity.
+    DerivedBoolean(BTreeSet<String>),
     Dict(BTreeMap<String, AbstractValue>),
     List(Vec<AbstractValue>),
     Overlay {
@@ -21,6 +24,14 @@ pub(crate) enum AbstractValue {
         fallback: Box<AbstractValue>,
     },
     Choice(BTreeSet<AbstractValue>),
+    /// List produced by splitting derived text. The source paths are
+    /// influences rather than list identities; literal indexing uses the
+    /// separator to recover a bounded source-cardinality precondition.
+    SplitList {
+        source_paths: BTreeSet<String>,
+        separator: String,
+        total_text_preimage: bool,
+    },
     /// Result of a call without a transfer function: the value itself is
     /// unknown (structural operations treat it like `Unknown`), but the
     /// `.Values` paths that flowed into the call are kept so output
@@ -77,6 +88,8 @@ impl AbstractValue {
             | Self::OutputPath(_, _)
             | Self::RootContext
             | Self::StringSet(_)
+            | Self::DerivedBoolean(_)
+            | Self::SplitList { .. }
             | Self::Widened(_) => {}
         }
     }
@@ -120,7 +133,12 @@ impl AbstractValue {
             // Influence paths surface in full path collection (output
             // attribution), but a widened value is not a fragment source:
             // fragment projections must treat it like `Unknown`.
-            Self::Widened(paths) => {
+            Self::Widened(paths)
+            | Self::DerivedBoolean(paths)
+            | Self::SplitList {
+                source_paths: paths,
+                ..
+            } => {
                 if !suppress_values_root {
                     out.extend(paths.iter().cloned());
                 }
@@ -143,6 +161,147 @@ impl AbstractValue {
         }
     }
 
+    pub(crate) fn output_meta(&self) -> BTreeMap<String, HelperOutputMeta> {
+        let mut out = BTreeMap::new();
+        self.collect_output_meta(&mut out);
+        out
+    }
+
+    pub(crate) fn with_output_meta(
+        self,
+        meta_by_path: &BTreeMap<String, HelperOutputMeta>,
+    ) -> Self {
+        match self {
+            Self::ValuesPath(path) => match meta_by_path.get(&path) {
+                Some(meta) => Self::OutputPath(path, meta.clone()),
+                None => Self::ValuesPath(path),
+            },
+            Self::JsonDecodedPath(path) => match meta_by_path.get(&path) {
+                Some(meta) => {
+                    let mut meta = meta.clone();
+                    meta.json_decoded = true;
+                    Self::OutputPath(path, meta)
+                }
+                None => Self::JsonDecodedPath(path),
+            },
+            Self::OutputPath(path, mut meta) => {
+                if let Some(extra) = meta_by_path.get(&path) {
+                    meta.merge(extra);
+                }
+                Self::OutputPath(path, meta)
+            }
+            Self::Dict(entries) => Self::Dict(
+                entries
+                    .into_iter()
+                    .map(|(key, value)| (key, value.with_output_meta(meta_by_path)))
+                    .collect(),
+            ),
+            Self::List(items) => Self::List(
+                items
+                    .into_iter()
+                    .map(|value| value.with_output_meta(meta_by_path))
+                    .collect(),
+            ),
+            Self::Overlay { entries, fallback } => Self::Overlay {
+                entries: entries
+                    .into_iter()
+                    .map(|(key, value)| (key, value.with_output_meta(meta_by_path)))
+                    .collect(),
+                fallback: Box::new(fallback.with_output_meta(meta_by_path)),
+            },
+            Self::Choice(choices) => Self::Choice(
+                choices
+                    .into_iter()
+                    .map(|value| value.with_output_meta(meta_by_path))
+                    .collect(),
+            ),
+            other => other,
+        }
+    }
+
+    fn collect_output_meta(&self, out: &mut BTreeMap<String, HelperOutputMeta>) {
+        match self {
+            Self::OutputPath(path, meta) => out.entry(path.clone()).or_default().merge(meta),
+            Self::Dict(entries) => {
+                for value in entries.values() {
+                    value.collect_output_meta(out);
+                }
+            }
+            Self::List(items) => {
+                for value in items {
+                    value.collect_output_meta(out);
+                }
+            }
+            Self::Overlay { entries, fallback } => {
+                for value in entries.values() {
+                    value.collect_output_meta(out);
+                }
+                fallback.collect_output_meta(out);
+            }
+            Self::Choice(choices) => {
+                for value in choices {
+                    value.collect_output_meta(out);
+                }
+            }
+            Self::Top
+            | Self::Unknown
+            | Self::ValuesPath(_)
+            | Self::JsonDecodedPath(_)
+            | Self::RangeKey(_)
+            | Self::RootContext
+            | Self::StringSet(_)
+            | Self::DerivedBoolean(_)
+            | Self::SplitList { .. }
+            | Self::Widened(_) => {}
+        }
+    }
+
+    pub(crate) fn require_rendered_source_presence(self) -> Self {
+        match self {
+            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => {
+                let mut meta = HelperOutputMeta::default();
+                meta.conjoin_branches(&BTreeSet::from([helm_schema_core::Predicate::from(
+                    helm_schema_core::Guard::Absent { path: path.clone() },
+                )
+                .negated()]));
+                Self::OutputPath(path, meta)
+            }
+            Self::OutputPath(path, mut meta) => {
+                meta.conjoin_branches(&BTreeSet::from([helm_schema_core::Predicate::from(
+                    helm_schema_core::Guard::Absent { path: path.clone() },
+                )
+                .negated()]));
+                Self::OutputPath(path, meta)
+            }
+            Self::Dict(entries) => Self::Dict(
+                entries
+                    .into_iter()
+                    .map(|(key, value)| (key, value.require_rendered_source_presence()))
+                    .collect(),
+            ),
+            Self::List(items) => Self::List(
+                items
+                    .into_iter()
+                    .map(Self::require_rendered_source_presence)
+                    .collect(),
+            ),
+            Self::Overlay { entries, fallback } => Self::Overlay {
+                entries: entries
+                    .into_iter()
+                    .map(|(key, value)| (key, value.require_rendered_source_presence()))
+                    .collect(),
+                fallback: Box::new(fallback.require_rendered_source_presence()),
+            },
+            Self::Choice(choices) => Self::Choice(
+                choices
+                    .into_iter()
+                    .map(Self::require_rendered_source_presence)
+                    .collect(),
+            ),
+            other => other,
+        }
+    }
+
     pub(crate) fn fragment_range_item(&self) -> Option<Self> {
         match self {
             Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
@@ -152,6 +311,7 @@ impl AbstractValue {
             }
             Self::OutputPath(path, meta) => Some(Self::OutputPath(path.clone(), meta.clone())),
             Self::List(items) => Self::choice(items.clone()),
+            Self::SplitList { .. } => Some(Self::Unknown),
             Self::Choice(choices) => Self::choice(
                 choices
                     .iter()
@@ -163,6 +323,7 @@ impl AbstractValue {
             | Self::RangeKey(_)
             | Self::RootContext
             | Self::StringSet(_)
+            | Self::DerivedBoolean(_)
             | Self::Dict(_)
             | Self::Overlay { .. }
             | Self::Widened(_) => None,
@@ -174,10 +335,47 @@ impl AbstractValue {
             Self::Dict(entries) => !entries.is_empty(),
             Self::List(items) => !items.is_empty(),
             Self::Overlay { entries, .. } => !entries.is_empty(),
+            Self::SplitList { .. } => true,
             Self::Choice(choices) => {
                 !choices.is_empty() && choices.iter().all(Self::definitely_nonempty_iterable)
             }
             _ => false,
+        }
+    }
+
+    pub(crate) fn static_truthiness(&self) -> Option<bool> {
+        match self {
+            Self::StringSet(strings) => {
+                let all_empty = strings.iter().all(String::is_empty);
+                let all_nonempty = strings.iter().all(|value| !value.is_empty());
+                match (all_empty, all_nonempty) {
+                    (true, false) => Some(false),
+                    (false, true) => Some(true),
+                    _ => None,
+                }
+            }
+            Self::Dict(entries) => Some(!entries.is_empty()),
+            Self::List(items) => Some(!items.is_empty()),
+            Self::Overlay { entries, fallback } => (!entries.is_empty())
+                .then_some(true)
+                .or_else(|| fallback.static_truthiness()),
+            Self::RootContext => Some(true),
+            Self::Choice(choices) => {
+                let mut truthiness = choices.iter().map(Self::static_truthiness);
+                let first = truthiness.next()??;
+                truthiness
+                    .all(|candidate| candidate == Some(first))
+                    .then_some(first)
+            }
+            Self::Top
+            | Self::Unknown
+            | Self::ValuesPath(_)
+            | Self::JsonDecodedPath(_)
+            | Self::RangeKey(_)
+            | Self::OutputPath(_, _)
+            | Self::DerivedBoolean(_)
+            | Self::SplitList { .. }
+            | Self::Widened(_) => None,
         }
     }
 
@@ -248,7 +446,9 @@ impl AbstractValue {
             | Self::Unknown
             | Self::RangeKey(_)
             | Self::RootContext
-            | Self::StringSet(_) => self,
+            | Self::StringSet(_)
+            | Self::DerivedBoolean(_)
+            | Self::SplitList { .. } => self,
         }
     }
 
@@ -310,7 +510,9 @@ impl AbstractValue {
             | Self::OutputPath(_, _)
             | Self::RootContext
             | Self::StringSet(_)
+            | Self::DerivedBoolean(_)
             | Self::List(_)
+            | Self::SplitList { .. }
             | Self::Widened(_) => None,
         }
     }
@@ -358,6 +560,8 @@ impl AbstractValue {
             | Self::RangeKey(_)
             | Self::RootContext
             | Self::StringSet(_)
+            | Self::DerivedBoolean(_)
+            | Self::SplitList { .. }
             | Self::Widened(_) => false,
         }
     }
@@ -432,7 +636,11 @@ impl AbstractValue {
             // Selecting into an unknown call result severs the influence:
             // the selected member is not derived from the recorded paths in
             // any way the projection could still attribute.
-            Self::Unknown | Self::Widened(_) | Self::RangeKey(_) => None,
+            Self::Unknown
+            | Self::Widened(_)
+            | Self::DerivedBoolean(_)
+            | Self::SplitList { .. }
+            | Self::RangeKey(_) => None,
             Self::StringSet(_) => None,
             Self::Choice(choices) => {
                 let mut out = Vec::new();
@@ -582,7 +790,23 @@ impl AbstractValue {
             | Self::Unknown
             | Self::Top
             | Self::StringSet(_) => Some(self),
+            Self::DerivedBoolean(paths) => Some(Self::DerivedBoolean(
+                paths.difference(remove).cloned().collect(),
+            )),
             Self::Widened(paths) => Self::widened(paths.difference(remove).cloned().collect()),
+            Self::SplitList {
+                source_paths,
+                separator,
+                total_text_preimage,
+            } => {
+                let source_paths: BTreeSet<String> =
+                    source_paths.difference(remove).cloned().collect();
+                (!source_paths.is_empty()).then_some(Self::SplitList {
+                    source_paths,
+                    separator,
+                    total_text_preimage,
+                })
+            }
             Self::Dict(entries) => {
                 let entries = Self::remove_fragment_paths_from_entries(entries, remove);
                 if entries.is_empty() {
@@ -656,7 +880,9 @@ impl AbstractValue {
             | Self::List(_)
             | Self::Overlay { .. }
             | Self::StringSet(_)
+            | Self::DerivedBoolean(_)
             | Self::Choice(_)
+            | Self::SplitList { .. }
             | Self::Widened(_) => None,
         }
     }

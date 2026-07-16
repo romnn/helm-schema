@@ -26,6 +26,100 @@
       ]
     },
     "schema1": {
+      "not": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "defaultSettings": {
+                      "properties": {
+                        "systemManagedComponentsNodeSelector": {}
+                      },
+                      "required": [
+                        "systemManagedComponentsNodeSelector"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "defaultSettings"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "defaultSettings": {
+                    "properties": {
+                      "systemManagedComponentsNodeSelector": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "systemManagedComponentsNodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "defaultSettings"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "defaultSettings": {
+                      "properties": {
+                        "systemManagedComponentsNodeSelector": {}
+                      },
+                      "required": [
+                        "systemManagedComponentsNodeSelector"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "defaultSettings"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "defaultSettings": {
+                    "properties": {
+                      "systemManagedComponentsNodeSelector": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "systemManagedComponentsNodeSelector"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "defaultSettings"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "schema13": {
       "anyOf": [
         {
           "type": "array"
@@ -42,63 +136,7 @@
       ],
       "description": "Extra hostnames for TLS (Subject Alternative Names - SAN). Used when you need multiple FQDNs for the same ingress.\nExample:\nextraHosts:\n- longhorn.example.com\n- longhorn-ui.internal.local"
     },
-    "schema12": {
-      "not": {
-        "properties": {
-          "ui": {
-            "properties": {
-              "route": {}
-            },
-            "required": [
-              "route"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "ui"
-        ],
-        "type": "object"
-      }
-    },
-    "schema13": {
-      "additionalProperties": {},
-      "properties": {
-        "group": {},
-        "kind": {},
-        "name": {},
-        "namespace": {},
-        "sectionName": {}
-      },
-      "type": "object"
-    },
-    "schema17": {
-      "properties": {
-        "createStorageClass": {}
-      },
-      "required": [
-        "createStorageClass"
-      ],
-      "type": "object"
-    },
-    "schema18": {
-      "not": {
-        "properties": {
-          "repository": {}
-        },
-        "required": [
-          "repository"
-        ],
-        "type": "object"
-      }
-    },
-    "schema19": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "schema2": {
+    "schema16": {
       "anyOf": [
         {
           "type": "array"
@@ -115,42 +153,7 @@
       ],
       "description": "List of hostnames for the HTTPRoute. Multiple hostnames are supported.\nExample:\n- longhorn.example.com\n- longhorn.example.org"
     },
-    "schema20": {
-      "properties": {
-        "repository": {}
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "schema21": {
-      "not": {
-        "properties": {
-          "tag": {}
-        },
-        "required": [
-          "tag"
-        ],
-        "type": "object"
-      }
-    },
-    "schema23": {
-      "properties": {
-        "tag": {}
-      },
-      "required": [
-        "tag"
-      ],
-      "type": "object"
-    },
-    "schema24": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "schema3": {
+    "schema18": {
       "additionalProperties": {},
       "properties": {
         "annotations": {
@@ -169,7 +172,7 @@
         }
       }
     },
-    "schema4": {
+    "schema22": {
       "not": {
         "properties": {
           "openshift": {
@@ -196,30 +199,7 @@
         "type": "object"
       }
     },
-    "schema6": {
-      "additionalProperties": {},
-      "properties": {
-        "certificate": {
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
-        },
-        "key": {
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
-        },
-        "name": {}
-      },
-      "type": "object"
-    },
-    "schema7": {
+    "schema25": {
       "properties": {
         "privateRegistry": {
           "properties": {
@@ -238,7 +218,7 @@
       ],
       "type": "object"
     },
-    "schema8": {
+    "schema27": {
       "not": {
         "properties": {
           "persistence": {
@@ -257,7 +237,7 @@
         "type": "object"
       }
     },
-    "schema9": {
+    "schema29": {
       "properties": {
         "global": {
           "properties": {
@@ -275,11 +255,1158 @@
         "global"
       ],
       "type": "object"
+    },
+    "schema3": {
+      "not": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "defaultSettings": {
+                      "properties": {
+                        "taintToleration": {}
+                      },
+                      "required": [
+                        "taintToleration"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "defaultSettings"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "defaultSettings": {
+                    "properties": {
+                      "taintToleration": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "taintToleration"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "defaultSettings"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "defaultSettings": {
+                      "properties": {
+                        "taintToleration": {}
+                      },
+                      "required": [
+                        "taintToleration"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "defaultSettings"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "defaultSettings": {
+                    "properties": {
+                      "taintToleration": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "taintToleration"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "defaultSettings"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "schema34": {
+      "not": {
+        "properties": {
+          "ui": {
+            "properties": {
+              "route": {}
+            },
+            "required": [
+              "route"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "ui"
+        ],
+        "type": "object"
+      }
+    },
+    "schema36": {
+      "additionalProperties": {},
+      "properties": {
+        "group": {},
+        "kind": {},
+        "name": {},
+        "namespace": {},
+        "sectionName": {}
+      },
+      "type": "object"
+    },
+    "schema41": {
+      "additionalProperties": {},
+      "properties": {
+        "certificate": {},
+        "key": {},
+        "name": {}
+      },
+      "type": "object"
+    },
+    "schema42": {
+      "properties": {
+        "createStorageClass": {}
+      },
+      "required": [
+        "createStorageClass"
+      ],
+      "type": "object"
+    },
+    "schema44": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema46": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema6": {
+      "not": {
+        "properties": {
+          "global": {
+            "properties": {
+              "cattle": {
+                "properties": {
+                  "windowsCluster": {
+                    "properties": {
+                      "defaultSetting": {
+                        "properties": {
+                          "systemManagedComponentsNodeSelector": {}
+                        },
+                        "required": [
+                          "systemManagedComponentsNodeSelector"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "defaultSetting"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "windowsCluster"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "cattle"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      }
+    },
+    "schema8": {
+      "not": {
+        "properties": {
+          "global": {
+            "properties": {
+              "cattle": {
+                "properties": {
+                  "windowsCluster": {
+                    "properties": {
+                      "defaultSetting": {
+                        "properties": {
+                          "taintToleration": {}
+                        },
+                        "required": [
+                          "taintToleration"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "defaultSetting"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "windowsCluster"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "cattle"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema6"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "defaultSetting": {
+                                    "properties": {
+                                      "systemManagedComponentsNodeSelector": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "systemManagedComponentsNodeSelector"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "defaultSetting"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema8"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "defaultSetting": {
+                                    "properties": {
+                                      "taintToleration": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "taintToleration"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "defaultSetting"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema3"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema3"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "cattle": {
+                "additionalProperties": {},
+                "properties": {
+                  "windowsCluster": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "defaultSetting": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema6"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "defaultSetting": {
+                                    "properties": {
+                                      "systemManagedComponentsNodeSelector": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "systemManagedComponentsNodeSelector"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "defaultSetting"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema8"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "defaultSetting": {
+                                    "properties": {
+                                      "taintToleration": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "taintToleration"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "defaultSetting"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema3"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "cattle": {
+                        "properties": {
+                          "windowsCluster": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "windowsCluster"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "cattle"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema3"
+                  },
+                  {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "cattle": {
+                            "properties": {
+                              "windowsCluster": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "windowsCluster"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "cattle"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
+            "properties": {
+              "cattle": {
+                "additionalProperties": {},
+                "properties": {
+                  "windowsCluster": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     {
       "if": {
         "allOf": [
@@ -303,10 +1430,10 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema9"
+            "$ref": "#/$defs/schema29"
           },
           {
-            "$ref": "#/$defs/schema7"
+            "$ref": "#/$defs/schema25"
           },
           {
             "anyOf": [
@@ -378,880 +1505,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "csi": {
-                              "properties": {
-                                "attacher": {
-                                  "$ref": "#/$defs/schema20"
-                                }
-                              },
-                              "required": [
-                                "attacher"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "csi"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "csi": {
-                            "properties": {
-                              "attacher": {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "attacher"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "csi"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "csi": {
-                              "properties": {
-                                "attacher": {
-                                  "$ref": "#/$defs/schema23"
-                                }
-                              },
-                              "required": [
-                                "attacher"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "csi"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "csi": {
-                            "properties": {
-                              "attacher": {
-                                "properties": {
-                                  "tag": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tag"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "attacher"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "csi"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "csi": {
-                              "properties": {
-                                "livenessProbe": {
-                                  "$ref": "#/$defs/schema20"
-                                }
-                              },
-                              "required": [
-                                "livenessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "csi"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "csi": {
-                            "properties": {
-                              "livenessProbe": {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "livenessProbe"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "csi"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "csi": {
-                              "properties": {
-                                "livenessProbe": {
-                                  "$ref": "#/$defs/schema23"
-                                }
-                              },
-                              "required": [
-                                "livenessProbe"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "csi"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "csi": {
-                            "properties": {
-                              "livenessProbe": {
-                                "properties": {
-                                  "tag": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tag"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "livenessProbe"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "csi"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "csi": {
-                              "properties": {
-                                "nodeDriverRegistrar": {
-                                  "$ref": "#/$defs/schema20"
-                                }
-                              },
-                              "required": [
-                                "nodeDriverRegistrar"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "csi"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "csi": {
-                            "properties": {
-                              "nodeDriverRegistrar": {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "nodeDriverRegistrar"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "csi"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "csi": {
-                              "properties": {
-                                "nodeDriverRegistrar": {
-                                  "$ref": "#/$defs/schema23"
-                                }
-                              },
-                              "required": [
-                                "nodeDriverRegistrar"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "csi"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "csi": {
-                            "properties": {
-                              "nodeDriverRegistrar": {
-                                "properties": {
-                                  "tag": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tag"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "nodeDriverRegistrar"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "csi"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "csi": {
-                              "properties": {
-                                "provisioner": {
-                                  "$ref": "#/$defs/schema20"
-                                }
-                              },
-                              "required": [
-                                "provisioner"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "csi"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "csi": {
-                            "properties": {
-                              "provisioner": {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "provisioner"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "csi"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "csi": {
-                              "properties": {
-                                "provisioner": {
-                                  "$ref": "#/$defs/schema23"
-                                }
-                              },
-                              "required": [
-                                "provisioner"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "csi"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "csi": {
-                            "properties": {
-                              "provisioner": {
-                                "properties": {
-                                  "tag": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tag"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "provisioner"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "csi"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "csi": {
-                              "properties": {
-                                "resizer": {
-                                  "$ref": "#/$defs/schema20"
-                                }
-                              },
-                              "required": [
-                                "resizer"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "csi"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "csi": {
-                            "properties": {
-                              "resizer": {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "resizer"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "csi"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "csi": {
-                              "properties": {
-                                "resizer": {
-                                  "$ref": "#/$defs/schema23"
-                                }
-                              },
-                              "required": [
-                                "resizer"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "csi"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "csi": {
-                            "properties": {
-                              "resizer": {
-                                "properties": {
-                                  "tag": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tag"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "resizer"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "csi"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "csi": {
-                              "properties": {
-                                "snapshotter": {
-                                  "$ref": "#/$defs/schema20"
-                                }
-                              },
-                              "required": [
-                                "snapshotter"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "csi"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "csi": {
-                            "properties": {
-                              "snapshotter": {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "snapshotter"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "csi"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "image": {
-                          "properties": {
-                            "csi": {
-                              "properties": {
-                                "snapshotter": {
-                                  "$ref": "#/$defs/schema23"
-                                }
-                              },
-                              "required": [
-                                "snapshotter"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "csi"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "image"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "image": {
-                        "properties": {
-                          "csi": {
-                            "properties": {
-                              "snapshotter": {
-                                "properties": {
-                                  "tag": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tag"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "snapshotter"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "csi"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "image"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-            "properties": {
-              "imageRegistry": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Global override for container image registry."
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "properties": {
@@ -1301,7 +1554,7 @@
             "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate should start with -----BEGIN CERTIFICATE----- or\nname should line up with a tlsSecret set further up\nIf you're using kube-lego, this is unneeded, as it will create the secret for you if it is not set\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\n- name: longhorn.local-tls\nkey:\ncertificate:",
             "properties": {
               "hostnames": {
-                "$ref": "#/$defs/schema2"
+                "$ref": "#/$defs/schema16"
               }
             }
           }
@@ -1362,13 +1615,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/schema13"
+                      "$ref": "#/$defs/schema36"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/schema13"
+                      "$ref": "#/$defs/schema36"
                     },
                     "type": "object"
                   },
@@ -1408,369 +1661,6 @@
           "properties": {
             "longhorn": {
               "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "image": {
-                "properties": {
-                  "openshift": {
-                    "properties": {
-                      "oauthProxy": {
-                        "properties": {
-                          "repository": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "repository"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "oauthProxy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "openshift"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "openshift": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "openshift"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema4"
-              },
-              {
-                "properties": {
-                  "openshift": {
-                    "properties": {
-                      "ui": {
-                        "properties": {
-                          "route": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "route"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ui"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "openshift"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "properties": {
-              "openshift": {
-                "additionalProperties": {},
-                "properties": {
-                  "oauthProxy": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "registry": {
-                        "anyOf": [
-                          {
-                            "type": "boolean"
-                          },
-                          {
-                            "type": "integer"
-                          },
-                          {
-                            "type": "number"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Registry for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "openshift": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "openshift"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema4"
-              },
-              {
-                "properties": {
-                  "openshift": {
-                    "properties": {
-                      "ui": {
-                        "properties": {
-                          "route": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "route"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ui"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "openshift"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "properties": {
-              "openshift": {
-                "additionalProperties": {},
-                "properties": {
-                  "oauthProxy": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "repository": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          {
-                            "type": "boolean"
-                          },
-                          {
-                            "type": "integer"
-                          },
-                          {
-                            "type": "number"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Repository for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "image": {
-                "properties": {
-                  "openshift": {
-                    "properties": {
-                      "oauthProxy": {
-                        "properties": {
-                          "repository": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "repository"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "oauthProxy"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "openshift"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "openshift": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "openshift"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema4"
-              },
-              {
-                "properties": {
-                  "openshift": {
-                    "properties": {
-                      "ui": {
-                        "properties": {
-                          "route": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "route"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ui"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "openshift"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "properties": {
-              "openshift": {
-                "additionalProperties": {},
-                "properties": {
-                  "oauthProxy": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "tag": {
-                        "anyOf": [
-                          {
-                            "type": "boolean"
-                          },
-                          {
-                            "type": "integer"
-                          },
-                          {
-                            "type": "number"
-                          },
-                          {
-                            "type": "string"
-                          }
-                        ],
-                        "description": "Tag for the OAuth Proxy image. Specify OCP/OKD version 4.1 or later (including version 4.18, which is available at quay.io/openshift/origin-oauth-proxy:4.18). This setting applies only to OpenShift users."
-                      }
-                    }
-                  }
-                }
-              }
             }
           }
         }
@@ -1838,7 +1728,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema4"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -1895,7 +1785,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema4"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -2015,7 +1905,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema4"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -2072,7 +1962,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema4"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -2187,7 +2077,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema4"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -2244,7 +2134,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema4"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -2375,7 +2265,7 @@
             "description": "If you want to set node selector for Longhorn UI Deployment, delete the `{}` in the line above\nand uncomment this example block\nlabel-key1: \"label-value1\"\nlabel-key2: \"label-value2\"",
             "properties": {
               "extraHosts": {
-                "$ref": "#/$defs/schema1"
+                "$ref": "#/$defs/schema13"
               }
             }
           }
@@ -2413,13 +2303,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/schema6"
+                      "$ref": "#/$defs/schema41"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/schema6"
+                      "$ref": "#/$defs/schema41"
                     },
                     "type": "object"
                   },
@@ -2607,21 +2497,272 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "networkPolicies": {
-          "additionalProperties": {},
-          "properties": {
-            "type": {
-              "anyOf": [
-                {
-                  "type": "string"
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "httproute": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 },
-                {
-                  "type": "null"
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "httproute"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "metrics": {
+                "properties": {
+                  "serviceMonitor": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceMonitor"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "networkPolicies": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicies"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "openshift": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "openshift"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema22"
+                  },
+                  {
+                    "properties": {
+                      "openshift": {
+                        "properties": {
+                          "ui": {
+                            "properties": {
+                              "route": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "route"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "ui"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "openshift"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "privateRegistry": {
+                    "properties": {
+                      "createSecret": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "createSecret"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "privateRegistry"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "privateRegistry": {
+                    "properties": {
+                      "registrySecret": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "registrySecret"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "privateRegistry"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "anyOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
                 }
-              ],
-              "description": "Distribution that determines the policy for allowing access for an ingress. (Options: \"k3s\", \"rke2\", \"rke1\")"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "Specify override namespace, specifically this is useful for using longhorn as sub-chart and its release namespace is not the `longhorn-system`."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "networkPolicies": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "networkPolicies"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "networkPolicies": {
+            "additionalProperties": {},
+            "properties": {
+              "type": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Distribution that determines the policy for allowing access for an ingress. (Options: \"k3s\", \"rke2\", \"rke1\")"
+              }
             }
           }
         }
@@ -2673,7 +2814,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema4"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -2773,7 +2914,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema4"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -2822,7 +2963,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema8"
+            "$ref": "#/$defs/schema27"
           },
           {
             "properties": {
@@ -2849,7 +2990,7 @@
         "additionalProperties": {},
         "properties": {
           "persistence": {
-            "$ref": "#/$defs/schema3"
+            "$ref": "#/$defs/schema18"
           }
         }
       }
@@ -2889,7 +3030,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -2917,7 +3058,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -2966,7 +3107,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -2994,7 +3135,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3072,7 +3213,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -3100,7 +3241,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3178,7 +3319,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -3206,7 +3347,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3284,7 +3425,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -3312,7 +3453,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3390,7 +3531,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -3418,7 +3559,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3498,7 +3639,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3526,7 +3667,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema8"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3585,7 +3726,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3613,7 +3754,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema8"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3672,7 +3813,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3700,7 +3841,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema8"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3759,7 +3900,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3787,7 +3928,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema8"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3846,7 +3987,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3874,7 +4015,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema8"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3962,7 +4103,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema8"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3990,7 +4131,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema8"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -4049,10 +4190,10 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema9"
+            "$ref": "#/$defs/schema29"
           },
           {
-            "$ref": "#/$defs/schema7"
+            "$ref": "#/$defs/schema25"
           },
           {
             "anyOf": [
@@ -4224,10 +4365,10 @@
     "annotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema19"
+          "$ref": "#/$defs/schema44"
         },
         {
-          "$ref": "#/$defs/schema24"
+          "$ref": "#/$defs/schema46"
         },
         {
           "not": {
@@ -4624,43 +4765,59 @@
               "type": "string"
             },
             "windowsCluster": {
-              "additionalProperties": {},
-              "properties": {
-                "defaultSetting": {
+              "anyOf": [
+                {
                   "additionalProperties": {},
                   "properties": {
-                    "systemManagedComponentsNodeSelector": {
-                      "description": "Node selector for system-managed Longhorn components.",
-                      "type": "string"
+                    "defaultSetting": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": {},
+                          "properties": {
+                            "systemManagedComponentsNodeSelector": {
+                              "description": "Node selector for system-managed Longhorn components."
+                            }
+                          }
+                        },
+                        {
+                          "additionalProperties": {},
+                          "properties": {
+                            "taintToleration": {
+                              "description": "Toleration for system-managed Longhorn components."
+                            }
+                          },
+                          "type": "object"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        {
+                          "type": "boolean"
+                        }
+                      ],
+                      "description": "Setting that allows Longhorn to run on a Rancher Windows cluster."
                     },
-                    "taintToleration": {
-                      "description": "Toleration for system-managed Longhorn components.",
-                      "type": "string"
+                    "nodeSelector": {
+                      "description": "Node selector for Linux nodes that can run user-deployed Longhorn components."
+                    },
+                    "tolerations": {
+                      "description": "Toleration for Linux nodes that can run user-deployed Longhorn components."
                     }
                   },
                   "type": "object"
-                },
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ],
-                  "description": "Setting that allows Longhorn to run on a Rancher Windows cluster."
-                },
-                "nodeSelector": {
-                  "description": "Node selector for Linux nodes that can run user-deployed Longhorn components."
-                },
-                "tolerations": {
-                  "description": "Toleration for Linux nodes that can run user-deployed Longhorn components."
                 }
-              },
-              "type": "object"
+              ]
             }
           },
           "type": "object"
@@ -4670,12 +4827,7 @@
         },
         "imageRegistry": {
           "description": "Global override for container image registry.",
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "type": "string"
         },
         "nodeSelector": {
           "description": "Node selector for nodes allowed to run user-deployed components such as Longhorn Manager, Longhorn UI, and Longhorn Driver Deployer."
@@ -4710,7 +4862,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema46"
                   },
                   {
                     "not": {
@@ -4754,7 +4906,7 @@
             "additionalProperties": {},
             "properties": {
               "hostnames": {
-                "$ref": "#/$defs/schema2"
+                "$ref": "#/$defs/schema16"
               }
             }
           }
@@ -5058,1208 +5210,6 @@
     },
     "image": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "attacher": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "allOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/schema18"
-                              },
-                              {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/schema21"
-                              },
-                              {
-                                "properties": {
-                                  "tag": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tag"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "registry": {
-                            "anyOf": [
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Registry for the CSI attacher image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "attacher": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema21"
-                          },
-                          {
-                            "properties": {
-                              "tag": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "tag"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "repository": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Repository for the CSI attacher image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "attacher": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema18"
-                          },
-                          {
-                            "properties": {
-                              "repository": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "repository"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "tag": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Tag for the CSI attacher image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "livenessProbe": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "allOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/schema18"
-                              },
-                              {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/schema21"
-                              },
-                              {
-                                "properties": {
-                                  "tag": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tag"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "registry": {
-                            "anyOf": [
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Registry for the CSI liveness probe image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "livenessProbe": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema21"
-                          },
-                          {
-                            "properties": {
-                              "tag": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "tag"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "repository": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Repository for the CSI liveness probe image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "livenessProbe": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema18"
-                          },
-                          {
-                            "properties": {
-                              "repository": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "repository"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "tag": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Tag for the CSI liveness probe image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "nodeDriverRegistrar": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "allOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/schema18"
-                              },
-                              {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/schema21"
-                              },
-                              {
-                                "properties": {
-                                  "tag": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tag"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "registry": {
-                            "anyOf": [
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Registry for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "nodeDriverRegistrar": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema21"
-                          },
-                          {
-                            "properties": {
-                              "tag": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "tag"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "repository": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Repository for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "nodeDriverRegistrar": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema18"
-                          },
-                          {
-                            "properties": {
-                              "repository": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "repository"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "tag": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Tag for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "provisioner": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "allOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/schema18"
-                              },
-                              {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/schema21"
-                              },
-                              {
-                                "properties": {
-                                  "tag": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tag"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "registry": {
-                            "anyOf": [
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Registry for the CSI Provisioner image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "provisioner": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema21"
-                          },
-                          {
-                            "properties": {
-                              "tag": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "tag"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "repository": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Repository for the CSI Provisioner image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "provisioner": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema18"
-                          },
-                          {
-                            "properties": {
-                              "repository": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "repository"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "tag": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Tag for the CSI Provisioner image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "resizer": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "allOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/schema18"
-                              },
-                              {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/schema21"
-                              },
-                              {
-                                "properties": {
-                                  "tag": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tag"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "registry": {
-                            "anyOf": [
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Registry for the CSI Resizer image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "resizer": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema21"
-                          },
-                          {
-                            "properties": {
-                              "tag": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "tag"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "repository": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Repository for the CSI Resizer image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "resizer": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema18"
-                          },
-                          {
-                            "properties": {
-                              "repository": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "repository"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "tag": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Tag for the CSI Resizer image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "snapshotter": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "allOf": [
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/schema18"
-                              },
-                              {
-                                "properties": {
-                                  "repository": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "repository"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/schema21"
-                              },
-                              {
-                                "properties": {
-                                  "tag": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "tag"
-                                ],
-                                "type": "object"
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "registry": {
-                            "anyOf": [
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Registry for the CSI Snapshotter image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "snapshotter": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema21"
-                          },
-                          {
-                            "properties": {
-                              "tag": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "tag"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "repository": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Repository for the CSI Snapshotter image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "csi": {
-              "additionalProperties": {},
-              "properties": {
-                "snapshotter": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema18"
-                          },
-                          {
-                            "properties": {
-                              "repository": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "repository"
-                            ],
-                            "type": "object"
-                          }
-                        ]
-                      },
-                      "then": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "tag": {
-                            "anyOf": [
-                              {
-                                "not": {
-                                  "$ref": "#/$defs/helm-truthy"
-                                }
-                              },
-                              {
-                                "type": "boolean"
-                              },
-                              {
-                                "type": "integer"
-                              },
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ],
-                            "description": "Tag for the CSI Snapshotter image. When unspecified, Longhorn uses the default value."
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      ],
       "properties": {
         "csi": {
           "additionalProperties": {},
@@ -6268,7 +5218,8 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the CSI attacher image. When unspecified, Longhorn uses the default value."
+                  "description": "Registry for the CSI attacher image. When unspecified, Longhorn uses the default value.",
+                  "type": "string"
                 },
                 "repository": {
                   "description": "Repository for the CSI attacher image. When unspecified, Longhorn uses the default value."
@@ -6283,7 +5234,8 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the CSI liveness probe image. When unspecified, Longhorn uses the default value."
+                  "description": "Registry for the CSI liveness probe image. When unspecified, Longhorn uses the default value.",
+                  "type": "string"
                 },
                 "repository": {
                   "description": "Repository for the CSI liveness probe image. When unspecified, Longhorn uses the default value."
@@ -6298,7 +5250,8 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value."
+                  "description": "Registry for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value.",
+                  "type": "string"
                 },
                 "repository": {
                   "description": "Repository for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value."
@@ -6313,7 +5266,8 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the CSI Provisioner image. When unspecified, Longhorn uses the default value."
+                  "description": "Registry for the CSI Provisioner image. When unspecified, Longhorn uses the default value.",
+                  "type": "string"
                 },
                 "repository": {
                   "description": "Repository for the CSI Provisioner image. When unspecified, Longhorn uses the default value."
@@ -6328,7 +5282,8 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the CSI Resizer image. When unspecified, Longhorn uses the default value."
+                  "description": "Registry for the CSI Resizer image. When unspecified, Longhorn uses the default value.",
+                  "type": "string"
                 },
                 "repository": {
                   "description": "Repository for the CSI Resizer image. When unspecified, Longhorn uses the default value."
@@ -6343,7 +5298,8 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "description": "Registry for the CSI Snapshotter image. When unspecified, Longhorn uses the default value."
+                  "description": "Registry for the CSI Snapshotter image. When unspecified, Longhorn uses the default value.",
+                  "type": "string"
                 },
                 "repository": {
                   "description": "Repository for the CSI Snapshotter image. When unspecified, Longhorn uses the default value."
@@ -6365,30 +5321,13 @@
               "properties": {
                 "registry": {
                   "description": "Registry for the Backing Image Manager image. When unspecified, Longhorn uses the default value.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "type": "string"
                 },
                 "repository": {
-                  "description": "Repository for the Backing Image Manager image. When unspecified, Longhorn uses the default value.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Repository for the Backing Image Manager image. When unspecified, Longhorn uses the default value."
                 },
                 "tag": {
-                  "description": "Tag for the Backing Image Manager image. When unspecified, Longhorn uses the default value.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Tag for the Backing Image Manager image. When unspecified, Longhorn uses the default value."
                 }
               },
               "type": "object"
@@ -6398,30 +5337,13 @@
               "properties": {
                 "registry": {
                   "description": "Registry for the Longhorn Engine image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "type": "string"
                 },
                 "repository": {
-                  "description": "Repository for the Longhorn Engine image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Repository for the Longhorn Engine image."
                 },
                 "tag": {
-                  "description": "Tag for the Longhorn Engine image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Tag for the Longhorn Engine image."
                 }
               },
               "type": "object"
@@ -6431,30 +5353,13 @@
               "properties": {
                 "registry": {
                   "description": "Registry for the Longhorn Instance Manager image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "type": "string"
                 },
                 "repository": {
-                  "description": "Repository for the Longhorn Instance Manager image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Repository for the Longhorn Instance Manager image."
                 },
                 "tag": {
-                  "description": "Tag for the Longhorn Instance Manager image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Tag for the Longhorn Instance Manager image."
                 }
               },
               "type": "object"
@@ -6464,30 +5369,13 @@
               "properties": {
                 "registry": {
                   "description": "Registry for the Longhorn Manager image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "type": "string"
                 },
                 "repository": {
-                  "description": "Repository for the Longhorn Manager image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Repository for the Longhorn Manager image."
                 },
                 "tag": {
-                  "description": "Tag for the Longhorn Manager image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Tag for the Longhorn Manager image."
                 }
               },
               "type": "object"
@@ -6497,30 +5385,13 @@
               "properties": {
                 "registry": {
                   "description": "Registry for the Longhorn Share Manager image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "type": "string"
                 },
                 "repository": {
-                  "description": "Repository for the Longhorn Share Manager image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Repository for the Longhorn Share Manager image."
                 },
                 "tag": {
-                  "description": "Tag for the Longhorn Share Manager image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Tag for the Longhorn Share Manager image."
                 }
               },
               "type": "object"
@@ -6530,30 +5401,13 @@
               "properties": {
                 "registry": {
                   "description": "Registry for the Longhorn Support Bundle Manager image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "type": "string"
                 },
                 "repository": {
-                  "description": "Repository for the Longhorn Support Bundle Manager image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Repository for the Longhorn Support Bundle Manager image."
                 },
                 "tag": {
-                  "description": "Tag for the Longhorn Support Bundle Manager image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Tag for the Longhorn Support Bundle Manager image."
                 }
               },
               "type": "object"
@@ -6563,30 +5417,13 @@
               "properties": {
                 "registry": {
                   "description": "Registry for the Longhorn UI image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "type": "string"
                 },
                 "repository": {
-                  "description": "Repository for the Longhorn UI image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Repository for the Longhorn UI image."
                 },
                 "tag": {
-                  "description": "Tag for the Longhorn UI image.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
+                  "description": "Tag for the Longhorn UI image."
                 }
               },
               "type": "object"
@@ -6602,17 +5439,14 @@
                 {
                   "additionalProperties": {},
                   "properties": {
-                    "registry": {
-                      "description": "Registry for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
+                    "repository": {
+                      "description": "Repository for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
                     }
                   }
                 },
                 {
                   "additionalProperties": {},
                   "properties": {
-                    "repository": {
-                      "description": "Repository for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
-                    },
                     "tag": {
                       "description": "Tag for the OAuth Proxy image. Specify OCP/OKD version 4.1 or later (including version 4.18, which is available at quay.io/openshift/origin-oauth-proxy:4.18). This setting applies only to OpenShift users."
                     }
@@ -6651,7 +5485,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema46"
                   },
                   {
                     "not": {
@@ -6686,7 +5520,7 @@
             "additionalProperties": {},
             "properties": {
               "extraHosts": {
-                "$ref": "#/$defs/schema1"
+                "$ref": "#/$defs/schema13"
               }
             }
           }
@@ -7054,10 +5888,10 @@
         "serviceAnnotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema19"
+              "$ref": "#/$defs/schema44"
             },
             {
-              "$ref": "#/$defs/schema24"
+              "$ref": "#/$defs/schema46"
             },
             {
               "not": {
@@ -7070,10 +5904,10 @@
         "serviceLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema19"
+              "$ref": "#/$defs/schema44"
             },
             {
-              "$ref": "#/$defs/schema24"
+              "$ref": "#/$defs/schema46"
             },
             {
               "not": {
@@ -7212,7 +6046,7 @@
                       "additionalLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema24"
+                            "$ref": "#/$defs/schema46"
                           },
                           {
                             "not": {
@@ -7252,7 +6086,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema24"
+                            "$ref": "#/$defs/schema46"
                           },
                           {
                             "not": {
@@ -7427,15 +6261,6 @@
           }
         },
         {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "number"
-        },
-        {
           "type": "string"
         }
       ],
@@ -7483,7 +6308,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema12"
+                    "$ref": "#/$defs/schema34"
                   },
                   {
                     "properties": {
@@ -7549,7 +6374,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema12"
+                    "$ref": "#/$defs/schema34"
                   },
                   {
                     "properties": {
@@ -7685,7 +6510,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema17"
+                  "$ref": "#/$defs/schema42"
                 }
               },
               {
@@ -7702,7 +6527,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/schema3"
+            "$ref": "#/$defs/schema18"
           }
         }
       ],
@@ -8038,6 +6863,33 @@
               ]
             }
           }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "ui": {
+              "additionalProperties": {},
+              "properties": {
+                "type": {
+                  "allOf": [
+                    {
+                      "if": {
+                        "not": {
+                          "enum": [
+                            "Rancher-Proxy"
+                          ]
+                        }
+                      },
+                      "then": {
+                        "type": "string"
+                      }
+                    }
+                  ],
+                  "description": "Service type for Longhorn UI. (Options: \"ClusterIP\", \"NodePort\", \"LoadBalancer\", \"Rancher-Proxy\")"
+                }
+              }
+            }
+          }
         }
       ],
       "properties": {
@@ -8071,10 +6923,10 @@
             "annotations": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema19"
+                  "$ref": "#/$defs/schema44"
                 },
                 {
-                  "$ref": "#/$defs/schema24"
+                  "$ref": "#/$defs/schema46"
                 },
                 {
                   "not": {
@@ -8087,10 +6939,10 @@
             "labels": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema19"
+                  "$ref": "#/$defs/schema44"
                 },
                 {
-                  "$ref": "#/$defs/schema24"
+                  "$ref": "#/$defs/schema46"
                 },
                 {
                   "not": {
@@ -8138,10 +6990,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema19"
+              "$ref": "#/$defs/schema44"
             },
             {
-              "$ref": "#/$defs/schema24"
+              "$ref": "#/$defs/schema46"
             },
             {
               "not": {

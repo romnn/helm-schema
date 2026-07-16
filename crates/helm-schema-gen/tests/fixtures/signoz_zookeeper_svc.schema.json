@@ -97,6 +97,126 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "commonAnnotations": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "commonAnnotations"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "commonAnnotations": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "commonAnnotations"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "commonAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "commonAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "annotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "annotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "commonAnnotations": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "commonLabels": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "commonLabels"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "commonLabels": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "commonLabels"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "commonLabels": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "fullnameOverride": {
             "$ref": "#/$defs/helm-truthy"
@@ -236,6 +356,168 @@
         "allOf": [
           {
             "properties": {
+              "service": {
+                "properties": {
+                  "annotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "annotations": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "annotations"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "commonAnnotations": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "commonAnnotations"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "annotations": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "annotations"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "annotations": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "extraPorts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraPorts"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "extraPorts": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "extraPorts"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "extraPorts": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "tls": {
                 "properties": {
                   "client": {
@@ -329,6 +611,10 @@
                         "not": {
                           "$ref": "#/$defs/helm-truthy"
                         }
+                      },
+                      {
+                        "pattern": "^-?(0|[1-9][0-9]*)$",
+                        "type": "string"
                       }
                     ]
                   }
@@ -543,54 +829,6 @@
                 ]
               }
             ]
-          },
-          {
-            "properties": {
-              "tls": {
-                "properties": {
-                  "client": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "client"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "tls"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "properties": {
-                "service": {
-                  "properties": {
-                    "disableBaseClientPort": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  },
-                  "required": [
-                    "disableBaseClientPort"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "service"
-              ],
-              "type": "object"
-            }
           }
         ]
       },
@@ -693,9 +931,17 @@
                 "additionalProperties": {},
                 "properties": {
                   "tls": {
-                    "description": "The port that will be exposed by this service.",
-                    "format": "int32",
-                    "type": "integer"
+                    "anyOf": [
+                      {
+                        "description": "The port that will be exposed by this service.",
+                        "format": "int32",
+                        "type": "integer"
+                      },
+                      {
+                        "pattern": "^-?(0|[1-9][0-9]*)$",
+                        "type": "string"
+                      }
+                    ]
                   }
                 }
               }
@@ -821,6 +1067,70 @@
       }
     },
     {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "sessionAffinityConfig": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "sessionAffinityConfig"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "sessionAffinityConfig": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "sessionAffinityConfig"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "sessionAffinityConfig": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "service": {
@@ -893,6 +1203,48 @@
     "fullnameOverride": {
       "anyOf": [
         {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+              }
+            }
+          ],
           "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
           "type": "string"
         },
@@ -906,18 +1258,102 @@
     "nameOverride": {
       "anyOf": [
         {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
           "not": {
             "$ref": "#/$defs/helm-truthy"
           }
-        },
-        {
-          "type": "string"
         }
       ]
     },
     "namespaceOverride": {
       "anyOf": [
         {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+              }
+            }
+          ],
           "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
           "type": "string"
         },
@@ -966,6 +1402,48 @@
               "clusterIP": {
                 "anyOf": [
                   {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                        }
+                      }
+                    ],
                     "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
                     "type": "string"
                   },
@@ -999,6 +1477,48 @@
               "loadBalancerIP": {
                 "anyOf": [
                   {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                        }
+                      }
+                    ],
                     "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
                     "type": "string"
                   },
@@ -1114,6 +1634,10 @@
                         "not": {
                           "$ref": "#/$defs/helm-truthy"
                         }
+                      },
+                      {
+                        "pattern": "^-?(0|[1-9][0-9]*)$",
+                        "type": "string"
                       }
                     ]
                   }
@@ -1143,9 +1667,17 @@
                 "additionalProperties": {},
                 "properties": {
                   "client": {
-                    "description": "The port that will be exposed by this service.",
-                    "format": "int32",
-                    "type": "integer"
+                    "anyOf": [
+                      {
+                        "description": "The port that will be exposed by this service.",
+                        "format": "int32",
+                        "type": "integer"
+                      },
+                      {
+                        "pattern": "^-?(0|[1-9][0-9]*)$",
+                        "type": "string"
+                      }
+                    ]
                   }
                 }
               }
@@ -1214,14 +1746,30 @@
           "properties": {
             "client": {},
             "election": {
-              "description": "The port that will be exposed by this service.",
-              "format": "int32",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "description": "The port that will be exposed by this service.",
+                  "format": "int32",
+                  "type": "integer"
+                },
+                {
+                  "pattern": "^-?(0|[1-9][0-9]*)$",
+                  "type": "string"
+                }
+              ]
             },
             "follower": {
-              "description": "The port that will be exposed by this service.",
-              "format": "int32",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "description": "The port that will be exposed by this service.",
+                  "format": "int32",
+                  "type": "integer"
+                },
+                {
+                  "pattern": "^-?(0|[1-9][0-9]*)$",
+                  "type": "string"
+                }
+              ]
             },
             "tls": {}
           },
@@ -1230,6 +1778,48 @@
         "sessionAffinity": {
           "anyOf": [
             {
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                  }
+                }
+              ],
               "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
               "type": "string"
             },

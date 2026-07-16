@@ -132,20 +132,12 @@ fn unused_helper_in_used_library_does_not_leak_type_hint() -> color_eyre::eyre::
         .pointer("/properties/app/properties/replicas")
         .expect("/properties/app/properties/replicas present");
 
-    // The app's quoted interpolation accepts any scalar. The unreachable sibling helper's
+    // The app's quoted interpolation accepts every input kind. The unreachable sibling helper's
     // integer default must not narrow that chart-owned domain.
     sim_assert_eq!(
         have: app_replicas,
-        want: &serde_json::json!({
-            "anyOf": [
-                { "const": null },
-                { "type": "boolean" },
-                { "type": "integer" },
-                { "type": "number" },
-                { "type": "string" },
-            ],
-        }),
-        "app.replicas must retain only its generic quoted-scalar domain; the unreachable sibling \
+        want: &serde_json::json!({}),
+        "app.replicas must retain its unconstrained quoted-text domain; the unreachable sibling \
          helper must not narrow it with an integer default: {app_replicas}",
     );
 

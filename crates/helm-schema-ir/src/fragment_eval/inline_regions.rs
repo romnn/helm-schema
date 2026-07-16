@@ -26,12 +26,11 @@ use super::holes::expr_contains_fail_call;
 use super::lower::{LowerScope, MAX_SCALAR_ARM_FANOUT, lower_value_scalar_arms};
 
 impl Interpreter<'_> {
-    /// Evaluate an inline `{{ if }}…{{ end }}` or `{{ range }}…{{ end }}`
+    /// Evaluate an inline `{{ if }}`, `{{ with }}`, or `{{ range }}`
     /// region inside a scalar by re-parsing the region text with the
     /// Go-template grammar and turning its branches into guarded scalar
-    /// arms. Other inline regions (`with`) and nested regions degrade to
-    /// conservative taint. The whole region evaluates under the region's
-    /// site facts (its holes share the region's line).
+    /// arms. The whole region evaluates under the region's site facts (its
+    /// holes share the region's line).
     pub(super) fn eval_inline_region(
         &mut self,
         span: Span,
@@ -58,7 +57,7 @@ impl Interpreter<'_> {
         let mut cursor = root.walk();
         let Some(action) = root
             .named_children(&mut cursor)
-            .find(|child| matches!(child.kind(), "if_action" | "range_action"))
+            .find(|child| matches!(child.kind(), "if_action" | "with_action" | "range_action"))
         else {
             return self.inline_region_taint(text);
         };
@@ -72,6 +71,9 @@ impl Interpreter<'_> {
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
         if action.kind() == "range_action" {
             return self.eval_inline_range(action, text);
+        }
+        if action.kind() == "with_action" {
+            return self.eval_inline_with(action, text);
         }
 
         let mut arm_specs = vec![(
@@ -107,6 +109,48 @@ impl Interpreter<'_> {
             let parts = arms.into_iter().flat_map(|(_, parts)| parts).collect();
             return vec![(Predicate::True, parts)];
         }
+        arms
+    }
+
+    pub(super) fn eval_inline_with(
+        &mut self,
+        action: tree_sitter::Node<'_>,
+        text: &str,
+    ) -> Vec<(PathCondition, Vec<StringPart>)> {
+        let entry_predicates = self.active_predicates.len();
+        let entry_dots = self.dot_stack.len();
+        let entry_locals = self.locals.clone();
+        let own = self.activate_with(
+            control_header(text, action).as_ref(),
+            action.start_byte(),
+            0,
+        );
+        let body_condition = own.clone().unwrap_or(Predicate::True);
+        let mut arms = self
+            .inline_body_arms(&children_with_field(action, "consequence"), text)
+            .into_iter()
+            .map(|(condition, parts)| (and_conditions(body_condition.clone(), condition), parts))
+            .collect::<Vec<_>>();
+
+        self.active_predicates.truncate(entry_predicates);
+        self.dot_stack.truncate(entry_dots);
+        self.locals = entry_locals.clone();
+        let alternative_condition = own.as_ref().map_or(Predicate::True, Predicate::negated);
+        if alternative_condition != Predicate::True {
+            self.push_predicate(alternative_condition.clone());
+        }
+        for (condition, parts) in
+            self.inline_body_arms(&children_with_field(action, "alternative"), text)
+        {
+            arms.push((
+                and_conditions(alternative_condition.clone(), condition),
+                parts,
+            ));
+        }
+
+        self.active_predicates.truncate(entry_predicates);
+        self.dot_stack.truncate(entry_dots);
+        self.locals = entry_locals;
         arms
     }
 
@@ -319,6 +363,7 @@ impl Interpreter<'_> {
                     return Vec::new();
                 }
                 self.record_required_subjects(&exprs);
+                let _ = self.inline_static_file_fragments(&exprs);
                 let hole = self.eval_hole_exprs(&exprs);
                 self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
                 let defaulted = hole.effects.default_paths_with_local();
@@ -359,20 +404,7 @@ impl Interpreter<'_> {
             }
             NodeAction::Range(_) => self.eval_inline_range(node, text),
             NodeAction::If(_) => self.eval_inline_control_action(node, text),
-            NodeAction::With(_) => {
-                // Nested inline control: keep the influence, drop the
-                // structure (bounded conservative fallback).
-                let content = node.utf8_text(text.as_bytes()).unwrap_or("");
-                let taint = self.resolved_paths_of_action_text(content);
-                if taint.is_empty() {
-                    Vec::new()
-                } else {
-                    vec![(
-                        Predicate::True,
-                        vec![StringPart::Taint(TaintPart::new(taint))],
-                    )]
-                }
-            }
+            NodeAction::With(_) => self.eval_inline_with(node, text),
             NodeAction::Output(None) | NodeAction::Assignment(None) | NodeAction::Suppressed => {
                 Vec::new()
             }

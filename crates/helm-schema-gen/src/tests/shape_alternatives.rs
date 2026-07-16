@@ -559,12 +559,14 @@ fn total_stringification_direct_forms_accept_any_input() {
           quoted: {{ quote .Values.quoted }}
           squoted: {{ squote .Values.squoted }}
           stringified: {{ toString .Values.stringified }}
+          queried: {{ .Values.queried | urlquery }}
           joined: {{ join "," .Values.joined }}
     "#};
     let values_yaml = indoc! {"
         quoted: probe
         squoted: probe
         stringified: probe
+        queried: probe
         joined: []
     "};
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
@@ -581,6 +583,7 @@ fn total_stringification_direct_forms_accept_any_input() {
             "quoted": probe,
             "squoted": probe,
             "stringified": probe,
+            "queried": probe,
             "joined": probe,
         });
         assert!(

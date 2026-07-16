@@ -113,7 +113,11 @@ impl Interpreter<'_> {
                     let mut alternative_outcomes = Vec::new();
                     for alternative in &plan.alternatives {
                         self.locals = alternative_entry.clone();
+                        let mut remaining = Predicate::True;
                         for item in alternative {
+                            if remaining == Predicate::False {
+                                break;
+                            }
                             if let Some((variable, binding)) = &item.variable {
                                 self.locals
                                     .fragment_values
@@ -124,9 +128,21 @@ impl Interpreter<'_> {
                                     .fragment_values
                                     .insert(variable.clone(), ordinal.clone());
                             }
+                            let entry_predicates = self.active_predicates.len();
+                            self.push_predicate(remaining.clone());
                             self.dot_stack.push(Some(item.dot.clone()));
-                            all.extend(self.eval_node_list(nodes));
+                            let mut iteration = self.eval_node_list(nodes);
                             self.dot_stack.pop();
+                            self.active_predicates.truncate(entry_predicates);
+                            let break_condition = iteration.loop_control.break_condition();
+                            iteration.take_loop_control();
+                            iteration.guard_all(&remaining);
+                            all.extend(iteration);
+                            remaining = match break_condition {
+                                Predicate::False => remaining,
+                                Predicate::True => Predicate::False,
+                                condition => and_conditions(remaining, condition.negated()),
+                            };
                         }
                         alternative_outcomes.push(self.locals.clone());
                     }
@@ -142,6 +158,9 @@ impl Interpreter<'_> {
             // parent entry chain, so they carry this arm's condition.
             for spec in escaped_per_branch.get(index).into_iter().flatten() {
                 self.eval_deferred(spec.clone(), &mut contributions);
+            }
+            if matches!(arm, ArmSpec::Range { .. }) {
+                contributions.take_loop_control();
             }
             self.locals.exit_local_scope();
             outcomes.push(self.locals.clone());
@@ -214,6 +233,7 @@ impl Interpreter<'_> {
             None => spec.chain.clone(),
         };
         let mut contributions = self.eval_node_list(&views);
+        let loop_control = contributions.take_loop_control();
         let mut chain = chain_entries.iter().rev();
         let Some(innermost) = chain.next() else {
             out.extend(contributions);
@@ -238,6 +258,7 @@ impl Interpreter<'_> {
         let mut re_attached = Contributions::default();
         re_attached.merge_entry(key, value);
         re_attached.floating = floating;
+        re_attached.loop_control = loop_control;
         out.extend(re_attached);
     }
 
@@ -316,13 +337,7 @@ impl Interpreter<'_> {
         let captures: Vec<crate::eval_effect::FailCapture> = paths
             .iter()
             .map(|path| {
-                let mut conjunction = vec![
-                    Predicate::from(crate::Guard::TypeIs {
-                        path: path.clone(),
-                        schema_type: "string".to_string(),
-                    })
-                    .negated(),
-                ];
+                let mut conjunction = Vec::new();
                 if !helm_schema_core::split_value_path(path)
                     .iter()
                     .any(|segment| segment == "*")
@@ -337,7 +352,10 @@ impl Interpreter<'_> {
                 crate::eval_effect::FailCapture {
                     conjunction,
                     ranged: crate::range_modes::RangeModes::default(),
-                    kind: crate::eval_effect::CaptureKind::Fail,
+                    kind: crate::eval_effect::CaptureKind::ValueType {
+                        path: path.clone(),
+                        schema_type: "string".to_string(),
+                    },
                 }
             })
             .collect();
@@ -413,7 +431,7 @@ impl Interpreter<'_> {
         Some(predicate)
     }
 
-    fn activate_with(
+    pub(super) fn activate_with(
         &mut self,
         header: Option<&TemplateHeader>,
         region_start: usize,
@@ -482,6 +500,13 @@ impl Interpreter<'_> {
                 self.push_read(path, &[]);
             }
         }
+        if let TemplateExpr::VariableDefinition { name, .. } = header.expr()
+            && let Some(binding) = dot.as_ref()
+        {
+            self.locals
+                .fragment_values
+                .insert(name.trim_start_matches('$').to_string(), binding.clone());
+        }
         self.dot_stack.push(dot);
         Some(predicate)
     }
@@ -518,6 +543,28 @@ impl Interpreter<'_> {
             .range_iterable_fragment_value(header)
             .is_some_and(|value| value.definitely_nonempty_iterable());
         let range_source = header_range_source(header.expr());
+        let derived_range_condition = match range_source.deparen() {
+            TemplateExpr::Variable(name)
+                if self
+                    .locals
+                    .fragment_values
+                    .get(name.trim_start_matches('$'))
+                    .is_some_and(|value| {
+                        !matches!(
+                            value,
+                            AbstractValue::ValuesPath(_)
+                                | AbstractValue::JsonDecodedPath(_)
+                                | AbstractValue::OutputPath(_, _)
+                        )
+                    }) =>
+            {
+                self.locals
+                    .truthy_reductions
+                    .get(name.trim_start_matches('$'))
+                    .cloned()
+            }
+            _ => None,
+        };
         let (source_paths, direct_path, direct_variable_path, json_decoded_path) = {
             let context = self.value_path_context();
             let direct_path = context.single_direct_iterable_range_path_expr(range_source);
@@ -601,14 +648,22 @@ impl Interpreter<'_> {
                     self.push_read(path, std::slice::from_ref(&guard));
                 }
             }
-            own.push(predicate.clone());
+            if derived_range_condition.is_none() {
+                own.push(predicate.clone());
+            }
             // A strict call in a guaranteed iteration executes regardless of
             // the values paths that produced the derived iterable. Keep the
             // range guard on rendered rows, but do not let it hide runtime
             // effects that the body necessarily evaluates.
-            if !range_is_statically_nonempty {
+            if !range_is_statically_nonempty && derived_range_condition.is_none() {
                 self.push_predicate(predicate);
             }
+        }
+        if let Some(condition) = derived_range_condition {
+            if !range_is_statically_nonempty {
+                self.push_predicate(condition.clone());
+            }
+            own.push(condition);
         }
         if renders_scalar_items {
             for path in &source_paths {
@@ -721,18 +776,61 @@ impl Interpreter<'_> {
         key_variable: Option<&str>,
     ) -> Option<RangeIterations> {
         let iterable = self.range_iterable_fragment_value(header)?;
-        if !self.helper_scope {
-            return None;
-        }
         let alternatives = match &iterable {
-            AbstractValue::List(items) => vec![items.clone()],
+            AbstractValue::List(items) => vec![
+                items
+                    .iter()
+                    .enumerate()
+                    .map(|(ordinal, item)| {
+                        (
+                            AbstractValue::StringSet(BTreeSet::from([ordinal.to_string()])),
+                            item.clone(),
+                        )
+                    })
+                    .collect::<Vec<_>>(),
+            ],
+            AbstractValue::Dict(entries) => vec![
+                entries
+                    .iter()
+                    .map(|(key, value)| {
+                        (
+                            AbstractValue::StringSet(BTreeSet::from([key.clone()])),
+                            value.clone(),
+                        )
+                    })
+                    .collect::<Vec<_>>(),
+            ],
             AbstractValue::Choice(choices) => {
                 let mut alternatives = Vec::new();
                 for choice in choices {
-                    let AbstractValue::List(choice_items) = choice else {
-                        return None;
+                    match choice {
+                        AbstractValue::List(items) => alternatives.push(
+                            items
+                                .iter()
+                                .enumerate()
+                                .map(|(ordinal, item)| {
+                                    (
+                                        AbstractValue::StringSet(BTreeSet::from([
+                                            ordinal.to_string()
+                                        ])),
+                                        item.clone(),
+                                    )
+                                })
+                                .collect(),
+                        ),
+                        AbstractValue::Dict(entries) => alternatives.push(
+                            entries
+                                .iter()
+                                .map(|(key, value)| {
+                                    (
+                                        AbstractValue::StringSet(BTreeSet::from([key.clone()])),
+                                        value.clone(),
+                                    )
+                                })
+                                .collect(),
+                        ),
+                        _ => return None,
                     };
-                    alternatives.push(choice_items.clone());
                 }
                 alternatives
             }
@@ -748,18 +846,10 @@ impl Interpreter<'_> {
             .map(|items| {
                 items
                     .into_iter()
-                    .enumerate()
-                    .map(|(ordinal, item)| RangeIterationBinding {
+                    .map(|(key, item)| RangeIterationBinding {
                         dot: item.clone(),
                         variable: variable.as_ref().map(|variable| (variable.clone(), item)),
-                        key: key_variable.map(|key| {
-                            (
-                                key.to_string(),
-                                AbstractValue::StringSet(
-                                    [ordinal.to_string()].into_iter().collect(),
-                                ),
-                            )
-                        }),
+                        key: key_variable.map(|variable| (variable.to_string(), key)),
                     })
                     .collect()
             })

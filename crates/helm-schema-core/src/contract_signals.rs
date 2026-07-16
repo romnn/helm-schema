@@ -12,6 +12,7 @@ pub enum ConditionalGuard {
     NotEq { path: String, value: GuardValue },
     Absent { path: String },
     TypeIs { path: String, schema_type: String },
+    MatchesPattern { path: String, pattern: String },
     Not(Box<ConditionalGuard>),
     AllOf(Vec<ConditionalGuard>),
     AnyOf(Vec<ConditionalGuard>),
@@ -32,7 +33,8 @@ impl ConditionalGuard {
             | Self::Eq { path, .. }
             | Self::NotEq { path, .. }
             | Self::Absent { path }
-            | Self::TypeIs { path, .. } => {
+            | Self::TypeIs { path, .. }
+            | Self::MatchesPattern { path, .. } => {
                 paths.insert(path.clone());
             }
             Self::Not(inner) => inner.collect_value_paths(paths),
@@ -158,7 +160,7 @@ pub struct ContractFailImplication {
 }
 
 /// Runtime value within a values-path contract that must satisfy a requirement.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ContractRequirementTarget {
     /// The values path itself.
     Value,
@@ -168,6 +170,16 @@ pub enum ContractRequirementTarget {
     /// false for a two-variable range, even when the member requirement would
     /// otherwise accept integer values.
     Members { allow_integer: bool },
+    /// Values of object entries whose keys start with the literal prefix.
+    /// Empty arrays and null remain valid because they execute no range body.
+    MembersMatchingPrefix { prefix: String },
+    /// Each ranged member whose literal sibling equals `value` must satisfy
+    /// the requirements at `target_path`, both relative to that member.
+    MembersWhereEquals {
+        guard_path: Vec<String>,
+        value: GuardValue,
+        target_path: Vec<String>,
+    },
     /// Every key produced by ranging the path.
     Keys,
 }
@@ -192,6 +204,18 @@ pub enum FailValueRequirement {
     /// The value is iterated by `range`: collections and nil render, and
     /// integer counts iterate when the loop body has no member structure.
     Iterable { allow_integer: bool },
+    /// A zero-based position must exist before `index` can project it.
+    /// Arrays lower exactly; strings remain conservative because Go indexes
+    /// bytes while JSON Schema `minLength` counts Unicode code points.
+    IndexableAt(usize),
+    /// Splitting the textual form must produce at least `segments` entries.
+    /// When the input was first passed through a total text conversion,
+    /// non-string inputs remain conservatively accepted.
+    SplitSegmentsAtLeast {
+        separator: String,
+        segments: usize,
+        allow_non_string: bool,
+    },
 }
 
 impl ContractPathSchemaEvidence {

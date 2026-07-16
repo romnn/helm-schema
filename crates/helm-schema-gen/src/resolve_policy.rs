@@ -26,6 +26,8 @@ use crate::schema_node::is_placeholder_fragment_object_schema;
 use crate::values_yaml::ValuesYamlPathFacts;
 use crate::values_yaml::yaml_value_at_path;
 
+const PLAIN_SCALAR_IMPLICIT_TOKEN_PATTERN: &str = r"^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$";
+
 /// Generator-side policy for lowering semantic value uses into schema evidence.
 ///
 /// Decisions about provider-schema domains and guard-derived constraints live
@@ -78,11 +80,13 @@ impl ValuePathSchemaFacts {
 
     fn preserve_empty_string_fallback(
         self,
+        provider_schema: &Value,
         type_hint_schema: &Value,
         guard_predicate_schema: &Value,
     ) -> bool {
         self.values_yaml.is_empty_string
             && ((self.contract.has_render_use && self.contract.all_render_uses_self_guarded)
+                || schema_allows_type(provider_schema, "string")
                 || is_scalar_like_schema(type_hint_schema)
                 || is_scalar_like_schema(guard_predicate_schema))
     }
@@ -123,21 +127,20 @@ impl ResolvePolicy {
         use_: &ProviderSchemaUse,
     ) -> Option<Value> {
         match use_.kind {
-            ValueKind::Fragment | ValueKind::YamlSerialized => {
-                // `toYaml` is TOTAL in a lone mapping-value slot: scalars,
-                // sequences, and maps all render, so an object-typed
-                // provider position must not bound the INPUT. Only a
-                // sequence position is load-bearing — splicing a non-list
-                // beside sequence items breaks the surrounding structure —
-                // so the provider schema constrains exactly when it types
-                // the slot as an array.
-                schema_allows_type(schema, "array").then(|| schema.clone())
-            }
+            // `toYaml` accepts every input kind but preserves that kind in
+            // the rendered YAML value, so a typed provider sink projects
+            // directly back to the input. Opaque fragment output does not
+            // provide that identity guarantee; only a sequence placement is
+            // structurally load-bearing there.
+            ValueKind::YamlSerialized => Some(schema.clone()),
+            ValueKind::Fragment => schema_allows_type(schema, "array").then(|| schema.clone()),
             ValueKind::PartialScalar | ValueKind::Serialized => None,
             ValueKind::Scalar if use_.is_self_range_collection => {
                 ForeignSchemaRestriction::ScalarCollection.apply(schema.clone())
             }
-            ValueKind::Scalar => ForeignSchemaRestriction::Scalar.apply(schema.clone()),
+            ValueKind::Scalar => ForeignSchemaRestriction::Scalar
+                .apply(schema.clone())
+                .map(plain_scalar_provider_preimage),
         }
     }
 
@@ -175,6 +178,7 @@ impl ResolvePolicy {
             | ConditionalGuard::NotEq { .. }
             | ConditionalGuard::Absent { .. }
             | ConditionalGuard::TypeIs { .. }
+            | ConditionalGuard::MatchesPattern { .. }
             | ConditionalGuard::Not(_)
             | ConditionalGuard::AllOf(_)
             | ConditionalGuard::AnyOf(_) => None,
@@ -223,8 +227,11 @@ impl ResolvePolicy {
         };
         let preserve_explicit_null_default_by_contract =
             facts.preserve_explicit_null_default(&type_hint_schema, &guard_predicate_schema);
-        let preserve_empty_string_fallback =
-            facts.preserve_empty_string_fallback(&type_hint_schema, &guard_predicate_schema);
+        let preserve_empty_string_fallback = facts.preserve_empty_string_fallback(
+            &provider_schema,
+            &type_hint_schema,
+            &guard_predicate_schema,
+        );
         let values_yaml_schema = self.adjust_values_yaml_schema_for_value_path(
             values_yaml_schema,
             facts,
@@ -498,6 +505,118 @@ impl ResolvePolicy {
     }
 }
 
+fn plain_scalar_provider_preimage(schema: Value) -> Value {
+    let Some(object) = schema.as_object() else {
+        return schema;
+    };
+    if let Some(types) = object.get("type").and_then(Value::as_array) {
+        let variants = types
+            .iter()
+            .filter_map(Value::as_str)
+            .map(|schema_type| {
+                let mut variant = object.clone();
+                variant.insert("type".to_string(), Value::String(schema_type.to_string()));
+                plain_scalar_provider_preimage(Value::Object(variant))
+            })
+            .collect();
+        return union_schema_list(variants);
+    }
+    for keyword in ["anyOf", "oneOf"] {
+        if let Some(variants) = object.get(keyword).and_then(Value::as_array) {
+            let mut transformed = object.clone();
+            transformed.insert(
+                keyword.to_string(),
+                Value::Array(
+                    variants
+                        .iter()
+                        .cloned()
+                        .map(plain_scalar_provider_preimage)
+                        .collect(),
+                ),
+            );
+            return Value::Object(transformed);
+        }
+    }
+
+    match schema_type(&schema) {
+        Some("integer") => scalar_number_preimage(schema, true),
+        Some("number") => scalar_number_preimage(schema, false),
+        Some("boolean") => scalar_boolean_preimage(schema),
+        Some("string") => scalar_plain_string_preimage(schema),
+        _ => schema,
+    }
+}
+
+fn scalar_plain_string_preimage(schema: Value) -> Value {
+    let lexical_domain = serde_json::json!({
+        "type": "string",
+        "allOf": [
+            { "not": { "pattern": "^[!&*#{}\\[\\],|>@`%]" } },
+            { "not": { "pattern": "^[-?:]([ \\t]|$)" } },
+            { "not": { "pattern": ":[ \\t]|:$" } },
+            { "not": { "pattern": "[ \\t]#" } },
+            { "not": { "pattern": "[\\r\\n]" } },
+            { "not": { "pattern": PLAIN_SCALAR_IMPLICIT_TOKEN_PATTERN } },
+            { "not": { "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$" } },
+            { "not": { "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$" } }
+        ]
+    });
+    merge_schema_list(vec![schema, lexical_domain])
+}
+
+fn scalar_number_preimage(schema: Value, integer: bool) -> Value {
+    let object = schema.as_object().expect("typed schema is an object");
+    if [
+        "minimum",
+        "maximum",
+        "exclusiveMinimum",
+        "exclusiveMaximum",
+        "multipleOf",
+    ]
+    .iter()
+    .any(|keyword| object.contains_key(*keyword))
+    {
+        return schema;
+    }
+    let string_schema = scalar_string_preimage(
+        object,
+        if integer {
+            r"^-?(0|[1-9][0-9]*)$"
+        } else {
+            r"^-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+        },
+    );
+    union_schema_list(vec![schema, string_schema])
+}
+
+fn scalar_boolean_preimage(schema: Value) -> Value {
+    let object = schema.as_object().expect("typed schema is an object");
+    let string_schema = scalar_string_preimage(object, r"^(true|false|True|False|TRUE|FALSE)$");
+    union_schema_list(vec![schema, string_schema])
+}
+
+fn scalar_string_preimage(object: &serde_json::Map<String, Value>, pattern: &str) -> Value {
+    let mut schema = serde_json::Map::new();
+    schema.insert("type".to_string(), Value::String("string".to_string()));
+    if let Some(values) = object.get("enum").and_then(Value::as_array) {
+        schema.insert(
+            "enum".to_string(),
+            Value::Array(
+                values
+                    .iter()
+                    .map(Value::to_string)
+                    .map(Value::String)
+                    .collect(),
+            ),
+        );
+    } else if let Some(value) = object.get("const") {
+        schema.insert("const".to_string(), Value::String(value.to_string()));
+    } else {
+        schema.insert("pattern".to_string(), Value::String(pattern.to_string()));
+    }
+    Value::Object(schema)
+}
+
 fn helm_falsy_schema() -> Value {
     serde_json::json!({
         "not": {
@@ -671,7 +790,8 @@ fn collect_positive_self_types(
         | helm_schema_core::ConditionalGuard::Eq { .. }
         | helm_schema_core::ConditionalGuard::NotEq { .. }
         | helm_schema_core::ConditionalGuard::Absent { .. }
-        | helm_schema_core::ConditionalGuard::TypeIs { .. } => {}
+        | helm_schema_core::ConditionalGuard::TypeIs { .. }
+        | helm_schema_core::ConditionalGuard::MatchesPattern { .. } => {}
     }
 }
 
@@ -699,7 +819,8 @@ pub(crate) fn open_objects_rejecting_declared_members(schema: Value, declared: &
 }
 
 pub(crate) fn preserve_declared_default_in_schema(schema: Value, declared: &Value) -> Value {
-    preserve_declared_default(schema, declared, true)
+    let schema = preserve_declared_default(schema, declared, true);
+    preserve_declared_plain_scalar_empty_defaults(schema, declared)
 }
 
 fn preserve_declared_default(mut schema: Value, declared: &Value, preserve_scalar: bool) -> Value {
@@ -775,6 +896,112 @@ fn preserve_declared_default(mut schema: Value, declared: &Value, preserve_scala
             preserve_declared_default(std::mem::take(child_schema), child_default, preserve_scalar);
     }
     schema
+}
+
+fn preserve_declared_plain_scalar_empty_defaults(mut schema: Value, declared: &Value) -> Value {
+    if declared.as_str() == Some("") {
+        return if has_plain_scalar_implicit_token_exclusion(&schema)
+            && !schema_accepts_json_value(&schema, declared)
+        {
+            union_schema_list(vec![
+                schema,
+                SchemaNode::const_value(declared.clone()).into_value(),
+            ])
+        } else {
+            schema
+        };
+    }
+
+    let Some(schema_object) = schema.as_object_mut() else {
+        return schema;
+    };
+    if let Some(declared_items) = declared.as_array() {
+        if let Some(items_schema) = schema_object.get_mut("items") {
+            for declared_item in declared_items {
+                *items_schema = preserve_declared_plain_scalar_empty_defaults(
+                    std::mem::take(items_schema),
+                    declared_item,
+                );
+            }
+        }
+        return schema;
+    }
+    let Some(declared_object) = declared.as_object() else {
+        return schema;
+    };
+
+    // Structural wrappers (`allOf` narrowing branches, `if`/`then`/`else`
+    // dispatch, and the `anyOf`/`oneOf` member-projection arms that model a
+    // ranged source as array | object | null) carry the same declared
+    // default into each branch.
+    for keyword in ["allOf", "anyOf", "oneOf"] {
+        if let Some(branches) = schema_object.get_mut(keyword).and_then(Value::as_array_mut) {
+            for branch in branches {
+                *branch =
+                    preserve_declared_plain_scalar_empty_defaults(std::mem::take(branch), declared);
+            }
+        }
+    }
+    for keyword in ["then", "else"] {
+        if let Some(branch) = schema_object.get_mut(keyword) {
+            *branch =
+                preserve_declared_plain_scalar_empty_defaults(std::mem::take(branch), declared);
+        }
+    }
+    if let Some(properties) = schema_object
+        .get_mut("properties")
+        .and_then(Value::as_object_mut)
+    {
+        for (key, child_schema) in properties {
+            let Some(child_default) = declared_object.get(key) else {
+                continue;
+            };
+            *child_schema = preserve_declared_plain_scalar_empty_defaults(
+                std::mem::take(child_schema),
+                child_default,
+            );
+        }
+    }
+    // A map default whose members are validated by a shared member schema
+    // (`range`d over `additionalProperties`/`items`) preserves each declared
+    // member's empty scalar defaults through that one member schema.
+    for keyword in ["additionalProperties", "items"] {
+        if let Some(member_schema) = schema_object.get_mut(keyword)
+            && member_schema.is_object()
+        {
+            for declared_value in declared_object.values() {
+                *member_schema = preserve_declared_plain_scalar_empty_defaults(
+                    std::mem::take(member_schema),
+                    declared_value,
+                );
+            }
+        }
+    }
+    schema
+}
+
+fn has_plain_scalar_implicit_token_exclusion(schema: &Value) -> bool {
+    if schema
+        .get("not")
+        .and_then(|not| not.get("pattern"))
+        .and_then(Value::as_str)
+        == Some(PLAIN_SCALAR_IMPLICIT_TOKEN_PATTERN)
+    {
+        return true;
+    }
+    // The preimage rides an `allOf` of `not` patterns, and a nullable sink
+    // wraps that in an `anyOf`/`oneOf` alongside the `null` arm, so the
+    // exclusion must be detected through every combinator wrapper.
+    ["allOf", "anyOf", "oneOf"].iter().any(|keyword| {
+        schema
+            .get(keyword)
+            .and_then(Value::as_array)
+            .is_some_and(|branches| {
+                branches
+                    .iter()
+                    .any(has_plain_scalar_implicit_token_exclusion)
+            })
+    })
 }
 
 fn should_merge_values_yaml_into_conditional_branch(

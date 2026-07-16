@@ -26,8 +26,6 @@ pub(crate) fn analyze_charts(
 ) -> EngineResult<ChartAnalysis> {
     let mut contract = ContractIr::default();
     let mut local_schema_universe = collect_static_crd_universe(charts)?;
-    let symbolic_context = SymbolicIrContext::new(defines);
-
     for chart in charts {
         for path in chart
             .dependency_activation
@@ -46,6 +44,10 @@ pub(crate) fn analyze_charts(
         if chart.is_library {
             continue;
         }
+        let symbolic_context = SymbolicIrContext::with_chart_default_strings(
+            defines,
+            values_roots.string_defaults_for_prefix(&chart.values_prefix),
+        );
         let ManifestContractAnalysis {
             contract: manifest_contract,
             local_resource_schemas,

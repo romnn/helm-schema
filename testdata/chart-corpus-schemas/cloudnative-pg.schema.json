@@ -28,185 +28,6 @@
     "schema1": {
       "not": {
         "properties": {
-          "monitoring": {
-            "properties": {
-              "grafanaDashboard": {
-                "properties": {
-                  "sidecarLabel": {}
-                },
-                "required": [
-                  "sidecarLabel"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "grafanaDashboard"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "monitoring"
-        ],
-        "type": "object"
-      }
-    },
-    "schema11": {
-      "not": {
-        "properties": {
-          "serviceAccount": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceAccount"
-        ],
-        "type": "object"
-      }
-    },
-    "schema12": {
-      "not": {
-        "properties": {
-          "config": {
-            "properties": {
-              "clusterWide": {}
-            },
-            "required": [
-              "clusterWide"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "config"
-        ],
-        "type": "object"
-      }
-    },
-    "schema16": {
-      "not": {
-        "properties": {
-          "config": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "config"
-        ],
-        "type": "object"
-      }
-    },
-    "schema17": {
-      "not": {
-        "properties": {
-          "rbac": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "rbac"
-        ],
-        "type": "object"
-      }
-    },
-    "schema2": {
-      "properties": {
-        "monitoring": {
-          "properties": {
-            "grafanaDashboard": {
-              "properties": {
-                "create": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "create"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "grafanaDashboard"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "monitoring"
-      ],
-      "type": "object"
-    },
-    "schema21": {
-      "not": {
-        "properties": {
-          "sidecarLabel": {}
-        },
-        "required": [
-          "sidecarLabel"
-        ],
-        "type": "object"
-      }
-    },
-    "schema22": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "schema23": {
-      "properties": {
-        "create": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema25": {
-      "not": {
-        "properties": {
-          "create": {}
-        },
-        "required": [
-          "create"
-        ],
-        "type": "object"
-      }
-    },
-    "schema27": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "schema4": {
-      "not": {
-        "properties": {
           "webhook": {
             "properties": {
               "validating": {
@@ -231,7 +52,80 @@
         "type": "object"
       }
     },
-    "schema5": {
+    "schema10": {
+      "not": {
+        "properties": {
+          "config": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      }
+    },
+    "schema11": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema16": {
+      "not": {
+        "properties": {
+          "sidecarLabel": {}
+        },
+        "required": [
+          "sidecarLabel"
+        ],
+        "type": "object"
+      }
+    },
+    "schema17": {
+      "properties": {
+        "create": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema18": {
+      "not": {
+        "properties": {
+          "create": {}
+        },
+        "required": [
+          "create"
+        ],
+        "type": "object"
+      }
+    },
+    "schema2": {
       "not": {
         "properties": {
           "webhook": {
@@ -258,9 +152,55 @@
         "type": "object"
       }
     },
-    "schema8": {
+    "schema20": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema5": {
       "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
       "type": "string"
+    },
+    "schema6": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema7": {
+      "properties": {
+        "config": {
+          "properties": {
+            "clusterWide": {
+              "enum": [
+                false
+              ]
+            }
+          },
+          "required": [
+            "clusterWide"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "config"
+      ],
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -272,7 +212,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema10"
               },
               {
                 "properties": {
@@ -317,7 +257,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -343,7 +283,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -369,7 +309,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema5"
+                "$ref": "#/$defs/schema2"
               },
               {
                 "properties": {
@@ -408,7 +348,7 @@
           "commonAnnotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema27"
+                "$ref": "#/$defs/schema20"
               },
               {
                 "not": {
@@ -425,7 +365,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema17"
+            "$ref": "#/$defs/schema11"
           },
           {
             "properties": {
@@ -477,7 +417,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema10"
               },
               {
                 "properties": {
@@ -504,7 +444,23 @@
             "not": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema12"
+                  "not": {
+                    "properties": {
+                      "config": {
+                        "properties": {
+                          "clusterWide": {}
+                        },
+                        "required": [
+                          "clusterWide"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  }
                 },
                 {
                   "properties": {
@@ -578,7 +534,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -604,7 +560,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -677,911 +633,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "monitoring": {
-                "properties": {
-                  "grafanaDashboard": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "grafanaDashboard"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "monitoring"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "monitoring": {
-                    "properties": {
-                      "grafanaDashboard": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "grafanaDashboard"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "monitoring"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema1"
-                  },
-                  {
-                    "properties": {
-                      "monitoring": {
-                        "properties": {
-                          "grafanaDashboard": {
-                            "properties": {
-                              "sidecarLabel": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "sidecarLabel"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "grafanaDashboard"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "monitoring"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "monitoring": {
-                        "properties": {
-                          "grafanaDashboard": {
-                            "properties": {
-                              "labels": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "labels"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "grafanaDashboard"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "monitoring"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema1"
-                      },
-                      {
-                        "properties": {
-                          "monitoring": {
-                            "properties": {
-                              "grafanaDashboard": {
-                                "properties": {
-                                  "sidecarLabel": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "sidecarLabel"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "grafanaDashboard"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "monitoring"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "monitoring": {
-                    "properties": {
-                      "grafanaDashboard": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "grafanaDashboard"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "monitoring"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "monitoring": {
-                        "properties": {
-                          "grafanaDashboard": {
-                            "properties": {
-                              "labels": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "labels"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "grafanaDashboard"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "monitoring"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema1"
-                      },
-                      {
-                        "properties": {
-                          "monitoring": {
-                            "properties": {
-                              "grafanaDashboard": {
-                                "properties": {
-                                  "sidecarLabel": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "sidecarLabel"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "grafanaDashboard"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "monitoring"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema1"
-                  },
-                  {
-                    "properties": {
-                      "monitoring": {
-                        "properties": {
-                          "grafanaDashboard": {
-                            "properties": {
-                              "sidecarLabel": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "sidecarLabel"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "grafanaDashboard"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "monitoring"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema2"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "monitoring": {
-                        "properties": {
-                          "grafanaDashboard": {
-                            "properties": {
-                              "labels": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "labels"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "grafanaDashboard"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "monitoring"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema1"
-                      },
-                      {
-                        "properties": {
-                          "monitoring": {
-                            "properties": {
-                              "grafanaDashboard": {
-                                "properties": {
-                                  "sidecarLabel": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "sidecarLabel"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "grafanaDashboard"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "monitoring"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema2"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema2"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "monitoring": {
-                        "properties": {
-                          "grafanaDashboard": {
-                            "properties": {
-                              "labels": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "labels"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "grafanaDashboard"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "monitoring"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema1"
-                      },
-                      {
-                        "properties": {
-                          "monitoring": {
-                            "properties": {
-                              "grafanaDashboard": {
-                                "properties": {
-                                  "sidecarLabel": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "sidecarLabel"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "grafanaDashboard"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "monitoring"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "monitoring": {
-            "additionalProperties": {},
-            "properties": {
-              "grafanaDashboard": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "monitoring": {
-                "properties": {
-                  "grafanaDashboard": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "grafanaDashboard"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "monitoring"
-            ],
-            "type": "object"
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "monitoring": {
-                    "properties": {
-                      "grafanaDashboard": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "grafanaDashboard"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "monitoring"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema1"
-                  },
-                  {
-                    "properties": {
-                      "monitoring": {
-                        "properties": {
-                          "grafanaDashboard": {
-                            "properties": {
-                              "sidecarLabel": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "sidecarLabel"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "grafanaDashboard"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "monitoring"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "monitoring": {
-                        "properties": {
-                          "grafanaDashboard": {
-                            "properties": {
-                              "labels": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "labels"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "grafanaDashboard"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "monitoring"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema1"
-                      },
-                      {
-                        "properties": {
-                          "monitoring": {
-                            "properties": {
-                              "grafanaDashboard": {
-                                "properties": {
-                                  "sidecarLabel": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "sidecarLabel"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "grafanaDashboard"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "monitoring"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "monitoring": {
-                    "properties": {
-                      "grafanaDashboard": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "grafanaDashboard"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "monitoring"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "monitoring": {
-                        "properties": {
-                          "grafanaDashboard": {
-                            "properties": {
-                              "labels": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "labels"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "grafanaDashboard"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "monitoring"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema1"
-                      },
-                      {
-                        "properties": {
-                          "monitoring": {
-                            "properties": {
-                              "grafanaDashboard": {
-                                "properties": {
-                                  "sidecarLabel": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "sidecarLabel"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "grafanaDashboard"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "monitoring"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema1"
-                  },
-                  {
-                    "properties": {
-                      "monitoring": {
-                        "properties": {
-                          "grafanaDashboard": {
-                            "properties": {
-                              "sidecarLabel": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "sidecarLabel"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "grafanaDashboard"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "monitoring"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema2"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "monitoring": {
-                        "properties": {
-                          "grafanaDashboard": {
-                            "properties": {
-                              "labels": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "labels"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "grafanaDashboard"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "monitoring"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema1"
-                      },
-                      {
-                        "properties": {
-                          "monitoring": {
-                            "properties": {
-                              "grafanaDashboard": {
-                                "properties": {
-                                  "sidecarLabel": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "sidecarLabel"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "grafanaDashboard"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "monitoring"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema2"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/schema2"
-              },
-              {
-                "anyOf": [
-                  {
-                    "properties": {
-                      "monitoring": {
-                        "properties": {
-                          "grafanaDashboard": {
-                            "properties": {
-                              "labels": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "labels"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "grafanaDashboard"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "monitoring"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema1"
-                      },
-                      {
-                        "properties": {
-                          "monitoring": {
-                            "properties": {
-                              "grafanaDashboard": {
-                                "properties": {
-                                  "sidecarLabel": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "sidecarLabel"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "grafanaDashboard"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "monitoring"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "monitoring": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "properties": {
           "nameOverride": {
             "$ref": "#/$defs/helm-truthy"
@@ -1614,7 +665,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema10"
               },
               {
                 "properties": {
@@ -1657,61 +708,42 @@
             "type": "object"
           },
           {
-            "anyOf": [
+            "allOf": [
               {
-                "$ref": "#/$defs/schema17"
-              },
-              {
-                "properties": {
-                  "rbac": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema11"
+                  },
+                  {
                     "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
                       }
                     },
                     "required": [
-                      "create"
+                      "rbac"
                     ],
                     "type": "object"
                   }
-                },
-                "required": [
-                  "rbac"
-                ],
-                "type": "object"
+                ]
+              },
+              {
+                "$ref": "#/$defs/schema7"
               }
             ]
           },
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema11"
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema5"
+                "$ref": "#/$defs/schema2"
               },
               {
                 "properties": {
@@ -1745,7 +777,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema4"
+                "$ref": "#/$defs/schema1"
               },
               {
                 "properties": {
@@ -1795,7 +827,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema16"
+                    "$ref": "#/$defs/schema10"
                   },
                   {
                     "properties": {
@@ -1865,7 +897,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema17"
+                    "$ref": "#/$defs/schema11"
                   },
                   {
                     "properties": {
@@ -1889,32 +921,14 @@
                 ]
               },
               {
-                "properties": {
-                  "config": {
-                    "properties": {
-                      "clusterWide": {
-                        "enum": [
-                          false
-                        ]
-                      }
-                    },
-                    "required": [
-                      "clusterWide"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/schema7"
               }
             ]
           },
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema6"
               },
               {
                 "properties": {
@@ -1936,34 +950,6 @@
                 "type": "object"
               }
             ]
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/schema12"
-                },
-                {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "clusterWide": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "clusterWide"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
-              ]
-            }
           }
         ]
       },
@@ -1991,7 +977,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema11"
               },
               {
                 "properties": {
@@ -2017,7 +1003,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema5"
+                "$ref": "#/$defs/schema2"
               },
               {
                 "properties": {
@@ -2051,7 +1037,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema4"
+                "$ref": "#/$defs/schema1"
               },
               {
                 "properties": {
@@ -2097,7 +1083,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema4"
+            "$ref": "#/$defs/schema1"
           },
           {
             "properties": {
@@ -2137,7 +1123,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema27"
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "not": {
@@ -2157,7 +1143,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema5"
+                "$ref": "#/$defs/schema2"
               },
               {
                 "properties": {
@@ -2191,7 +1177,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema4"
+                "$ref": "#/$defs/schema1"
               },
               {
                 "properties": {
@@ -2231,7 +1217,7 @@
             "additionalProperties": {},
             "properties": {
               "name": {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema5"
               }
             }
           }
@@ -2244,7 +1230,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema5"
+                "$ref": "#/$defs/schema2"
               },
               {
                 "properties": {
@@ -2278,7 +1264,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema4"
+                "$ref": "#/$defs/schema1"
               },
               {
                 "properties": {
@@ -2329,7 +1315,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema17"
+            "$ref": "#/$defs/schema11"
           },
           {
             "properties": {
@@ -2419,10 +1405,12 @@
     "commonAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema22"
+          "additionalProperties": {},
+          "properties": {},
+          "type": "object"
         },
         {
-          "$ref": "#/$defs/schema27"
+          "$ref": "#/$defs/schema20"
         },
         {
           "not": {
@@ -2439,7 +1427,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema25"
+                "$ref": "#/$defs/schema18"
               },
               {
                 "properties": {
@@ -2468,21 +1456,6 @@
       "description": "Operator configuration.",
       "properties": {
         "clusterWide": {
-          "anyOf": [
-            {
-              "enum": [
-                false
-              ]
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ],
           "description": "This option determines if the operator is responsible for observing\nevents across the entire Kubernetes cluster or if its focus should be\nnarrowed down to the specific namespace within which it has been deployed."
         },
         "create": {
@@ -2502,22 +1475,10 @@
           "description": "The content of the configmap/secret, see\nhttps://cloudnative-pg.io/documentation/current/operator_conf/#available-options\nfor all the available options.\nINHERITED_ANNOTATIONS: categories\nINHERITED_LABELS: environment, workload, app\nWATCH_NAMESPACE: namespace-a,namespace-b"
         },
         "maxConcurrentReconciles": {
-          "description": "The maximum number of concurrent reconciles. Defaults to 10.",
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "description": "The maximum number of concurrent reconciles. Defaults to 10."
         },
         "name": {
-          "description": "The name of the configmap/secret to use.",
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
+          "description": "The name of the configmap/secret to use."
         },
         "secret": {
           "anyOf": [
@@ -2605,15 +1566,6 @@
           }
         },
         {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "number"
-        },
-        {
           "type": "string"
         }
       ]
@@ -2632,67 +1584,12 @@
     },
     "image": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "tag": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "tag"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "repository": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      ],
       "properties": {
         "pullPolicy": {
           "type": "string"
         },
         "repository": {},
         "tag": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Overrides the image tag whose default is the chart appVersion."
         }
       },
@@ -2735,7 +1632,7 @@
               "podMonitorAdditionalLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema27"
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "not": {
@@ -2775,7 +1672,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema17"
                   }
                 ]
               },
@@ -2785,7 +1682,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema27"
+                        "$ref": "#/$defs/schema20"
                       },
                       {
                         "not": {
@@ -2813,7 +1710,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema17"
                   }
                 ]
               },
@@ -2859,7 +1756,7 @@
                           {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema21"
+                                "$ref": "#/$defs/schema16"
                               },
                               {
                                 "properties": {
@@ -2881,7 +1778,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema23"
+                        "$ref": "#/$defs/schema17"
                       },
                       {
                         "anyOf": [
@@ -2899,7 +1796,7 @@
                           {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema21"
+                                "$ref": "#/$defs/schema16"
                               },
                               {
                                 "properties": {
@@ -2926,7 +1823,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema27"
+                        "$ref": "#/$defs/schema20"
                       },
                       {
                         "not": {
@@ -2954,7 +1851,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema17"
                   }
                 ]
               },
@@ -3004,22 +1901,13 @@
               "description": "Allows overriding the namespace where the ConfigMap will be created, defaulting to the same one as the Release."
             },
             "sidecarLabel": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "string"
-                }
-              ],
               "description": "Label that ConfigMaps should have to be loaded as dashboards. DEPRECATED: Use labels instead."
             },
             "sidecarLabelValue": {
               "description": "Label value that ConfigMaps should have to be loaded as dashboards. DEPRECATED: Use labels instead."
             }
-          }
+          },
+          "type": "object"
         },
         "nameOverride": {
           "type": "string"
@@ -3054,21 +1942,8 @@
       "description": "Default monitoring queries",
       "properties": {
         "name": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "string"
-            }
-          ],
-          "description": "The name of the default monitoring configmap."
+          "description": "The name of the default monitoring configmap.",
+          "type": "string"
         },
         "queries": {
           "description": "A string representation of a YAML defining monitoring queries.",
@@ -3089,15 +1964,6 @@
           }
         },
         {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "number"
-        },
-        {
           "type": "string"
         }
       ]
@@ -3108,10 +1974,13 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema22"
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
         },
         {
-          "$ref": "#/$defs/schema27"
+          "$ref": "#/$defs/schema20"
         },
         {
           "not": {
@@ -3124,10 +1993,13 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema22"
+          "additionalProperties": false,
+          "maxProperties": 0,
+          "properties": {},
+          "type": "object"
         },
         {
-          "$ref": "#/$defs/schema27"
+          "$ref": "#/$defs/schema20"
         },
         {
           "not": {
@@ -3234,7 +2106,7 @@
           "description": "Set the ip family policy to configure dual-stack see [Configure dual-stack](https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services)"
         },
         "name": {
-          "$ref": "#/$defs/schema8"
+          "$ref": "#/$defs/schema5"
         },
         "port": {
           "type": "integer"
@@ -3252,7 +2124,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema25"
+                "$ref": "#/$defs/schema18"
               },
               {
                 "properties": {
@@ -3366,7 +2238,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema25"
+                        "$ref": "#/$defs/schema18"
                       },
                       {
                         "properties": {
@@ -3403,7 +2275,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema25"
+                        "$ref": "#/$defs/schema18"
                       },
                       {
                         "properties": {
@@ -3471,14 +2343,7 @@
           },
           "type": "object"
         },
-        "port": {
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
-        },
+        "port": {},
         "readinessProbe": {
           "additionalProperties": {},
           "properties": {

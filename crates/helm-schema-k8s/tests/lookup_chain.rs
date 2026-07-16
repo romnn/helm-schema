@@ -488,6 +488,7 @@ fn chain_schema_fragment_for_use_speculative_misses_do_not_leak_diagnostics() {
         ResourceRef {
             api_version: "policy/v1beta1".to_string(),
             kind: "PodSecurityPolicy".to_string(),
+            kind_candidates: Vec::new(),
             // `policy/v1` is a speculative candidate; ranking puts it
             // first (stable > beta) so it will be probed before the
             // primary. If the speculative miss leaks, we'd see
@@ -542,6 +543,7 @@ fn chain_commit_missing_schema_emits_per_candidate_when_primary_empty() {
     let resource = ResourceRef {
         api_version: String::new(),
         kind: "PodSecurityPolicy".to_string(),
+        kind_candidates: Vec::new(),
         api_version_candidates: vec!["policy/v1".to_string(), "policy/v1beta1".to_string()],
         api_version_branches: Vec::new(),
     };
@@ -601,6 +603,7 @@ fn chain_commit_missing_schema_else_branch_attribution_when_has_is_false() {
     let resource = ResourceRef {
         api_version: String::new(),
         kind: "PodSecurityPolicy".to_string(),
+        kind_candidates: Vec::new(),
         api_version_candidates: vec!["policy/v1".to_string(), "policy/v1beta1".to_string()],
         api_version_branches: vec![
             branch_literals(
@@ -659,6 +662,7 @@ fn chain_commit_missing_schema_if_branch_attribution_when_has_is_true() {
     let resource = ResourceRef {
         api_version: String::new(),
         kind: "PodSecurityPolicy".to_string(),
+        kind_candidates: Vec::new(),
         api_version_candidates: vec!["policy/v1".to_string(), "policy/v1beta1".to_string()],
         api_version_branches: vec![
             branch_literals(
@@ -726,6 +730,7 @@ fn chain_commit_missing_schema_recurses_through_nested_branch_body() {
     let resource = ResourceRef {
         api_version: String::new(),
         kind: "SomeKind".to_string(),
+        kind_candidates: Vec::new(),
         api_version_candidates: vec![],
         api_version_branches: vec![
             helm_schema_core::HelperBranch {
@@ -790,6 +795,7 @@ fn chain_recurses_through_nested_picks_inner_else_when_inner_has_false() {
     let resource = ResourceRef {
         api_version: String::new(),
         kind: "SomeKind".to_string(),
+        kind_candidates: Vec::new(),
         api_version_candidates: vec![],
         api_version_branches: vec![
             helm_schema_core::HelperBranch {
@@ -838,6 +844,7 @@ fn chain_commit_missing_schema_attributes_to_last_branch_when_no_else() {
     let resource = ResourceRef {
         api_version: String::new(),
         kind: "PodSecurityPolicy".to_string(),
+        kind_candidates: Vec::new(),
         api_version_candidates: vec!["policy/v1".to_string()],
         api_version_branches: vec![branch_literals(
             Some(CapabilityGuard::Has {
@@ -934,6 +941,7 @@ fn chain_schema_fragment_for_use_multi_candidate_all_path_unresolved_does_not_le
         ResourceRef {
             api_version: "policy/v1beta1".to_string(),
             kind: "PodSecurityPolicy".to_string(),
+            kind_candidates: Vec::new(),
             api_version_candidates: vec!["policy/v1".to_string()],
             api_version_branches: Vec::new(),
         },
@@ -969,6 +977,7 @@ fn chain_schema_fragment_for_use_total_failure_attributes_to_primary() {
         ResourceRef {
             api_version: "policy/v1beta1".to_string(),
             kind: "PodSecurityPolicy".to_string(),
+            kind_candidates: Vec::new(),
             api_version_candidates: vec!["policy/v1".to_string()],
             api_version_branches: Vec::new(),
         },

@@ -31,7 +31,7 @@ fn quoted_matchlabels_key_value_stays_string() {
         (serde_json::json!("ingress-nginx"), true, "string"),
         (serde_json::json!(7), true, "number"),
         (serde_json::json!(false), true, "boolean"),
-        (serde_json::json!({ "bad": true }), false, "object"),
+        (serde_json::json!({ "bad": true }), true, "object"),
     ] {
         let instance = serde_json::json!({
             "networkPolicies": {

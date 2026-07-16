@@ -34,6 +34,7 @@ pub fn is_string_transform_function(function: &str) -> bool {
             | "squote"
             | "b64enc"
             | "b64dec"
+            | "urlquery"
             | "toString"
             | "lower"
             | "indent"
@@ -44,6 +45,7 @@ pub fn is_string_transform_function(function: &str) -> bool {
             | "trimPrefix"
             | "trimSuffix"
             | "replace"
+            | "repeat"
             | "regexReplaceAll"
             | "mustRegexReplaceAll"
             | "regexReplaceAllLiteral"
@@ -82,10 +84,13 @@ pub fn string_operand_indices(function: &str, argument_count: usize) -> Vec<usiz
         | "hasPrefix"
         | "hasSuffix"
         | "semverCompare"
+        | "urlParse"
         | "splitList"
         | "split" => (0..argument_count).collect(),
+        // The duration is the first argument; the second is a time value.
+        "mustDateModify" if argument_count >= 2 => vec![0],
         // The string subject is final; `trunc`'s preceding width is numeric.
-        "trunc" | "trim" | "lower" | "indent" | "nindent" => {
+        "trunc" | "trim" | "lower" | "indent" | "nindent" | "repeat" => {
             vec![argument_count - 1]
         }
         // `splitn separator count subject` has a non-string middle argument.
@@ -105,17 +110,25 @@ pub fn strict_parser_operand_pattern(
     function: &str,
     argument_count: usize,
 ) -> Option<(usize, &'static str)> {
-    if function != "semverCompare" || argument_count != 2 {
-        return None;
+    match function {
+        "semverCompare" if argument_count == 2 => {
+            // Masterminds semver's coercing parser uses this loose lexical grammar
+            // before numeric and prerelease validation. Keeping that upstream
+            // grammar as a superset avoids inventing a narrower SemVer dialect.
+            Some((
+                argument_count - 1,
+                r"^v?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$",
+            ))
+        }
+        "mustDateModify" if argument_count == 2 => Some((
+            0,
+            r"^[+-]?(0|(([0-9]+(\.[0-9]*)?|\.[0-9]+)(ns|us|µs|μs|ms|s|m|h))+)$",
+        )),
+        "urlParse" if argument_count == 1 => {
+            Some((0, r"^([^\u0000-\u001F\u007F%]|%[0-9A-Fa-f]{2})*$"))
+        }
+        _ => None,
     }
-
-    // Masterminds semver's coercing parser uses this loose lexical grammar
-    // before numeric and prerelease validation. Keeping that upstream
-    // grammar as a superset avoids inventing a narrower SemVer dialect.
-    Some((
-        argument_count - 1,
-        r"^v?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$",
-    ))
 }
 
 /// Returns whether a function stringifies ANY input. These call Sprig's
@@ -125,7 +138,7 @@ pub fn strict_parser_operand_pattern(
 /// the input shape. (`join` shares this contract via `strslice` but has its
 /// own eval arms.)
 pub fn is_total_stringification_function(function: &str) -> bool {
-    matches!(function, "quote" | "squote" | "toString")
+    matches!(function, "quote" | "squote" | "toString" | "urlquery")
 }
 
 /// Returns whether a function is a total numeric cast: Sprig's `int`,
@@ -171,7 +184,14 @@ pub fn is_coercing_arithmetic_function(function: &str) -> bool {
 pub fn is_string_predicate_function(function: &str) -> bool {
     matches!(
         function,
-        "regexMatch" | "mustRegexMatch" | "contains" | "hasPrefix" | "hasSuffix" | "semverCompare"
+        "regexMatch"
+            | "mustRegexMatch"
+            | "contains"
+            | "hasPrefix"
+            | "hasSuffix"
+            | "semverCompare"
+            | "mustDateModify"
+            | "urlParse"
     )
 }
 

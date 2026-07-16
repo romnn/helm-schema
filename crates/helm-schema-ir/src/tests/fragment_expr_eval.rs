@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_ast::{DefineIndex, TemplateExpr, parse_action_expressions};
+use helm_schema_core::Predicate;
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
@@ -10,6 +11,172 @@ use crate::fragment_expr_eval::{
 };
 use crate::helper_meta::HelperOutputMeta;
 use test_util::prelude::sim_assert_eq;
+
+#[test]
+fn wrapped_with_program_keeps_exact_else_requirements() {
+    let defines = DefineIndex::new();
+    let context = crate::SymbolicIrContext::new(&defines);
+    let source = "program: |-\n  {{- with $tenants := .Values.tenants }}{{ $tenants }}{{- else }}{{ required \"username required\" .Values.auth.username }}{{- end }}\n";
+    let document = context.eval_document_fragment(source);
+    assert!(
+        !document.fail_conditions.is_empty()
+            && document
+                .fail_conditions
+                .iter()
+                .all(|capture| !capture.contains_approximation()),
+        "{document:#?}"
+    );
+}
+
+#[test]
+fn wrapped_nested_tenant_program_reaches_the_with_alternative() {
+    let defines = DefineIndex::new();
+    let context = crate::SymbolicIrContext::new(&defines);
+    let source = r#"program: |-
+  {{- with $tenants := .Values.loki.tenants }}
+    {{- range $tenant := $tenants }}
+      {{- required "tenant name" $tenant.name }}
+    {{- end }}
+  {{- else }}
+    {{- required "username" .Values.gateway.basicAuth.username }}
+    {{- required "password" .Values.gateway.basicAuth.password }}
+  {{- end }}
+"#;
+    let signals = context
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals();
+    for path in ["gateway.basicAuth.username", "gateway.basicAuth.password"] {
+        assert!(
+            signals.terminal_clauses().iter().any(|clause| clause
+                .iter()
+                .flat_map(helm_schema_core::ConditionalGuard::value_paths)
+                .any(|guard_path| guard_path == path)),
+            "missing required terminal for {path}: {signals:#?}"
+        );
+    }
+}
+
+#[test]
+fn constructed_finite_tpl_program_executes_its_required_call() {
+    let defines = DefineIndex::new();
+    let context = crate::SymbolicIrContext::new(&defines);
+    let source = r#"{{- $program := print "{{" " required \"name\" .Values.name " "}}" -}}
+apiVersion: v1
+kind: ConfigMap
+data:
+  value: {{ tpl $program . | quote }}
+"#;
+    let signals = context
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals();
+    assert!(
+        signals.terminal_clauses().iter().any(|clause| clause
+            .iter()
+            .flat_map(helm_schema_core::ConditionalGuard::value_paths)
+            .any(|path| path == "name")),
+        "the constructed program's required call must remain executable: {signals:#?}"
+    );
+}
+
+#[test]
+fn finite_range_append_accumulator_reaches_the_terminal_clause() {
+    let defines = DefineIndex::new();
+    let context = crate::SymbolicIrContext::new(&defines);
+    let source = r#"
+        {{- $keys := list "ebpf" "gvisor" -}}
+        {{- $found := list -}}
+        {{- range $key := $keys -}}
+          {{- if hasKey $.Values.driver $key -}}
+            {{- $found = append $found $key -}}
+          {{- end -}}
+        {{- end -}}
+        {{- if gt (len $found) 0 -}}
+          {{- fail "removed" -}}
+        {{- end -}}
+        "#;
+    let document = context.eval_document_fragment(source);
+    let signals = context
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals();
+
+    assert!(
+        ["driver.ebpf", "driver.gvisor"].iter().all(|path| {
+            signals.terminal_clauses().iter().any(|clause| {
+                clause.iter().any(|guard| {
+                    guard
+                        .value_paths()
+                        .into_iter()
+                        .any(|guard_path| guard_path == *path)
+                })
+            })
+        }),
+        "finite append accumulation must preserve every presence alternative: {signals:#?}; document={document:#?}"
+    );
+}
+
+#[test]
+fn constructed_selector_tpl_program_drives_a_caller_fail() {
+    let defines = DefineIndex::new();
+    let context = crate::SymbolicIrContext::new(&defines);
+    let source = r#"{{- $dep := "telemetry.v2.stackdriver.disableOutbound" -}}
+{{- $res := tpl (print "{{" (repeat (split "." $dep | len) "(") ".Values." (replace "." ")." $dep) ")}}") $ -}}
+{{- if not (eq $res "") -}}
+{{- fail "removed" -}}
+{{- end -}}
+"#;
+    let signals = context
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals();
+    assert!(
+        signals
+            .terminal_clauses()
+            .iter()
+            .any(|clause| clause.iter().any(|guard| matches!(guard,
+                helm_schema_core::ConditionalGuard::NotEq { path, value }
+                    if path == "telemetry.v2.stackdriver.disableOutbound"
+                        && value == &helm_schema_core::GuardValue::string("")))),
+        "the constructed selector program must reach the caller comparison and fail: {signals:#?}"
+    );
+}
+
+#[test]
+fn tpl_wrapped_helper_dispatch_drives_a_disjunctive_caller_guard() {
+    let helpers = r#"
+{{- define "provider.name" -}}
+{{- if eq (typeOf .Values.provider) "string" -}}
+{{- .Values.provider -}}
+{{- else -}}
+{{- .Values.provider.name -}}
+{{- end -}}
+{{- end -}}
+"#;
+    let source = r#"
+{{- $provider_name := tpl (include "provider.name" .) $ -}}
+{{- if eq $provider_name "webhook" -}}
+{{- fail "webhook selected" -}}
+{{- end -}}
+"#;
+    let mut defines = DefineIndex::new();
+    defines.add_file_source("<inline:0>", helpers);
+    let signals = crate::SymbolicIrContext::new(&defines)
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals();
+
+    assert!(
+        signals.terminal_clauses().iter().any(|clause| {
+            clause.iter().any(|guard| {
+                matches!(guard, helm_schema_core::ConditionalGuard::AnyOf(alternatives)
+                    if alternatives.len() == 2)
+            })
+        }),
+        "the helper's type-dispatched output must remain a disjunction at the caller: {signals:#?}"
+    );
+}
 
 fn single_expr(action: &str) -> TemplateExpr {
     let exprs = parse_action_expressions(&format!("{{{{ {action} }}}}"));
@@ -214,6 +381,185 @@ fn bound_helper_call_uses_single_value_resolver_for_helper_projection() {
 }
 
 #[test]
+fn bound_helper_break_keeps_priority_candidate_conditions() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        r#"{{- define "select.context" -}}
+{{- $result := dict -}}
+{{- range . -}}
+  {{- if and (hasKey . "securityContexts") (hasKey .securityContexts "pod") .securityContexts.pod -}}
+    {{- $result = .securityContexts.pod -}}
+    {{- break -}}
+  {{- end -}}
+  {{- if and (hasKey . "securityContext") .securityContext -}}
+    {{- $result = .securityContext -}}
+    {{- break -}}
+  {{- end -}}
+{{- end -}}
+{{- toYaml $result -}}
+{{- end -}}"#,
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let expr = single_expr(r#"include "select.context" (list .Values.worker .Values)"#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        None,
+        None,
+        context,
+        &mut seen,
+    );
+    let legacy = result
+        .effects
+        .helper_rendered
+        .iter()
+        .find(|row| row.path == "worker.securityContext")
+        .expect("worker legacy candidate");
+    assert!(
+        legacy.meta.predicates.iter().any(|branch| {
+            branch.iter().any(|predicate| {
+                matches!(predicate, Predicate::Not(_))
+                    && predicate
+                        .value_paths()
+                        .contains("worker.securityContexts.pod")
+            })
+        }),
+        "the legacy candidate must require every earlier break condition to be false: {legacy:#?}"
+    );
+    assert!(
+        result
+            .effects
+            .helper_rendered
+            .iter()
+            .flat_map(|row| &row.meta.predicates)
+            .flatten()
+            .all(|predicate| *predicate != Predicate::False),
+        "structural hasKey predicates must resolve against the active range dot: {result:#?}"
+    );
+}
+
+#[test]
+fn bound_helper_continue_suppresses_the_rest_of_only_that_iteration() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        r#"{{- define "loop.values" -}}
+{{- range . -}}
+  {{- if .skip -}}{{- continue -}}{{- end -}}
+  {{- .payload -}}
+{{- end -}}
+{{- end -}}"#,
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let expr = single_expr(r#"include "loop.values" (list .Values.first .Values.second)"#);
+    let mut seen = HashSet::new();
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        None,
+        None,
+        helper_context(&analysis_db),
+        &mut seen,
+    );
+
+    for (path, skip) in [
+        ("first.payload", "first.skip"),
+        ("second.payload", "second.skip"),
+    ] {
+        let row = result
+            .effects
+            .helper_rendered
+            .iter()
+            .find(|row| row.path == path)
+            .unwrap_or_else(|| panic!("missing {path} row: {result:#?}"));
+        assert!(
+            row.meta
+                .predicates
+                .iter()
+                .any(|branch| { branch.contains(&Predicate::truthy_path(skip).negated()) }),
+            "the post-continue output must run only when {skip} is false: {row:#?}"
+        );
+    }
+}
+
+#[test]
+fn inner_range_break_does_not_exit_the_outer_range() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        r#"{{- define "nested.loop" -}}
+{{- range . -}}
+  {{- range (list "only") -}}{{- break -}}{{- end -}}
+  {{- .payload -}}
+{{- end -}}
+{{- end -}}"#,
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let expr = single_expr(r#"include "nested.loop" (list .Values.first .Values.second)"#);
+    let mut seen = HashSet::new();
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        None,
+        None,
+        helper_context(&analysis_db),
+        &mut seen,
+    );
+    let paths = result
+        .effects
+        .helper_rendered
+        .iter()
+        .map(|row| row.path.as_str())
+        .collect::<BTreeSet<_>>();
+
+    sim_assert_eq!(have: paths, want: BTreeSet::from(["first.payload", "second.payload"]));
+}
+
+#[test]
+fn bound_helper_keeps_join_shape_erasure_from_range_header() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        r#"{{- define "prometheus.namespaces" -}}
+{{- $namespaces := list }}
+{{- if and .Values.rbac.create .Values.server.useExistingClusterRoleName }}
+  {{- if .Values.server.namespaces -}}
+    {{- range $ns := join "," .Values.server.namespaces | split "," }}
+      {{- $namespaces = append $namespaces (tpl $ns $) }}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{ mustToJson $namespaces }}
+{{- end -}}"#,
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let expr = single_expr(r#"include "prometheus.namespaces" ."#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        None,
+        None,
+        context,
+        &mut seen,
+    );
+
+    assert!(
+        result
+            .effects
+            .shape_erased_paths
+            .contains("server.namespaces"),
+        "join's total conversion must survive the helper summary: {result:#?}",
+    );
+}
+
+#[test]
 fn bound_helper_call_uses_single_value_resolver_for_fragment_projection() {
     let mut defines = DefineIndex::new();
     defines.add_file_source(
@@ -303,4 +649,47 @@ fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
 
     sim_assert_eq!(have: doc.unique_path(), want: Some(String::new()));
     sim_assert_eq!(have: doc.unique_json_decoded_path(), want: Some(String::new()));
+}
+
+#[test]
+fn yaml_helper_output_preserves_structured_value_for_decoding() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        r#"{{- define "pod.template" -}}
+metadata:
+  labels:
+    app: test
+spec:
+  hostUsers: {{ .Values.hostUsers }}
+{{- end -}}"#,
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let expr = single_expr(r#"include "pod.template" . | fromYaml"#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        None,
+        None,
+        context,
+        &mut seen,
+    );
+    let value = result.value.expect("decoded helper mapping");
+    sim_assert_eq!(
+        have: value.apply_to_path(&["spec".to_string(), "hostUsers".to_string()]),
+        want: Some(AbstractValue::OutputPath(
+            "hostUsers".to_string(),
+            HelperOutputMeta {
+                provenance: vec![crate::ContractProvenance::new(
+                    "<inline:0>".to_string(),
+                    crate::SourceSpan::new(83, 106),
+                    vec!["pod.template".to_string()],
+                )],
+                ..HelperOutputMeta::default()
+            },
+        )),
+    );
 }

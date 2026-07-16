@@ -1,10 +1,11 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::eval_env::EvalEnv;
+use crate::helper_meta::HelperOutputMeta;
 
 use super::bound_helper_resolver::{
     BoundHelperValueResolverParams, eval_expr_result_with_bound_helpers,
@@ -27,9 +28,22 @@ impl<'a> FragmentEvalContext<'a> {
         current_dot: Option<&AbstractValue>,
         seen: &mut HashSet<String>,
     ) -> Option<AbstractValue> {
+        self.fragment_value_from_expr_with_meta(expr, locals, &HashMap::new(), current_dot, seen)
+    }
+
+    pub(crate) fn fragment_value_from_expr_with_meta(
+        &self,
+        expr: &TemplateExpr,
+        locals: &HashMap<String, AbstractValue>,
+        local_output_meta: &HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+        current_dot: Option<&AbstractValue>,
+        seen: &mut HashSet<String>,
+    ) -> Option<AbstractValue> {
         let env = EvalEnv::from_fragment_context(locals, current_dot);
+        let mut env = env;
+        env.local_output_meta = local_output_meta.clone();
         let current_dot_helper = current_dot.map(AbstractValue::to_context_value);
-        eval_expr_result_with_bound_helpers(
+        let result = eval_expr_result_with_bound_helpers(
             expr,
             &env,
             BoundHelperValueResolverParams {
@@ -39,9 +53,11 @@ impl<'a> FragmentEvalContext<'a> {
                 context: *self,
                 seen,
             },
-        )
-        .value
-        .and_then(AbstractValue::without_widened)
-        .map(|value| value.to_context_value())
+        );
+        result
+            .value
+            .and_then(AbstractValue::without_widened)
+            .map(|value| value.with_output_meta(&result.effects.local_output_meta))
+            .map(|value| value.to_context_value())
     }
 }

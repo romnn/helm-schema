@@ -75,8 +75,7 @@ data:
             "additionalProperties": false,
             "properties": {
                 "enabled": {
-                    "description": "Whether the config map is enabled",
-                    "type": ["boolean", "integer", "number", "string"]
+                    "description": "Whether the config map is enabled"
                 }
             },
             "type": "object"
@@ -459,34 +458,6 @@ data:
             },
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
-            "allOf": [{
-                "if": {
-                    "properties": {
-                        "serviceAccount": {
-                            "properties": {
-                                "create": { "$ref": "#/$defs/helm-truthy" }
-                            },
-                            "required": ["create"],
-                            "type": "object"
-                        }
-                    },
-                    "required": ["serviceAccount"],
-                    "type": "object"
-                },
-                "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                        "mode": {
-                            "anyOf": [
-                                { "type": "boolean" },
-                                { "type": "integer" },
-                                { "type": "number" },
-                                { "type": "string" }
-                            ]
-                        }
-                    }
-                }
-            }],
             "properties": {
                 "mode": {},
                 "serviceAccount": {
@@ -850,7 +821,7 @@ fn dependency_activation_guards_lower_with_helm_precedence() -> eyre::Result<()>
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: "{{ .Values.name }}"
+  name: {{ .Values.name | trunc 63 | quote }}
 "#,
     )?;
 
@@ -966,9 +937,7 @@ data:
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             "properties": {
-                "mode": {
-                    "type": ["boolean", "integer", "number", "string"]
-                }
+                "mode": {}
             },
             "type": "object"
         })

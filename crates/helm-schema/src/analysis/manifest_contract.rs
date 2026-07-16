@@ -47,6 +47,10 @@ pub(crate) fn collect_manifest_contract_for_chart(
         let source = path.read_to_string()?;
         let mut notes_contract =
             symbolic_context.generate_contract_ir_for_source(&source, path.as_str());
+        // NOTES is a Go-template text program, not YAML. Direct holes use
+        // Go's textual formatting and therefore impose no input shape; real
+        // strict calls and terminal effects remain in their own channels.
+        notes_contract.mark_rendered_output_textual();
         notes_contract.map_value_paths(|path| chart::scope_values_path(path, &chart.values_prefix));
         notes_contract = apply_chart_activation_guard_sets(notes_contract, &activation_guard_sets);
         contract.append(notes_contract);

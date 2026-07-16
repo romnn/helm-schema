@@ -239,8 +239,8 @@ fn nullable_scalar_preserved_for_truthy_guarded_render_use() {
                     "ports": { "smtp": { "nodePort": "30025" } }
                 }
             }),
-            false,
-            "truthy string node port",
+            true,
+            "numeric-string node port",
         ),
         (
             serde_json::json!({

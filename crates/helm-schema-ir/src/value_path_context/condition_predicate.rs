@@ -48,6 +48,24 @@ fn literal_string(expr: &TemplateExpr) -> Option<&str> {
     }
 }
 
+fn literal_membership_string(expr: &TemplateExpr) -> Option<String> {
+    if let Some(value) = literal_string(expr) {
+        return Some(value.to_string());
+    }
+    let TemplateExpr::Call { function, args } = expr.deparen() else {
+        return None;
+    };
+    let [arg] = args.as_slice() else {
+        return None;
+    };
+    let value = literal_string(arg)?;
+    match function.as_str() {
+        "quote" if value.is_empty() => Some("\"\"".to_string()),
+        "squote" if value.is_empty() => Some("''".to_string()),
+        _ => None,
+    }
+}
+
 /// Split a printf format around a single `%s` verb; any other verb (or a
 /// second `%s`) makes the produced name undecodable.
 fn single_string_verb_split(format: &str) -> Option<(&str, &str)> {
@@ -64,6 +82,8 @@ impl ValuePathContext<'_> {
     /// does not, so it consults this before trusting a captured stack.
     pub(crate) fn condition_lowering_is_faithful(&self, expr: &TemplateExpr) -> bool {
         match expr.deparen() {
+            TemplateExpr::VariableDefinition { value, .. }
+            | TemplateExpr::Assignment { value, .. } => self.condition_lowering_is_faithful(value),
             TemplateExpr::Field(_) | TemplateExpr::Selector { .. } => {
                 self.root_field_truthy_predicate(expr).is_some()
                     || !self.paths_for_expr(expr).is_empty()
@@ -102,6 +122,7 @@ impl ValuePathContext<'_> {
                 "and" | "or" => args
                     .iter()
                     .all(|arg| self.condition_lowering_is_faithful(arg)),
+                "list" | "tuple" | "dict" => true,
                 "not" => {
                     args.len() == 1
                         && self.condition_lowering_is_faithful(&args[0])
@@ -112,6 +133,8 @@ impl ValuePathContext<'_> {
                 "gt" | "lt" => self.positive_len_predicate(function, args).is_some(),
                 "typeIs" | "kindIs" => self.type_is_predicate(args).is_some(),
                 "hasKey" => self.has_key_predicate(args).is_some(),
+                "hasPrefix" => self.range_key_prefix_predicate(args).is_some(),
+                "contains" => self.contains_predicate(args).is_some(),
                 "has" => self.helper_literal_membership_predicate(args).is_some(),
                 "empty" => self.empty_predicate(args).is_some(),
                 "coalesce" => self.coalesce_truthy_predicate(args).is_some(),
@@ -131,6 +154,11 @@ impl ValuePathContext<'_> {
     }
 
     pub(crate) fn condition_predicate_expr(&self, expr: &TemplateExpr) -> Predicate {
+        if let TemplateExpr::VariableDefinition { value, .. }
+        | TemplateExpr::Assignment { value, .. } = expr.deparen()
+        {
+            return self.condition_predicate_expr(value);
+        }
         if let Some(predicate) = self.condition_predicate(expr) {
             return predicate;
         }
@@ -184,9 +212,12 @@ impl ValuePathContext<'_> {
         };
         match function.as_str() {
             "and" => self.and_predicate(args),
+            "list" | "tuple" | "dict" => Some(bool_predicate(!args.is_empty())),
             "not" => self.not_predicate(args),
             "empty" => self.empty_predicate(args),
             "hasKey" => self.has_key_predicate(args),
+            "hasPrefix" => self.range_key_prefix_predicate(args),
+            "contains" => self.contains_predicate(args),
             "has" => self
                 .helper_literal_membership_predicate(args)
                 .or_else(|| self.truthy_predicate(expr)),
@@ -241,6 +272,27 @@ impl ValuePathContext<'_> {
             helm_schema_core::append_value_path(&path, key)
         });
         Some(Predicate::truthy_path(path))
+    }
+
+    fn range_key_prefix_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let [prefix, key] = args else {
+            return None;
+        };
+        let prefix = literal_string(prefix)?;
+        let TemplateExpr::Variable(name) = key.deparen() else {
+            return None;
+        };
+        let binding = self
+            .template_bindings
+            .get(name)
+            .or_else(|| self.template_bindings.get(name.trim_start_matches('$')))?;
+        let AbstractValue::RangeKey(path) = binding else {
+            return None;
+        };
+        Some(Predicate::from(Guard::RangeKeyPrefix {
+            path: path.clone(),
+            prefix: prefix.to_string(),
+        }))
     }
 
     fn positive_len_predicate(&self, function: &str, args: &[TemplateExpr]) -> Option<Predicate> {
@@ -515,6 +567,22 @@ impl ValuePathContext<'_> {
         }))
     }
 
+    fn contains_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
+        let [needle, subject] = args else {
+            return None;
+        };
+        let needle = literal_string(needle)?;
+        let path = match self.with_body_fragment_value_expr(subject)? {
+            AbstractValue::ValuesPath(path) if !path.is_empty() => path,
+            _ => return None,
+        };
+        Some(Predicate::from(Guard::MatchesPattern {
+            path,
+            pattern: escape_regex_literal(needle),
+            templated: false,
+        }))
+    }
+
     /// Whether the subject expression's resolved `path` reached this site
     /// through a derived-text transform (`tpl`, a stringification) recorded
     /// on a bound local's output metadata.
@@ -568,16 +636,24 @@ impl ValuePathContext<'_> {
     }
 
     fn type_is_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
-        let schema_type = type_is_schema_type(args.first())?;
+        let type_name = match args.first()?.deparen() {
+            TemplateExpr::Literal(Literal::String(name) | Literal::RawString(name)) => name,
+            _ => return None,
+        };
+        let schema_type = type_is_schema_type(args.first());
+        if type_name != "invalid" && schema_type.is_none() {
+            return None;
+        }
         let predicates = args
             .iter()
             .skip(1)
             .flat_map(|arg| self.paths_for_expr(arg))
-            .map(|path| {
-                Predicate::from(Guard::TypeIs {
+            .map(|path| match &schema_type {
+                Some(schema_type) => Predicate::from(Guard::TypeIs {
                     path,
                     schema_type: schema_type.clone(),
-                })
+                }),
+                None => invalid_kind_predicate(path),
             })
             .collect::<Vec<_>>();
         (!predicates.is_empty()).then(|| Predicate::all(predicates))
@@ -636,11 +712,8 @@ impl ValuePathContext<'_> {
         let targets: Vec<String> = match haystack.deparen() {
             TemplateExpr::Call { function, args } if function == "list" && !args.is_empty() => args
                 .iter()
-                .map(literal_string)
-                .collect::<Option<Vec<_>>>()?
-                .into_iter()
-                .map(str::to_string)
-                .collect(),
+                .map(literal_membership_string)
+                .collect::<Option<Vec<_>>>()?,
             TemplateExpr::Variable(name) => {
                 let AbstractValue::List(items) = self
                     .template_bindings
@@ -663,6 +736,32 @@ impl ValuePathContext<'_> {
         };
         if targets.is_empty() {
             return Some(Predicate::False);
+        }
+
+        if let TemplateExpr::Call { function, args } = needle.deparen()
+            && function == "quote"
+            && let [subject] = args.as_slice()
+            && targets
+                .iter()
+                .all(|target| target.is_empty() || target == "\"\"")
+            && targets.iter().any(|target| target == "\"\"")
+        {
+            let mut paths = self.paths_for_expr(subject).into_iter();
+            let path = paths.next()?;
+            if paths.next().is_some() {
+                return None;
+            }
+            return Some(Predicate::Or(vec![
+                Predicate::from(Guard::Absent { path: path.clone() }),
+                Predicate::from(Guard::Eq {
+                    path: path.clone(),
+                    value: GuardValue::Null,
+                }),
+                Predicate::from(Guard::Eq {
+                    path,
+                    value: GuardValue::string(""),
+                }),
+            ]));
         }
 
         if helper_root_call(needle).is_none() {
@@ -913,22 +1012,56 @@ impl ValuePathContext<'_> {
                 return self.helper_literal_dispatch_predicate(left, right, negated);
             }
         };
+        let comparison_for = |path: String| {
+            if negated {
+                Predicate::from(Guard::NotEq {
+                    path,
+                    value: value.clone(),
+                })
+            } else {
+                Predicate::from(Guard::Eq {
+                    path,
+                    value: value.clone(),
+                })
+            }
+        };
+        if let TemplateExpr::Variable(name) = if guard_value_literal(left).is_some() {
+            right.deparen()
+        } else {
+            left.deparen()
+        } {
+            let meta = self
+                .template_output_meta
+                .get(name)
+                .or_else(|| self.template_output_meta.get(name.trim_start_matches('$')));
+            if let Some(meta) = meta.filter(|meta| {
+                meta.values()
+                    .any(|candidate| !candidate.predicates.is_empty())
+            }) {
+                let mut alternatives = Vec::new();
+                for path in &paths {
+                    let comparison = comparison_for(path.clone());
+                    match meta.get(path) {
+                        Some(candidate) if !candidate.predicates.is_empty() => {
+                            for branch in &candidate.predicates {
+                                let mut conjuncts = branch.iter().cloned().collect::<Vec<_>>();
+                                conjuncts.push(comparison.clone());
+                                alternatives.push(Predicate::all(conjuncts));
+                            }
+                        }
+                        _ => alternatives.push(comparison),
+                    }
+                }
+                return Some(match alternatives.as_slice() {
+                    [only] => only.clone(),
+                    _ => Predicate::Or(alternatives),
+                });
+            }
+        }
         let predicates = paths
             .iter()
             .cloned()
-            .map(|path| {
-                if negated {
-                    Predicate::from(Guard::NotEq {
-                        path,
-                        value: value.clone(),
-                    })
-                } else {
-                    Predicate::from(Guard::Eq {
-                        path,
-                        value: value.clone(),
-                    })
-                }
-            })
+            .map(comparison_for)
             .collect::<Vec<_>>();
         (!predicates.is_empty()).then(|| Predicate::all(predicates))
     }
@@ -943,7 +1076,9 @@ impl ValuePathContext<'_> {
         right: &TemplateExpr,
         negated: bool,
     ) -> Option<Predicate> {
-        let described_path = |expr: &TemplateExpr| -> Option<String> {
+        let described_sources = |expr: &TemplateExpr| -> Option<
+            std::collections::BTreeMap<String, crate::helper_meta::HelperOutputMeta>,
+        > {
             match expr.deparen() {
                 TemplateExpr::Call { function, args }
                     if matches!(function.as_str(), "typeOf" | "kindOf") && args.len() == 1 =>
@@ -952,15 +1087,35 @@ impl ValuePathContext<'_> {
                     // a `$x := .Values.y` binding) both describe a single
                     // resolvable path.
                     let subject = args[0].deparen();
-                    matches!(
+                    let subject = matches!(
                         subject,
                         TemplateExpr::Field(_)
                             | TemplateExpr::Selector { .. }
                             | TemplateExpr::Variable(_)
                     )
-                    .then(|| self.paths_for_expr(subject))
-                    .filter(|paths| paths.len() == 1)
-                    .and_then(|paths| paths.into_iter().next())
+                    .then_some(subject)?;
+                    let paths = self.paths_for_expr(subject);
+                    if paths.is_empty() {
+                        return None;
+                    }
+                    let local_meta = match subject {
+                        TemplateExpr::Variable(name) => {
+                            self.template_output_meta.get(name.trim_start_matches('$'))
+                        }
+                        _ => None,
+                    };
+                    Some(
+                        paths
+                            .into_iter()
+                            .map(|path| {
+                                let meta = local_meta
+                                    .and_then(|meta| meta.get(&path))
+                                    .cloned()
+                                    .unwrap_or_default();
+                                (path, meta)
+                            })
+                            .collect(),
+                    )
                 }
                 TemplateExpr::Variable(name) => self
                     .typeof_bindings
@@ -977,17 +1132,44 @@ impl ValuePathContext<'_> {
                 _ => None,
             }
         }
-        let (path, type_name) = match (described_path(left), described_path(right)) {
-            (Some(path), None) => (path, type_literal(right)?),
-            (None, Some(path)) => (path, type_literal(left)?),
+        let (sources, type_name) = match (described_sources(left), described_sources(right)) {
+            (Some(sources), None) => (sources, type_literal(right)?),
+            (None, Some(sources)) => (sources, type_literal(left)?),
             _ => return None,
         };
-        let schema_type = helm_schema_ast::go_type_schema_type(type_name)?;
-        let guard = Predicate::from(Guard::TypeIs {
-            path,
-            schema_type: schema_type.to_string(),
-        });
-        Some(if negated { guard.negated() } else { guard })
+        let schema_type = helm_schema_ast::go_type_schema_type(type_name);
+        if type_name != "invalid" && schema_type.is_none() {
+            return None;
+        }
+        let mut alternatives = Vec::new();
+        for (path, meta) in sources {
+            let type_predicate = match schema_type {
+                Some(schema_type) => Predicate::from(Guard::TypeIs {
+                    path,
+                    schema_type: schema_type.to_string(),
+                }),
+                None => invalid_kind_predicate(path),
+            };
+            let type_predicate = if negated {
+                type_predicate.negated()
+            } else {
+                type_predicate
+            };
+            if meta.predicates.is_empty() {
+                alternatives.push(type_predicate);
+            } else {
+                alternatives.extend(meta.predicates.into_iter().map(|branch| {
+                    let mut conjunction = branch.into_iter().collect::<Vec<_>>();
+                    conjunction.push(type_predicate.clone());
+                    Predicate::all(conjunction)
+                }));
+            }
+        }
+        match alternatives.as_slice() {
+            [] => None,
+            [predicate] => Some(predicate.clone()),
+            _ => Some(Predicate::Or(alternatives)),
+        }
     }
 
     fn comparison_has_unrepresentable_values(&self, args: &[TemplateExpr]) -> bool {
@@ -1005,6 +1187,16 @@ impl ValuePathContext<'_> {
             (Some(_), None) | (None, Some(_))
         )
     }
+}
+
+fn invalid_kind_predicate(path: String) -> Predicate {
+    Predicate::Or(vec![
+        Predicate::from(Guard::Absent { path: path.clone() }),
+        Predicate::from(Guard::Eq {
+            path,
+            value: GuardValue::Null,
+        }),
+    ])
 }
 
 fn predicate_any(predicates: Vec<Predicate>) -> Predicate {
@@ -1033,6 +1225,20 @@ fn literal_is_truthy(literal: &Literal) -> bool {
         Literal::String(value) | Literal::RawString(value) => !value.is_empty(),
         Literal::Nil => false,
     }
+}
+
+fn escape_regex_literal(value: &str) -> String {
+    let mut escaped = String::with_capacity(value.len());
+    for character in value.chars() {
+        if matches!(
+            character,
+            '.' | '+' | '*' | '?' | '(' | ')' | '|' | '[' | ']' | '{' | '}' | '^' | '$' | '\\'
+        ) {
+            escaped.push('\\');
+        }
+        escaped.push(character);
+    }
+    escaped
 }
 
 fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
@@ -1066,7 +1272,9 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
         | AbstractValue::OutputPath(_, _)
         | AbstractValue::RootContext
         | AbstractValue::StringSet(_)
+        | AbstractValue::DerivedBoolean(_)
         | AbstractValue::List(_)
+        | AbstractValue::SplitList { .. }
         | AbstractValue::Widened(_) => None,
     }
 }

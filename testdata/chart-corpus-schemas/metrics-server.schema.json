@@ -158,20 +158,10 @@
       "type": "object"
     },
     "schema19": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ]
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
     },
     "schema2": {
       "not": {
@@ -200,13 +190,7 @@
         "type": "object"
       }
     },
-    "schema20": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "schema22": {
+    "schema21": {
       "not": {
         "properties": {
           "create": {}
@@ -217,7 +201,7 @@
         "type": "object"
       }
     },
-    "schema24": {
+    "schema23": {
       "additionalProperties": {
         "type": "string"
       },
@@ -358,7 +342,7 @@
         "additionalProperties": {},
         "properties": {
           "additionalAnnotations": {
-            "$ref": "#/$defs/schema24"
+            "$ref": "#/$defs/schema23"
           }
         }
       }
@@ -500,71 +484,6 @@
           {
             "anyOf": [
               {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "tls": {
-                              "properties": {
-                                "certManager": {
-                                  "properties": {
-                                    "addInjectorAnnotations": {}
-                                  },
-                                  "required": [
-                                    "addInjectorAnnotations"
-                                  ],
-                                  "type": "object"
-                                }
-                              },
-                              "required": [
-                                "certManager"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "tls"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "properties": {
-                          "tls": {
-                            "properties": {
-                              "certManager": {
-                                "properties": {
-                                  "addInjectorAnnotations": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "addInjectorAnnotations"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "certManager"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "tls"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/$defs/schema10"
-                  }
-                ]
-              },
-              {
                 "properties": {
                   "apiService": {
                     "properties": {
@@ -582,6 +501,106 @@
                   "apiService"
                 ],
                 "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "tls": {
+                          "properties": {
+                            "certManager": {
+                              "properties": {
+                                "addInjectorAnnotations": {}
+                              },
+                              "required": [
+                                "addInjectorAnnotations"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "certManager"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "certManager": {
+                            "properties": {
+                              "addInjectorAnnotations": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "addInjectorAnnotations"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "certManager"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "tls": {
+                          "properties": {
+                            "type": {}
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "type": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                ]
               }
             ]
           }
@@ -596,7 +615,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "not": {
@@ -783,7 +802,7 @@
           "commonLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema23"
               },
               {
                 "not": {
@@ -1374,7 +1393,7 @@
               "additionalLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "not": {
@@ -1735,22 +1754,7 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "fullnameOverride": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "fullnameOverride"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/schema10"
-          }
-        ]
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -1761,16 +1765,10 @@
               "clusterDomain": {
                 "anyOf": [
                   {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
                     "type": "string"
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Kubernetes cluster domain. Used to configure Subject Alt Names for the certificate"
@@ -1783,32 +1781,6 @@
     {
       "if": {
         "anyOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema6"
-              },
-              {
-                "properties": {
-                  "apiService": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "apiService"
-                ],
-                "type": "object"
-              }
-            ]
-          },
           {
             "allOf": [
               {
@@ -1912,9 +1884,6 @@
                 "$ref": "#/$defs/schema5"
               }
             ]
-          },
-          {
-            "$ref": "#/$defs/schema5"
           }
         ]
       },
@@ -1938,44 +1907,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema6"
-                  },
-                  {
-                    "properties": {
-                      "apiService": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "apiService"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema12"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema12"
-          }
-        ]
+        "$ref": "#/$defs/schema12"
       },
       "then": {
         "additionalProperties": {},
@@ -2020,141 +1952,7 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema6"
-                  },
-                  {
-                    "properties": {
-                      "apiService": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "apiService"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema6"
-                      },
-                      {
-                        "properties": {
-                          "apiService": {
-                            "properties": {
-                              "create": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "create"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "apiService"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema2"
-                      },
-                      {
-                        "properties": {
-                          "tls": {
-                            "properties": {
-                              "existingSecret": {
-                                "properties": {
-                                  "lookup": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                "required": [
-                                  "lookup"
-                                ],
-                                "type": "object"
-                              }
-                            },
-                            "required": [
-                              "existingSecret"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "tls"
-                        ],
-                        "type": "object"
-                      }
-                    ]
-                  },
-                  {
-                    "$ref": "#/$defs/schema9"
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "tls": {
-                        "properties": {
-                          "existingSecret": {
-                            "properties": {
-                              "name": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "name"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "existingSecret"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "tls"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema9"
-                  },
-                  {
-                    "$ref": "#/$defs/schema5"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/schema5"
-              }
-            ]
+            "$ref": "#/$defs/schema12"
           },
           {
             "anyOf": [
@@ -2262,12 +2060,80 @@
                     ]
                   },
                   {
-                    "$ref": "#/$defs/schema12"
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema2"
+                      },
+                      {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "existingSecret": {
+                                "properties": {
+                                  "lookup": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "lookup"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "existingSecret"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "$ref": "#/$defs/schema9"
                   }
                 ]
               },
               {
-                "$ref": "#/$defs/schema12"
+                "allOf": [
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "existingSecret": {
+                            "properties": {
+                              "name": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "name"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "existingSecret"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema9"
+                  },
+                  {
+                    "$ref": "#/$defs/schema5"
+                  }
+                ]
               }
             ]
           }
@@ -2287,86 +2153,6 @@
     "additionalAnnotations": {},
     "addonResizer": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "nanny": {
-                "additionalProperties": {},
-                "properties": {
-                  "minClusterSize": {
-                    "$ref": "#/$defs/schema19"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "nanny": {
-                "additionalProperties": {},
-                "properties": {
-                  "pollPeriod": {
-                    "$ref": "#/$defs/schema19"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "enabled": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "nanny": {
-                "additionalProperties": {},
-                "properties": {
-                  "threshold": {
-                    "$ref": "#/$defs/schema19"
-                  }
-                }
-              }
-            }
-          }
-        }
-      ],
       "properties": {
         "enabled": {
           "anyOf": [
@@ -2440,7 +2226,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema22"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -2518,10 +2304,12 @@
     "commonLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema20"
+          "additionalProperties": {},
+          "properties": {},
+          "type": "object"
         },
         {
-          "$ref": "#/$defs/schema24"
+          "$ref": "#/$defs/schema23"
         },
         {
           "not": {
@@ -2552,17 +2340,17 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema24"
+          "$ref": "#/$defs/schema23"
         }
       ]
     },
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema20"
+          "$ref": "#/$defs/schema19"
         },
         {
-          "$ref": "#/$defs/schema24"
+          "$ref": "#/$defs/schema23"
         },
         {
           "not": {
@@ -2692,10 +2480,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema20"
+          "$ref": "#/$defs/schema19"
         },
         {
-          "$ref": "#/$defs/schema24"
+          "$ref": "#/$defs/schema23"
         },
         {
           "not": {
@@ -2729,10 +2517,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema20"
+          "$ref": "#/$defs/schema19"
         },
         {
-          "$ref": "#/$defs/schema24"
+          "$ref": "#/$defs/schema23"
         },
         {
           "not": {
@@ -2886,10 +2674,10 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema20"
+              "$ref": "#/$defs/schema19"
             },
             {
-              "$ref": "#/$defs/schema24"
+              "$ref": "#/$defs/schema23"
             },
             {
               "not": {
@@ -2901,10 +2689,10 @@
         "labels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema20"
+              "$ref": "#/$defs/schema19"
             },
             {
-              "$ref": "#/$defs/schema24"
+              "$ref": "#/$defs/schema23"
             },
             {
               "not": {
@@ -2930,7 +2718,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema22"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -2951,7 +2739,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema23"
                   },
                   {
                     "not": {
@@ -2968,7 +2756,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema22"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {

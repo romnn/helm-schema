@@ -327,7 +327,7 @@ fn splice_row(splice: &Splice, path: &YamlPath, conditions: &[Predicate]) -> Con
         splice.meta.site.as_deref(),
         &splice.meta.provenance,
     );
-    row.has_string_contract = splice.meta.string_contract && kind != ValueKind::Serialized;
+    row.has_string_contract = splice.meta.string_contract;
     row
 }
 

@@ -35,6 +35,7 @@ fn resource(api_version: &str, candidates: &[&str], branches: Vec<HelperBranch>)
     ResourceRef {
         api_version: api_version.to_string(),
         kind: "Ingress".to_string(),
+        kind_candidates: Vec::new(),
         api_version_candidates: candidates
             .iter()
             .map(|candidate| (*candidate).to_string())
@@ -92,6 +93,25 @@ fn explicit_candidates_are_ranked_for_resolution() {
     sim_assert_eq!(
         have: planned_api_versions(&candidates),
         want: vec!["networking.k8s.io/v1", "extensions/v1beta1"]
+    );
+}
+
+#[test]
+fn finite_kind_candidates_cross_with_api_version_candidates() {
+    let mut resource = resource("apps/v1", &[], Vec::new());
+    resource.kind = "StatefulSet".to_string();
+    resource.kind_candidates = vec!["Deployment".to_string()];
+    let candidates = resource_lookup_candidates(&resource, &StaticOracle::new());
+
+    sim_assert_eq!(
+        have: candidates
+            .into_iter()
+            .map(|candidate| (candidate.api_version, candidate.kind))
+            .collect::<Vec<_>>(),
+        want: vec![
+            ("apps/v1".to_string(), "StatefulSet".to_string()),
+            ("apps/v1".to_string(), "Deployment".to_string()),
+        ]
     );
 }
 

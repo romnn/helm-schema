@@ -319,6 +319,7 @@ fn pipeline_calls_bind_collection_and_comparison_domains() {
 #[test]
 fn ternary_selector_binds_boolean_operand_contract() {
     let src = indoc! {r#"
+        {{- $local := .Values.local }}
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -327,6 +328,7 @@ fn ternary_selector_binds_boolean_operand_contract() {
           {{- if .Values.enabled }}
           direct: {{ ternary "yes" "no" .Values.direct | quote }}
           pipeline: {{ .Values.pipeline | ternary "yes" "no" | quote }}
+          local: {{ ternary "yes" "no" $local | quote }}
           computed-direct: {{ ternary "yes" "no" (eq .Values.mode "active") | quote }}
           computed-pipeline: {{ .Values.pipelineMode | eq "active" | ternary "yes" "no" | quote }}
           {{- end }}
@@ -335,6 +337,7 @@ fn ternary_selector_binds_boolean_operand_contract() {
         enabled: true
         direct: true
         pipeline: false
+        local: true
         mode: active
         pipelineMode: inactive
     "};
@@ -347,6 +350,7 @@ fn ternary_selector_binds_boolean_operand_contract() {
                 "enabled": true,
                 "direct": true,
                 "pipeline": false,
+                "local": true,
                 "mode": "active",
                 "pipelineMode": "inactive"
             })
@@ -356,6 +360,12 @@ fn ternary_selector_binds_boolean_operand_contract() {
     for instance in [
         serde_json::json!({ "enabled": true, "direct": "true", "pipeline": false }),
         serde_json::json!({ "enabled": true, "direct": true, "pipeline": 1 }),
+        serde_json::json!({
+            "enabled": true,
+            "direct": true,
+            "pipeline": false,
+            "local": "true"
+        }),
     ] {
         assert!(
             !schema_accepts_instance(&schema, &instance),
@@ -388,6 +398,251 @@ fn ternary_selector_binds_boolean_operand_contract() {
         ),
         "the outer guard skips both strict calls: {schema}"
     );
+}
+
+/// Go-template `or` returns the first truthy operand or its final operand;
+/// downstream runtime contracts apply only to the value that was selected.
+#[test]
+fn short_circuit_value_selection_scopes_downstream_contracts() {
+    let src = indoc! {r#"
+        {{- $selected := or .Values.primary .Values.fallback }}
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: test
+        data:
+          selected: {{ $selected | b64enc | quote }}
+          nested: {{ or .Values.ready (b64enc .Values.payload) | quote }}
+    "#};
+    let values_yaml = indoc! {"
+        primary: ''
+        fallback: fallback
+        ready: false
+        payload: payload
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for instance in [
+        serde_json::json!({
+            "primary": "primary",
+            "fallback": { "ignored": true },
+            "ready": true,
+            "payload": { "ignored": true }
+        }),
+        serde_json::json!({
+            "primary": "",
+            "fallback": "fallback",
+            "ready": false,
+            "payload": "payload"
+        }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "inactive later operands must not inherit downstream contracts: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({
+            "primary": "",
+            "fallback": { "selected": true },
+            "ready": true,
+            "payload": "payload"
+        }),
+        serde_json::json!({
+            "primary": { "selected": true },
+            "fallback": "ignored",
+            "ready": true,
+            "payload": "payload"
+        }),
+        serde_json::json!({
+            "primary": "primary",
+            "fallback": "fallback",
+            "ready": false,
+            "payload": { "executed": true }
+        }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "the selected or executed strict operand must satisfy b64enc: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Type dispatch after `or` partitions the selected candidate, not every
+/// source path that could have supplied the local.
+#[test]
+fn short_circuit_type_dispatch_preserves_candidate_partitions() {
+    let src = indoc! {r#"
+        {{- $selected := or .Values.primary .Values.fallback }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if $selected }}
+          selected: |-
+            {{- $type := typeOf $selected }}
+            {{- if eq $type "string" }}
+            {{ tpl $selected . | nindent 4 }}
+            {{- else }}
+            {{ toYaml $selected | nindent 4 }}
+            {{- end }}
+          {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("primary: default\nfallback: {}\n"));
+
+    for instance in [
+        serde_json::json!({ "primary": "text", "fallback": { "ignored": true } }),
+        serde_json::json!({ "primary": { "selected": true }, "fallback": "ignored" }),
+        serde_json::json!({ "primary": {}, "fallback": "text" }),
+        serde_json::json!({ "primary": {}, "fallback": { "selected": true } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "string and structured shapes render for whichever candidate is selected: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A literal `index` into a values-backed list terminates unless that
+/// position exists. The precondition follows ordinary control flow, while
+/// eagerly evaluated function arguments cannot hide it.
+#[test]
+fn literal_index_records_guarded_cardinality_preconditions() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if .Values.enabled }}
+          guarded: {{ index .Values.items 1 | quote }}
+          {{- end }}
+          eager: {{ default "fallback" (index .Values.eager 0) | quote }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("enabled: true\nitems: [a, b]\neager: [a]\n"),
+    );
+
+    for instance in [
+        serde_json::json!({ "enabled": true, "items": ["a", "b"], "eager": ["a"] }),
+        serde_json::json!({ "enabled": false, "items": [], "eager": ["a"] }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "every executed index has an existing position: instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({ "enabled": true, "items": ["a"], "eager": ["a"] }),
+        serde_json::json!({ "enabled": false, "items": [], "eager": [] }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "an executed out-of-range index must be rejected: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn split_index_projects_separator_cardinality_to_the_text_source() {
+    let src = indoc! {r#"
+        {{- if .Values.enabled }}
+        {{- $address := toString .Values.address }}
+        {{- $parts := regexSplit ":" $address -1 }}
+        {{- $port := index $parts 1 }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          port: {{ $port | quote }}
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("enabled: true\naddress: 0.0.0.0:9153\n"),
+    );
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "enabled": true, "address": "9153" })
+        ),
+        "the second split item requires one separator: {schema}"
+    );
+    for instance in [
+        serde_json::json!({ "enabled": true, "address": "0.0.0.0:9153" }),
+        serde_json::json!({ "enabled": false, "address": "9153" }),
+        serde_json::json!({ "enabled": true, "address": { "rendered": "conservatively" } }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "the split precondition must keep its guard and total-conversion preimage: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Certificate helpers require list-shaped SAN arguments whose every member
+/// is a Go string. List-preserving transforms keep that member contract on
+/// each values-backed source list.
+#[test]
+fn certificate_signatures_constrain_nested_list_members() {
+    let src = indoc! {r#"
+        {{- if .Values.enabled }}
+        {{- $ips := concat (list "127.0.0.1") .Values.extraIps }}
+        {{- $dns := prepend .Values.extraDns "service.local" }}
+        {{- $cert := genSelfSignedCert "service" $ips $dns 365 }}
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: test
+        stringData:
+          marker: generated
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("enabled: true\nextraIps: []\nextraDns: []\n"),
+    );
+
+    for instance in [
+        serde_json::json!({
+            "enabled": true,
+            "extraIps": ["10.0.0.7"],
+            "extraDns": ["audit.example"]
+        }),
+        serde_json::json!({
+            "enabled": false,
+            "extraIps": [7],
+            "extraDns": [{ "ignored": true }]
+        }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "valid SANs and values behind a dead guard must validate: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({ "enabled": true, "extraIps": [7], "extraDns": [] }),
+        serde_json::json!({
+            "enabled": true,
+            "extraIps": [],
+            "extraDns": [{ "invalid": true }]
+        }),
+        serde_json::json!({ "enabled": true, "extraIps": "10.0.0.7", "extraDns": [] }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a live certificate call rejects the wrong outer or member kind: \
+             instance={instance}; schema={schema}"
+        );
+    }
 }
 
 /// `semverCompare` first parses its version operand, so the accepted string
@@ -488,6 +743,147 @@ fn semver_parser_abstains_across_unpartitioned_local_choices() {
              instance={instance}; schema={schema}"
         );
     }
+}
+
+#[test]
+fn ternary_selected_semver_local_keeps_candidate_partitions() {
+    let src = indoc! {r#"
+        {{- $version := ternary .Values.primaryVersion .Values.fallbackVersion .Values.usePrimary }}
+        {{- if semverCompare ">=1.20.0" $version }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("usePrimary: true\nprimaryVersion: v1.30.0\nfallbackVersion: v1.29.0\n"),
+    );
+
+    for instance in [
+        serde_json::json!({
+            "usePrimary": true,
+            "primaryVersion": "v1.30.0",
+            "fallbackVersion": "garbage"
+        }),
+        serde_json::json!({
+            "usePrimary": false,
+            "primaryVersion": "garbage",
+            "fallbackVersion": "v1.30.0"
+        }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "the inactive parser candidate stays unconstrained: instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({
+            "usePrimary": true,
+            "primaryVersion": "garbage",
+            "fallbackVersion": "v1.30.0"
+        }),
+        serde_json::json!({
+            "usePrimary": false,
+            "primaryVersion": "v1.30.0",
+            "fallbackVersion": "garbage"
+        }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "the selected parser candidate must be lexical semver: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn duration_and_url_parsers_bind_lexical_domains() {
+    let src = indoc! {r#"
+        {{- if .Values.enabled }}
+        {{- $_ := mustDateModify .Values.duration (now) }}
+        {{- $_ := urlParse .Values.url }}
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("enabled: true\nduration: 30s\nurl: https://example.com\n"),
+    );
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "enabled": true,
+                "duration": "1h30m",
+                "url": "https://example.com/a%20b"
+            })
+        ),
+        "valid parser inputs render: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "enabled": true,
+                "duration": "garbage",
+                "url": "https://example.com"
+            })
+        ),
+        "an invalid duration aborts the live call: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "enabled": true,
+                "duration": "30s",
+                "url": "http://%zz"
+            })
+        ),
+        "an invalid URL escape aborts the live call: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "enabled": false,
+                "duration": "garbage",
+                "url": "http://%zz"
+            })
+        ),
+        "the dead outer branch invokes neither parser: {schema}"
+    );
+}
+
+#[test]
+fn semver_parser_projects_through_identity_helper_output() {
+    let src = indoc! {r#"
+        {{- if semverCompare ">=1.20.0" (include "app.version" .) }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        {{- end }}
+    "#};
+    let helpers = indoc! {r#"
+        {{- define "app.version" -}}
+        {{- default .Capabilities.KubeVersion.Version .Values.kubeVersion -}}
+        {{- end -}}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("kubeVersion: v1.30.0\n"),
+    );
+
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({ "kubeVersion": "v1.30.0" })),
+        "a valid helper-returned version renders: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!({ "kubeVersion": "garbage" })),
+        "the helper-returned raw value must satisfy semver syntax: {schema}"
+    );
 }
 
 /// Structural guards, rather than operand truthiness, decide whether a
@@ -751,7 +1147,11 @@ fn derived_range_header_absorbs_join_shape_erasure() {
     "#};
     let schema = schema_for_values_yaml(parse_ir(src), Some("namespaces: \"\"\n"));
 
-    for namespaces in [serde_json::json!("a,b"), serde_json::json!(["a", "b"])] {
+    for namespaces in [
+        serde_json::json!("a,b"),
+        serde_json::json!(["a", "b"]),
+        serde_json::json!({ "a": "b" }),
+    ] {
         assert!(
             schema_accepts_instance(&schema, &serde_json::json!({ "namespaces": namespaces })),
             "join accepts and stringifies both source forms: {schema}"
@@ -778,10 +1178,87 @@ fn join_accepts_lists_and_strings_alike() {
     for instance in [
         serde_json::json!({ "namespaces": "a,b" }),
         serde_json::json!({ "namespaces": ["a", "b"] }),
+        serde_json::json!({ "namespaces": { "a": "b" } }),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance),
             "join stringifies any operand: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn helper_range_header_keeps_join_conversion_boundary() {
+    let helpers = indoc! {r#"
+        {{- define "namespaces" -}}
+        {{- $items := list -}}
+        {{- if .Values.enabled -}}
+          {{- if .Values.namespaces -}}
+            {{- range $namespace := join "," .Values.namespaces | split "," -}}
+              {{- $items = append $items (tpl $namespace $) -}}
+            {{- end -}}
+          {{- end -}}
+        {{- end -}}
+        {{ mustToJson $items }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- range include "namespaces" . | fromJsonArray }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("enabled: true\nnamespaces: []\n"),
+    );
+
+    for namespaces in [
+        serde_json::json!(["default"]),
+        serde_json::json!({ "audit": "namespace" }),
+    ] {
+        let instance = serde_json::json!({ "enabled": true, "namespaces": namespaces });
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "the helper's join formats either input shape: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn range_key_prefix_scopes_member_contract_to_matching_keys() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- range $key, $value := .Values.config }}
+          {{- if hasPrefix "strict" $key }}
+          {{ $key }}: |-
+            {{ $value | trim }}
+          {{- end }}
+          {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("config: {}\n"));
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "config": { "strictAudit": { "bad": true } } })
+        ),
+        "a matching map entry reaches trim and must be a string: {schema}"
+    );
+    for instance in [
+        serde_json::json!({ "config": { "strictAudit": "policy" } }),
+        serde_json::json!({ "config": { "unrelated": { "bad": true } } }),
+        serde_json::json!({ "config": [] }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "only matching keys execute the value contract: instance={instance}; schema={schema}"
         );
     }
 }

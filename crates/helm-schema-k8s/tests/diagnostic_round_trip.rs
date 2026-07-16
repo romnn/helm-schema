@@ -65,6 +65,9 @@ fn sample_variants() -> Vec<Diagnostic> {
             on_disk_marker: 99,
             compiled_marker: 1,
         },
+        Diagnostic::InputChannelNumericRangeAmbiguity {
+            value_path: "servers".to_string(),
+        },
     ]
 }
 

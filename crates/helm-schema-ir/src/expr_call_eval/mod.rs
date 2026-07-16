@@ -1,4 +1,7 @@
+use std::collections::BTreeSet;
+
 use helm_schema_ast::{Literal, TemplateExpr};
+use helm_schema_core::{GuardDnf, Predicate};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
@@ -20,21 +23,23 @@ mod traversal;
 mod value_facts;
 
 use collections::{
-    eval_append, eval_coalesce, eval_default, eval_dict, eval_first, eval_first_result, eval_last,
-    eval_last_result, eval_list, eval_merge, eval_nonempty_split, eval_nonempty_split_pipeline,
-    eval_omit, eval_pick, eval_reverse, eval_reverse_result, eval_split_list,
+    direct_raw_identity_path, eval_append, eval_coalesce, eval_concat, eval_default, eval_dict,
+    eval_first, eval_first_result, eval_last, eval_last_result, eval_list, eval_merge,
+    eval_nonempty_split, eval_nonempty_split_pipeline, eval_omit, eval_pick, eval_prepend,
+    eval_regex_split, eval_reverse, eval_reverse_result, eval_split_list,
     is_nonempty_string_literal,
 };
 use comparisons::{eval_comparison, eval_pipeline_comparison, eval_ternary, eval_type_is};
 use root_mutation::eval_set_call;
 use serialization::{
     eval_cat, eval_from_json, eval_from_json_pipeline, eval_from_yaml, eval_from_yaml_pipeline,
-    eval_join, eval_join_pipeline, eval_print, eval_printf, eval_to_json, eval_to_json_result,
-    eval_to_yaml, eval_to_yaml_result, eval_tpl, record_printf_argument_effects,
-    record_total_conversion_effects,
+    eval_join, eval_join_pipeline, eval_print, eval_printf, eval_repeat, eval_replace,
+    eval_to_json, eval_to_json_result, eval_to_yaml, eval_to_yaml_result, eval_tpl,
+    record_printf_argument_effects, record_total_conversion_effects,
 };
 use strict_operands::{
-    pipeline_string_operand_facts, record_length_bearing_operand, record_length_bearing_result,
+    pipeline_string_operand_facts, record_collection_item_kind_result,
+    record_length_bearing_operand, record_length_bearing_result,
     record_raw_range_key_string_consumer_paths, record_strict_kind_operands,
     record_strict_kind_result, record_strict_parser_call, record_strict_parser_pipeline,
     record_string_call_consumers, record_string_consumer_effects, record_string_transform_effects,
@@ -60,6 +65,9 @@ pub(crate) fn eval_call_with_helper_calls(
         "or" => eval_short_circuit_args(args, false, env, resolver),
         "dict" => eval_dict(args, env, resolver),
         "list" | "tuple" => eval_list(args, env, resolver),
+        "deepCopy" | "mustDeepCopy" if args.len() == 1 => {
+            eval_expr_with_helper_calls(&args[0], env, resolver)
+        }
         "first" if args.len() == 1 => {
             let mut result = eval_first(args, env, resolver);
             record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
@@ -73,6 +81,12 @@ pub(crate) fn eval_call_with_helper_calls(
         "initial" | "rest" | "compact" if args.len() == 1 => {
             let mut result = eval_expr_with_helper_calls(&args[0], env, resolver);
             record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
+            result
+        }
+        "slice" | "mustSlice" if (2..=3).contains(&args.len()) => {
+            let mut result = eval_expr_with_helper_calls(&args[0], env, resolver);
+            record_strict_kind_operands(&args[..1], "array", env, resolver, &mut result.effects);
+            merge_arg_effects(&args[1..], env, resolver, &mut result.effects);
             result
         }
         "reverse" if args.len() == 1 => {
@@ -112,13 +126,30 @@ pub(crate) fn eval_call_with_helper_calls(
             result
         }
         "coalesce" => eval_coalesce(args, env, resolver),
+        "genSignedCert" | "genSelfSignedCert" if args.len() >= 4 => {
+            let operands = args
+                .iter()
+                .map(|arg| eval_expr_with_helper_calls(arg, env, resolver))
+                .collect::<Vec<_>>();
+            let mut effects = Effects::default();
+            for operand in &operands {
+                effects.merge(operand.effects.clone());
+            }
+            record_strict_kind_result(&operands[0], "string", &mut effects);
+            for operand in &operands[1..=2] {
+                record_strict_kind_result(operand, "array", &mut effects);
+                record_collection_item_kind_result(operand, "string", &mut effects);
+            }
+            record_strict_kind_result(&operands[3], "integer", &mut effects);
+            EvalResult::with_effects(None, effects)
+        }
         "eq" | "ne" if args.len() >= 2 => eval_comparison(args, env, resolver),
         // These stay on eval_unknown_call's widened-value semantics: their
         // results (a count, a membership bool, a rebuilt list) are dataflow
         // through the call, not the operand's identity, so downstream string
         // consumers must not type the operand through them.
         "concat" => {
-            let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
+            let mut result = eval_concat(args, env, resolver);
             record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
             result
         }
@@ -184,7 +215,7 @@ pub(crate) fn eval_call_with_helper_calls(
             result
         }
         "prepend" if args.len() == 2 => {
-            let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
+            let mut result = eval_prepend(args, env, resolver);
             record_strict_kind_operands(&args[..1], "array", env, resolver, &mut result.effects);
             result
         }
@@ -222,6 +253,32 @@ pub(crate) fn eval_call_with_helper_calls(
         "ternary" => eval_ternary(args, None, env, resolver),
         "print" => eval_print(args, env, resolver),
         "printf" => eval_printf(args, env, resolver),
+        "replace" if args.len() == 3 => {
+            let mut result = eval_replace(args, env, resolver);
+            let (string_paths, raw_range_key_paths) =
+                string_call_operand_facts("replace", args, env, resolver);
+            record_string_transform_effects(
+                "replace",
+                &result.value,
+                &string_paths,
+                &raw_range_key_paths,
+                &mut result.effects,
+            );
+            result
+        }
+        "repeat" if args.len() == 2 => {
+            let mut result = eval_repeat(args, env, resolver);
+            let (string_paths, raw_range_key_paths) =
+                string_call_operand_facts("repeat", args, env, resolver);
+            record_string_transform_effects(
+                "repeat",
+                &result.value,
+                &string_paths,
+                &raw_range_key_paths,
+                &mut result.effects,
+            );
+            result
+        }
         "tpl" if args.len() == 2 => eval_tpl(args, env, resolver),
         "cat" => eval_cat(args, env, resolver),
         "index" => eval_index(args, false, env, resolver),
@@ -241,6 +298,7 @@ pub(crate) fn eval_call_with_helper_calls(
             eval_to_json(args, env, resolver)
         }
         "join" if args.len() == 2 => eval_join(args, env, resolver),
+        "regexSplit" if args.len() == 3 => eval_regex_split(args, env, resolver),
         function if is_total_numeric_cast_function(function) && args.len() == 1 => {
             let result = eval_all_args(args, env, resolver);
             let mut effects = result.effects;
@@ -337,6 +395,13 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 record_strict_kind_result(&operand, "array", &mut result.effects);
                 result
             }
+            "slice" | "mustSlice" if (1..=2).contains(&args.len()) => {
+                let operand = current.clone();
+                let mut result = current;
+                record_strict_kind_result(&operand, "array", &mut result.effects);
+                merge_arg_effects(args, env, resolver, &mut result.effects);
+                result
+            }
             "reverse" if args.is_empty() => {
                 let operand = current.clone();
                 let mut result = eval_reverse_result(current);
@@ -351,6 +416,11 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                     identity_value_paths(&operand.value),
                     &mut result.effects,
                 );
+                if let Some(length) = operand.value.as_ref().and_then(concrete_collection_len) {
+                    result.value = Some(AbstractValue::StringSet(
+                        [length.to_string()].into_iter().collect(),
+                    ));
+                }
                 result
             }
             "eq" | "ne" if !args.is_empty() => {
@@ -364,6 +434,62 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 env,
                 resolver,
             ),
+            "replace" if args.len() == 2 => {
+                let piped_value = current.value.clone();
+                let piped_effects = current.effects.clone();
+                let old = eval_expr_with_helper_calls(&args[0], env, resolver);
+                let new = eval_expr_with_helper_calls(&args[1], env, resolver);
+                let old_values = old
+                    .value
+                    .as_ref()
+                    .map(AbstractValue::strings)
+                    .unwrap_or_default();
+                let new_values = new
+                    .value
+                    .as_ref()
+                    .map(AbstractValue::strings)
+                    .unwrap_or_default();
+                let subject_values = current
+                    .value
+                    .as_ref()
+                    .map(AbstractValue::strings)
+                    .unwrap_or_default();
+                let mut effects = current.effects;
+                effects.merge(old.effects);
+                effects.merge(new.effects);
+                let value = if old_values.is_empty()
+                    || new_values.is_empty()
+                    || subject_values.is_empty()
+                {
+                    current.value
+                } else {
+                    let mut rendered = BTreeSet::new();
+                    for subject in subject_values {
+                        for old in &old_values {
+                            for new in &new_values {
+                                rendered.insert(subject.replace(old, new));
+                            }
+                        }
+                    }
+                    Some(AbstractValue::StringSet(rendered))
+                };
+                let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
+                    "replace",
+                    args,
+                    &piped_value,
+                    &piped_effects,
+                    env,
+                    resolver,
+                );
+                record_string_transform_effects(
+                    "replace",
+                    &value,
+                    &string_paths,
+                    &raw_range_key_paths,
+                    &mut effects,
+                );
+                EvalResult::with_effects(value, effects)
+            }
             function if is_string_transform_function(function) => {
                 let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
                     function,
@@ -541,14 +667,152 @@ fn eval_short_circuit_args(
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let mut effects = Effects::default();
+    let mut values = Vec::new();
+    let mut execution_predicates = BTreeSet::new();
     let mut constrained_env = env.clone();
-    for arg in args {
-        effects.merge(eval_expr_with_helper_calls(arg, &constrained_env, resolver).effects);
+    for (index, arg) in args.iter().enumerate() {
+        let mut result = eval_expr_with_helper_calls(arg, &constrained_env, resolver);
+        scope_execution_effects(&mut result.effects, &execution_predicates);
+
+        let condition_path =
+            direct_raw_identity_path(result.value.as_ref()).filter(|path| !path.trim().is_empty());
+        let mut selection = execution_predicates.clone();
+        if index + 1 < args.len() {
+            let predicate = condition_path.as_ref().map_or_else(
+                || {
+                    Predicate::approximate(
+                        if previous_truthy {
+                            "and operand truthiness"
+                        } else {
+                            "or operand truthiness"
+                        },
+                        result
+                            .value
+                            .as_ref()
+                            .map(AbstractValue::paths)
+                            .unwrap_or_default(),
+                    )
+                },
+                |path| {
+                    let truthy = Predicate::truthy_path(path.clone());
+                    if previous_truthy {
+                        truthy.negated()
+                    } else {
+                        truthy
+                    }
+                },
+            );
+            selection.insert(predicate);
+        }
+        conjoin_result_selection(&mut result, &selection);
+        if let Some(value) = result.value {
+            values.push(value);
+        }
+        effects.merge(result.effects);
+
+        if index + 1 == args.len() {
+            break;
+        }
+        execution_predicates.insert(condition_path.map_or_else(
+            || {
+                Predicate::approximate(
+                    if previous_truthy {
+                        "and operand truthiness"
+                    } else {
+                        "or operand truthiness"
+                    },
+                    BTreeSet::new(),
+                )
+            },
+            |path| {
+                let truthy = Predicate::truthy_path(path);
+                if previous_truthy {
+                    truthy
+                } else {
+                    truthy.negated()
+                }
+            },
+        ));
         constrained_env.bound_values = constrained_env
             .bound_values
             .with_predicate_constraints(arg, previous_truthy);
     }
-    EvalResult::with_effects(None, effects)
+    EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+fn conjoin_result_selection(result: &mut EvalResult, predicates: &BTreeSet<Predicate>) {
+    if predicates.is_empty() {
+        return;
+    }
+    for path in identity_value_paths(&result.value) {
+        result
+            .effects
+            .local_output_meta
+            .entry(path)
+            .or_default()
+            .conjoin_branches(predicates);
+    }
+    for row in &mut result.effects.helper_rendered {
+        row.meta.conjoin_branches(predicates);
+    }
+}
+
+fn scope_execution_effects(effects: &mut Effects, predicates: &BTreeSet<Predicate>) {
+    if predicates.is_empty() {
+        return;
+    }
+
+    for meta in effects.local_output_meta.values_mut() {
+        meta.conjoin_branches(predicates);
+    }
+    for row in effects
+        .helper_rendered
+        .iter_mut()
+        .chain(&mut effects.helper_dependency_rendered)
+    {
+        row.meta.conjoin_branches(predicates);
+    }
+    for read in &mut effects.helper_reads {
+        read.condition = read
+            .condition
+            .conjoined(&GuardDnf::from_conjunction(predicates.iter().cloned()));
+    }
+    for capture in &mut effects.helper_fails {
+        for predicate in predicates {
+            if !capture.conjunction.contains(predicate) {
+                capture.conjunction.push(predicate.clone());
+            }
+        }
+    }
+    effects.member_host_conversions = std::mem::take(&mut effects.member_host_conversions)
+        .into_iter()
+        .map(|mut conversion| {
+            for predicate in predicates {
+                if !conversion.outer_predicates.contains(predicate) {
+                    conversion.outer_predicates.push(predicate.clone());
+                }
+            }
+            conversion
+        })
+        .collect();
+
+    let direct_string_paths = std::mem::take(&mut effects.direct_string_consumer_paths);
+    for path in direct_string_paths {
+        effects.string_contract_paths.remove(&path);
+        strict_operands::push_value_type_capture(
+            predicates.iter().cloned().collect(),
+            path,
+            "string".to_string(),
+            effects,
+        );
+    }
+
+    // Conditional mutation channels cannot yet carry an execution guard.
+    // Ignoring those mutations is conservative; applying them globally
+    // would let a skipped short-circuit operand alter later analysis.
+    effects.local_set_mutations.clear();
+    effects.root_set_mutations.clear();
+    effects.root_set_predicates.clear();
 }
 
 fn eval_helper_call(
@@ -559,6 +823,11 @@ fn eval_helper_call(
     if let Some(TemplateExpr::Literal(Literal::String(name) | Literal::RawString(name))) =
         args.first().map(TemplateExpr::deparen)
         && let Some(result) = resolver.resolve_helper_call(name, args.get(1))
+    {
+        return result;
+    }
+    if let Some(template_name) = args.first().and_then(template_base_path_suffix)
+        && let Some(result) = resolver.resolve_implicit_template_call(&template_name, args.get(1))
     {
         return result;
     }
@@ -573,6 +842,36 @@ fn eval_helper_call(
     let mut effects = Effects::default();
     merge_arg_effects(args, env, resolver, &mut effects);
     EvalResult::with_effects(None, effects)
+}
+
+fn template_base_path_suffix(expr: &TemplateExpr) -> Option<String> {
+    let TemplateExpr::Call { function, args } = expr.deparen() else {
+        return None;
+    };
+    if function != "print" || args.len() < 2 || !is_template_base_path(&args[0]) {
+        return None;
+    }
+
+    let mut suffix = String::new();
+    for arg in &args[1..] {
+        let TemplateExpr::Literal(Literal::String(part) | Literal::RawString(part)) = arg.deparen()
+        else {
+            return None;
+        };
+        suffix.push_str(part);
+    }
+    (!suffix.is_empty()).then_some(suffix)
+}
+
+fn is_template_base_path(expr: &TemplateExpr) -> bool {
+    match expr.deparen() {
+        TemplateExpr::Field(path) => path.as_slice() == ["Template", "BasePath"],
+        TemplateExpr::Selector { operand, path } => {
+            path.as_slice() == ["Template", "BasePath"]
+                && matches!(operand.deparen(), TemplateExpr::Variable(name) if name.is_empty())
+        }
+        _ => false,
+    }
 }
 
 fn eval_all_args(

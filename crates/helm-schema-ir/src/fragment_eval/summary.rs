@@ -383,6 +383,8 @@ fn project_structured_taint_value(
         | AbstractValue::RangeKey(_)
         | AbstractValue::RootContext
         | AbstractValue::StringSet(_)
+        | AbstractValue::DerivedBoolean(_)
+        | AbstractValue::SplitList { .. }
         | AbstractValue::Widened(_) => value.clone(),
     }
 }
@@ -421,7 +423,7 @@ fn conjoin_output_meta(inner: &HelperOutputMeta, outer: &HelperOutputMeta) -> He
 /// The documented value projection (module docs). Arms of one guarded value
 /// project independently and merge with the lattice's merge rules; splice
 /// conditions survive in `OutputPath` meta.
-fn projected_value(root: &Guarded<AbstractFragment>) -> Option<AbstractValue> {
+pub(super) fn projected_value(root: &Guarded<AbstractFragment>) -> Option<AbstractValue> {
     let mut conditions = Vec::new();
     let values = project_guarded(root, &mut conditions);
     AbstractValue::merge_all(values)

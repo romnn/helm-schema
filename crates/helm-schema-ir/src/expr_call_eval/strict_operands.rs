@@ -5,7 +5,7 @@ use helm_schema_ast::TemplateExpr;
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_with_helper_calls};
+use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use helm_schema_core::Predicate;
 
 use super::serialization::record_total_conversion_effects;
@@ -21,12 +21,12 @@ pub(super) fn record_string_transform_effects(
     raw_range_key_paths: &BTreeSet<String>,
     effects: &mut Effects,
 ) {
-    let paths = identity_value_paths(value);
+    let influence_paths = value.as_ref().map(AbstractValue::paths).unwrap_or_default();
     if is_total_stringification_function(function) {
         // Sprig's `strval` fallback renders ANY input (maps, lists, nil), so
         // a total stringification constrains nothing about its input and the
         // sink observes only the rendered text, never the input shape.
-        record_total_conversion_effects(paths, effects);
+        record_total_conversion_effects(influence_paths, effects);
         effects
             .derived_range_key_paths
             .extend(identity_range_key_paths(value));
@@ -34,12 +34,14 @@ pub(super) fn record_string_transform_effects(
     }
     record_string_consumer_effects(string_paths, effects);
     record_raw_range_key_string_consumer_paths(raw_range_key_paths, effects);
-    effects.derived_text_paths.extend(paths.iter().cloned());
+    effects
+        .derived_text_paths
+        .extend(influence_paths.iter().cloned());
     effects
         .derived_range_key_paths
         .extend(identity_range_key_paths(value));
     if function == "b64enc" {
-        effects.add_encoded_paths(string_paths.clone());
+        effects.add_encoded_paths(influence_paths);
     }
 }
 
@@ -122,15 +124,11 @@ pub(super) fn record_strict_parser_call(
     let Some(arg) = args.get(index) else {
         return;
     };
-    // Locals and helper returns can denote several guarded or transformed
-    // alternatives. Until those return alternatives remain disjunctive at
-    // the call site, only a parser-proven direct values selector can safely
-    // inherit the parser's lexical domain.
-    if direct_values_path(arg).is_none() {
-        return;
-    }
     let operand = eval_expr_with_helper_calls(arg, env, resolver);
-    record_strict_parser_result(&operand, pattern, effects);
+    let total_string_preimage = function == "mustDateModify" && is_to_string_expression(arg);
+    if parser_operand_has_partitioned_identity(&operand, total_string_preimage) {
+        record_strict_parser_result(&operand, pattern, total_string_preimage, effects);
+    }
 }
 
 pub(super) fn record_strict_parser_pipeline(
@@ -146,35 +144,200 @@ pub(super) fn record_strict_parser_pipeline(
         return;
     };
     if index == args.len() {
-        // The pipeline flag is syntax-derived at the first stage; abstract
-        // path identity alone cannot distinguish a raw selector from a local
-        // or helper result assembled from several source paths.
-        if piped_is_direct_values_path {
-            record_strict_parser_result(piped, pattern, effects);
+        if piped_is_direct_values_path || parser_operand_has_partitioned_identity(piped, false) {
+            record_strict_parser_result(piped, pattern, false, effects);
         }
     } else if let Some(arg) = args.get(index) {
-        if direct_values_path(arg).is_none() {
-            return;
-        }
         let operand = eval_expr_with_helper_calls(arg, env, resolver);
-        record_strict_parser_result(&operand, pattern, effects);
+        let total_string_preimage = function == "mustDateModify" && is_to_string_expression(arg);
+        if parser_operand_has_partitioned_identity(&operand, total_string_preimage) {
+            record_strict_parser_result(&operand, pattern, total_string_preimage, effects);
+        }
     }
 }
 
-fn record_strict_parser_result(operand: &EvalResult, pattern: &str, effects: &mut Effects) {
-    for path in strict_operand_identity_paths(operand) {
-        for mut conjunction in strict_operand_selection_conjunctions(operand, &path) {
-            conjunction.push(
-                Predicate::from(crate::Guard::MatchesPattern {
-                    path: path.clone(),
-                    pattern: pattern.to_string(),
-                    templated: false,
-                })
-                .negated(),
-            );
-            push_fail_capture(conjunction, effects);
+fn is_to_string_expression(expr: &TemplateExpr) -> bool {
+    match expr.deparen() {
+        TemplateExpr::Call { function, args } => function == "toString" && args.len() == 1,
+        TemplateExpr::Pipeline(stages) => stages.last().is_some_and(|stage| {
+            matches!(
+                stage.deparen(),
+                TemplateExpr::Call { function, args }
+                    if function == "toString" && args.is_empty()
+            )
+        }),
+        _ => false,
+    }
+}
+
+fn parser_operand_has_partitioned_identity(
+    operand: &EvalResult,
+    total_string_preimage: bool,
+) -> bool {
+    let paths = parser_operand_identity_paths(operand, total_string_preimage);
+    paths.len() == 1
+        || (!paths.is_empty()
+            && paths.iter().all(|path| {
+                operand.effects.defaults.contains(path)
+                    || operand.effects.local_default_paths.contains(path)
+                    || operand
+                        .effects
+                        .local_output_meta
+                        .get(path)
+                        .is_some_and(|meta| !meta.predicates.is_empty())
+                    || parser_output_metas(&operand.value, path)
+                        .iter()
+                        .any(|meta| !meta.predicates.is_empty() || meta.defaulted)
+            }))
+}
+
+fn parser_operand_identity_paths(
+    operand: &EvalResult,
+    total_string_preimage: bool,
+) -> BTreeSet<String> {
+    fn collect(
+        value: &AbstractValue,
+        effects: &Effects,
+        total_string_preimage: bool,
+        paths: &mut BTreeSet<String>,
+    ) {
+        match value {
+            AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+                if total_string_preimage
+                    || (!effects.shape_erased_paths.contains(path)
+                        && !effects.derived_text_paths.contains(path))
+                {
+                    paths.insert(path.clone());
+                }
+            }
+            AbstractValue::OutputPath(path, meta) => {
+                if !meta.shape_erased
+                    && !meta.derived_text
+                    && !meta.yaml_serialized
+                    && !meta.json_serialized
+                {
+                    paths.insert(path.clone());
+                }
+            }
+            AbstractValue::Choice(choices) => {
+                for choice in choices {
+                    collect(choice, effects, total_string_preimage, paths);
+                }
+            }
+            AbstractValue::Top
+            | AbstractValue::Unknown
+            | AbstractValue::RangeKey(_)
+            | AbstractValue::RootContext
+            | AbstractValue::StringSet(_)
+            | AbstractValue::DerivedBoolean(_)
+            | AbstractValue::Dict(_)
+            | AbstractValue::List(_)
+            | AbstractValue::Overlay { .. }
+            | AbstractValue::SplitList { .. }
+            | AbstractValue::Widened(_) => {}
         }
     }
+
+    let mut paths = BTreeSet::new();
+    if let Some(value) = &operand.value {
+        collect(value, &operand.effects, total_string_preimage, &mut paths);
+    }
+    paths
+}
+
+fn record_strict_parser_result(
+    operand: &EvalResult,
+    pattern: &str,
+    total_string_preimage: bool,
+    effects: &mut Effects,
+) {
+    for path in parser_operand_identity_paths(operand, total_string_preimage) {
+        for conjunction in parser_operand_selection_conjunctions(operand, &path) {
+            push_value_pattern_capture(
+                conjunction,
+                path.clone(),
+                pattern.to_string(),
+                false,
+                effects,
+            );
+        }
+    }
+}
+
+fn parser_operand_selection_conjunctions(operand: &EvalResult, path: &str) -> Vec<Vec<Predicate>> {
+    let base = operand_selection_conjunctions(&operand.effects, path);
+    let metas = parser_output_metas(&operand.value, path);
+    if metas.is_empty() {
+        return base;
+    }
+
+    let mut out = Vec::new();
+    for shared in base {
+        for meta in &metas {
+            let branches = if meta.predicates.is_empty() {
+                vec![BTreeSet::new()]
+            } else {
+                meta.predicates.iter().cloned().collect()
+            };
+            for branch in branches {
+                let mut conjunction = shared.clone();
+                conjunction.extend(branch);
+                if meta.defaulted {
+                    conjunction.push(Predicate::truthy_path(path.to_string()));
+                }
+                conjunction.sort();
+                conjunction.dedup();
+                out.push(conjunction);
+            }
+        }
+    }
+    out.sort();
+    out.dedup();
+    out
+}
+
+fn parser_output_metas(
+    value: &Option<AbstractValue>,
+    path: &str,
+) -> Vec<crate::helper_meta::HelperOutputMeta> {
+    fn collect(
+        value: &AbstractValue,
+        path: &str,
+        metas: &mut Vec<crate::helper_meta::HelperOutputMeta>,
+    ) {
+        match value {
+            AbstractValue::OutputPath(candidate, meta) if candidate == path => {
+                if !metas.contains(meta) {
+                    metas.push(meta.clone());
+                }
+            }
+            AbstractValue::Choice(choices) => {
+                for choice in choices {
+                    collect(choice, path, metas);
+                }
+            }
+            AbstractValue::Top
+            | AbstractValue::Unknown
+            | AbstractValue::ValuesPath(_)
+            | AbstractValue::JsonDecodedPath(_)
+            | AbstractValue::RangeKey(_)
+            | AbstractValue::OutputPath(_, _)
+            | AbstractValue::RootContext
+            | AbstractValue::StringSet(_)
+            | AbstractValue::DerivedBoolean(_)
+            | AbstractValue::Dict(_)
+            | AbstractValue::List(_)
+            | AbstractValue::Overlay { .. }
+            | AbstractValue::SplitList { .. }
+            | AbstractValue::Widened(_) => {}
+        }
+    }
+
+    let mut metas = Vec::new();
+    if let Some(value) = value {
+        collect(value, path, &mut metas);
+    }
+    metas
 }
 
 /// Record that an expression stage consumes the RAW value of `paths` as a
@@ -202,22 +365,8 @@ pub(super) fn record_string_consumer_effects(paths: &BTreeSet<String>, effects: 
                 .get(path)
                 .is_some_and(|meta| !meta.predicates.is_empty());
         if has_selection_condition {
-            for mut conjunction in operand_selection_conjunctions(effects, path) {
-                conjunction.push(
-                    Predicate::from(crate::Guard::TypeIs {
-                        path: path.clone(),
-                        schema_type: "string".to_string(),
-                    })
-                    .negated(),
-                );
-                let capture = crate::eval_effect::FailCapture {
-                    conjunction,
-                    ranged: crate::range_modes::RangeModes::default(),
-                    kind: crate::eval_effect::CaptureKind::Fail,
-                };
-                if !effects.helper_fails.contains(&capture) {
-                    effects.helper_fails.push(capture);
-                }
+            for conjunction in operand_selection_conjunctions(effects, path) {
+                push_value_type_capture(conjunction, path.clone(), "string".to_string(), effects);
             }
         } else {
             effects.string_contract_paths.insert(path.clone());
@@ -284,15 +433,97 @@ pub(super) fn record_strict_kind_result(
     effects: &mut Effects,
 ) {
     for path in strict_operand_identity_paths(operand) {
-        for mut conjunction in strict_operand_selection_conjunctions(operand, &path) {
-            conjunction.push(
-                Predicate::from(crate::Guard::TypeIs {
-                    path: path.clone(),
+        for conjunction in strict_operand_selection_conjunctions(operand, &path) {
+            push_value_type_capture(conjunction, path.clone(), schema_type.to_string(), effects);
+        }
+    }
+}
+
+pub(super) fn record_collection_item_kind_result(
+    operand: &EvalResult,
+    schema_type: &str,
+    effects: &mut Effects,
+) {
+    let mut collection_paths = BTreeSet::new();
+    let mut individual_paths = BTreeSet::new();
+
+    fn collect(
+        value: &AbstractValue,
+        collection_paths: &mut BTreeSet<String>,
+        individual_paths: &mut BTreeSet<String>,
+        direct_collection: bool,
+    ) {
+        match value {
+            AbstractValue::ValuesPath(path)
+            | AbstractValue::JsonDecodedPath(path)
+            | AbstractValue::OutputPath(path, _) => {
+                if direct_collection {
+                    collection_paths.insert(path.clone());
+                } else if let Some(parent) = path.strip_suffix(".*") {
+                    collection_paths.insert(parent.to_string());
+                } else {
+                    individual_paths.insert(path.clone());
+                }
+            }
+            AbstractValue::List(items) => {
+                for item in items {
+                    collect(item, collection_paths, individual_paths, false);
+                }
+            }
+            AbstractValue::Choice(choices) => {
+                for choice in choices {
+                    collect(
+                        choice,
+                        collection_paths,
+                        individual_paths,
+                        direct_collection,
+                    );
+                }
+            }
+            AbstractValue::Overlay { entries, fallback } => {
+                for item in entries.values() {
+                    collect(item, collection_paths, individual_paths, false);
+                }
+                collect(
+                    fallback,
+                    collection_paths,
+                    individual_paths,
+                    direct_collection,
+                );
+            }
+            AbstractValue::Top
+            | AbstractValue::Unknown
+            | AbstractValue::RangeKey(_)
+            | AbstractValue::RootContext
+            | AbstractValue::StringSet(_)
+            | AbstractValue::DerivedBoolean(_)
+            | AbstractValue::Dict(_)
+            | AbstractValue::SplitList { .. }
+            | AbstractValue::Widened(_) => {}
+        }
+    }
+
+    if let Some(value) = &operand.value {
+        collect(value, &mut collection_paths, &mut individual_paths, true);
+    }
+    for path in collection_paths {
+        for conjunction in strict_operand_selection_conjunctions(operand, &path) {
+            let capture = crate::eval_effect::FailCapture {
+                conjunction,
+                ranged: crate::range_modes::RangeModes::default(),
+                kind: crate::eval_effect::CaptureKind::CollectionItems {
+                    paths: BTreeSet::from([path.clone()]),
                     schema_type: schema_type.to_string(),
-                })
-                .negated(),
-            );
-            push_fail_capture(conjunction, effects);
+                },
+            };
+            if !effects.helper_fails.contains(&capture) {
+                effects.helper_fails.push(capture);
+            }
+        }
+    }
+    for path in individual_paths {
+        for conjunction in strict_operand_selection_conjunctions(operand, &path) {
+            push_value_type_capture(conjunction, path.clone(), schema_type.to_string(), effects);
         }
     }
 }
@@ -315,6 +546,43 @@ pub(super) fn push_fail_capture(conjunction: Vec<Predicate>, effects: &mut Effec
         conjunction,
         ranged: crate::range_modes::RangeModes::default(),
         kind: crate::eval_effect::CaptureKind::Fail,
+    };
+    if !effects.helper_fails.contains(&capture) {
+        effects.helper_fails.push(capture);
+    }
+}
+
+pub(super) fn push_value_type_capture(
+    conjunction: Vec<Predicate>,
+    path: String,
+    schema_type: String,
+    effects: &mut Effects,
+) {
+    let capture = crate::eval_effect::FailCapture {
+        conjunction,
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::ValueType { path, schema_type },
+    };
+    if !effects.helper_fails.contains(&capture) {
+        effects.helper_fails.push(capture);
+    }
+}
+
+fn push_value_pattern_capture(
+    conjunction: Vec<Predicate>,
+    path: String,
+    pattern: String,
+    templated: bool,
+    effects: &mut Effects,
+) {
+    let capture = crate::eval_effect::FailCapture {
+        conjunction,
+        ranged: crate::range_modes::RangeModes::default(),
+        kind: crate::eval_effect::CaptureKind::ValuePattern {
+            path,
+            pattern,
+            templated,
+        },
     };
     if !effects.helper_fails.contains(&capture) {
         effects.helper_fails.push(capture);

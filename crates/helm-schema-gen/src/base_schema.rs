@@ -97,10 +97,16 @@ pub(crate) fn classify_base(
 /// base: overlays own keys the resolved shape does not know about, so a
 /// closed base would reject values the guarded renders accept.
 fn unclose_fixed_objects(mut schema: Value) -> Value {
-    if is_fixed_object_schema(&schema) {
-        if let Some(object) = schema.as_object_mut() {
-            object.insert("additionalProperties".to_string(), serde_json::json!({}));
+    let fixed_object = is_fixed_object_schema(&schema);
+    let exact_empty_object = schema.get("maxProperties").and_then(Value::as_u64) == Some(0)
+        && schema.get("type").and_then(Value::as_str) == Some("object");
+    if (fixed_object || exact_empty_object)
+        && let Some(object) = schema.as_object_mut()
+    {
+        if exact_empty_object {
+            object.remove("maxProperties");
         }
+        object.insert("additionalProperties".to_string(), serde_json::json!({}));
         return schema;
     }
     if let Some(object) = schema.as_object_mut() {

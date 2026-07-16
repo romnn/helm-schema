@@ -657,30 +657,34 @@ fn strict_pipeline_calls_match_direct_operand_contracts() {
 
 #[test]
 fn integer_and_float_comparisons_keep_distinct_runtime_kinds() {
-    let conjunctions = |action: &str| {
+    let captures = |action: &str| {
         eval_expr(&single_expr(action), &EvalEnv::default())
             .effects
             .helper_fails
             .into_iter()
-            .map(|capture| capture.conjunction)
+            .map(|capture| (capture.kind, capture.conjunction))
             .collect::<BTreeSet<_>>()
     };
 
     sim_assert_eq!(
-        have: conjunctions("eq .Values.input 1"),
-        want: BTreeSet::from([vec![Predicate::from(Guard::TypeIs {
-            path: "input".to_string(),
-            schema_type: "integer".to_string(),
-        })
-        .negated()]])
+        have: captures("eq .Values.input 1"),
+        want: BTreeSet::from([(
+            crate::eval_effect::CaptureKind::ValueType {
+                path: "input".to_string(),
+                schema_type: "integer".to_string(),
+            },
+            Vec::new(),
+        )])
     );
     sim_assert_eq!(
-        have: conjunctions("eq .Values.input 1.5"),
-        want: BTreeSet::from([vec![Predicate::from(Guard::TypeIs {
-            path: "input".to_string(),
-            schema_type: "number".to_string(),
-        })
-        .negated()]])
+        have: captures("eq .Values.input 1.5"),
+        want: BTreeSet::from([(
+            crate::eval_effect::CaptureKind::ValueType {
+                path: "input".to_string(),
+                schema_type: "number".to_string(),
+            },
+            Vec::new(),
+        )])
     );
 }
 
@@ -774,33 +778,133 @@ fn coalesce_records_ordered_candidate_selection_conditions() {
         &single_expr("coalesce .Values.primary .Values.fallback | b64enc"),
         &EvalEnv::default(),
     );
-    let failure_conjunctions = consumed
+    let failure_captures = consumed
         .effects
         .helper_fails
         .into_iter()
-        .map(|capture| capture.conjunction.into_iter().collect::<BTreeSet<_>>())
+        .map(|capture| {
+            (
+                capture.kind,
+                capture.conjunction.into_iter().collect::<BTreeSet<_>>(),
+            )
+        })
         .collect::<BTreeSet<_>>();
     sim_assert_eq!(
-        have: failure_conjunctions,
+        have: failure_captures,
         want: BTreeSet::from([
-            BTreeSet::from([
-                Predicate::truthy_path("primary"),
-                Predicate::from(Guard::TypeIs {
+            (
+                crate::eval_effect::CaptureKind::ValueType {
                     path: "primary".to_string(),
                     schema_type: "string".to_string(),
-                })
-                .negated(),
-            ]),
-            BTreeSet::from([
-                Predicate::truthy_path("primary").negated(),
-                Predicate::truthy_path("fallback"),
-                Predicate::from(Guard::TypeIs {
+                },
+                BTreeSet::from([Predicate::truthy_path("primary")]),
+            ),
+            (
+                crate::eval_effect::CaptureKind::ValueType {
                     path: "fallback".to_string(),
                     schema_type: "string".to_string(),
-                })
-                .negated(),
-            ]),
+                },
+                BTreeSet::from([
+                    Predicate::truthy_path("primary").negated(),
+                    Predicate::truthy_path("fallback"),
+                ]),
+            ),
         ])
+    );
+}
+
+#[test]
+fn short_circuit_calls_return_guarded_operand_values() {
+    let or_result = eval_expr(
+        &single_expr("or .Values.primary .Values.fallback .Values.last"),
+        &EvalEnv::default(),
+    );
+    sim_assert_eq!(
+        have: or_result.value,
+        want: Some(AbstractValue::Choice(BTreeSet::from([
+            AbstractValue::ValuesPath("fallback".to_string()),
+            AbstractValue::ValuesPath("last".to_string()),
+            AbstractValue::ValuesPath("primary".to_string()),
+        ]))),
+    );
+    sim_assert_eq!(
+        have: or_result
+            .effects
+            .local_output_meta
+            .get("fallback")
+            .map(|meta| &meta.predicates),
+        want: Some(&BTreeSet::from([BTreeSet::from([
+            Predicate::truthy_path("primary").negated(),
+            Predicate::truthy_path("fallback"),
+        ])])),
+    );
+    sim_assert_eq!(
+        have: or_result
+            .effects
+            .local_output_meta
+            .get("last")
+            .map(|meta| &meta.predicates),
+        want: Some(&BTreeSet::from([BTreeSet::from([
+            Predicate::truthy_path("primary").negated(),
+            Predicate::truthy_path("fallback").negated(),
+        ])])),
+    );
+
+    let and_result = eval_expr(
+        &single_expr("and .Values.primary .Values.fallback .Values.last"),
+        &EvalEnv::default(),
+    );
+    sim_assert_eq!(
+        have: and_result
+            .effects
+            .local_output_meta
+            .get("fallback")
+            .map(|meta| &meta.predicates),
+        want: Some(&BTreeSet::from([BTreeSet::from([
+            Predicate::truthy_path("primary"),
+            Predicate::truthy_path("fallback").negated(),
+        ])])),
+    );
+    sim_assert_eq!(
+        have: and_result
+            .effects
+            .local_output_meta
+            .get("last")
+            .map(|meta| &meta.predicates),
+        want: Some(&BTreeSet::from([BTreeSet::from([
+            Predicate::truthy_path("primary"),
+            Predicate::truthy_path("fallback"),
+        ])])),
+    );
+}
+
+#[test]
+fn short_circuit_calls_scope_later_runtime_failures_to_execution() {
+    let result = eval_expr(
+        &single_expr("or .Values.ready (b64enc .Values.payload)"),
+        &EvalEnv::default(),
+    );
+    let failure_captures = result
+        .effects
+        .helper_fails
+        .into_iter()
+        .map(|capture| {
+            (
+                capture.kind,
+                capture.conjunction.into_iter().collect::<BTreeSet<_>>(),
+            )
+        })
+        .collect::<BTreeSet<_>>();
+
+    sim_assert_eq!(
+        have: failure_captures,
+        want: BTreeSet::from([(
+            crate::eval_effect::CaptureKind::ValueType {
+                path: "payload".to_string(),
+                schema_type: "string".to_string(),
+            },
+            BTreeSet::from([Predicate::truthy_path("ready").negated()]),
+        )]),
     );
 }
 
@@ -1091,5 +1195,30 @@ fn division_operand_is_not_arithmetic_erased() {
     assert!(
         !result.effects.shape_erased_paths.contains("count"),
         "div is not part of the coercing-arithmetic catalog"
+    );
+}
+
+#[test]
+fn finite_selector_program_construction_stays_exact() {
+    let env = EvalEnv {
+        locals: HashMap::from([(
+            "dep".to_string(),
+            AbstractValue::StringSet(BTreeSet::from([
+                "telemetry.v2.stackdriver.disableOutbound".to_string()
+            ])),
+        )]),
+        ..EvalEnv::default()
+    };
+    let result = eval_expr(
+        &single_expr(
+            r#"print "{{" (repeat (split "." $dep | len) "(") ".Values." (replace "." ")." $dep) ")}}""#,
+        ),
+        &env,
+    );
+    sim_assert_eq!(
+        have: result.value,
+        want: Some(AbstractValue::StringSet(BTreeSet::from([
+            "{{((((.Values.telemetry).v2).stackdriver).disableOutbound)}}".to_string(),
+        ])))
     );
 }

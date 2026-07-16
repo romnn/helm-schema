@@ -397,14 +397,15 @@ fn tplvalues_render_of_omitted_probe_keeps_fragment_shape() {
           probeCommandTimeout: 2
     "};
 
-    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    let ir = parse_ir_with_helpers(src, helpers);
+    let schema = schema_for_values_yaml(&ir, Some(values_yaml));
     let probe = schema
         .pointer("/properties/livenessProbe")
         .expect("livenessProbe present");
 
     assert!(
         schema_property_contains_type(probe, "initialDelaySeconds", "integer"),
-        "omitted probe fragment should retain rendered Kubernetes Probe fields, got {probe}"
+        "omitted probe fragment should retain rendered Kubernetes Probe fields, got {probe}; ir={ir:#?}"
     );
     assert!(
         schema_property_contains_type(probe, "probeCommandTimeout", "integer"),
@@ -709,7 +710,7 @@ fn inline_sequence_scalar_with_bound_dot_infers_string_type() {
             serde_json::json!({
                 "leaderElection": { "leaseDuration": { "bad": true } }
             }),
-            false,
+            true,
             "object duration",
         ),
         (
@@ -731,7 +732,7 @@ fn inline_sequence_scalar_with_bound_dot_infers_string_type() {
 }
 
 #[test]
-fn mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_paths() {
+fn mixed_inline_template_gaps_in_scalar_sequence_item_keep_textual_paths_open() {
     let src = indoc! {r#"
         apiVersion: v1
         kind: Pod
@@ -749,14 +750,14 @@ fn mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_paths() {
 
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    for pointer in [
-        "/properties/image/properties/registry",
-        "/properties/image/properties/repository",
-        "/properties/image/properties/digest",
+    for (path, value) in [
+        ("registry", serde_json::json!({ "host": "registry" })),
+        ("repository", serde_json::json!(["example", "app"])),
+        ("digest", serde_json::json!({ "algorithm": "sha256" })),
     ] {
         assert!(
-            permits_type(schema.pointer(pointer).expect("pointer present"), "string"),
-            "mixed inline template gaps should keep {pointer} string-like, got {schema}"
+            schema_accepts_instance(&schema, &serde_json::json!({ "image": { (path): value } }),),
+            "a partial scalar formats {path} as text without imposing its input kind: {schema}"
         );
     }
 }
@@ -797,7 +798,7 @@ fn with_bound_mixed_inline_template_gaps_in_scalar_sequence_item_keep_string_pat
             serde_json::json!({
                 "image": { "repository": { "bad": true } }
             }),
-            false,
+            true,
             "object repository",
         ),
         (serde_json::json!({ "image": false }), true, "falsy image"),
@@ -984,16 +985,21 @@ fn direct_fragment_resource_requirements_keep_open_requests_and_limits() {
 
     let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
 
-    // Provider object typing no longer bounds `toYaml` fragment INPUTS
-    // (F56): the surviving contract is openness — user-supplied quantity
-    // keys of any shape stay valid.
+    // `toYaml` preserves the object shape, including the provider's open
+    // Quantity maps. Arbitrary resource names remain accepted while each
+    // value keeps the provider's string-or-number domain.
     for member in ["requests", "limits"] {
         let node = schema
             .pointer(&format!("/properties/resources/properties/{member}"))
             .unwrap_or_else(|| panic!("resources.{member} present"));
         sim_assert_eq!(
             have: node.pointer("/additionalProperties"),
-            want: Some(&serde_json::json!({})),
+            want: Some(&serde_json::json!({
+                "oneOf": [
+                    { "type": "string" },
+                    { "type": "number" }
+                ]
+            })),
             "resources.{member} stays an open map: {node}"
         );
     }

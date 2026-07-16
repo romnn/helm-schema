@@ -37,6 +37,15 @@ fn file_roles_preserve_existing_chart_file_classification() -> color_eyre::eyre:
         "kind: CustomResourceDefinition\n",
     )?;
     test_util::write(&chart_dir.join("files/config.yaml")?, "answer: 42\n")?;
+    test_util::write(
+        &chart_dir.join("config/client-auth.json")?,
+        "{\"users\": []}\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/_script.txt")?,
+        "{{ .Values.script }}\n",
+    )?;
+    test_util::write(&chart_dir.join("charts/child/config/child.json")?, "{}\n")?;
 
     let files_without_tests = list_chart_files(&chart_dir, false)?;
     sim_assert_eq!(
@@ -45,7 +54,7 @@ fn file_roles_preserve_existing_chart_file_classification() -> color_eyre::eyre:
     );
     sim_assert_eq!(
         have: role_paths(&files_without_tests, FileRole::DefineIndexTemplate),
-        want: vec!["_helpers.tpl", "deployment.yaml"]
+        want: vec!["_helpers.tpl", "_script.txt", "deployment.yaml"]
     );
     sim_assert_eq!(
         have: role_paths(&files_without_tests, FileRole::StaticCrd),
@@ -53,7 +62,7 @@ fn file_roles_preserve_existing_chart_file_classification() -> color_eyre::eyre:
     );
     sim_assert_eq!(
         have: role_paths(&files_without_tests, FileRole::FilesGetSource),
-        want: vec!["config.yaml"]
+        want: vec!["client-auth.json", "config.yaml", "example.yaml"]
     );
 
     let files_with_tests = list_chart_files(&chart_dir, true)?;

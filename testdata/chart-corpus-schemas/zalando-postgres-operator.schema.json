@@ -26,18 +26,146 @@
       ]
     },
     "schema1": {
-      "additionalProperties": {},
-      "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\""
-    },
-    "schema10": {
-      "additionalProperties": {},
-      "description": "configure connection pooler deployment created by the operator"
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+          }
+        }
+      ],
+      "type": "string"
     },
     "schema11": {
       "additionalProperties": {},
-      "description": "automate creation of human users with teams API service"
+      "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
     },
     "schema12": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema14": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "schema17": {
+      "additionalProperties": {},
+      "properties": {
+        "cpu": {
+          "type": "string"
+        },
+        "memory": {
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "schema18": {
+      "additionalProperties": {},
+      "description": "configure connection pooler deployment created by the operator"
+    },
+    "schema2": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "configTarget": {}
+                },
+                "required": [
+                  "configTarget"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "configTarget": {
+                  "enum": [
+                    "OperatorConfigurationCRD"
+                  ]
+                }
+              },
+              "required": [
+                "configTarget"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "not": {
+            "properties": {
+              "configTarget": {
+                "enum": [
+                  "ConfigMap"
+                ]
+              }
+            },
+            "required": [
+              "configTarget"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "schema20": {
+      "additionalProperties": {},
+      "description": "automate creation of human users with teams API service"
+    },
+    "schema21": {
       "properties": {
         "configTarget": {
           "enum": [
@@ -50,15 +178,15 @@
       ],
       "type": "object"
     },
-    "schema13": {
+    "schema22": {
       "additionalProperties": {},
       "description": "parameters affecting logging and REST API listener"
     },
-    "schema14": {
+    "schema23": {
       "additionalProperties": {},
       "description": "options to aid debugging of the operator itself"
     },
-    "schema15": {
+    "schema24": {
       "not": {
         "properties": {
           "readinessProbe": {}
@@ -69,7 +197,7 @@
         "type": "object"
       }
     },
-    "schema16": {
+    "schema25": {
       "additionalProperties": {
         "additionalProperties": {}
       },
@@ -77,15 +205,20 @@
         "additionalProperties": {}
       }
     },
-    "schema18": {
+    "schema27": {
       "additionalProperties": {},
       "description": "timeouts related to some operator actions"
     },
-    "schema2": {
+    "schema3": {
       "additionalProperties": {},
-      "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\""
+      "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\""
     },
-    "schema21": {
+    "schema30": {
+      "not": {
+        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+      }
+    },
+    "schema31": {
       "not": {
         "properties": {
           "create": {}
@@ -96,7 +229,7 @@
         "type": "object"
       }
     },
-    "schema22": {
+    "schema32": {
       "properties": {
         "*": {
           "type": "object"
@@ -107,7 +240,7 @@
       ],
       "type": "object"
     },
-    "schema23": {
+    "schema33": {
       "properties": {
         "*": {
           "type": "array"
@@ -118,7 +251,7 @@
       ],
       "type": "object"
     },
-    "schema24": {
+    "schema34": {
       "properties": {
         "create": {}
       },
@@ -127,12 +260,21 @@
       ],
       "type": "object"
     },
-    "schema25": {
+    "schema37": {
+      "not": {
+        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+      }
+    },
+    "schema39": {
       "enum": [
         "OperatorConfigurationCRD"
       ]
     },
-    "schema3": {
+    "schema4": {
+      "additionalProperties": {},
+      "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\""
+    },
+    "schema5": {
       "anyOf": [
         {
           "not": {
@@ -160,18 +302,10 @@
         }
       ]
     },
-    "schema4": {
-      "additionalProperties": {},
-      "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin"
-    },
-    "schema5": {
-      "additionalProperties": {},
-      "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
-    },
     "schema6": {
       "not": {
         "properties": {
-          "rbac": {
+          "podPriorityClassName": {
             "properties": {
               "create": {}
             },
@@ -182,22 +316,33 @@
           }
         },
         "required": [
-          "rbac"
+          "podPriorityClassName"
         ],
         "type": "object"
       }
     },
-    "schema9": {
+    "schema7": {
       "additionalProperties": {},
-      "properties": {
-        "cpu": {
-          "type": "string"
+      "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin"
+    },
+    "schema9": {
+      "not": {
+        "properties": {
+          "podServiceAccount": {
+            "properties": {
+              "name": {}
+            },
+            "required": [
+              "name"
+            ],
+            "type": "object"
+          }
         },
-        "memory": {
-          "type": "string"
-        }
-      },
-      "type": "object"
+        "required": [
+          "podServiceAccount"
+        ],
+        "type": "object"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -207,13 +352,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "not": {
               "properties": {
                 "configAwsOrGcp": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "required": [
@@ -226,7 +371,7 @@
             "not": {
               "properties": {
                 "configAwsOrGcp": {
-                  "$ref": "#/$defs/schema22"
+                  "$ref": "#/$defs/schema32"
                 }
               },
               "required": [
@@ -254,20 +399,20 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configAwsOrGcp": {
-            "$ref": "#/$defs/schema2"
+            "$ref": "#/$defs/schema4"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "$ref": "#/$defs/schema21"
       },
       "then": {
         "additionalProperties": {},
@@ -293,13 +438,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "not": {
               "properties": {
                 "configConnectionPooler": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "required": [
@@ -312,7 +457,7 @@
             "not": {
               "properties": {
                 "configConnectionPooler": {
-                  "$ref": "#/$defs/schema22"
+                  "$ref": "#/$defs/schema32"
                 }
               },
               "required": [
@@ -340,20 +485,20 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configConnectionPooler": {
-            "$ref": "#/$defs/schema10"
+            "$ref": "#/$defs/schema18"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "$ref": "#/$defs/schema21"
       },
       "then": {
         "additionalProperties": {},
@@ -379,13 +524,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "not": {
               "properties": {
                 "configDebug": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "required": [
@@ -398,7 +543,7 @@
             "not": {
               "properties": {
                 "configDebug": {
-                  "$ref": "#/$defs/schema22"
+                  "$ref": "#/$defs/schema32"
                 }
               },
               "required": [
@@ -426,20 +571,20 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configDebug": {
-            "$ref": "#/$defs/schema14"
+            "$ref": "#/$defs/schema23"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "$ref": "#/$defs/schema21"
       },
       "then": {
         "additionalProperties": {},
@@ -465,13 +610,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "not": {
               "properties": {
                 "configGeneral": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "required": [
@@ -484,7 +629,7 @@
             "not": {
               "properties": {
                 "configGeneral": {
-                  "$ref": "#/$defs/schema22"
+                  "$ref": "#/$defs/schema32"
                 }
               },
               "required": [
@@ -512,7 +657,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
@@ -526,7 +671,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "$ref": "#/$defs/schema21"
       },
       "then": {
         "additionalProperties": {},
@@ -552,7 +697,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema6"
+            "$ref": "#/$defs/schema12"
           },
           {
             "properties": {
@@ -593,13 +738,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "not": {
               "properties": {
                 "configKubernetes": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "required": [
@@ -612,7 +757,7 @@
             "not": {
               "properties": {
                 "configKubernetes": {
-                  "$ref": "#/$defs/schema22"
+                  "$ref": "#/$defs/schema32"
                 }
               },
               "required": [
@@ -640,20 +785,20 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configKubernetes": {
-            "$ref": "#/$defs/schema5"
+            "$ref": "#/$defs/schema11"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "$ref": "#/$defs/schema21"
       },
       "then": {
         "additionalProperties": {},
@@ -679,7 +824,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema6"
+            "$ref": "#/$defs/schema12"
           },
           {
             "properties": {
@@ -720,13 +865,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "not": {
               "properties": {
                 "configLoadBalancer": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "required": [
@@ -739,7 +884,7 @@
             "not": {
               "properties": {
                 "configLoadBalancer": {
-                  "$ref": "#/$defs/schema22"
+                  "$ref": "#/$defs/schema32"
                 }
               },
               "required": [
@@ -767,7 +912,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
@@ -781,7 +926,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "$ref": "#/$defs/schema21"
       },
       "then": {
         "additionalProperties": {},
@@ -807,13 +952,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "not": {
               "properties": {
                 "configLoggingRestApi": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "required": [
@@ -826,7 +971,7 @@
             "not": {
               "properties": {
                 "configLoggingRestApi": {
-                  "$ref": "#/$defs/schema22"
+                  "$ref": "#/$defs/schema32"
                 }
               },
               "required": [
@@ -856,7 +1001,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema15"
+            "$ref": "#/$defs/schema24"
           },
           {
             "properties": {
@@ -896,20 +1041,20 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configLoggingRestApi": {
-            "$ref": "#/$defs/schema13"
+            "$ref": "#/$defs/schema22"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "$ref": "#/$defs/schema21"
       },
       "then": {
         "additionalProperties": {},
@@ -935,7 +1080,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema15"
+            "$ref": "#/$defs/schema24"
           },
           {
             "properties": {
@@ -975,13 +1120,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "not": {
               "properties": {
                 "configLogicalBackup": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "required": [
@@ -994,7 +1139,7 @@
             "not": {
               "properties": {
                 "configLogicalBackup": {
-                  "$ref": "#/$defs/schema22"
+                  "$ref": "#/$defs/schema32"
                 }
               },
               "required": [
@@ -1022,20 +1167,20 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configLogicalBackup": {
-            "$ref": "#/$defs/schema1"
+            "$ref": "#/$defs/schema3"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "$ref": "#/$defs/schema21"
       },
       "then": {
         "additionalProperties": {},
@@ -1061,13 +1206,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "not": {
               "properties": {
                 "configMajorVersionUpgrade": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "required": [
@@ -1080,7 +1225,7 @@
             "not": {
               "properties": {
                 "configMajorVersionUpgrade": {
-                  "$ref": "#/$defs/schema22"
+                  "$ref": "#/$defs/schema32"
                 }
               },
               "required": [
@@ -1095,14 +1240,14 @@
         "additionalProperties": {},
         "properties": {
           "configMajorVersionUpgrade": {
-            "$ref": "#/$defs/schema16"
+            "$ref": "#/$defs/schema25"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
@@ -1115,7 +1260,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "$ref": "#/$defs/schema21"
       },
       "then": {
         "additionalProperties": {},
@@ -1140,13 +1285,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "not": {
               "properties": {
                 "configPatroni": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "required": [
@@ -1159,7 +1304,7 @@
             "not": {
               "properties": {
                 "configPatroni": {
-                  "$ref": "#/$defs/schema22"
+                  "$ref": "#/$defs/schema32"
                 }
               },
               "required": [
@@ -1174,14 +1319,14 @@
         "additionalProperties": {},
         "properties": {
           "configPatroni": {
-            "$ref": "#/$defs/schema16"
+            "$ref": "#/$defs/schema25"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
@@ -1194,7 +1339,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "$ref": "#/$defs/schema21"
       },
       "then": {
         "additionalProperties": {},
@@ -1234,13 +1379,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "not": {
               "properties": {
                 "configTeamsApi": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "required": [
@@ -1253,7 +1398,7 @@
             "not": {
               "properties": {
                 "configTeamsApi": {
-                  "$ref": "#/$defs/schema22"
+                  "$ref": "#/$defs/schema32"
                 }
               },
               "required": [
@@ -1281,20 +1426,20 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configTeamsApi": {
-            "$ref": "#/$defs/schema11"
+            "$ref": "#/$defs/schema20"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "$ref": "#/$defs/schema21"
       },
       "then": {
         "additionalProperties": {},
@@ -1320,13 +1465,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "not": {
               "properties": {
                 "configTimeouts": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "required": [
@@ -1339,7 +1484,7 @@
             "not": {
               "properties": {
                 "configTimeouts": {
-                  "$ref": "#/$defs/schema22"
+                  "$ref": "#/$defs/schema32"
                 }
               },
               "required": [
@@ -1367,20 +1512,20 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configTimeouts": {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema27"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "$ref": "#/$defs/schema21"
       },
       "then": {
         "additionalProperties": {},
@@ -1406,13 +1551,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "not": {
               "properties": {
                 "configUsers": {
-                  "$ref": "#/$defs/schema23"
+                  "$ref": "#/$defs/schema33"
                 }
               },
               "required": [
@@ -1425,7 +1570,7 @@
             "not": {
               "properties": {
                 "configUsers": {
-                  "$ref": "#/$defs/schema22"
+                  "$ref": "#/$defs/schema32"
                 }
               },
               "required": [
@@ -1453,20 +1598,20 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "configUsers": {
-            "$ref": "#/$defs/schema4"
+            "$ref": "#/$defs/schema7"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "$ref": "#/$defs/schema21"
       },
       "then": {
         "additionalProperties": {},
@@ -1490,7 +1635,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
@@ -1498,6 +1643,42 @@
           "fullnameOverride": {
             "anyOf": [
               {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[-?:]([ \\t]|$)"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/schema14"
+                  },
+                  {
+                    "$ref": "#/$defs/schema30"
+                  },
+                  {
+                    "$ref": "#/$defs/schema37"
+                  }
+                ],
                 "default": "postgresql-operator",
                 "type": "string"
               },
@@ -1518,6 +1699,32 @@
             "anyOf": [
               {
                 "$ref": "#/$defs/schema6"
+              },
+              {
+                "properties": {
+                  "podPriorityClassName": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podPriorityClassName"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema12"
               },
               {
                 "properties": {
@@ -1565,7 +1772,7 @@
                 "not": {
                   "properties": {
                     "serviceAccount": {
-                      "$ref": "#/$defs/schema24"
+                      "$ref": "#/$defs/schema34"
                     }
                   },
                   "required": [
@@ -1596,7 +1803,10 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
+          },
+          {
+            "$ref": "#/$defs/schema2"
           }
         ]
       },
@@ -1648,7 +1858,277 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema6"
+                  },
+                  {
+                    "properties": {
+                      "podPriorityClassName": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "podPriorityClassName"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "podPriorityClassName": {
+                      "properties": {
+                        "name": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podPriorityClassName"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema12"
+                  },
+                  {
+                    "properties": {
+                      "rbac": {
+                        "properties": {
+                          "create": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "rbac"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema9"
+                    },
+                    {
+                      "properties": {
+                        "podServiceAccount": {
+                          "properties": {
+                            "name": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "podServiceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema21"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "podPriorityClassName": {
+                      "properties": {
+                        "name": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "podPriorityClassName"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema6"
+                      },
+                      {
+                        "properties": {
+                          "podPriorityClassName": {
+                            "properties": {
+                              "create": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "podPriorityClassName"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "podPriorityClassName": {
+                        "properties": {
+                          "name": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "podPriorityClassName"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema21"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema9"
+                    },
+                    {
+                      "properties": {
+                        "podServiceAccount": {
+                          "properties": {
+                            "name": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "podServiceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema5"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/schema9"
+                    },
+                    {
+                      "properties": {
+                        "podServiceAccount": {
+                          "properties": {
+                            "name": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "podServiceAccount"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "fullnameOverride": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
@@ -1656,12 +2136,12 @@
           "nameOverride": {
             "anyOf": [
               {
+                "$ref": "#/$defs/schema1"
+              },
+              {
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
-              },
-              {
-                "type": "string"
               }
             ]
           }
@@ -1698,7 +2178,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
@@ -1710,12 +2190,12 @@
               "name": {
                 "anyOf": [
                   {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "If not set a name is generated using the fullname template and \"-pod\" suffix"
@@ -1729,24 +2209,14 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema12"
+            "$ref": "#/$defs/schema21"
           },
           {
             "anyOf": [
               {
                 "anyOf": [
                   {
-                    "not": {
-                      "properties": {
-                        "podPriorityClassName": {
-                          "$ref": "#/$defs/schema24"
-                        }
-                      },
-                      "required": [
-                        "podPriorityClassName"
-                      ],
-                      "type": "object"
-                    }
+                    "$ref": "#/$defs/schema6"
                   },
                   {
                     "properties": {
@@ -1810,7 +2280,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema3"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
@@ -1821,6 +2291,42 @@
               "name": {
                 "anyOf": [
                   {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema14"
+                      },
+                      {
+                        "$ref": "#/$defs/schema30"
+                      },
+                      {
+                        "$ref": "#/$defs/schema37"
+                      }
+                    ],
                     "default": "postgres-pod",
                     "type": "string"
                   },
@@ -1841,7 +2347,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema6"
+            "$ref": "#/$defs/schema12"
           },
           {
             "properties": {
@@ -1890,7 +2396,14 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema12"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/schema21"
+          },
+          {
+            "$ref": "#/$defs/schema2"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -1911,7 +2424,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema15"
+            "$ref": "#/$defs/schema24"
           },
           {
             "properties": {
@@ -1951,7 +2464,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema6"
+            "$ref": "#/$defs/schema12"
           },
           {
             "properties": {
@@ -2004,30 +2517,30 @@
       "description": "Affinity for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
     },
     "configAwsOrGcp": {
-      "$ref": "#/$defs/schema2"
+      "$ref": "#/$defs/schema4"
     },
     "configConnectionPooler": {
-      "$ref": "#/$defs/schema10"
+      "$ref": "#/$defs/schema18"
     },
     "configDebug": {
-      "$ref": "#/$defs/schema14"
+      "$ref": "#/$defs/schema23"
     },
     "configGeneral": {
       "additionalProperties": {},
       "description": "general configuration parameters"
     },
     "configKubernetes": {
-      "$ref": "#/$defs/schema5"
+      "$ref": "#/$defs/schema11"
     },
     "configLoadBalancer": {
       "additionalProperties": {},
       "description": "configure behavior of load balancers"
     },
     "configLoggingRestApi": {
-      "$ref": "#/$defs/schema13"
+      "$ref": "#/$defs/schema22"
     },
     "configLogicalBackup": {
-      "$ref": "#/$defs/schema1"
+      "$ref": "#/$defs/schema3"
     },
     "configMajorVersionUpgrade": {
       "additionalProperties": {}
@@ -2046,7 +2559,7 @@
           ]
         },
         {
-          "$ref": "#/$defs/schema25"
+          "$ref": "#/$defs/schema39"
         },
         {
           "not": {
@@ -2059,13 +2572,13 @@
       ]
     },
     "configTeamsApi": {
-      "$ref": "#/$defs/schema11"
+      "$ref": "#/$defs/schema20"
     },
     "configTimeouts": {
-      "$ref": "#/$defs/schema18"
+      "$ref": "#/$defs/schema27"
     },
     "configUsers": {
-      "$ref": "#/$defs/schema4"
+      "$ref": "#/$defs/schema7"
     },
     "controllerID": {
       "additionalProperties": {},
@@ -2123,30 +2636,9 @@
         "pullPolicy": {
           "type": "string"
         },
-        "registry": {
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
-        },
-        "repository": {
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
-        },
-        "tag": {
-          "type": [
-            "boolean",
-            "integer",
-            "number",
-            "string"
-          ]
-        }
+        "registry": {},
+        "repository": {},
+        "tag": {}
       },
       "type": "object"
     },
@@ -2204,7 +2696,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema21"
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -2242,7 +2734,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema21"
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {
@@ -2407,10 +2899,10 @@
       "additionalProperties": {},
       "properties": {
         "limits": {
-          "$ref": "#/$defs/schema9"
+          "$ref": "#/$defs/schema17"
         },
         "requests": {
-          "$ref": "#/$defs/schema9"
+          "$ref": "#/$defs/schema17"
         }
       },
       "type": "object"
@@ -2440,7 +2932,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema21"
+                "$ref": "#/$defs/schema31"
               },
               {
                 "properties": {

@@ -201,6 +201,13 @@ pub(crate) fn lower_value(
                 suppressed: false,
             }))
         }
+        AbstractValue::DerivedBoolean(paths) => {
+            Guarded::unconditional(AbstractFragment::Opaque(Opaque {
+                taint: paths.clone(),
+                kind: ValueKind::Serialized,
+                ..Opaque::default()
+            }))
+        }
         AbstractValue::Dict(entries) => json_serialized_scalar(value, scope).unwrap_or_else(|| {
             Guarded::unconditional(AbstractFragment::Mapping(lower_entries(entries, scope)))
         }),
@@ -244,7 +251,11 @@ pub(crate) fn lower_value(
             }
             out
         }
-        AbstractValue::Widened(paths) => {
+        AbstractValue::Widened(paths)
+        | AbstractValue::SplitList {
+            source_paths: paths,
+            ..
+        } => {
             // A widened transform still attributes exactly: paths whose
             // branch conditions are recorded (helper rows collapsed by
             // transfer functions like `printf … | trunc`) keep them as
@@ -380,6 +391,10 @@ pub(crate) fn lower_value_scalar_arms(
         AbstractValue::StringSet(strings) => {
             vec![(Predicate::True, vec![StringPart::Text(strings.clone())])]
         }
+        AbstractValue::DerivedBoolean(paths) => vec![(
+            Predicate::True,
+            vec![StringPart::Taint(TaintPart::new(paths.clone()))],
+        )],
         AbstractValue::Dict(_) | AbstractValue::List(_) | AbstractValue::Overlay { .. } => {
             let taint = json_serialized_taint(value, scope)
                 .unwrap_or_else(|| TaintPart::new(value.fragment_rendered_paths()));
@@ -408,7 +423,11 @@ pub(crate) fn lower_value_scalar_arms(
             }
             arms
         }
-        AbstractValue::Widened(paths) => {
+        AbstractValue::Widened(paths)
+        | AbstractValue::SplitList {
+            source_paths: paths,
+            ..
+        } => {
             let mut arms = Vec::new();
             let mut taint = BTreeSet::new();
             for path in paths {

@@ -3,6 +3,129 @@ use test_util::prelude::sim_assert_eq;
 use super::*;
 
 #[test]
+fn helper_range_break_scopes_later_provider_candidates() {
+    let helpers = indoc! {r#"
+        {{- define "select.context" -}}
+        {{- $result := dict -}}
+        {{- range . -}}
+          {{- if and (hasKey . "securityContexts") (hasKey .securityContexts "pod") .securityContexts.pod -}}
+            {{- $result = .securityContexts.pod -}}
+            {{- break -}}
+          {{- end -}}
+          {{- if and (hasKey . "securityContext") .securityContext -}}
+            {{- $result = .securityContext -}}
+            {{- break -}}
+          {{- end -}}
+        {{- end -}}
+        {{- toYaml $result -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- $securityContext := include "select.context" (list .Values.worker .Values) -}}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          securityContext: {{ $securityContext | nindent 4 }}
+          containers:
+          - name: test
+            image: busybox
+    "#};
+    let values_yaml = indoc! {"
+        securityContext: {}
+        securityContexts:
+          pod: {}
+        worker:
+          securityContext: {}
+          securityContexts:
+            pod: {}
+    "};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "worker": {
+                    "securityContexts": { "pod": { "runAsUser": 50000 } },
+                    "securityContext": 7
+                }
+            })
+        ),
+        "a later scalar candidate is dormant after the preferred branch breaks: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "worker": {
+                    "securityContexts": { "pod": {} },
+                    "securityContext": 7
+                }
+            })
+        ),
+        "the live scalar candidate reaches the object-typed Pod securityContext: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "worker": {
+                    "securityContexts": { "pod": {} },
+                    "securityContext": { "runAsUser": 50000 }
+                }
+            })
+        ),
+        "a valid fallback object remains accepted: {schema}"
+    );
+}
+
+/// A helper that returns a YAML object and is decoded before placement keeps
+/// each nested leaf's provider position; the outer `toYaml` only serializes
+/// the constructed object and does not erase those leaf identities.
+#[test]
+fn decoded_yaml_helper_keeps_nested_provider_positions() {
+    let helpers = indoc! {r#"
+        {{- define "pod.template" -}}
+        metadata:
+          labels:
+            app: test
+        spec:
+          {{- if not (kindIs "invalid" .Values.hostUsers) }}
+          hostUsers: {{ .Values.hostUsers }}
+          {{- end }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          selector:
+            matchLabels:
+              app: test
+          template: {{ include "pod.template" . | fromYaml | toYaml | nindent 4 }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("hostUsers: null\n"),
+    );
+
+    for value in [serde_json::json!(false), serde_json::json!(true)] {
+        assert!(
+            schema_accepts_instance(&schema, &serde_json::json!({ "hostUsers": value })),
+            "Boolean PodSpec hostUsers values must validate: {schema}"
+        );
+    }
+    assert!(
+        !schema_accepts_instance(&schema, &serde_json::json!({ "hostUsers": "audit" })),
+        "a present string reaches the Boolean PodSpec field: {schema}"
+    );
+}
+
+#[test]
 fn common_fullname_helper_keeps_fullname_override_nullable() {
     let helpers = indoc! {r#"
         {{- define "common.name" -}}

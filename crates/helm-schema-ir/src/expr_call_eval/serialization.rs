@@ -66,12 +66,7 @@ pub(super) fn eval_printf(
 /// an earlier string-consuming stage (`b64enc | quote`) keeps its contract
 /// on the raw path.
 pub(super) fn record_total_conversion_effects(paths: BTreeSet<String>, effects: &mut Effects) {
-    let erasable = paths
-        .iter()
-        .filter(|path| !effects.string_contract_paths.contains(*path))
-        .cloned()
-        .collect();
-    effects.add_shape_erased_paths(erasable);
+    effects.add_shape_erased_paths(paths.clone());
     effects.derived_text_paths.extend(paths);
 }
 
@@ -94,12 +89,7 @@ pub(super) fn record_printf_argument_effects(
             .collect();
         effects.string_contract_paths.extend(raw);
     } else {
-        let erasable = identity_paths
-            .iter()
-            .filter(|path| !effects.string_contract_paths.contains(*path))
-            .cloned()
-            .collect();
-        effects.add_shape_erased_paths(erasable);
+        effects.add_shape_erased_paths(identity_paths.clone());
     }
     effects
         .derived_text_paths
@@ -129,6 +119,59 @@ pub(super) fn eval_print(
         rendered = next;
     }
     EvalResult::with_effects(Some(AbstractValue::StringSet(rendered)), effects)
+}
+
+pub(super) fn eval_replace(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let old = eval_expr_with_helper_calls(&args[0], env, resolver);
+    let new = eval_expr_with_helper_calls(&args[1], env, resolver);
+    let mut subject = eval_expr_with_helper_calls(&args[2], env, resolver);
+    subject.effects.merge(old.effects);
+    subject.effects.merge(new.effects);
+    let old_values = value_strings(&old.value);
+    let new_values = value_strings(&new.value);
+    let subject_values = value_strings(&subject.value);
+    if old_values.is_empty() || new_values.is_empty() || subject_values.is_empty() {
+        return subject;
+    }
+    let mut rendered = BTreeSet::new();
+    for subject in subject_values {
+        for old in &old_values {
+            for new in &new_values {
+                rendered.insert(subject.replace(old, new));
+            }
+        }
+    }
+    EvalResult::with_effects(Some(AbstractValue::StringSet(rendered)), subject.effects)
+}
+
+pub(super) fn eval_repeat(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    let count = eval_expr_with_helper_calls(&args[0], env, resolver);
+    let mut subject = eval_expr_with_helper_calls(&args[1], env, resolver);
+    subject.effects.merge(count.effects);
+    let count = count
+        .value
+        .as_ref()
+        .and_then(super::value_facts::concrete_integer);
+    let subject_values = value_strings(&subject.value);
+    let Some(count) = count.filter(|count| (0..=4096).contains(count)) else {
+        return subject;
+    };
+    if subject_values.is_empty() {
+        return subject;
+    }
+    let rendered = subject_values
+        .into_iter()
+        .map(|value| value.repeat(count as usize))
+        .collect();
+    EvalResult::with_effects(Some(AbstractValue::StringSet(rendered)), subject.effects)
 }
 
 /// `tpl` renders its first argument as a template against the given context.
@@ -205,7 +248,13 @@ pub(super) fn eval_to_yaml(
 pub(super) fn eval_to_yaml_result(result: EvalResult) -> EvalResult {
     let paths = serialization_payload_paths(&result.value);
     let mut effects = result.effects;
-    effects.yaml_serialized_paths.extend(paths.iter().cloned());
+    if !result
+        .value
+        .as_ref()
+        .is_some_and(is_structurally_rendered_yaml_value)
+    {
+        effects.yaml_serialized_paths.extend(paths.iter().cloned());
+    }
     // The output is rendered YAML text: a later consuming transform
     // (`toYaml x | trim`) operates on that text and claims nothing about
     // the raw value, which serializes at any type.
@@ -378,16 +427,29 @@ pub(super) fn eval_from_yaml_result(result: EvalResult) -> EvalResult {
         return EvalResult::with_effects(Some(folded), result.effects);
     }
     let paths = serialization_payload_paths(&result.value);
-    let round_trips_yaml = !paths.is_empty()
+    let structurally_rendered_yaml = result
+        .value
+        .as_ref()
+        .is_some_and(is_structurally_rendered_yaml_value)
+        && !paths.is_empty()
         && paths
             .iter()
-            .all(|path| path_is_encoded(path, &result.effects.yaml_serialized_paths));
+            .all(|path| result.effects.derived_text_paths.contains(path));
+    let round_trips_yaml = structurally_rendered_yaml
+        || !paths.is_empty()
+            && paths
+                .iter()
+                .all(|path| path_is_encoded(path, &result.effects.yaml_serialized_paths));
     let mut effects = result.effects;
-    let string_input_paths = paths
-        .iter()
-        .filter(|path| !path_is_encoded(path, &effects.yaml_serialized_paths))
-        .cloned()
-        .collect::<BTreeSet<_>>();
+    let string_input_paths = if round_trips_yaml {
+        BTreeSet::new()
+    } else {
+        paths
+            .iter()
+            .filter(|path| !path_is_encoded(path, &effects.yaml_serialized_paths))
+            .cloned()
+            .collect::<BTreeSet<_>>()
+    };
     effects.add_type_hints(string_input_paths.clone(), "string");
     effects
         .string_contract_paths
@@ -399,6 +461,16 @@ pub(super) fn eval_from_yaml_result(result: EvalResult) -> EvalResult {
         AbstractValue::widened(paths)
     };
     EvalResult::with_effects(value, effects)
+}
+
+fn is_structurally_rendered_yaml_value(value: &AbstractValue) -> bool {
+    match value {
+        AbstractValue::Dict(_) | AbstractValue::List(_) | AbstractValue::Overlay { .. } => true,
+        AbstractValue::Choice(choices) => {
+            !choices.is_empty() && choices.iter().all(is_structurally_rendered_yaml_value)
+        }
+        _ => false,
+    }
 }
 
 pub(super) fn eval_join(

@@ -7,7 +7,7 @@ use crate::{
     ValuesSchemaInput, generate_values_schema,
     resolve_policy::{
         ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs,
-        open_objects_rejecting_declared_members,
+        open_objects_rejecting_declared_members, preserve_declared_default_in_schema,
     },
     values_yaml::ValuesYamlPathFacts,
 };
@@ -37,6 +37,7 @@ mod provider_evidence;
 mod range_collections;
 mod range_contracts;
 mod range_key_contracts;
+mod resolve_policy;
 mod shape_alternatives;
 mod string_transform_contracts;
 mod validator_reachability;

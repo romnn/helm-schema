@@ -109,6 +109,50 @@ pub(super) fn eval_index(
         for value in &values {
             let base_paths = value.paths();
             for option in &options {
+                if option.integer_index
+                    && let Some(index) = option
+                        .segments
+                        .first()
+                        .and_then(|segment| segment.parse::<usize>().ok())
+                {
+                    if let AbstractValue::SplitList {
+                        source_paths,
+                        separator,
+                        total_text_preimage,
+                    } = value
+                    {
+                        let capture = crate::eval_effect::FailCapture {
+                            conjunction: Vec::new(),
+                            ranged: crate::range_modes::RangeModes::default(),
+                            kind: crate::eval_effect::CaptureKind::SplitIndexAccess {
+                                paths: source_paths.clone(),
+                                separator: separator.clone(),
+                                index,
+                                total_text_preimage: *total_text_preimage,
+                            },
+                        };
+                        if !effects.helper_fails.contains(&capture) {
+                            effects.helper_fails.push(capture);
+                        }
+                    }
+                    for path in identity_value_paths(&Some(value.clone())) {
+                        for conjunction in
+                            super::strict_operands::operand_selection_conjunctions(&effects, &path)
+                        {
+                            let capture = crate::eval_effect::FailCapture {
+                                conjunction,
+                                ranged: crate::range_modes::RangeModes::default(),
+                                kind: crate::eval_effect::CaptureKind::IndexAccess {
+                                    path: path.clone(),
+                                    index,
+                                },
+                            };
+                            if !effects.helper_fails.contains(&capture) {
+                                effects.helper_fails.push(capture);
+                            }
+                        }
+                    }
+                }
                 if let Some(next) = apply_index_segment(value, option) {
                     for next_path in next.paths() {
                         for base_path in &base_paths {
@@ -179,6 +223,7 @@ pub(super) fn apply_index_segment(
             let index = option.segments.first()?.parse::<usize>().ok()?;
             items.get(index).cloned()
         }
+        AbstractValue::SplitList { .. } => Some(AbstractValue::Unknown),
         AbstractValue::Choice(choices) => AbstractValue::choice(
             choices
                 .iter()

@@ -126,7 +126,8 @@ fn dump_node(node: &Node, source: &str, depth: usize, out: &mut String) {
             let kind = match opaque.kind {
                 OpaqueKind::TemplateComment => "template-comment",
                 OpaqueKind::Assignment => "assign",
-                OpaqueKind::ControlAtom => "control-atom",
+                OpaqueKind::Break => "break",
+                OpaqueKind::Continue => "continue",
                 OpaqueKind::InlineRegion => "inline-region",
                 OpaqueKind::ActionLineText => "action-line-text",
                 OpaqueKind::ParseError => "parse-error",

@@ -143,6 +143,15 @@ impl ContractIr {
         }
     }
 
+    /// Mark rendered claims as textual output rather than structured YAML
+    /// placements. Runtime operand contracts and terminal effects remain
+    /// unchanged.
+    pub fn mark_rendered_output_textual(&mut self) {
+        for contract_use in self.uses.iter_mut().chain(&mut self.dependency_uses) {
+            contract_use.kind = ValueKind::Serialized;
+        }
+    }
+
     /// Rewrite all referenced values paths while preserving rendered YAML paths.
     ///
     /// This is used at chart boundaries where a dependency's `.Values.foo`

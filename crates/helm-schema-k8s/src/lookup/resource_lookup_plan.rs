@@ -63,9 +63,20 @@ fn resource_candidates_with_api_versions(
     resource: &ResourceRef,
     api_versions: Vec<String>,
 ) -> Vec<ResourceRef> {
+    let mut kinds = vec![resource.kind.clone()];
+    for kind in &resource.kind_candidates {
+        if !kind.is_empty() && !kinds.contains(kind) {
+            kinds.push(kind.clone());
+        }
+    }
     api_versions
         .into_iter()
-        .map(|api_version| ResourceRef::concrete(api_version, resource.kind.clone()))
+        .flat_map(|api_version| {
+            kinds
+                .iter()
+                .cloned()
+                .map(move |kind| ResourceRef::concrete(api_version.clone(), kind))
+        })
         .collect()
 }
 

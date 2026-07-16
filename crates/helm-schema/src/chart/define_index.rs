@@ -1,3 +1,5 @@
+use std::io::Read as _;
+
 use helm_schema_ast::DefineIndex;
 use tracing::instrument;
 use vfs::VfsPath;
@@ -32,14 +34,19 @@ pub fn build_define_index(
             .filter(|file| file.has_role(FileRole::FilesGetSource))
             .map(|file| &file.path)
         {
-            index.add_file_source(
-                &files_get_relative_path(&chart.chart_dir, path),
-                &path.read_to_string()?,
-            );
+            if let Some(source) = read_utf8_files_get_source(path)? {
+                index.add_file_source(&files_get_relative_path(&chart.chart_dir, path), &source);
+            }
         }
     }
 
     Ok(index)
+}
+
+fn read_utf8_files_get_source(path: &VfsPath) -> EngineResult<Option<String>> {
+    let mut bytes = Vec::new();
+    path.open_file()?.read_to_end(&mut bytes)?;
+    Ok(String::from_utf8(bytes).ok())
 }
 
 fn chart_relative_path(chart_dir: &VfsPath, path: &VfsPath) -> String {

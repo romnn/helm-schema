@@ -113,6 +113,10 @@ pub enum Guard {
         pattern: String,
         templated: bool,
     },
+    /// A destructured range key starts with a literal prefix. The path names
+    /// the ranged collection; the predicate applies to its matching entries,
+    /// not to the collection value itself.
+    RangeKeyPrefix { path: String, prefix: String },
     /// Disjunction: `if or .Values.A .Values.B`
     Or { paths: Vec<String> },
     /// Disjunction whose arms may each contain a conjunction of typed guards.
@@ -182,6 +186,7 @@ impl Guard {
             | Self::NotEq { .. }
             | Self::Absent { .. }
             | Self::MatchesPattern { .. }
+            | Self::RangeKeyPrefix { .. }
             | Self::Range { .. }
             | Self::With { .. }
             | Self::Default { .. }
@@ -200,6 +205,7 @@ impl Guard {
             | Guard::NotEq { path, .. }
             | Guard::Absent { path }
             | Guard::MatchesPattern { path, .. }
+            | Guard::RangeKeyPrefix { path, .. }
             | Guard::Range { path }
             | Guard::With { path }
             | Guard::Default { path }
@@ -241,6 +247,10 @@ impl Guard {
                 path: map(&path),
                 pattern,
                 templated,
+            },
+            Guard::RangeKeyPrefix { path, prefix } => Guard::RangeKeyPrefix {
+                path: map(&path),
+                prefix,
             },
             Guard::Or { paths } => Guard::Or {
                 paths: paths.into_iter().map(|path| map(&path)).collect(),

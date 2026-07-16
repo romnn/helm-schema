@@ -28,6 +28,37 @@ fn parse_condition_with_template_bindings(
     parse_condition_with_template_facts(text, template_bindings, HashMap::new())
 }
 
+#[test]
+fn invalid_kind_is_absence_or_null_instead_of_truthiness() {
+    let invalid = parse_action_expressions(r#"{{ kindIs "invalid" .Values.hostUsers }}"#)
+        .into_iter()
+        .next()
+        .expect("condition expression");
+    let predicate = condition_context(HashMap::new()).condition_predicate_expr(&invalid);
+    sim_assert_eq!(
+        have: predicate,
+        want: Predicate::Or(vec![
+            Predicate::from(Guard::Absent {
+                path: "hostUsers".to_string(),
+            }),
+            Predicate::from(Guard::Eq {
+                path: "hostUsers".to_string(),
+                value: GuardValue::Null,
+            }),
+        ]),
+    );
+
+    let present = parse_action_expressions(r#"{{ not (kindIs "invalid" .Values.hostUsers) }}"#)
+        .into_iter()
+        .next()
+        .expect("condition expression");
+    let predicate = condition_context(HashMap::new()).condition_predicate_expr(&present);
+    assert!(
+        matches!(predicate, Predicate::Not(ref inner) if matches!(inner.as_ref(), Predicate::Or(_))),
+        "negating invalid must preserve required-and-non-null semantics: {predicate:#?}"
+    );
+}
+
 fn parse_condition_with_template_facts(
     text: &str,
     template_bindings: HashMap<String, AbstractValue>,
@@ -113,12 +144,28 @@ fn absent_custom_root_field_is_false_until_set() {
 }
 
 #[test]
-fn not_with_nested_helper_call() {
+fn quoted_empty_membership_preserves_false_and_zero_as_live_values() {
+    let expr = parse_action_expressions(
+        r#"{{ not (has (quote .Values.global.logLevel) (list "" (quote ""))) }}"#,
+    )
+    .into_iter()
+    .next()
+    .expect("condition expression");
     sim_assert_eq!(
-        have: parse_condition(r#"not (has (quote .Values.global.logLevel) (list "" (quote "")))"#),
-        want: vec![Guard::Not {
-            path: "global.logLevel".into(),
-        }],
+        have: condition_context(HashMap::new()).condition_predicate_expr(&expr),
+        want: Predicate::Not(Box::new(Predicate::Or(vec![
+            Predicate::from(Guard::Absent {
+                path: "global.logLevel".into(),
+            }),
+            Predicate::from(Guard::Eq {
+                path: "global.logLevel".into(),
+                value: GuardValue::Null,
+            }),
+            Predicate::from(Guard::Eq {
+                path: "global.logLevel".into(),
+                value: GuardValue::string(""),
+            }),
+        ]))),
     );
 }
 

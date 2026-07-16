@@ -30,10 +30,11 @@ pub(crate) fn context_value_from_outer_expr(
         ));
     }
 
-    // The outer-fragment dot is the dict of outer bindings when they exist
-    // (so a bare `.` sees the caller's root context), else the ambient dot.
-    let dot = outer
-        .map(|bindings| {
+    // An active with/range dot is the current context. Outside a nested
+    // context, the caller's root bindings provide the helper-call dot; `$`
+    // still resolves explicitly through the early root-variable arm above.
+    let dot = current_dot.cloned().or_else(|| {
+        outer.map(|bindings| {
             AbstractValue::Dict(
                 bindings
                     .iter()
@@ -41,7 +42,7 @@ pub(crate) fn context_value_from_outer_expr(
                     .collect(),
             )
         })
-        .or_else(|| current_dot.cloned());
+    });
     let env = EvalEnv {
         dot,
         root_fields: outer.cloned().unwrap_or_default(),
@@ -59,9 +60,8 @@ pub(crate) fn context_value_from_outer_expr(
 /// the fallback. This is the composition behind with-body dots and `hasKey`
 /// probes.
 ///
-/// The first arm binds `outer`, so its dot is always the dict of root
-/// bindings; an ambient helper dot cannot reach it (hence no ambient-dot
-/// parameter here).
+/// The first arm uses the active helper dot when one exists, while `$` and
+/// root fields keep resolving through `root_bindings`.
 pub(crate) fn fragment_context_value(
     expr: &TemplateExpr,
     root_bindings: &HashMap<String, AbstractValue>,
@@ -71,7 +71,13 @@ pub(crate) fn fragment_context_value(
 ) -> Option<AbstractValue> {
     let locals = locals_with_roots(template_bindings, root_bindings);
 
-    context_value_from_outer_expr(expr, Some(&locals), Some(root_bindings), None).or_else(|| {
+    context_value_from_outer_expr(
+        expr,
+        Some(&locals),
+        Some(root_bindings),
+        current_dot_fragment,
+    )
+    .or_else(|| {
         fragment_context.fragment_value_from_expr(
             expr,
             template_bindings,

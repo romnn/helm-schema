@@ -82,6 +82,9 @@ fn assert_chart_cases(chart: &str, cases: Vec<SemanticCase>) -> color_eyre::eyre
             let rejected_path = case.rejected_path.expect("rejected case path");
             let path_prefix = format!("{rejected_path}/");
             if !additional_errors.iter().any(|error| {
+                if rejected_path.is_empty() {
+                    return error.instance_path.is_empty();
+                }
                 if error.instance_path.is_empty() {
                     return false;
                 }
@@ -221,6 +224,32 @@ fn istiod_string_and_object_consumers_reject_wrong_kinds() -> color_eyre::eyre::
                 json!({ "gateways": 7 }),
             ),
             SemanticCase::accepted("default object gateways", json!({})),
+        ],
+    )
+}
+
+#[test]
+fn istiod_constructed_tpl_selector_reaches_removed_value_fail() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "istiod",
+        vec![
+            SemanticCase::rejected(
+                "truthy removed Stackdriver option",
+                "",
+                json!({
+                    "telemetry": {
+                        "v2": { "stackdriver": { "disableOutbound": true } }
+                    }
+                }),
+            ),
+            SemanticCase::accepted(
+                "empty removed Stackdriver option",
+                json!({
+                    "telemetry": {
+                        "v2": { "stackdriver": { "disableOutbound": "" } }
+                    }
+                }),
+            ),
         ],
     )
 }
@@ -379,6 +408,40 @@ fn external_dns_affinity_preserves_the_with_skip_domain() -> color_eyre::eyre::R
             SemanticCase::accepted(
                 "object affinity",
                 json!({ "affinity": { "podAntiAffinity": {} } }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn external_dns_helper_return_partitions_the_webhook_provider_contract()
+-> color_eyre::eyre::Result<()> {
+    let provider = |name: &str, pull_policy: Value| {
+        json!({
+            "provider": {
+                "name": name,
+                "webhook": {
+                    "image": {
+                        "repository": "example/webhook",
+                        "tag": "1.0",
+                        "pullPolicy": pull_policy
+                    }
+                }
+            }
+        })
+    };
+    assert_chart_cases(
+        "external-dns",
+        vec![
+            SemanticCase::rejected(
+                "active webhook with a non-string image pull policy",
+                "/provider/webhook/image/pullPolicy",
+                provider("webhook", json!(7)),
+            ),
+            SemanticCase::accepted("dormant webhook image policy", provider("aws", json!(7))),
+            SemanticCase::accepted(
+                "active webhook with a string image pull policy",
+                provider("webhook", json!("IfNotPresent")),
             ),
         ],
     )
@@ -854,6 +917,34 @@ fn airflow_version_requires_semver_lexical_form() -> color_eyre::eyre::Result<()
 }
 
 #[test]
+fn airflow_security_context_priority_keeps_dormant_fallbacks_open() -> color_eyre::eyre::Result<()>
+{
+    assert_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::accepted(
+                "deprecated scalar context is dormant behind the preferred pod context",
+                json!({
+                    "workers": {
+                        "securityContexts": { "pod": { "runAsUser": 50000 } },
+                        "securityContext": 7
+                    }
+                }),
+            ),
+            SemanticCase::accepted(
+                "deprecated object context remains a valid live fallback",
+                json!({
+                    "workers": {
+                        "securityContexts": { "pod": {} },
+                        "securityContext": { "runAsUser": 50000 }
+                    }
+                }),
+            ),
+        ],
+    )
+}
+
+#[test]
 fn postgres_operator_ui_team_elements_are_formatted_as_text() -> color_eyre::eyre::Result<()> {
     assert_chart_cases(
         "zalando-postgres-operator-ui",
@@ -927,6 +1018,441 @@ fn kube_state_metrics_namespace_fallback_accepts_null() -> color_eyre::eyre::Res
             SemanticCase::accepted(
                 "string namespaceOverride",
                 json!({ "namespaceOverride": "audit" }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn nats_operator_executes_file_backed_client_auth_template() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "nats-operator",
+        vec![
+            SemanticCase::rejected(
+                "numeric auth user",
+                "/cluster/auth/users/0",
+                json!({ "cluster": { "auth": { "users": [7] } } }),
+            ),
+            SemanticCase::accepted(
+                "credential auth user",
+                json!({
+                    "cluster": {
+                        "auth": {
+                            "users": [{ "username": "audit", "password": "secret" }]
+                        }
+                    }
+                }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn minio_executes_base_path_template_partials() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "minio",
+        vec![
+            SemanticCase::rejected("numeric bucket", "/buckets/0", json!({ "buckets": [7] })),
+            SemanticCase::accepted("named bucket", json!({ "buckets": [{ "name": "audit" }] })),
+        ],
+    )
+}
+
+#[test]
+fn sealed_secrets_helper_propagates_semver_domain() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "sealed-secrets",
+        vec![
+            SemanticCase::rejected(
+                "invalid helper-propagated kubeVersion",
+                "/kubeVersion",
+                json!({ "kubeVersion": "garbage" }),
+            ),
+            SemanticCase::accepted(
+                "valid helper-propagated kubeVersion",
+                json!({ "kubeVersion": "v1.30.0" }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn cilium_duration_parser_keeps_its_lexical_domain() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "cilium",
+        vec![
+            SemanticCase::rejected(
+                "invalid conntrack duration",
+                "/conntrackGCInterval",
+                json!({ "conntrackGCInterval": "garbage" }),
+            ),
+            SemanticCase::accepted(
+                "valid conntrack duration",
+                json!({ "conntrackGCInterval": "30s" }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn traefik_helper_propagates_semver_domain() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "traefik",
+        vec![
+            SemanticCase::rejected(
+                "invalid versionOverride",
+                "/versionOverride",
+                json!({ "versionOverride": "garbage" }),
+            ),
+            SemanticCase::accepted(
+                "valid versionOverride",
+                json!({ "versionOverride": "v3.7.6" }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn urlquery_total_conversion_accepts_structured_passwords() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::accepted(
+                "map metadata password",
+                json!({ "data": { "metadataConnection": { "pass": { "key": "value" } } } }),
+            ),
+            SemanticCase::accepted(
+                "list metadata password",
+                json!({ "data": { "metadataConnection": { "pass": ["value"] } } }),
+            ),
+            SemanticCase::accepted(
+                "string metadata password",
+                json!({ "data": { "metadataConnection": { "pass": "secret" } } }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn vault_object_selector_keeps_or_selected_shape_alternatives() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "vault",
+        vec![
+            SemanticCase::accepted(
+                "preferred structured object selector",
+                json!({
+                    "injector": {
+                        "webhook": {
+                            "objectSelector": { "matchLabels": { "audit": "true" } }
+                        }
+                    }
+                }),
+            ),
+            SemanticCase::accepted(
+                "preferred templated object selector",
+                json!({
+                    "injector": {
+                        "webhook": {
+                            "objectSelector": "matchLabels:\n  audit: {{ .Release.Name | quote }}"
+                        }
+                    }
+                }),
+            ),
+            SemanticCase::accepted(
+                "legacy templated object selector",
+                json!({
+                    "injector": {
+                        "webhook": { "objectSelector": "" },
+                        "objectSelector": "matchLabels:\n  audit: legacy"
+                    }
+                }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn vault_quoted_external_address_accepts_total_textual_forms() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "vault",
+        vec![
+            SemanticCase::accepted(
+                "mapping external Vault address",
+                json!({ "global": { "externalVaultAddr": { "host": "vault" } } }),
+            ),
+            SemanticCase::accepted(
+                "list external Vault address",
+                json!({ "global": { "externalVaultAddr": ["vault"] } }),
+            ),
+            SemanticCase::accepted(
+                "string external Vault address",
+                json!({ "global": { "externalVaultAddr": "https://vault.example" } }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn prometheus_namespace_text_pipeline_accepts_structured_inputs() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "prometheus",
+        vec![
+            SemanticCase::accepted(
+                "mapping namespace input",
+                json!({
+                    "rbac": { "create": true },
+                    "server": {
+                        "namespaces": { "audit": "namespace" },
+                        "useExistingClusterRoleName": "audit"
+                    }
+                }),
+            ),
+            SemanticCase::accepted(
+                "list namespace input",
+                json!({
+                    "rbac": { "create": true },
+                    "server": {
+                        "namespaces": ["default", "kube-system"],
+                        "useExistingClusterRoleName": "audit"
+                    }
+                }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn trivy_ignore_policy_prefix_requires_string_values() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "trivy-operator",
+        vec![
+            SemanticCase::rejected(
+                "mapping ignore policy",
+                "/trivy/ignorePolicy",
+                json!({ "trivy": { "ignorePolicy": { "bad": true } } }),
+            ),
+            SemanticCase::accepted(
+                "string ignore policy",
+                json!({ "trivy": { "ignorePolicy": "package trivy" } }),
+            ),
+            SemanticCase::accepted(
+                "unrelated dynamic map member",
+                json!({ "trivy": { "unrelatedAudit": { "bad": true } } }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn traefik_invalid_kind_guard_preserves_falsy_present_values() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "traefik",
+        vec![
+            SemanticCase::accepted(
+                "falsy present hostUsers",
+                json!({ "deployment": { "hostUsers": false } }),
+            ),
+            SemanticCase::accepted(
+                "truthy Boolean hostUsers",
+                json!({ "deployment": { "hostUsers": true } }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn cilium_certificate_sans_require_string_members() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "cilium",
+        vec![
+            SemanticCase::rejected(
+                "numeric Hubble IP SAN",
+                "/hubble/tls/server/extraIpAddresses/0",
+                json!({
+                    "hubble": { "tls": { "server": { "extraIpAddresses": [7] } } }
+                }),
+            ),
+            SemanticCase::rejected(
+                "numeric Hubble DNS SAN",
+                "/hubble/tls/server/extraDnsNames/0",
+                json!({
+                    "hubble": { "tls": { "server": { "extraDnsNames": [7] } } }
+                }),
+            ),
+            SemanticCase::accepted(
+                "string Hubble SANs",
+                json!({
+                    "hubble": {
+                        "tls": {
+                            "server": {
+                                "extraIpAddresses": ["10.0.0.7"],
+                                "extraDnsNames": ["audit.example"]
+                            }
+                        }
+                    }
+                }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn loki_minio_user_index_requires_a_first_user_when_live() -> color_eyre::eyre::Result<()> {
+    let live_enterprise = json!({
+        "enterprise": { "enabled": true },
+        "loki": {
+            "storage": {
+                "bucketNames": { "admin": "admin", "chunks": "chunks", "ruler": "ruler" }
+            },
+            "useTestSchema": true
+        },
+        "minio": { "enabled": true }
+    });
+    assert_chart_cases(
+        "loki",
+        vec![
+            SemanticCase::rejected(
+                "empty MinIO users in live enterprise gateway",
+                "/minio/users",
+                json!({
+                    "enterprise": { "enabled": true },
+                    "loki": {
+                        "storage": {
+                            "bucketNames": {
+                                "admin": "admin",
+                                "chunks": "chunks",
+                                "ruler": "ruler"
+                            }
+                        },
+                        "useTestSchema": true
+                    },
+                    "minio": { "enabled": true, "users": [] }
+                }),
+            ),
+            SemanticCase::accepted("first MinIO user available", live_enterprise),
+            SemanticCase::accepted(
+                "empty MinIO users while enterprise gateway is dormant",
+                json!({
+                    "loki": { "useTestSchema": true },
+                    "minio": { "enabled": false, "users": [] }
+                }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn loki_chart_authored_htpasswd_program_requires_selected_credentials()
+-> color_eyre::eyre::Result<()> {
+    let live = |basic_auth: Value| {
+        json!({
+            "gateway": { "basicAuth": basic_auth },
+            "loki": {
+                "storage": {
+                    "bucketNames": {
+                        "admin": "admin",
+                        "chunks": "chunks",
+                        "ruler": "ruler"
+                    }
+                },
+                "useTestSchema": true
+            }
+        })
+    };
+    assert_chart_cases(
+        "loki",
+        vec![
+            SemanticCase::rejected(
+                "selected default htpasswd program without username",
+                "",
+                live(json!({ "enabled": true, "password": "pass" })),
+            ),
+            SemanticCase::rejected(
+                "selected default htpasswd program without password",
+                "",
+                live(json!({ "enabled": true, "username": "user" })),
+            ),
+            SemanticCase::accepted(
+                "selected default htpasswd program with credentials",
+                live(json!({
+                    "enabled": true,
+                    "username": "user",
+                    "password": "pass"
+                })),
+            ),
+            SemanticCase::accepted(
+                "literal htpasswd override replaces the default program",
+                live(json!({ "enabled": true, "htpasswd": "audit:hash" })),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn coredns_prometheus_address_requires_a_host_port_split() -> color_eyre::eyre::Result<()> {
+    let server = |parameters| {
+        json!([{
+            "zones": [{ "zone": "." }],
+            "port": 53,
+            "plugins": [{ "name": "prometheus", "parameters": parameters }]
+        }])
+    };
+    assert_chart_cases(
+        "coredns",
+        vec![
+            SemanticCase::rejected(
+                "one-segment Prometheus address",
+                "/servers/0/plugins/0/parameters",
+                json!({ "servers": server("9153") }),
+            ),
+            SemanticCase::accepted(
+                "host and port Prometheus address",
+                json!({ "servers": server("0.0.0.0:9153") }),
+            ),
+        ],
+    )
+}
+
+#[test]
+fn falco_removed_config_accumulator_forbids_present_legacy_keys() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "falco",
+        vec![
+            SemanticCase::rejected(
+                "empty removed driver key is still present",
+                "",
+                json!({ "driver": { "ebpf": {} } }),
+            ),
+            SemanticCase::rejected(
+                "falsy removed Falco key is still present",
+                "",
+                json!({ "falco": { "grpc": false } }),
+            ),
+            SemanticCase::accepted("removed keys absent", json!({})),
+        ],
+    )
+}
+
+#[test]
+fn jaeger_http_route_validator_requires_a_parent_reference() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "jaeger",
+        vec![
+            SemanticCase::rejected(
+                "enabled HTTPRoute without parent references",
+                "/jaeger",
+                json!({ "jaeger": { "httproute": { "enabled": true, "parentRefs": [] } } }),
+            ),
+            SemanticCase::accepted(
+                "enabled HTTPRoute with a parent reference",
+                json!({
+                    "jaeger": {
+                        "httproute": {
+                            "enabled": true,
+                            "parentRefs": [{ "name": "gateway" }]
+                        }
+                    }
+                }),
             ),
         ],
     )

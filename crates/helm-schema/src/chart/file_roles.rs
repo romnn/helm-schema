@@ -64,13 +64,7 @@ pub(crate) fn list_chart_files(
         is_static_crd_source,
         &mut files,
     )?;
-    collect_directory_roles(
-        chart_dir,
-        "files",
-        FileRole::FilesGetSource,
-        is_files_get_source,
-        &mut files,
-    )?;
+    collect_files_get_roles(chart_dir, &mut files)?;
 
     Ok(files.into_values().collect())
 }
@@ -89,9 +83,7 @@ fn collect_template_roles(
     list_files_recursive(&templates_dir, include_tests, &mut paths)?;
 
     for path in paths {
-        if is_define_index_template(&path) {
-            insert_role(files, path.clone(), FileRole::DefineIndexTemplate);
-        }
+        insert_role(files, path.clone(), FileRole::DefineIndexTemplate);
         if is_notes_template(&path) {
             insert_role(files, path.clone(), FileRole::NotesTemplate);
         }
@@ -138,10 +130,6 @@ fn insert_role(files: &mut ChartFileMap, path: VfsPath, role: FileRole) {
         });
 }
 
-fn is_define_index_template(path: &VfsPath) -> bool {
-    extension_is_one_of(path, &["tpl", "yaml", "yml"])
-}
-
 fn is_manifest_template(path: &VfsPath) -> bool {
     let file_name = path.filename();
     if file_name.to_ascii_lowercase().starts_with('_') {
@@ -159,8 +147,22 @@ fn is_static_crd_source(path: &VfsPath) -> bool {
     extension_is_one_of(path, &["json", "yaml", "yml"])
 }
 
+fn collect_files_get_roles(chart_dir: &VfsPath, files: &mut ChartFileMap) -> EngineResult<()> {
+    let mut paths = Vec::new();
+    list_files_recursive_excluding(chart_dir, &["charts", "templates"], &mut paths)?;
+
+    for path in paths.into_iter().filter(is_files_get_source) {
+        insert_role(files, path, FileRole::FilesGetSource);
+    }
+
+    Ok(())
+}
+
 fn is_files_get_source(path: &VfsPath) -> bool {
-    extension_is_one_of(path, &["tpl", "yaml", "yml"])
+    !matches!(
+        path.filename().as_str(),
+        ".helmignore" | "Chart.lock" | "Chart.yaml" | "values.schema.json" | "values.yaml"
+    )
 }
 
 fn extension_is_one_of(path: &VfsPath, extensions: &[&str]) -> bool {
@@ -195,6 +197,28 @@ fn list_files_recursive(
             list_files_recursive(&ent, include_tests, out)?;
         } else if ent.is_file()? {
             out.push(ent);
+        }
+    }
+
+    Ok(())
+}
+
+fn list_files_recursive_excluding(
+    dir: &VfsPath,
+    excluded_dir_names: &[&str],
+    out: &mut Vec<VfsPath>,
+) -> EngineResult<()> {
+    for entry in dir.read_dir()? {
+        if entry.is_dir()? {
+            if excluded_dir_names
+                .iter()
+                .any(|name| entry.filename().eq_ignore_ascii_case(name))
+            {
+                continue;
+            }
+            list_files_recursive_excluding(&entry, excluded_dir_names, out)?;
+        } else if entry.is_file()? {
+            out.push(entry);
         }
     }
 

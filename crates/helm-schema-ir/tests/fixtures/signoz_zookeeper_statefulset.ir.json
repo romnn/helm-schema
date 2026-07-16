@@ -501,6 +501,15 @@
           "template_path": "<inline:0>"
         }
       ],
+      "resource": null,
+      "source_expr": "auth.client.enabled"
+    },
+    {
+      "condition": [
+        []
+      ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "apps/v1beta1",
         "api_version_branches": [
@@ -584,6 +593,20 @@
           {
             "path": "auth.client.enabled",
             "type": "truthy"
+          },
+          {
+            "path": "auth.client.existingSecret",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "auth.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "auth.client.existingSecret",
+            "type": "truthy"
           }
         ]
       ],
@@ -666,7 +689,7 @@
         ]
       ],
       "has_string_contract": true,
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -959,7 +982,7 @@
         ]
       ],
       "has_string_contract": true,
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -4122,7 +4145,12 @@
     },
     {
       "condition": [
-        []
+        [
+          {
+            "path": "image.debug",
+            "type": "not"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -4269,7 +4297,7 @@
         ]
       ],
       "has_string_contract": true,
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -5678,6 +5706,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -5807,6 +5836,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -5979,6 +6009,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -6111,6 +6142,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -6270,6 +6302,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -6364,6 +6397,7 @@
           }
         ]
       ],
+      "has_string_contract": true,
       "kind": "Serialized",
       "path": [
         "spec",
@@ -6441,8 +6475,100 @@
       "condition": [
         [
           {
+            "path": "dataLogDir",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.dataLogDir.existingClaim",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "global.storageClass",
+              "persistence.storageClass"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
+                  "type": "eq",
+                  "value": "-"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "eq",
+                  "value": "-"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
             "path": "global",
             "type": "truthy"
+          }
+        ],
+        [
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.existingClaim",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "global.storageClass",
+              "persistence.storageClass"
+            ],
+            "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
+                  "type": "truthy"
+                },
+                {
+                  "path": "global.storageClass",
+                  "type": "eq",
+                  "value": "-"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "eq",
+                  "value": "-"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ],
         [
@@ -6565,6 +6691,16 @@
           "span": {
             "end": 408,
             "start": 273
+          },
+          "template_path": "<inline:7>"
+        },
+        {
+          "helper_chain": [
+            "common.storage.class"
+          ],
+          "span": {
+            "end": 602,
+            "start": 437
           },
           "template_path": "<inline:7>"
         }
@@ -7691,7 +7827,12 @@
     },
     {
       "condition": [
-        []
+        [
+          {
+            "path": "image.debug",
+            "type": "truthy"
+          }
+        ]
       ],
       "kind": "Scalar",
       "path": [
@@ -8882,6 +9023,11 @@
           {
             "path": "initContainers",
             "type": "truthy"
+          },
+          {
+            "path": "initContainers",
+            "schema_type": "string",
+            "type": "not_type_is"
           }
         ]
       ],
@@ -8898,18 +9044,74 @@
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 301,
-            "start": 275
+            "end": 363,
+            "start": 326
           },
           "template_path": "<inline:2>"
-        },
+        }
+      ],
+      "resource": {
+        "api_version": "apps/v1beta1",
+        "api_version_branches": [
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1beta1"
+              ]
+            },
+            "guard": {
+              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
+              "type": "opaque"
+            }
+          },
+          {
+            "body": {
+              "type": "literals",
+              "values": [
+                "apps/v1"
+              ]
+            },
+            "guard": null
+          }
+        ],
+        "api_version_candidates": [
+          "apps/v1"
+        ],
+        "kind": "StatefulSet"
+      },
+      "source_expr": "initContainers"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "initContainers",
+            "type": "truthy"
+          },
+          {
+            "path": "initContainers",
+            "schema_type": "string",
+            "type": "type_is"
+          }
+        ]
+      ],
+      "has_string_contract": true,
+      "kind": "Serialized",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "initContainers"
+      ],
+      "provenance": [
         {
           "helper_chain": [
             "common.tplvalues.render"
           ],
           "span": {
-            "end": 363,
-            "start": 326
+            "end": 301,
+            "start": 275
           },
           "template_path": "<inline:2>"
         }
@@ -13089,7 +13291,7 @@
         ]
       ],
       "has_string_contract": true,
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -13547,7 +13749,7 @@
         ]
       ],
       "has_string_contract": true,
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -16904,6 +17106,49 @@
       "condition": [
         [
           {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          }
+        ],
+        [
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.passwordsSecretName",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
+            ],
+            "type": "or"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
+      "provenance": [
+        {
+          "helper_chain": [
+            "zookeeper.client.createTlsPasswordsSecret"
+          ],
+          "span": {
+            "end": 7559,
+            "start": 7445
+          },
+          "template_path": "<inline:0>"
+        }
+      ],
+      "resource": null,
+      "source_expr": "tls.client.enabled"
+    },
+    {
+      "condition": [
+        [
+          {
             "path": "livenessProbe.enabled",
             "type": "truthy"
           },
@@ -16951,6 +17196,15 @@
             "path": "tls.client.enabled",
             "type": "truthy"
           }
+        ],
+        [
+          {
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
+            ],
+            "type": "or"
+          }
         ]
       ],
       "kind": "Scalar",
@@ -16963,16 +17217,6 @@
           "span": {
             "end": 5357,
             "start": 5215
-          },
-          "template_path": "<inline:0>"
-        },
-        {
-          "helper_chain": [
-            "zookeeper.client.createTlsPasswordsSecret"
-          ],
-          "span": {
-            "end": 7559,
-            "start": 7445
           },
           "template_path": "<inline:0>"
         }
@@ -17165,7 +17409,7 @@
         ]
       ],
       "has_string_contract": true,
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -17542,6 +17786,16 @@
           },
           {
             "path": "tls.client.passwordsSecretName",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "tls.client.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.client.passwordsSecretName",
             "type": "truthy"
           },
           {
@@ -17579,6 +17833,13 @@
           {
             "path": "tls.client.passwordsSecretName",
             "type": "not"
+          },
+          {
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
+            ],
+            "type": "or"
           }
         ],
         [
@@ -17720,7 +17981,7 @@
         ]
       ],
       "has_string_contract": true,
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -17792,7 +18053,7 @@
         ]
       ],
       "has_string_contract": true,
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -18287,6 +18548,23 @@
             "path": "tls.quorum.enabled",
             "type": "truthy"
           }
+        ],
+        [
+          {
+            "path": "tls.quorum.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.passwordsSecretName",
+            "type": "not"
+          },
+          {
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
+            ],
+            "type": "or"
+          }
         ]
       ],
       "kind": "Scalar",
@@ -18313,6 +18591,15 @@
           "template_path": "<inline:0>"
         }
       ],
+      "resource": null,
+      "source_expr": "tls.quorum.enabled"
+    },
+    {
+      "condition": [
+        []
+      ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "apps/v1beta1",
         "api_version_branches": [
@@ -18501,7 +18788,7 @@
         ]
       ],
       "has_string_contract": true,
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -18878,6 +19165,16 @@
           },
           {
             "path": "tls.quorum.passwordsSecretName",
+            "type": "not"
+          }
+        ],
+        [
+          {
+            "path": "tls.quorum.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "tls.quorum.passwordsSecretName",
             "type": "truthy"
           },
           {
@@ -18915,6 +19212,13 @@
           {
             "path": "tls.quorum.passwordsSecretName",
             "type": "not"
+          },
+          {
+            "paths": [
+              "tls.client.enabled",
+              "tls.quorum.enabled"
+            ],
+            "type": "or"
           }
         ],
         [
@@ -19056,7 +19360,7 @@
         ]
       ],
       "has_string_contract": true,
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",
@@ -19128,7 +19432,7 @@
         ]
       ],
       "has_string_contract": true,
-      "kind": "Scalar",
+      "kind": "Serialized",
       "path": [
         "spec",
         "template",

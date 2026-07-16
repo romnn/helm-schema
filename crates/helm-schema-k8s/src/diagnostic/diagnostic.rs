@@ -50,6 +50,9 @@ pub enum DiagnosticKey {
         cache_root: String,
         on_disk_marker: u32,
     },
+    InputChannelNumericRangeAmbiguity {
+        value_path: String,
+    },
 }
 
 /// User-facing diagnostic. Every event helm-schema emits at runtime is
@@ -110,6 +113,11 @@ pub enum Diagnostic {
         on_disk_marker: u32,
         compiled_marker: u32,
     },
+    /// A one-variable Helm range can iterate an integer supplied through
+    /// `--set`, while the same JSON number supplied by a values file or
+    /// `--set-json` has a non-rangeable runtime kind. JSON Schema cannot
+    /// distinguish those input channels.
+    InputChannelNumericRangeAmbiguity { value_path: String },
 }
 
 impl Diagnostic {
@@ -192,6 +200,11 @@ impl Diagnostic {
                 cache_root: cache_root.clone(),
                 on_disk_marker: *on_disk_marker,
             },
+            Diagnostic::InputChannelNumericRangeAmbiguity { value_path } => {
+                DiagnosticKey::InputChannelNumericRangeAmbiguity {
+                    value_path: value_path.clone(),
+                }
+            }
         }
     }
 
@@ -223,7 +236,8 @@ impl Diagnostic {
             | Diagnostic::InferredApiVersion { .. }
             | Diagnostic::LocalOverrideUnreadable { .. }
             | Diagnostic::CacheLayoutInvalidated { .. }
-            | Diagnostic::CacheLayoutForwardIncompatible { .. } => {}
+            | Diagnostic::CacheLayoutForwardIncompatible { .. }
+            | Diagnostic::InputChannelNumericRangeAmbiguity { .. } => {}
         }
     }
 }

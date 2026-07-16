@@ -146,7 +146,9 @@ fn partially_observed_selector_object_stays_open() {
     assert!(
         schema_accepts_instance(
             &schema,
-            &serde_json::json!({ "credentials": { "secret": { "name": "n", "key": "k" } } })
+            &serde_json::json!({
+                "credentials": { "secret": { "name": "secret-name", "key": "k" } }
+            })
         ),
         "a member read must not close the selector object to observed keys: {schema}"
     );
@@ -255,9 +257,8 @@ fn serialized_truthy_guarded_leaf_admits_arrays() {
     );
 }
 
-/// F49: a scalar spliced into a CLI-flag string slot renders for ANY
-/// scalar — the empty-string declared default is intent, not a constraint
-/// (nack `jetstream.klogLevel` shape, `- -v=8` renders).
+/// A value spliced into a CLI-flag string slot is formatted as text. The
+/// empty-string declared default is intent, not an input-kind constraint.
 #[test]
 fn flag_splice_accepts_any_scalar_beyond_declared_string() {
     let src = indoc! {r#"
@@ -277,10 +278,12 @@ fn flag_splice_accepts_any_scalar_beyond_declared_string() {
     for instance in [
         serde_json::json!({ "klogLevel": 8 }),
         serde_json::json!({ "klogLevel": "8" }),
+        serde_json::json!({ "klogLevel": [8] }),
+        serde_json::json!({ "klogLevel": { "level": 8 } }),
     ] {
         assert!(
             schema_accepts_instance(&schema, &instance),
-            "flag splices print any scalar: instance={instance}; schema={schema}"
+            "flag splices format every input kind: instance={instance}; schema={schema}"
         );
     }
 }

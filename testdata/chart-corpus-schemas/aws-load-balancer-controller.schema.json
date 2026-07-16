@@ -26,25 +26,70 @@
       ]
     },
     "schema1": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "schema10": {
       "not": {
         "properties": {
-          "webhookConfig": {
+          "serviceAccount": {
             "properties": {
-              "ingressValidationNamespaceSelector": {}
+              "create": {}
             },
             "required": [
-              "ingressValidationNamespaceSelector"
+              "create"
             ],
             "type": "object"
           }
         },
         "required": [
-          "webhookConfig"
+          "serviceAccount"
         ],
         "type": "object"
       }
     },
-    "schema10": {
+    "schema12": {
       "additionalProperties": {},
       "properties": {
         "path": {
@@ -59,7 +104,7 @@
       },
       "type": "object"
     },
-    "schema11": {
+    "schema13": {
       "not": {
         "properties": {
           "rbac": {
@@ -78,25 +123,12 @@
         "type": "object"
       }
     },
-    "schema12": {
-      "additionalProperties": {
-        "type": [
-          "boolean",
-          "integer",
-          "number",
-          "string"
-        ]
-      },
-      "items": {
-        "type": [
-          "boolean",
-          "integer",
-          "number",
-          "string"
-        ]
+    "schema15": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL|true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema15": {
+    "schema18": {
       "not": {
         "properties": {
           "enableServiceMutatorWebhook": {}
@@ -107,7 +139,25 @@
         "type": "object"
       }
     },
-    "schema17": {
+    "schema2": {
+      "description": "Attributes defines custom attributes on resources.",
+      "properties": {
+        "key": {
+          "description": "The key of the attribute.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value of the attribute.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "key",
+        "value"
+      ],
+      "type": "object"
+    },
+    "schema20": {
       "not": {
         "properties": {
           "createIngressClassResource": {}
@@ -118,7 +168,120 @@
         "type": "object"
       }
     },
-    "schema2": {
+    "schema23": {
+      "additionalProperties": {},
+      "properties": {
+        "matchExpressions": {},
+        "matchLabels": {}
+      },
+      "type": "object"
+    },
+    "schema25": {
+      "properties": {
+        "maxReplicas": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "maxReplicas"
+      ],
+      "type": "object"
+    },
+    "schema26": {
+      "not": {
+        "properties": {
+          "certManager": {}
+        },
+        "required": [
+          "certManager"
+        ],
+        "type": "object"
+      }
+    },
+    "schema28": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema3": {
+      "not": {
+        "properties": {
+          "webhookConfig": {
+            "properties": {
+              "ingressValidationNamespaceSelector": {}
+            },
+            "required": [
+              "ingressValidationNamespaceSelector"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "webhookConfig"
+        ],
+        "type": "object"
+      }
+    },
+    "schema30": {
+      "not": {
+        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+      }
+    },
+    "schema31": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema33": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema34": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema35": {
+      "not": {
+        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+      }
+    },
+    "schema36": {
+      "if": {
+        "type": "boolean"
+      },
+      "then": {
+        "type": "boolean"
+      }
+    },
+    "schema37": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema4": {
       "not": {
         "properties": {
           "webhookConfig": {
@@ -137,99 +300,7 @@
         "type": "object"
       }
     },
-    "schema20": {
-      "additionalProperties": {},
-      "properties": {
-        "matchExpressions": {},
-        "matchLabels": {}
-      },
-      "type": "object"
-    },
-    "schema22": {
-      "properties": {
-        "maxReplicas": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "maxReplicas"
-      ],
-      "type": "object"
-    },
-    "schema23": {
-      "not": {
-        "properties": {
-          "certManager": {}
-        },
-        "required": [
-          "certManager"
-        ],
-        "type": "object"
-      }
-    },
-    "schema25": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "schema26": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema27": {
-      "anyOf": [
-        {
-          "type": "array"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "schema28": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "schema29": {
-      "if": {
-        "type": "boolean"
-      },
-      "then": {
-        "type": "boolean"
-      }
-    },
-    "schema30": {
-      "type": [
-        "boolean",
-        "integer",
-        "number",
-        "string"
-      ]
-    },
-    "schema31": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "schema5": {
+    "schema7": {
       "anyOf": [
         {
           "not": {
@@ -257,7 +328,7 @@
         }
       ]
     },
-    "schema6": {
+    "schema8": {
       "not": {
         "properties": {
           "ingressClassParams": {
@@ -272,25 +343,6 @@
         },
         "required": [
           "ingressClassParams"
-        ],
-        "type": "object"
-      }
-    },
-    "schema7": {
-      "not": {
-        "properties": {
-          "serviceAccount": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceAccount"
         ],
         "type": "object"
       }
@@ -324,7 +376,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema20"
               },
               {
                 "properties": {
@@ -378,7 +430,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -404,7 +456,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema7"
+                "$ref": "#/$defs/schema10"
               },
               {
                 "properties": {
@@ -454,7 +506,7 @@
           "additionalLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema28"
+                "$ref": "#/$defs/schema34"
               },
               {
                 "not": {
@@ -491,7 +543,7 @@
         "additionalProperties": {},
         "properties": {
           "annotations": {
-            "$ref": "#/$defs/schema28"
+            "$ref": "#/$defs/schema34"
           }
         }
       }
@@ -513,7 +565,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema23"
+                "$ref": "#/$defs/schema26"
               },
               {
                 "properties": {
@@ -579,7 +631,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema23"
+                "$ref": "#/$defs/schema26"
               },
               {
                 "properties": {
@@ -746,6 +798,369 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema26"
+                  },
+                  {
+                    "properties": {
+                      "certManager": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "certManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "certManager": {
+                          "properties": {
+                            "duration": {}
+                          },
+                          "required": [
+                            "duration"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "certManager"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "certManager": {
+                        "properties": {
+                          "duration": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "duration"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "certManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "enableCertManager": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enableCertManager"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema26"
+                  },
+                  {
+                    "properties": {
+                      "certManager": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "certManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "certManager": {
+                          "properties": {
+                            "renewBefore": {}
+                          },
+                          "required": [
+                            "renewBefore"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "certManager"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "certManager": {
+                        "properties": {
+                          "renewBefore": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "renewBefore"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "certManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "enableCertManager": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enableCertManager"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema26"
+                  },
+                  {
+                    "properties": {
+                      "certManager": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "certManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "certManager": {
+                    "properties": {
+                      "revisionHistoryLimit": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "revisionHistoryLimit"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "certManager"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "enableCertManager": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enableCertManager"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema26"
+                  },
+                  {
+                    "properties": {
+                      "certManager": {
+                        "anyOf": [
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "certManager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "enableCertManager": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enableCertManager"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "certManager": {
+                    "properties": {
+                      "issuerRef": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "issuerRef"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "certManager"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "enableCertManager": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enableCertManager"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "enableCertManager": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enableCertManager"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "enableCertManager": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enableCertManager"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "certManager": {
+                      "properties": {
+                        "issuerRef": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "issuerRef"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "certManager"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "certManager": {
+            "anyOf": [
+              {
+                "type": "object"
+              }
+            ],
+            "description": "Overrideable variables when enableCertManager is set to true"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {
@@ -787,62 +1202,6 @@
           "certManager": {
             "description": "Overrideable variables when enableCertManager is set to true",
             "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "enableCertManager": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "enableCertManager"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "nameOverride": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "nameOverride"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "cluster": {
-            "additionalProperties": {},
-            "description": "cluster contains configurations specific to the kubernetes cluster",
-            "properties": {
-              "dnsDomain": {
-                "anyOf": [
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ],
-                "description": "Cluster DNS domain (required for requesting TLS certificates)"
-              }
-            }
           }
         }
       }
@@ -947,7 +1306,7 @@
         "additionalProperties": {},
         "properties": {
           "creator": {
-            "$ref": "#/$defs/schema31"
+            "$ref": "#/$defs/schema37"
           }
         }
       }
@@ -1046,63 +1405,6 @@
         "additionalProperties": {},
         "properties": {
           "env": {
-            "additionalProperties": {
-              "$ref": "#/$defs/schema30"
-            },
-            "description": "Environment variables to set for aws-load-balancer-controller pod.\nWe strongly discourage programming access credentials in the controller environment. You should setup IRSA or\ncomparable solutions like kube2iam, kiam etc instead.\nENV_1: \"\"\nENV_2: \"\"",
-            "items": {
-              "$ref": "#/$defs/schema30"
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "env": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "env"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "env": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "env"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "envSecretName": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "envSecretName"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "env": {
             "anyOf": [
               {
                 "type": "array"
@@ -1144,7 +1446,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -1170,7 +1472,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema7"
+                "$ref": "#/$defs/schema10"
               },
               {
                 "properties": {
@@ -1248,7 +1550,123 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/schema31"
+            "$ref": "#/$defs/schema37"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema20"
+              },
+              {
+                "properties": {
+                  "createIngressClassResource": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createIngressClassResource"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema8"
+              },
+              {
+                "properties": {
+                  "ingressClassParams": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingressClassParams"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "ingressClassParams": {
+                  "properties": {
+                    "name": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "ingressClassParams"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingressClass": {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "^[-?:]([ \\t]|$)"
+                }
+              },
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              {
+                "$ref": "#/$defs/schema15"
+              },
+              {
+                "$ref": "#/$defs/schema30"
+              },
+              {
+                "$ref": "#/$defs/schema35"
+              }
+            ],
+            "description": "The ingress class this controller will satisfy. If not specified, controller will match all\ningresses without ingress class annotation and ingresses of type alb",
+            "type": "string"
           }
         }
       }
@@ -1257,7 +1675,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema17"
+            "$ref": "#/$defs/schema20"
           },
           {
             "properties": {
@@ -1288,7 +1706,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema20"
               },
               {
                 "properties": {
@@ -1306,7 +1724,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema6"
+                "$ref": "#/$defs/schema8"
               },
               {
                 "properties": {
@@ -1341,15 +1759,333 @@
               "name": {
                 "anyOf": [
                   {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "The name of ingressClassParams resource will be referred in ingressClass"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema20"
+              },
+              {
+                "properties": {
+                  "createIngressClassResource": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createIngressClassResource"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema8"
+              },
+              {
+                "properties": {
+                  "ingressClassParams": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingressClassParams"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingressClassParams": {
+            "additionalProperties": {},
+            "description": "ingressClassParams specify the IngressCLassParams that enforce settings for a set of Ingresses when using with ingress Controller.",
+            "properties": {
+              "spec": {
+                "anyOf": [
+                  {
+                    "description": "IngressClassParamsSpec defines the desired state of IngressClassParams",
+                    "properties": {
+                      "PrefixListsIDs": {
+                        "description": "PrefixListsIDsLegacy defines the security group prefix lists for all Ingresses that belong to IngressClass with this IngressClassParams.\nNot Recommended, Use PrefixListsIDs (prefixListsIDs in JSON) instead",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "certificateArn": {
+                        "description": "CertificateArn specifies the ARN of the certificates for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "group": {
+                        "description": "Group defines the IngressGroup for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                        "properties": {
+                          "name": {
+                            "description": "Name is the name of IngressGroup.",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "type": "object"
+                      },
+                      "inboundCIDRs": {
+                        "description": "InboundCIDRs specifies the CIDRs that are allowed to access the Ingresses that belong to IngressClass with this IngressClassParams.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "ipAddressType": {
+                        "description": "IPAddressType defines the ip address type for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                        "enum": [
+                          "ipv4",
+                          "dualstack",
+                          "dualstack-without-public-ipv4"
+                        ],
+                        "type": "string"
+                      },
+                      "ipamConfiguration": {
+                        "description": "IPAMConfiguration defines the IPAM settings for a Load Balancer.",
+                        "properties": {
+                          "ipv4IPAMPoolId": {
+                            "description": "IPv4IPAMPoolId defines the IPAM pool ID used for IPv4 Addresses on the ALB.",
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "listeners": {
+                        "description": "Listeners define a list of listeners with their protocol, port and attributes.",
+                        "items": {
+                          "properties": {
+                            "listenerAttributes": {
+                              "description": "The attributes of the listener",
+                              "items": {
+                                "$ref": "#/$defs/schema2"
+                              },
+                              "type": "array"
+                            },
+                            "port": {
+                              "description": "The port of the listener",
+                              "format": "int32",
+                              "type": "integer"
+                            },
+                            "protocol": {
+                              "description": "The protocol of the listener",
+                              "type": "string"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "loadBalancerAttributes": {
+                        "description": "LoadBalancerAttributes define the custom attributes to LoadBalancers for all Ingress that that belong to IngressClass with this IngressClassParams.",
+                        "items": {
+                          "$ref": "#/$defs/schema2"
+                        },
+                        "type": "array"
+                      },
+                      "loadBalancerName": {
+                        "description": "LoadBalancerName defines the name of the load balancer that will be created with this IngressClassParams.",
+                        "type": "string"
+                      },
+                      "minimumLoadBalancerCapacity": {
+                        "description": "MinimumLoadBalancerCapacity define the capacity reservation for LoadBalancers for all Ingress that belong to IngressClass with this IngressClassParams.",
+                        "properties": {
+                          "capacityUnits": {
+                            "description": "The Capacity Units Value.",
+                            "format": "int32",
+                            "type": "integer"
+                          }
+                        },
+                        "required": [
+                          "capacityUnits"
+                        ],
+                        "type": "object"
+                      },
+                      "namespaceSelector": {
+                        "description": "NamespaceSelector restrict the namespaces of Ingresses that are allowed to specify the IngressClass with this IngressClassParams.\n* if absent or present but empty, it selects all namespaces.",
+                        "properties": {
+                          "matchExpressions": {
+                            "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                            "items": {
+                              "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
+                              "properties": {
+                                "key": {
+                                  "description": "key is the label key that the selector applies to.",
+                                  "type": "string"
+                                },
+                                "operator": {
+                                  "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
+                                  "type": "string"
+                                },
+                                "values": {
+                                  "description": "values is an array of string values. If the operator is In or NotIn,\nthe values array must be non-empty. If the operator is Exists or DoesNotExist,\nthe values array must be empty. This array is replaced during a strategic\nmerge patch.",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "type": "array",
+                                  "x-kubernetes-list-type": "atomic"
+                                }
+                              },
+                              "required": [
+                                "key",
+                                "operator"
+                              ],
+                              "type": "object"
+                            },
+                            "type": "array",
+                            "x-kubernetes-list-type": "atomic"
+                          },
+                          "matchLabels": {
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels\nmap is equivalent to an element of matchExpressions, whose key field is \"key\", the\noperator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                            "type": "object"
+                          }
+                        },
+                        "type": "object",
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "prefixListsIDs": {
+                        "description": "PrefixListsIDs defines the security group prefix lists for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "scheme": {
+                        "description": "Scheme defines the scheme for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                        "enum": [
+                          "internal",
+                          "internet-facing"
+                        ],
+                        "type": "string"
+                      },
+                      "sslPolicy": {
+                        "description": "SSLPolicy specifies the SSL Policy for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                        "type": "string"
+                      },
+                      "sslRedirectPort": {
+                        "description": "SSLRedirectPort specifies the SSL Redirect Port for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                        "type": "string"
+                      },
+                      "subnets": {
+                        "description": "Subnets defines the subnets for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                        "properties": {
+                          "ids": {
+                            "description": "IDs specify the resource IDs of subnets. Exactly one of this or `tags` must be specified.",
+                            "items": {
+                              "description": "SubnetID specifies a subnet ID.",
+                              "pattern": "subnet-[0-9a-f]+",
+                              "type": "string"
+                            },
+                            "minItems": 1,
+                            "type": "array"
+                          },
+                          "tags": {
+                            "additionalProperties": {
+                              "items": {
+                                "type": "string"
+                              },
+                              "type": "array"
+                            },
+                            "description": "Tags specifies subnets in the load balancer's VPC where each\ntag specified in the map key contains one of the values in the corresponding\nvalue list.\nExactly one of this or `ids` must be specified.",
+                            "type": "object"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "tags": {
+                        "description": "Tags defines list of Tags on AWS resources provisioned for Ingresses that belong to IngressClass with this IngressClassParams.",
+                        "items": {
+                          "description": "Tag defines a AWS Tag on resources.",
+                          "properties": {
+                            "key": {
+                              "description": "The key of the tag.",
+                              "type": "string"
+                            },
+                            "value": {
+                              "description": "The value of the tag.",
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "key",
+                            "value"
+                          ],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "targetType": {
+                        "description": "TargetType defines the target type of target groups for all Ingresses that belong to IngressClass with this IngressClassParams.",
+                        "enum": [
+                          "instance",
+                          "ip"
+                        ],
+                        "type": "string"
+                      },
+                      "wafv2AclArn": {
+                        "description": "WAFv2ACLArn specifies ARN for the Amazon WAFv2 web ACL.",
+                        "type": "string"
+                      },
+                      "wafv2AclName": {
+                        "description": "WAFv2ACLName specifies name of the Amazon WAFv2 web ACL.",
+                        "type": "string"
+                      }
+                    },
+                    "type": "object",
+                    "x-kubernetes-validations": [
+                      {
+                        "message": "cannot specify both 'prefixListsIDs' and 'PrefixListsIDs' fields",
+                        "rule": "!(has(self.prefixListsIDs) && has(self.PrefixListsIDs))"
+                      }
+                    ]
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "Due to dependency issue, the validation webhook ignores this particular ingressClassParams resource.\nWe recommend creating ingressClassParams resources separately after installing this chart and the\ncontroller is functional.\nYou can set the specifications in the `helm install` command through `--set` or `--set-string`\nIf you do want to specify in the values.yaml, uncomment the following\nlines, adjust them as necessary, and remove the curly braces after 'spec:'\nnamespaceSelector:\nmatchLabels:\ngroup:\nscheme:\nipAddressType:\ntags:\nloadBalancerAttributes:\n- key:\nvalue:"
               }
             }
           }
@@ -1412,65 +2148,50 @@
     },
     {
       "if": {
-        "anyOf": [
+        "allOf": [
           {
-            "allOf": [
+            "anyOf": [
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema17"
-                  },
-                  {
-                    "properties": {
-                      "createIngressClassResource": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "createIngressClassResource"
-                    ],
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/schema20"
               },
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema6"
-                  },
-                  {
-                    "properties": {
-                      "ingressClassParams": {
-                        "properties": {
-                          "create": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "create"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ingressClassParams"
-                    ],
-                    "type": "object"
+                "properties": {
+                  "createIngressClassResource": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
-                ]
+                },
+                "required": [
+                  "createIngressClassResource"
+                ],
+                "type": "object"
               }
             ]
           },
           {
-            "properties": {
-              "enableCertManager": {
-                "$ref": "#/$defs/helm-truthy"
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema8"
+              },
+              {
+                "properties": {
+                  "ingressClassParams": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingressClassParams"
+                ],
+                "type": "object"
               }
-            },
-            "required": [
-              "enableCertManager"
-            ],
-            "type": "object"
+            ]
           }
         ]
       },
@@ -1480,12 +2201,12 @@
           "nameOverride": {
             "anyOf": [
               {
+                "$ref": "#/$defs/schema1"
+              },
+              {
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
-              },
-              {
-                "type": "string"
               }
             ]
           }
@@ -1508,7 +2229,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/schema31"
+            "$ref": "#/$defs/schema37"
           }
         }
       }
@@ -1581,7 +2302,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema17"
+                "$ref": "#/$defs/schema20"
               },
               {
                 "properties": {
@@ -1599,7 +2320,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema11"
+                "$ref": "#/$defs/schema13"
               },
               {
                 "properties": {
@@ -1625,7 +2346,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema7"
+                "$ref": "#/$defs/schema10"
               },
               {
                 "properties": {
@@ -1742,7 +2463,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema11"
+            "$ref": "#/$defs/schema13"
           },
           {
             "properties": {
@@ -1793,7 +2514,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema15"
+            "$ref": "#/$defs/schema18"
           },
           {
             "properties": {
@@ -1830,7 +2551,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema15"
+                "$ref": "#/$defs/schema18"
               },
               {
                 "properties": {
@@ -1850,7 +2571,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "properties": {
@@ -1899,7 +2620,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "properties": {
@@ -1971,7 +2692,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema15"
+                "$ref": "#/$defs/schema18"
               },
               {
                 "properties": {
@@ -1991,7 +2712,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "properties": {
@@ -2040,7 +2761,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema15"
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "properties": {
@@ -2165,7 +2886,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema1"
+                    "$ref": "#/$defs/schema3"
                   },
                   {
                     "properties": {
@@ -2250,7 +2971,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema1"
+                    "$ref": "#/$defs/schema3"
                   },
                   {
                     "properties": {
@@ -2335,7 +3056,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema1"
+                    "$ref": "#/$defs/schema3"
                   },
                   {
                     "properties": {
@@ -2417,7 +3138,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema2"
+                    "$ref": "#/$defs/schema4"
                   },
                   {
                     "properties": {
@@ -2502,7 +3223,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema2"
+                    "$ref": "#/$defs/schema4"
                   },
                   {
                     "properties": {
@@ -2587,7 +3308,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema2"
+                    "$ref": "#/$defs/schema4"
                   },
                   {
                     "properties": {
@@ -2671,7 +3392,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema1"
+                        "$ref": "#/$defs/schema3"
                       },
                       {
                         "properties": {
@@ -2756,7 +3477,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema1"
+                        "$ref": "#/$defs/schema3"
                       },
                       {
                         "properties": {
@@ -2841,7 +3562,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema1"
+                        "$ref": "#/$defs/schema3"
                       },
                       {
                         "properties": {
@@ -2903,7 +3624,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema2"
+                        "$ref": "#/$defs/schema4"
                       },
                       {
                         "properties": {
@@ -2988,7 +3709,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema2"
+                        "$ref": "#/$defs/schema4"
                       },
                       {
                         "properties": {
@@ -3073,7 +3794,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema2"
+                        "$ref": "#/$defs/schema4"
                       },
                       {
                         "properties": {
@@ -3135,6 +3856,86 @@
         "properties": {
           "webhookConfig": {
             "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "webhookTLS": {
+                "properties": {
+                  "cert": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "cert"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhookTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "webhookTLS": {
+                "properties": {
+                  "key": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "key"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhookTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "enableCertManager": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "enableCertManager"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhookTLS": {
+            "additionalProperties": {},
+            "description": "webhookTLS specifies TLS cert/key for the webhook",
+            "properties": {
+              "caCert": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            }
           }
         }
       }
@@ -3209,7 +4010,87 @@
             "description": "webhookTLS specifies TLS cert/key for the webhook",
             "properties": {
               "caCert": {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema37"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "webhookTLS": {
+                "properties": {
+                  "caCert": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "caCert"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhookTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "webhookTLS": {
+                "properties": {
+                  "key": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "key"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhookTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "enableCertManager": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "enableCertManager"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhookTLS": {
+            "additionalProperties": {},
+            "description": "webhookTLS specifies TLS cert/key for the webhook",
+            "properties": {
+              "cert": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             }
           }
@@ -3286,7 +4167,87 @@
             "description": "webhookTLS specifies TLS cert/key for the webhook",
             "properties": {
               "cert": {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema37"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "webhookTLS": {
+                "properties": {
+                  "caCert": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "caCert"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhookTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "webhookTLS": {
+                "properties": {
+                  "cert": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "cert"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "webhookTLS"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "properties": {
+                "enableCertManager": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "enableCertManager"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "webhookTLS": {
+            "additionalProperties": {},
+            "description": "webhookTLS specifies TLS cert/key for the webhook",
+            "properties": {
+              "key": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
               }
             }
           }
@@ -3363,7 +4324,7 @@
             "description": "webhookTLS specifies TLS cert/key for the webhook",
             "properties": {
               "key": {
-                "$ref": "#/$defs/schema31"
+                "$ref": "#/$defs/schema37"
               }
             }
           }
@@ -3387,10 +4348,10 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema5"
+            "$ref": "#/$defs/schema7"
           },
           {
-            "$ref": "#/$defs/schema5"
+            "$ref": "#/$defs/schema7"
           }
         ]
       },
@@ -3401,10 +4362,12 @@
     "additionalLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema25"
+          "additionalProperties": {},
+          "properties": {},
+          "type": "object"
         },
         {
-          "$ref": "#/$defs/schema28"
+          "$ref": "#/$defs/schema34"
         },
         {
           "not": {
@@ -3418,28 +4381,6 @@
       "description": "affinity specifies a custom affinity for the controller pods"
     },
     "albGatewayMaxConcurrentReconciles": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Maximum number of concurrently running reconcile loops for ALB gateways (default 3)"
     },
     "annotations": {},
@@ -3539,10 +4480,10 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema22"
+                    "$ref": "#/$defs/schema25"
                   },
                   {
-                    "$ref": "#/$defs/schema22"
+                    "$ref": "#/$defs/schema25"
                   }
                 ]
               }
@@ -3573,106 +4514,21 @@
       "type": "object"
     },
     "awsApiEndpoints": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Custom AWS API Endpoints (serviceID1=URL1,serviceID2=URL2)"
     },
     "awsApiThrottle": {
       "description": "awsApiThrottle specifies custom AWS API throttle settings (serviceID1:operationRegex1=rate:burst,serviceID2:operationRegex2=rate:burst)\nexample: --set awsApiThrottle=\"{Elastic Load Balancing v2:RegisterTargets|DeregisterTargets=4:20,Elastic Load Balancing v2:.*=10:40}\""
     },
     "awsMaxRetries": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Maximum retries for AWS APIs (default 10)"
     },
     "backendSecurityGroup": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "backendSecurityGroup specifies backend security group id (default controller auto create backend security group)"
     },
     "certDiscovery": {
       "additionalProperties": {},
       "properties": {
         "allowedCertificateAuthorityARNs": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "empty means all CAs are in scope"
         }
       },
@@ -3682,27 +4538,7 @@
       "additionalProperties": {},
       "description": "see https://kubernetes-sigs.github.io/aws-load-balancer-controller/latest/guide/ingress/certificate_management/\nDefault PCA ARN that will be applied to all Ingresses that do not have a PCA ARN set but added the cerate-acm-cert annotation\ndefaultPCAARN: \"\"",
       "properties": {
-        "defaultPCAARN": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "number"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        }
+        "defaultPCAARN": {}
       },
       "type": "object"
     },
@@ -3737,8 +4573,7 @@
           }
         }
       ],
-      "description": "Overrideable variables when enableCertManager is set to true",
-      "type": "object"
+      "description": "Overrideable variables when enableCertManager is set to true"
     },
     "cluster": {
       "additionalProperties": {},
@@ -3803,25 +4638,7 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "$ref": "#/$defs/schema12"
-                  }
-                }
-              ],
-              "description": "featureGates set of key: value pairs that describe AWS load balance controller features\nListenerRulesTagging: true\nWeightedTargetGroups: true\nServiceTypeLoadBalancerOnly: false\nEndpointsFailOpen: true\nEnableServiceController: true\nEnableIPTargetType: true\nEnableTCPUDPListener: false\nEnableRGTAPI: false\nSubnetsClusterTagCheck: true\nNLBHealthCheckAdvancedConfig: true\nNLBSecurityGroup: true\nALBSingleSubnet: false\nLBCapacityReservation: true\nSubnetDiscoveryByReachability: true\nNLBGatewayAPI: true\nALBGatewayAPI: true\nGatewayListenerSet: true\nGlobalAcceleratorController: false\nIngressPlanAnnotation: false\nEnhancedDefaultBehavior: false\nEnableDefaultTagsLowPriority: false\nALBTargetControlAgent: false\nEnableCertificateManagement: false"
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "featureGates": {
-              "allOf": [
-                {
-                  "if": {
-                    "$ref": "#/$defs/helm-truthy"
-                  },
-                  "then": {
-                    "$ref": "#/$defs/schema27"
+                    "$ref": "#/$defs/schema33"
                   }
                 }
               ],
@@ -3858,53 +4675,9 @@
     },
     "creator": {},
     "defaultLoadBalancerScheme": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Default load balancer scheme when not specifying \"alb.ingress.kubernetes.io/scheme\" or\n\"service.beta.kubernetes.io/aws-load-balancer-scheme\" annotations.\nPossible values are \"internal\" and \"internet-facing\" (default \"internal\")"
     },
     "defaultSSLPolicy": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "defaultSSLPolicy specifies the default SSL policy to use for TLS/HTTPS listeners"
     },
     "defaultTags": {
@@ -3914,15 +4687,7 @@
             "$ref": "#/$defs/helm-truthy"
           },
           "then": {
-            "$ref": "#/$defs/schema12"
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/helm-truthy"
-          },
-          "then": {
-            "$ref": "#/$defs/schema27"
+            "$ref": "#/$defs/schema33"
           }
         }
       ],
@@ -3935,10 +4700,10 @@
     "deploymentAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema25"
+          "$ref": "#/$defs/schema28"
         },
         {
-          "$ref": "#/$defs/schema28"
+          "$ref": "#/$defs/schema34"
         },
         {
           "not": {
@@ -3951,7 +4716,7 @@
     "disableIngressClassAnnotation": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema29"
+          "$ref": "#/$defs/schema36"
         }
       ],
       "description": "disableIngressClassAnnotation disables the usage of kubernetes.io/ingress.class annotation, false by default"
@@ -3959,7 +4724,7 @@
     "disableIngressGroupNameAnnotation": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema29"
+          "$ref": "#/$defs/schema36"
         }
       ],
       "description": "disableIngressGroupNameAnnotation disables the usage of alb.ingress.kubernetes.io/group.name annotation, false by default"
@@ -3967,7 +4732,7 @@
     "disableRestrictedSecurityGroupRules": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema29"
+          "$ref": "#/$defs/schema36"
         }
       ],
       "description": "disableRestrictedSecurityGroupRules specifies whether to disable creating port-range restricted security group rules for traffic"
@@ -3978,7 +4743,7 @@
     "enableBackendSecurityGroup": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema29"
+          "$ref": "#/$defs/schema36"
         }
       ],
       "description": "enableBackendSecurityGroup enables shared security group for backend traffic (default true)"
@@ -3999,7 +4764,7 @@
     "enableEndpointSlices": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema29"
+          "$ref": "#/$defs/schema36"
         }
       ],
       "description": "enableEndpointSlices enables k8s EndpointSlices for IP targets instead of Endpoints (default true)"
@@ -4007,7 +4772,7 @@
     "enableManageBackendSecurityGroupRules": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema29"
+          "$ref": "#/$defs/schema36"
         }
       ],
       "description": "enableManageBackendSecurityGroupRules enables controller manages security group rules (default false)"
@@ -4015,7 +4780,7 @@
     "enablePodReadinessGateInject": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema29"
+          "$ref": "#/$defs/schema36"
         }
       ],
       "description": "If enabled, targetHealth readiness gate will get injected to the pod spec for the matching endpoint pods (default true)"
@@ -4036,7 +4801,7 @@
     "enableShield": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema29"
+          "$ref": "#/$defs/schema36"
         }
       ],
       "description": "Enable Shield addon for ALB (default true)"
@@ -4044,7 +4809,7 @@
     "enableWaf": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema29"
+          "$ref": "#/$defs/schema36"
         }
       ],
       "description": "Enable WAF addon for ALB (default true)"
@@ -4052,7 +4817,7 @@
     "enableWafv2": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema29"
+          "$ref": "#/$defs/schema36"
         }
       ],
       "description": "Enable WAF V2 addon for ALB (default true)"
@@ -4079,67 +4844,14 @@
           }
         },
         {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "number"
-        },
-        {
           "type": "string"
         }
       ]
     },
     "globalAcceleratorMaxConcurrentReconciles": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Maximum number of concurrently running reconcile loops for GlobalAccelerator objects"
     },
     "globalAcceleratorMaxExponentialBackoffDelay": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Maximum duration of exponential backoff for GlobalAccelerator reconcile failures"
     },
     "hostNetwork": {
@@ -4152,12 +4864,8 @@
         "pullPolicy": {
           "type": "string"
         },
-        "repository": {
-          "$ref": "#/$defs/schema30"
-        },
-        "tag": {
-          "$ref": "#/$defs/schema30"
-        }
+        "repository": {},
+        "tag": {}
       },
       "type": "object"
     },
@@ -4178,13 +4886,7 @@
       ]
     },
     "ingressClass": {
-      "description": "The ingress class this controller will satisfy. If not specified, controller will match all\ningresses without ingress class annotation and ingresses of type alb",
-      "type": [
-        "boolean",
-        "integer",
-        "number",
-        "string"
-      ]
+      "description": "The ingress class this controller will satisfy. If not specified, controller will match all\ningresses without ingress class annotation and ingresses of type alb"
     },
     "ingressClassConfig": {
       "additionalProperties": {},
@@ -4222,28 +4924,6 @@
       "type": "object"
     },
     "ingressMaxConcurrentReconciles": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Maximum number of concurrently running reconcile loops for ingress (default 3)"
     },
     "keepTLSSecret": {
@@ -4251,28 +4931,6 @@
       "type": "boolean"
     },
     "lbStabilizationMonitorInterval": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Interval at which the controller monitors the state of load balancer after creation for stabilization"
     },
     "livenessProbe": {
@@ -4284,7 +4942,7 @@
               "type": "integer"
             },
             "httpGet": {
-              "$ref": "#/$defs/schema10"
+              "$ref": "#/$defs/schema12"
             },
             "initialDelaySeconds": {
               "type": "integer"
@@ -4304,137 +4962,19 @@
       "description": "Liveness probe configuration for the controller"
     },
     "loadBalancerClass": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Specifies the class of load balancer to use for services. This affects how services are provisioned if type LoadBalancer is used (default service.k8s.aws/nlb)"
     },
     "logLevel": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Set the controller log level - info(default), debug (default \"info\")"
     },
     "maxTargetsPerTargetGroup": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "maxTargetsPerTargetGroup specifies the maximum number of targets that the controller will attempt to add to a given ELB instance"
     },
     "metricsBindAddr": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "The address the metric endpoint binds to. (default \":8080\")"
     },
-    "nameOverride": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
+    "nameOverride": {},
     "nlbGatewayMaxConcurrentReconciles": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Maximum number of concurrently running reconcile loops for NLB gateways (default 3)"
     },
     "nodeSelector": {},
@@ -4452,10 +4992,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema25"
+          "$ref": "#/$defs/schema28"
         },
         {
-          "$ref": "#/$defs/schema28"
+          "$ref": "#/$defs/schema34"
         },
         {
           "not": {
@@ -4472,10 +5012,10 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema25"
+          "$ref": "#/$defs/schema28"
         },
         {
-          "$ref": "#/$defs/schema28"
+          "$ref": "#/$defs/schema34"
         },
         {
           "not": {
@@ -4535,7 +5075,7 @@
               "type": "integer"
             },
             "httpGet": {
-              "$ref": "#/$defs/schema10"
+              "$ref": "#/$defs/schema12"
             },
             "initialDelaySeconds": {
               "type": "integer"
@@ -4607,7 +5147,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema26"
+                  "$ref": "#/$defs/schema31"
                 }
               },
               {
@@ -4638,7 +5178,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema26"
+                  "$ref": "#/$defs/schema31"
                 }
               },
               {
@@ -4719,10 +5259,10 @@
     "serviceAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema25"
+          "$ref": "#/$defs/schema28"
         },
         {
-          "$ref": "#/$defs/schema28"
+          "$ref": "#/$defs/schema34"
         },
         {
           "not": {
@@ -4733,28 +5273,6 @@
       "description": "serviceAnnotations contains annotations to be added to the provisioned webhook service resource"
     },
     "serviceMaxConcurrentReconciles": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Maximum number of concurrently running reconcile loops for service (default 3)"
     },
     "serviceMonitor": {
@@ -4778,7 +5296,7 @@
               "additionalLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema28"
+                    "$ref": "#/$defs/schema34"
                   },
                   {
                     "not": {
@@ -4917,128 +5435,18 @@
       "type": "object"
     },
     "serviceTargetENISGTags": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "serviceTargetENISGTags specifies AWS tags, in addition to the cluster tags, for finding the target ENI SG to which to add inbound rules from NLBs."
     },
     "syncPeriod": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Period at which the controller forces the repopulation of its local object stores. (default 10h0m0s)"
     },
     "targetgroupbindingMaxConcurrentReconciles": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Maximum number of concurrently running reconcile loops for targetGroupBinding"
     },
     "targetgroupbindingMaxExponentialBackoffDelay": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Maximum duration of exponential backoff for targetGroupBinding reconcile failures"
     },
     "targetgroupbindingRequeueDuration": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Duration after which TargetGroupBinding will be requeued for reconciliation when it's waiting for AWS resources to update."
     },
     "terminationGracePeriodSeconds": {
@@ -5048,7 +5456,7 @@
     "tolerateNonExistentBackendAction": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema29"
+          "$ref": "#/$defs/schema36"
         }
       ],
       "description": "tolerateNonExistentBackendAction permits rules which specify backend actions that don't exist, true by default (When enabled, it will return 503 error if backend action not exist)"
@@ -5056,7 +5464,7 @@
     "tolerateNonExistentBackendService": {
       "allOf": [
         {
-          "$ref": "#/$defs/schema29"
+          "$ref": "#/$defs/schema36"
         }
       ],
       "description": "tolerateNonExistentBackendService permits rules which specify backend services that don't exist, true by default (When enabled, it will return 503 error if backend service not exist)"
@@ -5111,43 +5519,13 @@
             "$ref": "#/$defs/helm-truthy"
           },
           "then": {
-            "$ref": "#/$defs/schema12"
-          }
-        },
-        {
-          "if": {
-            "$ref": "#/$defs/helm-truthy"
-          },
-          "then": {
-            "$ref": "#/$defs/schema27"
+            "$ref": "#/$defs/schema33"
           }
         }
       ],
       "description": "This is alternative to vpcId. Set this when your pods are unable to use the metadata service to determine VPC automatically.\nAll specified tags are used as AND filters for VPC lookup.\nName: tagValue"
     },
     "watchNamespace": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "boolean"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "number"
-        },
-        {
-          "type": "string"
-        }
-      ],
       "description": "Namespace the controller watches for updates to Kubernetes objects, If empty, all namespaces are watched."
     },
     "webhookBindPort": {
@@ -5204,7 +5582,7 @@
         "ingressValidationNamespaceSelector": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema20"
+              "$ref": "#/$defs/schema23"
             },
             {
               "not": {
@@ -5217,7 +5595,7 @@
         "ingressValidationObjectSelector": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema20"
+              "$ref": "#/$defs/schema23"
             },
             {
               "not": {
@@ -5237,24 +5615,9 @@
       "additionalProperties": {},
       "description": "webhookTLS specifies TLS cert/key for the webhook",
       "properties": {
-        "caCert": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "cert": {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "key": {
-          "type": [
-            "string",
-            "null"
-          ]
-        }
+        "caCert": {},
+        "cert": {},
+        "key": {}
       },
       "type": "object"
     }

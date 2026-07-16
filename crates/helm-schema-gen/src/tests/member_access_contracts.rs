@@ -208,11 +208,18 @@ fn present_key_guard_keeps_scalar_provider_schema_at_leaf() {
         );
     }
     assert!(
-        !schema_accepts_instance(
+        schema_accepts_instance(
             &schema,
             &serde_json::json!({ "global": { "hostUsers": "false" } })
         ),
-        "a present hostUsers value reaches the boolean PodSpec field: {schema}"
+        "an unquoted Boolean string reparses to the provider's Boolean field: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "global": { "hostUsers": "audit" } })
+        ),
+        "a non-Boolean string cannot satisfy the provider field: {schema}"
     );
 }
 

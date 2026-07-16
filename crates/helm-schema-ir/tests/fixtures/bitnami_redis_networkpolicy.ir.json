@@ -36,6 +36,12 @@
           {
             "path": "networkPolicy.enabled",
             "type": "truthy"
+          },
+          {
+            "path": "commonAnnotations",
+            "pattern": "\\{\\{",
+            "templated": false,
+            "type": "matches_pattern"
           }
         ]
       ],
@@ -53,6 +59,24 @@
           "template_path": "<inline:2>"
         }
       ],
+      "resource": null,
+      "source_expr": "commonAnnotations"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "commonAnnotations",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
@@ -1025,7 +1049,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "Scalar",
       "path": [
         "metadata",
         "labels",
@@ -1169,7 +1193,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "Scalar",
       "path": [
         "spec",
         "egress[*]",
@@ -1227,7 +1251,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "Scalar",
       "path": [
         "spec",
         "ingress[*]",
@@ -1281,7 +1305,7 @@
           }
         ]
       ],
-      "kind": "YamlSerialized",
+      "kind": "Scalar",
       "path": [
         "spec",
         "podSelector",
@@ -1429,6 +1453,12 @@
           {
             "path": "networkPolicy.allowExternalEgress",
             "type": "not"
+          },
+          {
+            "path": "networkPolicy.extraEgress",
+            "pattern": "\\{\\{",
+            "templated": false,
+            "type": "matches_pattern"
           }
         ]
       ],
@@ -1446,6 +1476,28 @@
           "template_path": "<inline:2>"
         }
       ],
+      "resource": null,
+      "source_expr": "networkPolicy.extraEgress"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.extraEgress",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.allowExternalEgress",
+            "type": "not"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
@@ -1522,6 +1574,12 @@
           {
             "path": "networkPolicy.extraIngress",
             "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.extraIngress",
+            "pattern": "\\{\\{",
+            "templated": false,
+            "type": "matches_pattern"
           }
         ]
       ],
@@ -1539,6 +1597,24 @@
           "template_path": "<inline:2>"
         }
       ],
+      "resource": null,
+      "source_expr": "networkPolicy.extraIngress"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "networkPolicy.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "networkPolicy.extraIngress",
+            "type": "truthy"
+          }
+        ]
+      ],
+      "kind": "Scalar",
+      "path": [],
       "resource": {
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"

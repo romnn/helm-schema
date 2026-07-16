@@ -2,6 +2,373 @@ use test_util::prelude::sim_assert_eq;
 
 use super::*;
 
+#[test]
+fn quoted_empty_membership_scopes_raw_provider_preimages() {
+    let raw = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          {{- if not (has (quote .Values.limit) (list "" (quote ""))) }}
+          revisionHistoryLimit: {{ .Values.limit }}
+          {{- end }}
+          selector:
+            matchLabels:
+              app: test
+          template:
+            metadata:
+              labels:
+                app: test
+            spec:
+              containers:
+                - name: test
+                  image: busybox
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(raw), Some("limit: ''\n"));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "limit": { "bad": true } }),
+            false,
+            "map",
+        ),
+        (serde_json::json!({ "limit": false }), false, "false"),
+        (serde_json::json!({ "limit": 7 }), true, "integer"),
+        (serde_json::json!({ "limit": "7" }), true, "numeric string"),
+        (serde_json::json!({ "limit": "" }), true, "empty string"),
+        (serde_json::json!({ "limit": null }), true, "null"),
+        (serde_json::json!({}), true, "absent"),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "raw membership {label}: instance={instance}; schema={schema}"
+        );
+    }
+
+    let converted = raw.replace(
+        "revisionHistoryLimit: {{ .Values.limit }}",
+        "revisionHistoryLimit: {{ .Values.limit | int64 }}",
+    );
+    let schema = schema_for_values_yaml(parse_ir(&converted), Some("limit: ''\n"));
+    assert!(
+        schema_accepts_instance(&schema, &serde_json::json!({ "limit": { "bad": true } })),
+        "the int64 conversion makes a live map provider-safe without typing the raw input: {schema}"
+    );
+}
+
+#[test]
+fn plain_string_provider_preimage_rejects_yaml_unsafe_spellings() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: test
+              image: busybox
+              env:
+                - name: AUDIT
+                  value: {{ .Values.value }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("value: safe\n"));
+
+    for (value, want, label) in [
+        (serde_json::json!("safe"), true, "ordinary string"),
+        (
+            serde_json::json!("repo:tag"),
+            true,
+            "colon without separation",
+        ),
+        (serde_json::json!("repo: bad"), false, "mapping separator"),
+        (
+            serde_json::json!("%bad"),
+            false,
+            "forbidden leading indicator",
+        ),
+        (serde_json::json!("false"), false, "implicit Boolean"),
+        (serde_json::json!("7"), false, "implicit number"),
+        (serde_json::json!("line\nbreak"), false, "line break"),
+    ] {
+        let instance = serde_json::json!({ "value": value });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "plain YAML {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn inline_conditional_kind_candidates_reach_the_matching_provider_path() {
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: {{ if .Values.stateful }}StatefulSet{{ else }}Deployment{{ end }}
+        metadata:
+          name: test
+        spec:
+          {{- if .Values.stateful }}
+          serviceName: test
+          {{- else }}
+          strategy: {{ toYaml .Values.strategy | nindent 4 }}
+          {{- end }}
+          selector:
+            matchLabels:
+              app: test
+          template:
+            metadata:
+              labels:
+                app: test
+            spec:
+              containers:
+              - name: test
+                image: busybox
+    "#};
+    let values_yaml = "stateful: false\nstrategy: {}\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "stateful": false, "strategy": 7 })
+        ),
+        "Deployment strategy is object-typed: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "stateful": true, "strategy": 7 })
+        ),
+        "the strategy value is dormant in the StatefulSet branch: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "stateful": false,
+                "strategy": { "type": "Recreate" }
+            })
+        ),
+        "a valid Deployment strategy remains accepted: {schema}"
+    );
+}
+
+#[test]
+fn values_selected_kind_partitions_provider_contracts() {
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: {{ .Values.workloadKind }}
+        metadata:
+          name: test
+        spec:
+          {{- if not (eq .Values.workloadKind "DaemonSet") }}
+          replicas: 1
+          {{- end }}
+          {{- if eq .Values.workloadKind "StatefulSet" }}
+          serviceName: test
+          {{- end }}
+          {{- if eq .Values.workloadKind "Deployment" }}
+          strategy: {{ toYaml .Values.updateStrategy | nindent 4 }}
+          {{- else }}
+          updateStrategy: {{ toYaml .Values.updateStrategy | nindent 4 }}
+          {{- end }}
+          selector:
+            matchLabels:
+              app: test
+          template:
+            metadata:
+              labels:
+                app: test
+            spec:
+              containers:
+              - name: test
+                image: busybox
+    "#};
+    let values_yaml = "workloadKind: Deployment\nupdateStrategy: {}\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let stateful_only = serde_json::json!({
+        "rollingUpdate": { "partition": "not-an-integer" }
+    });
+    let deployment_only = serde_json::json!({
+        "rollingUpdate": { "maxSurge": false }
+    });
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "workloadKind": "Deployment",
+                "updateStrategy": deployment_only.clone()
+            })
+        ),
+        "DeploymentStrategy types rollingUpdate.maxSurge as a string or integer: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "workloadKind": "StatefulSet",
+                "updateStrategy": deployment_only
+            })
+        ),
+        "StatefulSetStrategy leaves Deployment-only rollingUpdate fields open: {schema}"
+    );
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "workloadKind": "StatefulSet",
+                "updateStrategy": stateful_only.clone()
+            })
+        ),
+        "StatefulSetStrategy types rollingUpdate.partition as an integer: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "workloadKind": "Deployment",
+                "updateStrategy": stateful_only.clone()
+            })
+        ),
+        "DeploymentStrategy leaves StatefulSet-only rollingUpdate fields open: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "workloadKind": "CustomWorkload",
+                "updateStrategy": stateful_only
+            })
+        ),
+        "an unknown kind remains an explicit unconstrained complement: {schema}"
+    );
+}
+
+#[test]
+fn helper_return_disjunction_partitions_downstream_provider_contracts() {
+    let helpers = indoc! {r#"
+        {{- define "provider.name" -}}
+        {{- if eq (typeOf .Values.provider) "string" -}}
+        {{- .Values.provider -}}
+        {{- else -}}
+        {{- .Values.provider.name -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        {{- $provider_name := tpl (include "provider.name" .) $ -}}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+          - name: main
+            image: busybox
+          {{- if eq $provider_name "webhook" }}
+          - name: webhook
+            image: webhook:1.0
+            livenessProbe: {{ toYaml .Values.provider.webhook.livenessProbe | nindent 6 }}
+          {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), None);
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "provider": {
+                    "name": "webhook",
+                    "webhook": { "livenessProbe": { "failureThreshold": "audit" } }
+                }
+            })
+        ),
+        "the selected webhook helper arm must apply the Probe provider schema: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "provider": {
+                    "name": "aws",
+                    "webhook": { "livenessProbe": { "failureThreshold": "audit" } }
+                }
+            })
+        ),
+        "the unselected webhook helper arm must leave its probe dormant: {schema}"
+    );
+    assert!(
+        schema_accepts_instance(
+            &schema,
+            &serde_json::json!({
+                "provider": {
+                    "name": "webhook",
+                    "webhook": { "livenessProbe": { "failureThreshold": 2 } }
+                }
+            })
+        ),
+        "a provider-valid probe remains accepted in the selected helper arm: {schema}"
+    );
+}
+
+#[test]
+fn helper_literal_or_override_return_applies_integer_preimage_to_the_override() {
+    let helpers = indoc! {r#"
+        {{- define "version.default" -}}
+        {{- $old := index . 0 -}}
+        {{- $new := index . 1 -}}
+        {{- $default := index . 2 -}}
+        {{- if kindIs "invalid" $default -}}
+          {{- if semverCompare ">= 1.22-0" "1.29.0" -}}
+            {{- print $new -}}
+          {{- else -}}
+            {{- print $old -}}
+          {{- end -}}
+        {{- else -}}
+          {{- print $default -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: test
+        spec:
+          selector:
+            app: test
+          ports:
+          - name: metrics
+            port: {{ include "version.default" (list 10252 10257 .Values.service.port) }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("service:\n  port: null\n"),
+    );
+
+    assert!(
+        !schema_accepts_instance(
+            &schema,
+            &serde_json::json!({ "service": { "port": "audit" } })
+        ),
+        "a selected nonnumeric override renders an invalid Service port: {schema}"
+    );
+    for port in [
+        serde_json::json!(10257),
+        serde_json::json!("10257"),
+        serde_json::Value::Null,
+    ] {
+        assert!(
+            schema_accepts_instance(
+                &schema,
+                &serde_json::json!({ "service": { "port": port.clone() } })
+            ),
+            "a provider-valid override or the literal-default arm must validate: port={port}; schema={schema}"
+        );
+    }
+}
+
 /// A conditional branch rendering a DIRECT scalar hole into a
 /// provider-required field (a Service `port`) backprojects presence and
 /// non-nullability of the source leaf under the branch's guards: Helm

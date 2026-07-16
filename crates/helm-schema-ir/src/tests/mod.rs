@@ -65,6 +65,61 @@ foo: {{ .Values.name }}
 }
 
 #[test]
+fn direct_tpl_files_get_executes_json_template_source() {
+    let src = r#"
+apiVersion: v1
+kind: Secret
+data:
+  clients.json: {{ tpl (.Files.Get "config/client-auth.json") . | b64enc }}
+"#;
+    let file = r#"
+{{- range $user := .Values.users }}
+{{ $user.username }}: {{ $user.password }}
+{{- end }}
+"#;
+    let mut index = DefineIndex::new();
+    index.add_file_source("config/client-auth.json", file);
+    let ir = SymbolicIrContext::new(&index)
+        .generate_contract_ir(src)
+        .finalize();
+
+    for path in ["users.*.username", "users.*.password"] {
+        assert!(
+            ir.uses().iter().any(|use_| use_.source_expr == path),
+            "the tpl-executed file should contribute {path}: {ir:#?}"
+        );
+    }
+}
+
+#[test]
+fn base_path_include_executes_implicit_template_source() {
+    let src = r#"
+apiVersion: v1
+kind: ConfigMap
+data:
+  initialize: |-
+    {{ include (print $.Template.BasePath "/_create.txt") . | nindent 4 }}
+"#;
+    let partial = r#"
+{{- range $bucket := .Values.buckets }}
+create {{ $bucket.name }}
+{{- end }}
+"#;
+    let mut index = DefineIndex::new();
+    index.add_file_source("templates/_create.txt", partial);
+    let ir = SymbolicIrContext::new(&index)
+        .generate_contract_ir(src)
+        .finalize();
+
+    assert!(
+        ir.uses()
+            .iter()
+            .any(|use_| use_.source_expr == "buckets.*.name"),
+        "the implicit template body should contribute its member access: {ir:#?}"
+    );
+}
+
+#[test]
 fn dynamic_mapping_value_projects_structural_member_path() {
     let src = r"
 apiVersion: v1
@@ -278,6 +333,66 @@ data:
                 path: "fallback".to_string(),
             },
         ]]
+    );
+}
+
+#[test]
+fn helper_type_dispatch_keeps_or_candidate_selection_on_each_row() {
+    let helpers = r#"
+{{- define "selected.value" -}}
+{{- $selected := or .Values.primary .Values.fallback -}}
+{{- if $selected -}}
+{{- $type := typeOf $selected -}}
+{{- if eq $type "string" -}}
+{{ tpl $selected . }}
+{{- else -}}
+{{ toYaml $selected }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+"#;
+    let src = r#"
+apiVersion: v1
+kind: ConfigMap
+data:
+  value: {{ include "selected.value" . | quote }}
+"#;
+    let mut index = DefineIndex::new();
+    index.add_file_source("<inline:0>", helpers);
+    let ir = SymbolicIrContext::new(&index)
+        .generate_contract_ir(src)
+        .finalize();
+
+    let primary = ir
+        .uses()
+        .iter()
+        .filter(|use_| use_.source_expr == "primary" && !use_.path.0.is_empty())
+        .collect::<Vec<_>>();
+    assert!(!primary.is_empty(), "expected primary rows: {ir:#?}");
+    assert!(
+        primary.iter().all(|use_| {
+            use_.condition
+                .disjuncts()
+                .iter()
+                .all(|branch| branch.contains(&Predicate::truthy_path("primary")))
+        }),
+        "every rendered primary row must retain its selection predicate: {primary:#?}"
+    );
+
+    let fallback = ir
+        .uses()
+        .iter()
+        .filter(|use_| use_.source_expr == "fallback" && !use_.path.0.is_empty())
+        .collect::<Vec<_>>();
+    assert!(!fallback.is_empty(), "expected fallback rows: {ir:#?}");
+    assert!(
+        fallback.iter().all(|use_| {
+            use_.condition
+                .disjuncts()
+                .iter()
+                .all(|branch| branch.contains(&Predicate::truthy_path("primary").negated()))
+        }),
+        "every rendered fallback row must retain the earlier empty predicate: {fallback:#?}"
     );
 }
 

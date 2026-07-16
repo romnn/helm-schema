@@ -161,8 +161,7 @@ impl Interpreter<'_> {
         let strict_paths: std::collections::BTreeSet<String> = effects
             .helper_fails
             .iter()
-            .flat_map(|capture| capture.conjunction.iter())
-            .flat_map(Predicate::value_paths)
+            .flat_map(runtime_requirement_paths)
             .collect();
         // Derived booleans and counts erase output identity, but their operands remain strict.
         // A header has no output slot to protect, so the hard operand contract wins over that
@@ -311,6 +310,7 @@ impl Interpreter<'_> {
             };
             match guard {
                 Guard::Range { .. } | Guard::With { .. } | Guard::Default { .. } => false,
+                Guard::RangeKeyPrefix { .. } => true,
                 Guard::Truthy { path: guard_path }
                 | Guard::Not { path: guard_path }
                 | Guard::Absent { path: guard_path }
@@ -538,5 +538,45 @@ impl Interpreter<'_> {
             };
             self.push_read_row(path, kind, &extra, resource, provenance, false);
         }
+    }
+}
+
+fn runtime_requirement_paths(
+    capture: &crate::eval_effect::FailCapture,
+) -> std::collections::BTreeSet<String> {
+    use crate::eval_effect::CaptureKind;
+
+    match &capture.kind {
+        CaptureKind::RangeKeyStrings { paths } | CaptureKind::CollectionItems { paths, .. } => {
+            paths.clone()
+        }
+        CaptureKind::IndexAccess { path, .. } => [path.clone()].into_iter().collect(),
+        CaptureKind::SplitIndexAccess { paths, .. } => paths.clone(),
+        CaptureKind::ValueType { path, .. } | CaptureKind::ValuePattern { path, .. } => {
+            [path.clone()].into_iter().collect()
+        }
+        CaptureKind::Fail | CaptureKind::MemberAccess { .. } => capture
+            .conjunction
+            .last()
+            .filter(|predicate| predicate_is_runtime_kind_requirement(predicate))
+            .map(Predicate::value_paths)
+            .unwrap_or_default()
+            .into_iter()
+            .collect(),
+    }
+}
+
+fn predicate_is_runtime_kind_requirement(predicate: &Predicate) -> bool {
+    match predicate {
+        Predicate::Guard(
+            Guard::TypeIs { .. } | Guard::NotTypeIs { .. } | Guard::MatchesPattern { .. },
+        ) => true,
+        Predicate::Not(inner) => predicate_is_runtime_kind_requirement(inner),
+        Predicate::True
+        | Predicate::False
+        | Predicate::Approximate { .. }
+        | Predicate::Guard(_)
+        | Predicate::And(_)
+        | Predicate::Or(_) => false,
     }
 }

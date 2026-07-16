@@ -107,4 +107,18 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
             .extend(summary.root_set_predicates.clone());
         Some(EvalResult::with_effects(summary.value.clone(), effects))
     }
+
+    fn resolve_implicit_template_call(
+        &mut self,
+        suffix: &str,
+        arg: Option<&TemplateExpr>,
+    ) -> Option<EvalResult> {
+        let name = self
+            .params
+            .context
+            .analysis_db
+            .implicit_template_name(suffix)?
+            .to_string();
+        self.resolve_helper_call(&name, arg)
+    }
 }

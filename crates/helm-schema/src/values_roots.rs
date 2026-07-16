@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use serde_yaml::Value as YamlValue;
 
@@ -20,6 +20,12 @@ pub(crate) struct ValuesRoots {
     /// that the chart already ships a default at that path and therefore must
     /// not infer it as user-required later.
     pub(crate) explicit_paths: BTreeSet<String>,
+    /// Literal string defaults keyed by their composed values path.
+    ///
+    /// These remain chart-authored facts rather than accepted-input facts:
+    /// consumers use them only when a template explicitly evaluates the
+    /// selected default as a program (for example, `tpl .Values.query .`).
+    pub(crate) string_defaults: BTreeMap<String, String>,
 }
 
 impl ValuesRoots {
@@ -49,18 +55,46 @@ impl ValuesRoots {
             }
         }
 
-        collect_explicit_paths(&doc, &mut Vec::new(), &mut roots.explicit_paths);
+        collect_values_facts(
+            &doc,
+            &mut Vec::new(),
+            &mut roots.explicit_paths,
+            &mut roots.string_defaults,
+        );
         roots
+    }
+
+    pub(crate) fn string_defaults_for_prefix(&self, prefix: &[String]) -> BTreeMap<String, String> {
+        self.string_defaults
+            .iter()
+            .filter_map(|(path, value)| {
+                let segments = helm_schema_core::split_value_path(path);
+                segments
+                    .strip_prefix(prefix)
+                    .filter(|relative| !relative.is_empty())
+                    .map(|relative| {
+                        (
+                            helm_schema_core::join_value_path(relative.iter().cloned()),
+                            value.clone(),
+                        )
+                    })
+            })
+            .collect()
     }
 }
 
-fn collect_explicit_paths(
+fn collect_values_facts(
     value: &YamlValue,
     current_path: &mut Vec<String>,
-    out: &mut BTreeSet<String>,
+    explicit_paths: &mut BTreeSet<String>,
+    string_defaults: &mut BTreeMap<String, String>,
 ) {
     if !current_path.is_empty() {
-        out.insert(helm_schema_core::join_value_path(&*current_path));
+        let path = helm_schema_core::join_value_path(&*current_path);
+        explicit_paths.insert(path.clone());
+        if let YamlValue::String(value) = value {
+            string_defaults.insert(path, value.clone());
+        }
     }
 
     let YamlValue::Mapping(mapping) = value else {
@@ -77,7 +111,7 @@ fn collect_explicit_paths(
         }
 
         current_path.push(key.to_string());
-        collect_explicit_paths(child, current_path, out);
+        collect_values_facts(child, current_path, explicit_paths, string_defaults);
         current_path.pop();
     }
 }

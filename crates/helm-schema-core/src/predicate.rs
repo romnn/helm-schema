@@ -149,6 +149,7 @@ impl Predicate {
             ],
             Self::Guard(
                 Guard::Range { .. }
+                | Guard::RangeKeyPrefix { .. }
                 | Guard::Absent { .. }
                 | Guard::With { .. }
                 | Guard::Default { .. }
@@ -191,6 +192,7 @@ impl Predicate {
             Self::Not(inner) => match inner.as_ref() {
                 Self::Guard(
                     Guard::Truthy { .. }
+                    | Guard::With { .. }
                     | Guard::Eq { .. }
                     | Guard::NotEq { .. }
                     | Guard::TypeIs { .. }
@@ -251,6 +253,7 @@ impl Predicate {
                 Guard::Truthy { .. }
                 | Guard::Eq { .. }
                 | Guard::MatchesPattern { .. }
+                | Guard::RangeKeyPrefix { .. }
                 | Guard::Range { .. }
                 | Guard::With { .. }
                 | Guard::Default { .. }
@@ -307,7 +310,9 @@ impl Predicate {
 
 fn negated_contract_guards(inner: &Predicate) -> Vec<Guard> {
     match inner {
-        Predicate::Guard(Guard::Truthy { path }) => vec![Guard::Not { path: path.clone() }],
+        Predicate::Guard(Guard::Truthy { path } | Guard::With { path }) => {
+            vec![Guard::Not { path: path.clone() }]
+        }
         Predicate::Guard(Guard::Eq { path, value }) => vec![Guard::NotEq {
             path: path.clone(),
             value: value.clone(),

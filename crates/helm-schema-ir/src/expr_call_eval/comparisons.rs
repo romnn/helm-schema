@@ -1,9 +1,12 @@
+use std::collections::BTreeSet;
+
 use helm_schema_ast::{Literal, TemplateExpr};
+use helm_schema_core::Predicate;
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
-use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_with_helper_calls};
+use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use helm_schema_ast::type_is_schema_type;
 
 use super::strict_operands::record_strict_kind_result;
@@ -19,22 +22,34 @@ pub(super) fn eval_ternary(
 ) -> EvalResult {
     let mut effects = Effects::default();
     let has_piped_condition = piped_condition.is_some();
-    if let Some((condition, is_direct_values_path)) = piped_condition {
-        // A computed Boolean such as `eq .Values.mode "active"` retains its
-        // operands' provenance, but the ternary contract belongs to the
-        // computed result rather than those raw operands.
-        if is_direct_values_path {
-            record_strict_kind_result(&condition, "boolean", &mut effects);
-        }
+    let mut condition_path = None;
+    if let Some((condition, _is_direct_values_path)) = piped_condition {
+        // Derived Boolean values carry no raw identity, so this records a
+        // contract only for direct selectors and aliases of direct selectors.
+        record_strict_kind_result(&condition, "boolean", &mut effects);
+        condition_path = condition.value.as_ref().and_then(raw_condition_path);
+        effects.merge(condition.effects);
+    } else if let Some(condition_arg) = args.get(2) {
+        let condition = eval_expr_with_helper_calls(condition_arg, env, resolver);
+        record_strict_kind_result(&condition, "boolean", &mut effects);
+        condition_path = condition.value.as_ref().and_then(raw_condition_path);
         effects.merge(condition.effects);
     }
     let mut values = Vec::new();
     for (index, arg) in args.iter().enumerate() {
-        let result = eval_expr_with_helper_calls(arg, env, resolver);
-        // As with the pipeline form, only syntactic identity proves that the
-        // raw values path itself is the Boolean passed to ternary.
-        if !has_piped_condition && index == 2 && direct_values_path(arg).is_some() {
-            record_strict_kind_result(&result, "boolean", &mut effects);
+        if !has_piped_condition && index == 2 {
+            continue;
+        }
+        let mut result = eval_expr_with_helper_calls(arg, env, resolver);
+        if index < 2
+            && let Some(path) = &condition_path
+        {
+            let predicate = if index == 0 {
+                Predicate::truthy_path(path.clone())
+            } else {
+                Predicate::truthy_path(path.clone()).negated()
+            };
+            conjoin_result_selection(&mut result, predicate);
         }
         effects.merge(result.effects);
         if index < 2
@@ -45,6 +60,42 @@ pub(super) fn eval_ternary(
     }
     effects.promote_tested_type_hints();
     EvalResult::with_effects(AbstractValue::choice(values), effects)
+}
+
+fn raw_condition_path(value: &AbstractValue) -> Option<String> {
+    match value {
+        AbstractValue::ValuesPath(path)
+        | AbstractValue::JsonDecodedPath(path)
+        | AbstractValue::OutputPath(path, _) => Some(path.clone()),
+        AbstractValue::Choice(choices) => {
+            let mut paths = choices.iter().filter_map(raw_condition_path);
+            let first = paths.next()?;
+            paths.all(|path| path == first).then_some(first)
+        }
+        AbstractValue::Top
+        | AbstractValue::Unknown
+        | AbstractValue::RangeKey(_)
+        | AbstractValue::RootContext
+        | AbstractValue::StringSet(_)
+        | AbstractValue::DerivedBoolean(_)
+        | AbstractValue::Dict(_)
+        | AbstractValue::List(_)
+        | AbstractValue::Overlay { .. }
+        | AbstractValue::SplitList { .. }
+        | AbstractValue::Widened(_) => None,
+    }
+}
+
+fn conjoin_result_selection(result: &mut EvalResult, predicate: Predicate) {
+    let selection = BTreeSet::from([predicate]);
+    for path in identity_value_paths(&result.value) {
+        result
+            .effects
+            .local_output_meta
+            .entry(path)
+            .or_default()
+            .conjoin_branches(&selection);
+    }
 }
 
 pub(super) fn eval_type_is(
@@ -130,12 +181,11 @@ pub(super) fn eval_comparison_operands(
 }
 
 pub(super) fn merge_operand_results(operands: Vec<EvalResult>, mut effects: Effects) -> EvalResult {
-    let mut values = Vec::new();
     for operand in operands {
-        if let Some(value) = operand.value {
-            values.push(value);
-        }
         effects.merge(operand.effects);
     }
-    EvalResult::with_effects(AbstractValue::choice(values), effects)
+    EvalResult::with_effects(
+        Some(AbstractValue::DerivedBoolean(effects.output_paths.clone())),
+        effects,
+    )
 }

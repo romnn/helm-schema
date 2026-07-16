@@ -24,10 +24,9 @@ pub(crate) struct SymbolicLocalState {
     /// Values paths defaulted by structural `set X "K" (X.K | default V)`
     /// helper mutations that have already run in source order.
     pub(crate) chart_value_defaults: BTreeSet<String>,
-    /// Locals bound to a TYPE DESCRIPTOR of a values path
-    /// (`$tp := typeOf .Values.x`): comparing such a local to a literal is
-    /// a type test on the path, never a value equality.
-    pub(crate) typeof_sources: HashMap<String, String>,
+    /// Locals bound to a type descriptor. Each described path retains the
+    /// predicates under which that path supplied the selected value.
+    pub(crate) typeof_sources: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     /// Range variables bound to the MEMBER identity of a directly ranged
     /// path (`$v` in `range $k, $v := .Values.x` holds each `x.*` value).
     /// Conditions and assignments resolve through these; hole rendering
@@ -57,7 +56,7 @@ struct VariableLocalState {
     default_paths: Option<BTreeSet<String>>,
     output_meta: Option<BTreeMap<String, HelperOutputMeta>>,
     truthy_reduction: Option<Predicate>,
-    typeof_source: Option<String>,
+    typeof_source: Option<BTreeMap<String, HelperOutputMeta>>,
     range_member_value: Option<AbstractValue>,
 }
 

@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::rc::Rc;
 
 use helm_schema_ast::DefineIndex;
@@ -26,6 +27,24 @@ impl SymbolicIrContext {
         Self {
             inner: Rc::new(SymbolicIrContextInner {
                 analysis_db: IrAnalysisDb::new(defines),
+            }),
+        }
+    }
+
+    /// Build a context that can execute chart-authored string defaults when
+    /// a `tpl` call selects them. The strings are not general inference
+    /// evidence; they are consulted only at that explicit execution boundary.
+    #[must_use]
+    pub fn with_chart_default_strings(
+        defines: &DefineIndex,
+        chart_default_strings: BTreeMap<String, String>,
+    ) -> Self {
+        Self {
+            inner: Rc::new(SymbolicIrContextInner {
+                analysis_db: IrAnalysisDb::with_chart_default_strings(
+                    defines,
+                    chart_default_strings,
+                ),
             }),
         }
     }

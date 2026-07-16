@@ -116,6 +116,31 @@ pub(crate) enum CaptureKind {
     Fail,
     /// Collections whose range key reaches a strict string consumer.
     RangeKeyStrings { paths: BTreeSet<String> },
+    /// Every member of the named collection paths reaches a strict runtime
+    /// consumer with the given JSON kind.
+    CollectionItems {
+        paths: BTreeSet<String>,
+        schema_type: String,
+    },
+    /// A literal zero-based `index` executes on this source path.
+    IndexAccess { path: String, index: usize },
+    /// A literal index executes on a list produced by splitting source text.
+    SplitIndexAccess {
+        paths: BTreeSet<String>,
+        separator: String,
+        index: usize,
+        total_text_preimage: bool,
+    },
+    /// A scalar path must have the named JSON Schema type whenever the
+    /// capture's execution predicates hold.
+    ValueType { path: String, schema_type: String },
+    /// A string path must match the pattern whenever the capture's execution
+    /// predicates hold.
+    ValuePattern {
+        path: String,
+        pattern: String,
+        templated: bool,
+    },
     /// A member-access capture (`[outer…, ¬object(P)]` from a field access
     /// through `P`): the signal builder folds these per path into one
     /// bypass-proof arm instead of lowering each as its own implication.

@@ -121,5 +121,8 @@ pub fn format_diagnostic_text(diagnostic: &Diagnostic) -> String {
         } => format!(
             "warning: cache at {cache_root} was written by a newer helm-schema (on-disk: {on_disk_marker}, this binary: {compiled_marker}); refusing to mutate"
         ),
+        Diagnostic::InputChannelNumericRangeAmbiguity { value_path } => format!(
+            "warning: {value_path} has input-channel-dependent integer range semantics: Helm can iterate an integer from --set but rejects the same JSON number from a values file or --set-json; JSON Schema cannot distinguish those inputs"
+        ),
     }
 }

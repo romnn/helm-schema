@@ -23,12 +23,13 @@ use helm_schema_core::Predicate;
 use super::eval::Interpreter;
 use super::hole_effects::{RenderedDemotion, predicate_applies_to_flowing_path};
 
-/// The values path whose TYPE an expression describes: `typeOf <selector>`
-/// or `kindOf <selector>` over a single resolvable values path.
-pub(super) fn type_descriptor_source(
+/// The values paths whose type an expression describes, preserving the
+/// selection branches of a local that can hold one of several paths.
+pub(super) fn type_descriptor_sources(
     expr: &TemplateExpr,
     interpreter: &Interpreter<'_>,
-) -> Option<String> {
+    output_meta: &std::collections::BTreeMap<String, crate::helper_meta::HelperOutputMeta>,
+) -> Option<std::collections::BTreeMap<String, crate::helper_meta::HelperOutputMeta>> {
     let TemplateExpr::Call { function, args } = expr.deparen() else {
         return None;
     };
@@ -38,38 +39,23 @@ pub(super) fn type_descriptor_source(
     let subject = args[0].deparen();
     if !matches!(
         subject,
-        TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        TemplateExpr::Field(_) | TemplateExpr::Selector { .. } | TemplateExpr::Variable(_)
     ) {
         return None;
     }
     let paths = interpreter.value_path_context().paths_for_expr(subject);
-    (paths.len() == 1).then(|| paths.into_iter().next().unwrap_or_default())
-}
-
-pub(super) fn static_value_truthiness(value: Option<&AbstractValue>) -> Option<bool> {
-    match value? {
-        AbstractValue::StringSet(strings) => {
-            let all_empty = strings.iter().all(String::is_empty);
-            let all_nonempty = strings.iter().all(|value| !value.is_empty());
-            match (all_empty, all_nonempty) {
-                (true, false) => Some(false),
-                (false, true) => Some(true),
-                _ => None,
-            }
-        }
-        AbstractValue::Dict(entries) => Some(!entries.is_empty()),
-        AbstractValue::List(items) => Some(!items.is_empty()),
-        AbstractValue::Choice(choices) => {
-            let mut truthiness = choices
-                .iter()
-                .map(|choice| static_value_truthiness(Some(choice)));
-            let first = truthiness.next()??;
-            truthiness
-                .all(|candidate| candidate == Some(first))
-                .then_some(first)
-        }
-        _ => None,
+    if paths.is_empty() {
+        return None;
     }
+    Some(
+        paths
+            .into_iter()
+            .map(|path| {
+                let meta = output_meta.get(&path).cloned().unwrap_or_default();
+                (path, meta)
+            })
+            .collect(),
+    )
 }
 
 /// Whether the expression's produced VALUE is derived text (a
@@ -100,6 +86,22 @@ pub(super) fn self_preserving_nonempty_accumulation(expr: &TemplateExpr, variabl
     };
     if args.len() < 2 {
         return false;
+    }
+    if function == "concat" {
+        let keeps_self = args.iter().any(|arg| {
+            matches!(
+                arg.deparen(),
+                TemplateExpr::Variable(name) if name.trim_start_matches('$') == variable
+            )
+        });
+        let adds_nonempty_literal_list = args.iter().any(|arg| {
+            matches!(
+                arg.deparen(),
+                TemplateExpr::Call { function, args }
+                    if matches!(function.as_str(), "list" | "tuple") && !args.is_empty()
+            )
+        });
+        return keeps_self && adds_nonempty_literal_list;
     }
     let same_variable = matches!(
         args[0].deparen(),
@@ -302,6 +304,7 @@ impl Interpreter<'_> {
         if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
             let rhs = std::slice::from_ref(&assignment.rhs_expr);
             self.record_required_subjects(rhs);
+            let inlined_template_value = self.inline_static_template_value(rhs);
             let rhs_truthy_reduction = {
                 let context = self.value_path_context();
                 context
@@ -313,7 +316,8 @@ impl Interpreter<'_> {
             // The binding is the hole value without widened members (an
             // unknown call result is influence, not a values-backed
             // fragment).
-            let fragment_value = hole.value.clone().and_then(AbstractValue::without_widened);
+            let fragment_value = inlined_template_value
+                .or_else(|| hole.value.clone().and_then(AbstractValue::without_widened));
             let previous_truthy_reduction = self
                 .locals
                 .truthy_reductions
@@ -330,13 +334,16 @@ impl Interpreter<'_> {
                         if rhs_produces_derived_text(&assignment.rhs_expr) {
                             return None;
                         }
-                        static_value_truthiness(fragment_value.as_ref()).map(|truthy| {
-                            if truthy {
-                                Predicate::True
-                            } else {
-                                Predicate::False
-                            }
-                        })
+                        fragment_value
+                            .as_ref()
+                            .and_then(AbstractValue::static_truthiness)
+                            .map(|truthy| {
+                                if truthy {
+                                    Predicate::True
+                                } else {
+                                    Predicate::False
+                                }
+                            })
                     }),
                 crate::fragment_assignment::AssignmentKind::Assignment
                     if self_preserving_nonempty_accumulation(
@@ -346,11 +353,11 @@ impl Interpreter<'_> {
                 {
                     previous_truthy_reduction.map(|previous| {
                         let condition = Predicate::all(self.active_predicates.clone());
-                        let lowerable = condition.contract_guards_are_exact()
+                        let exact = !condition.contains_approximation()
                             && condition.value_paths().iter().all(|path| {
                                 !path.starts_with('$') && !path.split('.').any(|part| part == "*")
                             });
-                        if lowerable {
+                        if exact {
                             or_predicates(previous, condition)
                         } else {
                             previous
@@ -366,13 +373,16 @@ impl Interpreter<'_> {
                         if rhs_produces_derived_text(&assignment.rhs_expr) {
                             return None;
                         }
-                        static_value_truthiness(fragment_value.as_ref()).map(|truthy| {
-                            if truthy {
-                                Predicate::True
-                            } else {
-                                Predicate::False
-                            }
-                        })
+                        fragment_value
+                            .as_ref()
+                            .and_then(AbstractValue::static_truthiness)
+                            .map(|truthy| {
+                                if truthy {
+                                    Predicate::True
+                                } else {
+                                    Predicate::False
+                                }
+                            })
                     }),
             };
             let previous_fragment_value = self
@@ -426,13 +436,20 @@ impl Interpreter<'_> {
             // later `eq $tp "string"` comparisons are type tests, never value
             // equalities, so remember the described path. Recorded after the
             // value binding, whose displacement clears every other domain.
-            if let Some(source) = type_descriptor_source(&assignment.rhs_expr, self) {
+            if let Some(sources) =
+                type_descriptor_sources(&assignment.rhs_expr, self, &hole.effects.local_output_meta)
+            {
                 self.locals
                     .typeof_sources
-                    .insert(assignment.variable.clone(), source);
+                    .insert(assignment.variable.clone(), sources);
             }
             let mut output_meta = output_effects.local_output_meta.clone();
             merge_rendered_row_meta(&mut output_meta, &hole.effects.helper_rendered);
+            if let Some(binding) = &fragment_value {
+                for (path, meta) in binding.output_meta() {
+                    output_meta.entry(path).or_default().merge(&meta);
+                }
+            }
             // A shape-erasing RHS (`$tag := … | toString`) rides the binding:
             // wherever the local renders, the splice exposes no input shape.
             for path in &hole.effects.shape_erased_paths {

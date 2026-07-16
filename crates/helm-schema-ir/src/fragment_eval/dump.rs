@@ -163,6 +163,9 @@ fn fmt_guard(guard: &Guard) -> String {
             let suffix = if *templated { " templated" } else { "" };
             format!("matches({path} ~ {pattern}{suffix})")
         }
+        Guard::RangeKeyPrefix { path, prefix } => {
+            format!("rangeKeyPrefix({path}: {prefix})")
+        }
         Guard::Or { paths } => format!("or({})", paths.join(", ")),
         Guard::AnyOf { alternatives } => {
             let rendered: Vec<String> = alternatives
