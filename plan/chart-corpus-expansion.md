@@ -6803,3 +6803,149 @@ plus four negative-cache records the tests exercise.
   log-level gate is exactly the F83 helper-literal `eq (include …) "true"`
   decode, and cilium's clustermesh `$cluster.name` is the
   helper-`fromJson` collection identity gap.
+
+## Deferred-findings fix round (2026-07-17, third round)
+
+The four deferrals from the second round (F64, F76.2, F80, F104) are now
+implemented, each with focused reproducers that fail without the fix. The
+full workspace suite, doc tests, `task lint`, and the luup2 `check:local`
+run are green; all 55 corpus schemas, 20 gen fixtures, 16 IR fixtures, and
+the CLI full fixture were regenerated (45 corpus schemas changed).
+
+### F64 — semver cross-path arm (FIXED)
+
+`semverCompare "<constraint>" .Values.path` with a literal bounded
+comparator and a DIRECT values selector now mints an exact positive
+strengthening: `helm_schema_ast::semver_constraint_match_pattern` lowers a
+single `<`/`<=`/`>`/`>=` comparator against a numeric bound to a regex
+matching precisely the satisfying version strings (leading-zero-tolerant
+digit-wise comparison, optional `v` prefix, build metadata, NO prerelease —
+Masterminds' bare comparators never match prerelease versions). The
+condition lowering emits it as a `Guard::MatchesPattern` sound subset of
+the Approximate conjunct, so the existing fail-arm machinery and the
+default-aware gen `MatchesPattern` encoding light up with no new guard
+variant. Constraints with prerelease markers (`>=1.33-0`), ranges,
+wildcards, or non-selector operands abstain as before.
+
+- airflow: map `config.webserver.base_url` now REJECTS under
+  `airflowVersion: 2.11.0` (live `tpl` branch) and stays accepted under
+  the shipped 3.2.2 default, explicit or absent. Pins:
+  `semver_guarded_string_contract_binds_conditionally` (gen),
+  `airflow_webserver_contract_binds_under_version_guard` (CLI, renamed
+  from the abstention pin), exhaustive regex-vs-reference tests in
+  `helm-schema-ast/tests/semver_constraint.rs`.
+
+### F76.2 — composite-in-quotes serialization preimage (FIXED)
+
+Quoted-splice contracts now cover COLLECTION values: Go's fmt embeds
+nested strings and mapping keys raw into `map[k:v]` / `[a b]`, so the
+capture became a dedicated `CaptureKind::QuotedSerialization` lowering to
+`FailValueRequirement::QuotedSerializationSafe { style }`, whose gen
+encoding is a self-recursive `$defs` definition per quoting style
+(`helm-double-quoted-safe` / `helm-single-quoted-safe`): non-string
+scalars are always safe, strings and property names must match the style's
+content grammar, and arrays/objects recurse. The old
+`[NotSchemaType(string), MatchesPattern]` pair (whose not-string arm let
+composites through) is gone; the safe-content patterns moved to
+`QuotedScalarStyle::safe_content_pattern` in core. The test helper
+`schema_accepts_instance` also stopped hiding document `$defs` when
+wrapping fragments (it now preserves existing definitions and only
+supplies helm-truthy when genuinely absent).
+
+Moving the quoted path into the capture KIND surfaced a latent
+namespacing gap: dependency rebasing mapped only a fail capture's
+conjunction and range facts, never the kind payload's own paths, so
+every kind-carried capture path (ValueType, ValuePattern, IndexAccess,
+RangeKeyStrings, …) crossed subchart boundaries UNPREFIXED — attaching
+subchart contracts to the parent's root paths. `CaptureKind::
+map_value_paths` now rebases them; twelve umbrella corpus schemas
+(airflow, kyverno, kube-prometheus-stack, metallb, external-secrets,
+oauth2-proxy, falco, loki, argo-cd, prometheus, datadog, signoz)
+shifted accordingly, and the wrapper-chart tarball pin moved its quoted
+contract to the subchart-prefixed path. The rebasing also revived the
+zookeeper naming contracts on signoz's `clickhouse.zookeeper.nameOverride`
+(Sprig `contains`/`trunc` consume the raw `default`-selected operand; helm
+aborts on an integer with "wrong type for value"), which ADJUDICATED the
+old `signoz_zookeeper_printf_does_not_type_its_format_operand` pin as
+wrong — it only ever held because the misplacement hid the subchart's
+implications. Its successor
+(`signoz_zookeeper_name_override_string_contract_stays_branch_scoped`)
+pins the corrected truth: the string implications exist and every one
+rides the operand's own truthiness, keeping the falsy set open.
+
+- Pins: `double_quoted_splice_composites_require_safe_nested_strings`
+  (zalando's map-valued registry: nested quote/key/depth rejections, safe
+  composites accepted), `single_quoted_splice_composites_require_safe_nested_strings`
+  (nested apostrophe; doubled apostrophe accepted). All prior quoted pins
+  hold under the new encoding.
+
+### F80 — per-key merge shadowing (FIXED)
+
+Ordered `merge` is now modeled as ordered: `eval_merge` produces
+`AbstractValue::MergedLayers` (highest precedence first; `mergeOverwrite`
+reverses) when every operand carries a distinct values identity, behaving
+as `Choice` for every influence question. Lowering stamps each layer's
+splices with `MergeLayersUse { layers, position }`, carried through
+`ContractUse`/`ProviderSchemaUse` (and the provider lookup cache key). The
+signal builder drops sibling-layer `with` markers from a layer's row
+condition (a layer's keys render exactly when the LAYER is truthy — the
+old filing keyed each layer's typing by the OTHER path's truthiness, the
+velero inversion) and routes merge-layer provider uses to the path level,
+where the generator synthesizes:
+
+- position 0 (preferred): a whole-payload arm under the layer's own
+  truthiness (payload-internal `$ref`s inlined by a bounded dereference);
+- position > 0 (shadowed): per provider property `k`, an arm
+  `if not(hasKey(earlier, k)) then legacy.k: S_k` — finite,
+  provider-enumerated, exactly the design recorded last round. Custom
+  keys outside the payload stay open.
+
+- velero: active legacy `securityContext.runAsUser: {bad: true}` now
+  REJECTS; the same value shadowed by `podSecurityContext.runAsUser: 1000`
+  now ACCEPTS (both directions were wrong before). Pins:
+  `shadowed_merge_layer_binds_members_only_where_unshadowed`,
+  `merge_overwrite_reverses_layer_precedence` (gen),
+  `merge_of_values_paths_forms_ordered_layers` (IR value shape),
+  `velero_merge_shadowing_scopes_legacy_security_context` (CLI).
+
+### F104 — $tplYaml program wrappers (FIXED, bounded)
+
+Detection is structural end-to-end: an `include NAME` whose argument
+carries the VALUES ROOT records the candidate engine
+(`Effects::values_root_helper_includes`, flowing through summaries to the
+document), and `IrAnalysisDb::program_wrapper_sentinels` scans the define
+family (entry plus transitive includes, bounded) for the engine shape — a
+literal key both TESTED with `hasKey` and READ with `get` into a value
+feeding `tpl` (variable-indirect or direct). Matching sentinels become
+`ValuesProgramWrapper { scope_path, key }` facts on the schema signals
+(dependency namespacing rebases the scope like `ValuesDefaultSource`).
+
+The generator's `program_wrapper` pass then unions every value-position
+node (base properties, conditional arms' then/else, `$defs` payloads —
+never test-position keywords or the helm-* test definitions) with the
+singleton-wrapper alternative: exactly one sentinel member
+(`minProperties`/`maxProperties` 1, closed), whose program must be a
+string; at pure integer-typed nodes a STATIC program (no template action)
+must lex as an integer literal, while dynamic programs stay an explicit
+open alternative.
+
+- nats: `podTemplate.topologySpreadConstraints: {$tplYaml: "{}"}` was
+  falsely rejected and now accepts; non-string programs, two-key maps,
+  and nested wrappers keep failing; the sentinel keys still never leak
+  into root properties. Pins:
+  `detected_engine_accepts_program_wrappers_at_value_nodes`,
+  `without_an_engine_wrapper_maps_stay_ordinary_objects` (gen),
+  `nats_program_wrappers_inhabit_typed_leaves` (CLI).
+- Residuals: the plan's original `config.nats.port` rejection narrative
+  is stale — the committed corpus already accepts everything at those
+  leaves through an open config alternative, so the integer-program
+  constraint currently binds only where typed nodes are not bypassed.
+  The NATS `extraResources: [true]` member-kind case remains open (it
+  needs resource-sink typing for extraResources items, not the wrapper
+  representation).
+
+### Residuals carried forward
+
+F31/F38/F51/F68/F70/F71/F72/F75/F83/F85/F93/F95, the datadog
+printf-composed tag, and the F82/F84-family notes keep their prior
+positions and diagnoses.
