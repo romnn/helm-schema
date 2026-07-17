@@ -35,6 +35,7 @@ struct ProviderSchemaLookupKey {
     template_supplied_member_keys: std::collections::BTreeSet<String>,
     split_segment: Option<helm_schema_core::SplitSegmentUse>,
     merge_layers: Option<helm_schema_core::MergeLayersUse>,
+    range_key: bool,
 }
 
 pub(crate) struct PathSchemaResolver<'a> {
@@ -179,7 +180,9 @@ fn provider_schemas_for_path_evidence(
         // Merge-layer uses resolve through synthesized arms instead: the
         // preferred layer as a whole-payload arm under its own truthiness,
         // a shadowed layer as per-key arms scoped to unshadowed keys.
-        if provider_use.merge_layers.is_some() {
+        // Range-KEY uses likewise: their slot constrains the key domain,
+        // never the collection's value schema.
+        if provider_use.merge_layers.is_some() || provider_use.range_key {
             continue;
         }
         let lookup_key = ProviderSchemaLookupKey {
@@ -190,6 +193,7 @@ fn provider_schemas_for_path_evidence(
             template_supplied_member_keys: provider_use.template_supplied_member_keys.clone(),
             split_segment: provider_use.split_segment.clone(),
             merge_layers: provider_use.merge_layers.clone(),
+            range_key: provider_use.range_key,
         };
         let schema = match provider_schema_cache.entry(lookup_key) {
             std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),

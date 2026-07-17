@@ -11,6 +11,10 @@ pub(crate) enum AbstractValue {
     JsonDecodedPath(String),
     /// Key produced by directly ranging a values-backed collection.
     RangeKey(String),
+    /// The list of keys of the values-backed collection at path (`keys m`).
+    /// Ranging it binds the item to [`Self::RangeKey`], so plucking that
+    /// key back out of the same collection is a member projection.
+    KeysList(String),
     OutputPath(String, HelperOutputMeta),
     RootContext,
     StringSet(BTreeSet<String>),
@@ -106,6 +110,7 @@ impl AbstractValue {
             | Self::Unknown
             | Self::ValuesPath(_)
             | Self::JsonDecodedPath(_)
+            | Self::KeysList(_)
             | Self::OutputPath(_, _)
             | Self::RootContext
             | Self::StringSet(_)
@@ -155,6 +160,13 @@ impl AbstractValue {
             Self::MergedLayers(layers) => {
                 for value in layers {
                     value.collect_paths(out, descend_structures, suppress_values_root);
+                }
+            }
+            // The derived keys list influences output without carrying the
+            // collection's member values.
+            Self::KeysList(path) => {
+                if !suppress_values_root {
+                    out.insert(path.clone());
                 }
             }
             // Influence paths surface in full path collection (output
@@ -284,6 +296,7 @@ impl AbstractValue {
             | Self::ValuesPath(_)
             | Self::JsonDecodedPath(_)
             | Self::RangeKey(_)
+            | Self::KeysList(_)
             | Self::RootContext
             | Self::StringSet(_)
             | Self::DerivedBoolean(_)
@@ -342,6 +355,7 @@ impl AbstractValue {
     pub(crate) fn fragment_range_item(&self) -> Option<Self> {
         match self {
             Self::ValuesPath(path) => Some(Self::ValuesPath(item_path(path))),
+            Self::KeysList(path) => Some(Self::RangeKey(path.clone())),
             Self::JsonDecodedPath(path) => Some(Self::JsonDecodedPath(item_path(path))),
             Self::OutputPath(path, meta) if meta.json_decoded => {
                 Some(Self::OutputPath(item_path(path), meta.clone()))
@@ -429,6 +443,7 @@ impl AbstractValue {
             | Self::ValuesPath(_)
             | Self::JsonDecodedPath(_)
             | Self::RangeKey(_)
+            | Self::KeysList(_)
             | Self::OutputPath(_, _)
             | Self::DerivedBoolean(_)
             | Self::SplitList { .. }
@@ -506,6 +521,7 @@ impl AbstractValue {
             Self::Top
             | Self::Unknown
             | Self::RangeKey(_)
+            | Self::KeysList(_)
             | Self::RootContext
             | Self::StringSet(_)
             | Self::DerivedBoolean(_)
@@ -575,6 +591,7 @@ impl AbstractValue {
             | Self::ValuesPath(_)
             | Self::JsonDecodedPath(_)
             | Self::RangeKey(_)
+            | Self::KeysList(_)
             | Self::OutputPath(_, _)
             | Self::RootContext
             | Self::StringSet(_)
@@ -630,6 +647,7 @@ impl AbstractValue {
             | Self::ValuesPath(_)
             | Self::JsonDecodedPath(_)
             | Self::RangeKey(_)
+            | Self::KeysList(_)
             | Self::RootContext
             | Self::StringSet(_)
             | Self::DerivedBoolean(_)
@@ -724,7 +742,8 @@ impl AbstractValue {
             | Self::DerivedBoolean(_)
             | Self::SplitList { .. }
             | Self::SplitSegment { .. }
-            | Self::RangeKey(_) => None,
+            | Self::RangeKey(_)
+            | Self::KeysList(_) => None,
             Self::StringSet(_) => None,
             Self::Choice(choices) => {
                 let mut out = Vec::new();
@@ -880,6 +899,7 @@ impl AbstractValue {
             Self::ValuesPath(_)
             | Self::JsonDecodedPath(_)
             | Self::RangeKey(_)
+            | Self::KeysList(_)
             | Self::OutputPath(_, _)
             | Self::RootContext
             | Self::Unknown
@@ -992,6 +1012,7 @@ impl AbstractValue {
             Self::Top
             | Self::Unknown
             | Self::RangeKey(_)
+            | Self::KeysList(_)
             | Self::Dict(_)
             | Self::List(_)
             | Self::Overlay { .. }

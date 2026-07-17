@@ -87,6 +87,7 @@ fn raw_condition_path(value: &AbstractValue) -> Option<String> {
         AbstractValue::Top
         | AbstractValue::Unknown
         | AbstractValue::RangeKey(_)
+        | AbstractValue::KeysList(_)
         | AbstractValue::RootContext
         | AbstractValue::StringSet(_)
         | AbstractValue::DerivedBoolean(_)

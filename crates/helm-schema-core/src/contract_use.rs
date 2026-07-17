@@ -60,6 +60,10 @@ pub struct ContractUse {
     /// Set when the value renders as one layer of an ordered `merge`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub merge_layers: Option<MergeLayersUse>,
+    /// Set when the rendered text is the collection's RANGE KEY rather than
+    /// its value: the sink constrains the key domain only.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub range_key: bool,
 }
 
 impl<'de> Deserialize<'de> for ContractUse {
@@ -84,6 +88,8 @@ impl<'de> Deserialize<'de> for ContractUse {
             split_segment: Option<SplitSegmentUse>,
             #[serde(default)]
             merge_layers: Option<MergeLayersUse>,
+            #[serde(default)]
+            range_key: bool,
         }
 
         let wire = WireContractUse::deserialize(deserializer)?;
@@ -98,6 +104,7 @@ impl<'de> Deserialize<'de> for ContractUse {
             template_supplied_member_keys: wire.template_supplied_member_keys,
             split_segment: wire.split_segment,
             merge_layers: wire.merge_layers,
+            range_key: wire.range_key,
         })
     }
 }
@@ -151,6 +158,7 @@ impl ContractUse {
             template_supplied_member_keys: std::collections::BTreeSet::new(),
             split_segment: None,
             merge_layers: None,
+            range_key: false,
         }
     }
 

@@ -172,6 +172,36 @@ fn build_single_condition_fragment(
                 default_matches,
             )
         }
+        // The existential over iterated items: `contains` covers the array
+        // lane; the object lane quantifies member values through the
+        // double negation (∃ member P = ¬∀ member ¬P).
+        ConditionalGuard::ContainsMemberEquals {
+            path,
+            member,
+            value,
+        } => {
+            let item = SchemaNode::foreign(serde_json::json!({
+                "type": "object",
+                "properties": { member: guard_value_enum_schema(value)?.into_value() },
+                "required": [member],
+            }))
+            .into_value();
+            build_default_aware_leaf_condition_fragment(
+                path,
+                ancestor_segments,
+                SchemaNode::foreign(serde_json::json!({
+                    "anyOf": [
+                        { "type": "array", "contains": item },
+                        { "type": "object", "not": { "additionalProperties": { "not": item } } },
+                    ]
+                })),
+                declared_collection_contains_member_equals(
+                    yaml_value_at_path(values_yaml_doc, path),
+                    member,
+                    value,
+                ),
+            )
+        }
         ConditionalGuard::Not(inner) => Some(SchemaNode::not(build_single_condition_fragment(
             inner,
             ancestor_segments,
@@ -343,6 +373,15 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
                 .ok()
                 .map(|regex| regex.is_match(value))
         }
+        ConditionalGuard::ContainsMemberEquals {
+            path,
+            member,
+            value,
+        } => Some(declared_collection_contains_member_equals(
+            yaml_value_at_path(values_yaml_doc, path),
+            member,
+            value,
+        )),
         ConditionalGuard::Not(inner) => {
             evaluate_guard_on_values(inner, values_yaml_doc).map(|v| !v)
         }
@@ -353,6 +392,27 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
             .collect::<Option<Vec<_>>>()
             .map(|results| results.into_iter().any(|result| result)),
     }
+}
+
+/// Whether the declared collection already carries an iterated item whose
+/// `member` equals `value` (list items or mapping member values).
+fn declared_collection_contains_member_equals(
+    yaml: Option<&YamlValue>,
+    member: &str,
+    value: &GuardValue,
+) -> bool {
+    let items: Vec<&YamlValue> = match yaml {
+        Some(YamlValue::Sequence(items)) => items.iter().collect(),
+        Some(YamlValue::Mapping(mapping)) => mapping.values().collect(),
+        _ => return false,
+    };
+    items.iter().any(|item| {
+        matches!(item, YamlValue::Mapping(mapping)
+        if guard_value_matches_optional_yaml(
+            value,
+            mapping.get(YamlValue::String(member.to_string())),
+        ))
+    })
 }
 
 fn guard_value_matches_optional_yaml(value: &GuardValue, yaml: Option<&YamlValue>) -> bool {

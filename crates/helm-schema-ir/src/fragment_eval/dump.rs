@@ -122,6 +122,9 @@ fn fmt_splice(splice: &Splice) -> String {
     if splice.meta.encoded {
         rendered.push_str(" encoded");
     }
+    if splice.meta.range_key {
+        rendered.push_str(" range-key");
+    }
     rendered
 }
 

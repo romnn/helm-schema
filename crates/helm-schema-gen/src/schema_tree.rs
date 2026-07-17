@@ -170,15 +170,37 @@ pub(crate) fn insert_path_schema_value(
     root.into_value()
 }
 
-fn conditional_entry(condition: SchemaNode, then_schema: SchemaNode) -> SchemaNode {
+fn conditional_entry(condition: Value, then_schema: SchemaNode) -> SchemaNode {
     SchemaNode::foreign(Value::Object(
         [
-            ("if".to_string(), condition.into_value()),
+            ("if".to_string(), condition),
             ("then".to_string(), then_schema.into_value()),
         ]
         .into_iter()
         .collect(),
     ))
+}
+
+/// Whether a condition schema is a pure partition of the value's own TYPE
+/// (`{type: object}`, also negated or a combination of such tests). Such a
+/// condition deliberately selects one runtime kind out of several the chart
+/// handles, so the conditional's carrier must not assert `type: object`
+/// itself; a condition that tests members instead presupposes an object
+/// host.
+fn condition_is_value_type_partition(condition: &Value) -> bool {
+    let Value::Object(object) = condition else {
+        return false;
+    };
+    if object.len() != 1 {
+        return false;
+    }
+    if let Some(inner) = object.get("not") {
+        return condition_is_value_type_partition(inner);
+    }
+    if let Some(Value::Array(items)) = object.get("anyOf").or_else(|| object.get("allOf")) {
+        return items.iter().all(condition_is_value_type_partition);
+    }
+    object.contains_key("type")
 }
 
 fn append_conditional_at_parts(
@@ -272,9 +294,11 @@ fn push_conditional_entry(
         reconcile_node_host_with_branch_schema(node, &then_schema);
     }
     open_host_descendants_extended_by_schema(node, &then_schema);
+    let condition = condition.into_value();
+    let type_partition = condition_is_value_type_partition(&condition);
     // A trivially-true condition (an unconditional requirement, e.g. an
     // unguarded member-access contract) needs no `if`/`then` wrapper.
-    let conditional = if condition.is_empty_slot() {
+    let conditional = if crate::schema_model::is_empty_schema(&condition) {
         then_schema
     } else {
         conditional_entry(condition, then_schema)
@@ -284,7 +308,15 @@ fn push_conditional_entry(
         node,
         SchemaNode::Object { .. } | SchemaNode::Foreign(Value::Object(_))
     ) {
-        *node = SchemaNode::unknown_object();
+        // A type-partition arm deliberately selects one runtime kind out of
+        // several the chart handles, so its carrier holds vacuously for the
+        // unselected kinds; every other conditional presupposes an object
+        // host the same way its member tests do.
+        *node = if type_partition {
+            SchemaNode::untyped_member_host()
+        } else {
+            SchemaNode::unknown_object()
+        };
     }
     node.push_all_of(conditional);
 }

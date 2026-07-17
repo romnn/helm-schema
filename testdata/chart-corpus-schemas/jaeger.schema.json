@@ -9356,12 +9356,19 @@
         "extraObjects": {
           "anyOf": [
             {
+              "items": {
+                "$ref": "#/$defs/schema300"
+              },
               "type": "array"
             },
             {
+              "additionalProperties": {
+                "$ref": "#/$defs/schema300"
+              },
               "type": "object"
             },
             {
+              "maximum": 0,
               "type": "integer"
             },
             {
@@ -12309,6 +12316,65 @@
                 "properties": {
                   "env": {
                     "$ref": "#/$defs/schema292"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "spark": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "spark"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/schema225"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "storage": {
+            "additionalProperties": {},
+            "description": "Storage Connection Settings\nThese settings configure spark and es-maintenance templates.",
+            "properties": {
+              "cassandra": {
+                "additionalProperties": {},
+                "description": "Cassandra connection settings (for external Cassandra or customizing provisioned)",
+                "properties": {
+                  "env": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "maxItems": 0,
+                        "type": "array"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 }
               }

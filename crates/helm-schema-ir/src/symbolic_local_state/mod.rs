@@ -65,6 +65,39 @@ impl SymbolicLocalState {
         *self = joined_branch_outcomes(entry, outcomes);
     }
 
+    /// Conjoin `condition` onto every truthiness reduction this branch
+    /// CHANGED relative to `entry`: the reassigned truthiness holds only
+    /// where the branch ran, so the cross-branch union becomes the exact
+    /// disjunction of guarded arms (the range-sentinel flag pattern).
+    ///
+    /// Bounded on both sides: an approximate arm condition would only
+    /// poison every consumer into abstention, and unbounded conjoining at
+    /// nested joins grows reductions combinatorially, so oversized results
+    /// keep the old unstamped semantics instead.
+    pub(crate) fn conjoin_changed_truthy_reductions(
+        &mut self,
+        entry: &Self,
+        condition: &Predicate,
+    ) {
+        const MAX_STAMPED_GUARDS: usize = 6;
+        if matches!(condition, Predicate::True) || condition.contains_approximation() {
+            return;
+        }
+        let condition_guards = predicate_guard_count(condition);
+        for (variable, reduction) in &mut self.truthy_reductions {
+            if entry.truthy_reductions.get(variable) == Some(reduction)
+                || matches!(reduction, Predicate::False)
+                || reduction.contains_approximation()
+            {
+                continue;
+            }
+            if condition_guards + predicate_guard_count(reduction) > MAX_STAMPED_GUARDS {
+                continue;
+            }
+            *reduction = Predicate::all(vec![condition.clone(), reduction.clone()]);
+        }
+    }
+
     pub(crate) fn enter_local_scope(&mut self) {
         self.local_scopes.push(LocalScopeFrame::default());
     }
@@ -215,5 +248,16 @@ fn restore_map_entry<T>(map: &mut HashMap<String, T>, variable: &str, value: Opt
         map.insert(variable.to_string(), value);
     } else {
         map.remove(variable);
+    }
+}
+
+fn predicate_guard_count(predicate: &Predicate) -> usize {
+    match predicate {
+        Predicate::True | Predicate::False | Predicate::Approximate { .. } => 0,
+        Predicate::Guard(_) => 1,
+        Predicate::Not(inner) => predicate_guard_count(inner),
+        Predicate::And(items) | Predicate::Or(items) => {
+            items.iter().map(predicate_guard_count).sum()
+        }
     }
 }

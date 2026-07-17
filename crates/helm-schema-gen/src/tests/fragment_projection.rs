@@ -1023,6 +1023,7 @@ fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
         template_supplied_member_keys: Default::default(),
         split_segment: None,
         merge_layers: None,
+        range_key: false,
     };
 
     let schema = provider
@@ -1069,6 +1070,41 @@ fn mapping_key_splice_accepts_every_scalar_kind() {
             schema_accepts_instance(&schema, &instance) == want,
             "key positions format scalars and exclude composites: \
              instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A ranged member spliced as a whole fragment at column zero renders as
+/// its own DOCUMENT, and Helm decodes every manifest as a mapping: present
+/// non-null members must be objects while null members decode to empty
+/// manifests (nats renders each `extraResources` item as a document).
+#[test]
+fn document_root_member_splices_require_object_items() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: anchor
+        data: {}
+        {{- range .Values.extraResources }}
+        ---
+        {{ . | toYaml }}
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("extraResources: []\n"));
+    for (instance, want) in [
+        (serde_json::json!({ "extraResources": [true] }), false),
+        (serde_json::json!({ "extraResources": ["audit"] }), false),
+        (
+            serde_json::json!({ "extraResources": [{ "kind": "ConfigMap" }] }),
+            true,
+        ),
+        (serde_json::json!({ "extraResources": [null] }), true),
+        (serde_json::json!({ "extraResources": [] }), true),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "document-root member splice: instance={instance}; schema={schema}"
         );
     }
 }

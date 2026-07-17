@@ -105,6 +105,7 @@ impl LowerScope<'_> {
                     .unwrap_or_default(),
                 split_segment: None,
                 merge_layers: None,
+                range_key: false,
                 provenance: helper_meta
                     .map(|meta| meta.provenance.clone())
                     .unwrap_or_default(),
@@ -158,9 +159,22 @@ pub(crate) fn lower_value(
     match value {
         AbstractValue::Top
         | AbstractValue::Unknown
-        | AbstractValue::RangeKey(_)
+        | AbstractValue::KeysList(_)
         | AbstractValue::RootContext => {
             Guarded::unconditional(AbstractFragment::Opaque(Opaque::default()))
+        }
+        // The rendered key rides a marked splice of its COLLECTION: the
+        // sink's slot constrains the key domain (a string-only slot
+        // excludes a non-empty list's integer keys), never the
+        // collection's value.
+        AbstractValue::RangeKey(path) => {
+            if path.is_empty() {
+                Guarded::unconditional(AbstractFragment::Opaque(Opaque::default()))
+            } else {
+                let mut splice = scope.splice(path, kind, None);
+                splice.meta.range_key = true;
+                Guarded::unconditional(AbstractFragment::Splice(splice))
+            }
         }
         AbstractValue::ValuesPath(path) => {
             if path.is_empty() {
@@ -410,8 +424,20 @@ pub(crate) fn lower_value_scalar_arms(
     match value {
         AbstractValue::Top
         | AbstractValue::Unknown
-        | AbstractValue::RangeKey(_)
+        | AbstractValue::KeysList(_)
         | AbstractValue::RootContext => Vec::new(),
+        // The rendered key rides a marked splice of its COLLECTION: the
+        // sink's slot constrains the key domain (a string-only slot
+        // excludes a non-empty list's integer keys), never the collection's
+        // value.
+        AbstractValue::RangeKey(path) => {
+            if path.is_empty() {
+                return Vec::new();
+            }
+            let mut splice = scope.splice(path, kind, None);
+            splice.meta.range_key = true;
+            vec![(Predicate::True, vec![StringPart::Splice(splice)])]
+        }
         AbstractValue::ValuesPath(path) => {
             if path.is_empty() {
                 Vec::new()

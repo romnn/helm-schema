@@ -471,6 +471,26 @@ struct DefineBlock {
 }
 
 #[tracing::instrument(skip_all)]
+/// The helper names a template source `define`s, for chart-ownership
+/// queries over the define index's files.
+#[must_use]
+pub fn define_names_in_source(src: &str) -> Vec<String> {
+    extract_define_blocks(src)
+        .into_iter()
+        .map(|block| block.name)
+        .collect()
+}
+
+/// The `(name, body)` pairs a template source `define`s, for include-graph
+/// walks that need to follow helper calls through helper bodies.
+#[must_use]
+pub fn define_bodies_in_source(src: &str) -> Vec<(String, String)> {
+    extract_define_blocks(src)
+        .into_iter()
+        .map(|block| (block.name, block.body))
+        .collect()
+}
+
 fn extract_define_blocks(src: &str) -> Vec<DefineBlock> {
     let Some(tree) = parse_go_template(src) else {
         return Vec::new();

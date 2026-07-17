@@ -2012,3 +2012,248 @@ fn external_secrets_pdb_header_member_requires_an_object_host() -> color_eyre::e
         ],
     )
 }
+
+/// signoz's `renderAdditionalEnv` reads each member through `range keys .
+/// | sortAlpha` + `pluck . $dict | first` — a same-map member projection
+/// the analyzer resolves — but then gates every render on a case-folding
+/// dedup accumulator (`not (hasKey $processedKeys (upper .))`). A member
+/// can therefore be SHADOWED by an earlier case-colliding key and never
+/// render, so a blanket per-member EnvVar constraint would falsely reject
+/// `{audit: {value: 7}, AUDIT: {value: "ok"}}`; the schema soundly keeps
+/// the members open. If a future increment starts rejecting the numeric
+/// case below, it must prove the shadowed-member instance stays accepted.
+#[test]
+fn signoz_additional_env_members_stay_open_under_dedup_shadowing() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "signoz-signoz",
+        vec![
+            SemanticCase::accepted(
+                "numeric EnvVar value abstains under the dedup accumulator",
+                json!({ "signoz": { "additionalEnvs": { "AUDIT": { "value": 7 } } } }),
+            ),
+            SemanticCase::accepted(
+                "case-colliding shadowed member renders nothing",
+                json!({ "signoz": { "additionalEnvs": {
+                    "AUDIT": { "value": "ok" }, "audit": { "value": 7 }
+                } } }),
+            ),
+            SemanticCase::accepted(
+                "scalar member renders through the quoted value lane",
+                json!({ "signoz": { "additionalEnvs": { "AUDIT": 7 } } }),
+            ),
+        ],
+    )
+}
+
+/// minio renders each `environment` range KEY at the EnvVar `name:` slot
+/// (`statefulset.yaml`). A list supplies integer indices there — `name: 0`
+/// renders but the provider rejects the non-string name — so non-empty
+/// lists are excluded while the map lane, the empty list (zero
+/// iterations), and absence stay open.
+#[test]
+fn minio_environment_list_lane_is_excluded_at_the_name_slot() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "minio",
+        vec![
+            SemanticCase::rejected(
+                "non-empty list supplies integer keys",
+                "/environment",
+                json!({ "environment": ["audit"] }),
+            ),
+            SemanticCase::accepted(
+                "map keys are strings",
+                json!({ "environment": { "AUDIT": "ok" } }),
+            ),
+            SemanticCase::accepted(
+                "empty list runs zero iterations",
+                json!({ "environment": [] }),
+            ),
+        ],
+    )
+}
+
+/// airflow's celery-broker sentinel (`check-values.yaml`) accumulates a
+/// Boolean while ranging `env` and terminates when neither
+/// `data.brokerUrlSecretName` nor an item named
+/// `AIRFLOW__CELERY__BROKER_URL_CMD` exists. The flag joins to the
+/// existential over `env` and lowers to a `contains`-backed terminal
+/// clause under the celery/redis guards.
+#[test]
+fn airflow_celery_broker_sentinel_requires_a_matching_env_item() -> color_eyre::eyre::Result<()> {
+    let celery = |extra: serde_json::Value| {
+        let mut base = json!({
+            "executor": "CeleryExecutor",
+            "redis": { "enabled": true, "passwordSecretName": "redis-secret" }
+        });
+        for (key, value) in extra.as_object().expect("object").iter() {
+            base.as_object_mut()
+                .expect("object")
+                .insert(key.clone(), value.clone());
+        }
+        base
+    };
+    assert_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::rejected("no broker source terminates", "", celery(json!({}))),
+            SemanticCase::rejected(
+                "a differently named env item terminates",
+                "",
+                celery(json!({ "env": [{ "name": "OTHER", "value": "x" }] })),
+            ),
+            SemanticCase::accepted(
+                "brokerUrlSecretName satisfies the sentinel",
+                celery(json!({ "data": { "brokerUrlSecretName": "broker-secret" } })),
+            ),
+            SemanticCase::accepted(
+                "a matching env item satisfies the sentinel",
+                celery(
+                    json!({ "env": [{ "name": "AIRFLOW__CELERY__BROKER_URL_CMD", "value": "cmd" }] }),
+                ),
+            ),
+        ],
+    )
+}
+
+/// cilium's `validate.yaml` states scalar domains through `fail` guards:
+/// the 32-character `cluster.name` length bound, the internal-or-external
+/// `kvstoreMode` membership, and the 255-or-511 `maxConnectedClusters`
+/// coerced inequality pair. The sound-subset lowerings reject the
+/// strengthened domains while coerced spellings outside them stay open.
+#[test]
+fn cilium_scalar_domain_validators_reject_out_of_domain_values() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "cilium",
+        vec![
+            SemanticCase::rejected(
+                "cluster name over 32 characters",
+                "/cluster/name",
+                json!({ "cluster": { "name": "a".repeat(40) } }),
+            ),
+            SemanticCase::accepted(
+                "cluster name within the bound",
+                json!({ "cluster": { "name": "good-name" } }),
+            ),
+            SemanticCase::rejected(
+                "kvstoreMode outside the literal membership",
+                "",
+                json!({ "clustermesh": { "apiserver": { "kvstoremesh": { "kvstoreMode": "bogus" } } } }),
+            ),
+            SemanticCase::accepted(
+                "kvstoreMode in the membership",
+                json!({ "clustermesh": { "apiserver": { "kvstoremesh": { "kvstoreMode": "internal" } } } }),
+            ),
+            SemanticCase::rejected(
+                "maxConnectedClusters outside 255-or-511",
+                "/clustermesh",
+                json!({ "clustermesh": { "maxConnectedClusters": 300 } }),
+            ),
+            SemanticCase::accepted(
+                "maxConnectedClusters at the alternate bound",
+                json!({ "clustermesh": { "maxConnectedClusters": 511 } }),
+            ),
+            SemanticCase::accepted(
+                "numeric string stays outside the raw-integer subset",
+                json!({ "clustermesh": { "maxConnectedClusters": "255" } }),
+            ),
+        ],
+    )
+}
+
+/// airflow's `check-values.yaml` terminates below the minimum supported
+/// version through `semverCompare "<2.11.0"`; the comparator's exact
+/// pattern subset now reaches the terminal clause.
+#[test]
+fn airflow_minimum_version_terminal_rejects_older_semver() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::rejected(
+                "below the minimum supported version",
+                "",
+                json!({ "airflowVersion": "2.10.0" }),
+            ),
+            SemanticCase::accepted(
+                "at the minimum supported version",
+                json!({ "airflowVersion": "2.11.0" }),
+            ),
+        ],
+    )
+}
+
+/// nats renders each `extraResources` item as its own document
+/// (`extra-resources.yaml`): Helm decodes every manifest as a mapping, so
+/// scalar and list items cannot become resources; object items (including
+/// `$tplYaml` wrappers) stay open.
+#[test]
+fn nats_extra_resources_items_must_be_objects() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "nats",
+        vec![
+            SemanticCase::rejected(
+                "Boolean item cannot decode as a resource",
+                "/extraResources/0",
+                json!({ "extraResources": [true] }),
+            ),
+            SemanticCase::rejected(
+                "list item cannot decode as a resource",
+                "/extraResources/0",
+                json!({ "extraResources": [["audit"]] }),
+            ),
+            SemanticCase::accepted(
+                "object item stays open",
+                json!({ "extraResources": [{ "apiVersion": "v1", "kind": "ConfigMap",
+                    "metadata": { "name": "extra" } }] }),
+            ),
+            SemanticCase::accepted(
+                "wrapper item is an object",
+                json!({ "extraResources": [{ "$tplYaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: extra" }] }),
+            ),
+        ],
+    )
+}
+
+/// bitnami-postgresql's live parent templates unconditionally include
+/// `common.*` helpers that only the tagged `common` library defines:
+/// disabling the tag makes Helm abort with `no template
+/// "common.names.fullname"`, so the inactive tag states are terminal.
+#[test]
+fn bitnami_postgresql_disabled_common_tag_loses_live_helpers() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "bitnami-postgresql",
+        vec![
+            SemanticCase::rejected(
+                "explicitly disabled library tag",
+                "",
+                json!({ "tags": { "bitnami-common": false } }),
+            ),
+            SemanticCase::accepted(
+                "explicitly enabled library tag",
+                json!({ "tags": { "bitnami-common": true } }),
+            ),
+            SemanticCase::accepted("absent tag defaults to enabled", json!({ "tags": {} })),
+        ],
+    )
+}
+
+/// airflow's counter-pin for the optional-helper implication: the
+/// `bitnami-common` tag belongs to the POSTGRESQL child's own library
+/// dependency, so disabling the tag is terminal only while the postgresql
+/// child itself is active.
+#[test]
+fn airflow_disabled_common_tag_is_scoped_to_the_postgresql_child() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::rejected(
+                "disabled tag under the default active child",
+                "",
+                json!({ "tags": { "bitnami-common": false } }),
+            ),
+            SemanticCase::accepted(
+                "disabled tag with the child disabled",
+                json!({ "tags": { "bitnami-common": false }, "postgresql": { "enabled": false } }),
+            ),
+        ],
+    )
+}

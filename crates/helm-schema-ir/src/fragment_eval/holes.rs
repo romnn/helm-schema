@@ -295,6 +295,32 @@ impl Interpreter<'_> {
         self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
         let (value, extra_paths) =
             prepare_hole_value(hole.value, &hole.effects, kind == ValueKind::Scalar);
+        // A ranged member spliced as a whole fragment at COLUMN ZERO with no
+        // explicit indent renders as document-root content, and Helm decodes
+        // every manifest as a mapping: a present non-null member must be an
+        // object (nats renders each `extraResources` item as its own
+        // document; null members decode to empty manifests and are skipped).
+        // Helper bodies render at their caller's position and abstain.
+        if !self.helper_scope
+            && width.is_none()
+            && kind == ValueKind::Fragment
+            && self.line_indent(span.start) == 0
+            && let Some(AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)) =
+                &value
+            && path.ends_with(".*")
+        {
+            let capture = crate::eval_effect::FailCapture {
+                conjunction: self.fail_capture_conjunction(Vec::new()),
+                ranged: self.capture_ranged_modes(),
+                kind: crate::eval_effect::CaptureKind::ComparableKind {
+                    path: path.clone(),
+                    schema_type: "object".to_string(),
+                },
+            };
+            if !self.fail_conditions.contains(&capture) {
+                self.fail_conditions.push(capture);
+            }
+        }
         let defaulted = hole.effects.default_paths_with_local();
         // Direct helper flows collapsed by transfer functions (printf over
         // include) keep their per-path branch meta: the summary's rendered
@@ -689,6 +715,7 @@ impl Interpreter<'_> {
                             && !splice.meta.string_contract
                             && !splice.meta.json_serialized
                             && splice.meta.split_segment.is_none()
+                            && !splice.meta.range_key
                             && !splice.values_path.is_empty();
                         if !raw {
                             continue;

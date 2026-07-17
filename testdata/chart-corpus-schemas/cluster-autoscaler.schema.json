@@ -12426,6 +12426,104 @@
       "then": {
         "additionalProperties": {},
         "properties": {
+          "extraEnv": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "extraEnv -- Additional container environment variables."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "autoscalingGroups": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "autoscalingGroups"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "clusterName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "labels": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "labels"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
           "extraEnvConfigMaps": {
             "additionalProperties": {
               "$ref": "#/$defs/schema43"
@@ -13023,6 +13121,104 @@
       "then": {
         "additionalProperties": {},
         "properties": {
+          "extraEnvConfigMaps": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "extraEnvConfigMaps -- Additional container environment variables from ConfigMaps."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "autoscalingGroups": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "autoscalingGroups"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "clusterName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "labels": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "labels"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
           "extraEnvSecrets": {
             "additionalProperties": {
               "$ref": "#/$defs/schema40"
@@ -13530,6 +13726,104 @@
               },
               {
                 "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "extraEnvSecrets -- Additional container environment variables from Secrets."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "autoscalingGroups": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "autoscalingGroups"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "clusterName": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterName"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "labels": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "labels"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "autoDiscovery": {
+                    "properties": {
+                      "namespace": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoDiscovery"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraEnvSecrets": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
               },
               {
                 "type": "null"
@@ -13546,12 +13840,33 @@
         "extraObjects": {
           "anyOf": [
             {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "type": "array"
             },
             {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "type": "object"
             },
             {
+              "maximum": 0,
               "type": "integer"
             },
             {
@@ -14199,6 +14514,142 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema176"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "clusterAPIKubeconfigSecret": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "clusterAPIKubeconfigSecret"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "extraVolumeSecrets": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumeSecrets"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "extraVolumes": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "extraVolumes"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "autoscalingGroups": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "autoscalingGroups"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "clusterName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "labels": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "labels"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "autoDiscovery": {
+                        "properties": {
+                          "namespace": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "namespace"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "autoDiscovery"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraVolumeSecrets": {
+            "additionalProperties": {},
+            "description": "extraVolumeSecrets -- Additional volumes to mount from Secrets.\nautoscaler-vol:\nmountPath: /data/autoscaler/\ncustom-vol:\nname: custom-secret\nmountPath: /data/custom/\nitems:\n- key: subkey\npath: mypath",
+            "type": "object"
           }
         }
       }
@@ -15057,6 +15508,280 @@
               },
               {
                 "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "extraVolumeSecrets -- Additional volumes to mount from Secrets.\nautoscaler-vol:\nmountPath: /data/autoscaler/\ncustom-vol:\nname: custom-secret\nmountPath: /data/custom/\nitems:\n- key: subkey\npath: mypath"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema176"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "clusterAPIKubeconfigSecret": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterAPIKubeconfigSecret"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "extraVolumeMounts": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "extraVolumeMounts"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "extraVolumeSecrets": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "extraVolumeSecrets"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoscalingGroups": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "autoscalingGroups"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "autoDiscovery": {
+                            "properties": {
+                              "clusterName": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "clusterName"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoDiscovery"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "autoDiscovery": {
+                            "properties": {
+                              "labels": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "labels"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoDiscovery"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "autoDiscovery": {
+                            "properties": {
+                              "namespace": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "namespace"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoDiscovery"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema176"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "clusterAPIKubeconfigSecret": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "clusterAPIKubeconfigSecret"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "extraVolumeSecrets": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "extraVolumeSecrets"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "extraVolumes": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "extraVolumes"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "autoscalingGroups": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "autoscalingGroups"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "autoDiscovery": {
+                            "properties": {
+                              "clusterName": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "clusterName"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoDiscovery"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "autoDiscovery": {
+                            "properties": {
+                              "labels": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "labels"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoDiscovery"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "autoDiscovery": {
+                            "properties": {
+                              "namespace": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "namespace"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "autoDiscovery"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraVolumeSecrets": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
               },
               {
                 "type": "null"

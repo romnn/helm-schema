@@ -302,6 +302,10 @@ fn record_contract_use(
     contract_use: &ContractUse,
     range_modes: &crate::range_modes::RangeModes,
 ) {
+    if contract_use.range_key {
+        record_range_key_slot_use(paths, contract_use, range_modes);
+        return;
+    }
     let disjuncts = contract_use.condition.disjuncts();
     let has_approximate_disjunct = disjuncts
         .iter()
@@ -347,6 +351,46 @@ fn record_contract_use(
             predicates
         };
         record_contract_use_conjunction(paths, contract_use, &predicates, range_modes);
+    }
+}
+
+/// A row rendering the collection's RANGE KEY contributes exactly one fact:
+/// the provider slot the key renders at, from which the generator derives
+/// the key-domain requirement (a string-only slot excludes a non-empty
+/// list's integer keys). It must never read as a render of the collection's
+/// VALUE. Guarded or indirect sites abstain — the synthesized arm would
+/// fire in states the analysis cannot scope.
+fn record_range_key_slot_use(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    contract_use: &ContractUse,
+    range_modes: &crate::range_modes::RangeModes,
+) {
+    if contract_use.path.0.is_empty() || !range_modes.mode(&contract_use.source_expr).direct {
+        return;
+    }
+    let Some(provider_use) = provider_schema_use(contract_use, false) else {
+        return;
+    };
+    for conjunction in contract_use.condition.disjuncts() {
+        let predicates: Vec<Predicate> = conjunction.iter().cloned().collect();
+        if predicates.iter().any(Predicate::contains_approximation) {
+            continue;
+        }
+        let Some(guards) = lowerable_conditional_guard_set(contract_use, &predicates) else {
+            continue;
+        };
+        let acc = path_accumulator(paths, &contract_use.source_expr);
+        acc.referenced = true;
+        if guards.is_empty() {
+            acc.facts.record_provider_schema_use(provider_use.clone());
+        } else {
+            // The guarded use rides an overlay branch so the synthesized
+            // key-domain arm carries the branch guards; the branch itself
+            // resolves to nothing (range-key uses are skipped by value
+            // resolution) and stays structurally inert.
+            let branch = acc.conditional_overlay_branches.entry(guards).or_default();
+            branch.record_provider_schema_use(provider_use.clone());
+        }
     }
 }
 
@@ -542,7 +586,29 @@ fn record_contract_use_conjunction(
         if contract_use.has_string_contract && own_iteration_only {
             acc.type_hints.insert("string".to_string());
         }
-        let provider_use = (!type_dispatched || complement_dispatched)
+        // A positive dispatch arm normally abstains from provider typing
+        // (a transformed scalar arm observes derived text), but an arm that
+        // splices the VALUE structurally — a fragment under its own lowered
+        // structured-type partition — observes the value itself, so the
+        // provider projection rides the overlay scoped to the tested type.
+        // Scalar-type partitions (a `tpl` string arm rendered as a fragment)
+        // still abstain: their provider projection would be vacuous under
+        // the partition and only bloats the encoding.
+        let structural_dispatch_arm = type_dispatched
+            && matches!(
+                contract_use.kind,
+                ValueKind::Fragment | ValueKind::YamlSerialized
+            )
+            && lowerable_guards.as_ref().is_some_and(|guards| {
+                guards.iter().any(|guard| {
+                    matches!(
+                        guard,
+                        ConditionalGuard::TypeIs { schema_type, .. }
+                            if schema_type == "object" || schema_type == "array"
+                    )
+                })
+            });
+        let provider_use = (!type_dispatched || complement_dispatched || structural_dispatch_arm)
             .then(|| provider_schema_use(contract_use, self_range_guarded))
             .flatten();
         // A merge layer's provider typing is synthesized by the generator
@@ -558,8 +624,25 @@ fn record_contract_use_conjunction(
         if let Some(layered) = merge_layer_provider_use {
             acc.facts.record_provider_schema_use(layered);
         }
+        // A structural dispatch arm splits its facts: the PATH keeps only the
+        // dispatch tolerance (the arm must not hard-type the whole domain its
+        // partition merely selects from), while the BRANCH keeps the real
+        // structural use without the tolerance (which would dissolve the
+        // arm's own provider typing into the serialized preimage).
+        let (path_facts, branch_facts) = if structural_dispatch_arm {
+            let mut path_facts = facts;
+            path_facts.used_as_fragment = false;
+            path_facts.used_as_yaml_serialized = false;
+            path_facts.used_as_pathless_fragment = false;
+            let mut branch_facts = facts;
+            branch_facts.used_as_serialized = false;
+            (path_facts, branch_facts)
+        } else {
+            (facts, facts)
+        };
         acc.record_source_use(
-            facts,
+            path_facts,
+            branch_facts,
             path_is_empty || has_matching_self_guard,
             lowerable_guards,
             branch_provider_use,
@@ -1070,7 +1153,7 @@ fn record_fail_conjunction(
         {
             let clause = conjunction
                 .iter()
-                .map(|predicate| predicate_to_guard(predicate, None))
+                .map(terminal_clause_guard)
                 .collect::<Option<Vec<_>>>();
             if let Some(mut clause) = clause {
                 clause.sort();
@@ -2027,6 +2110,7 @@ impl ContractPathAccumulator {
     fn record_source_use(
         &mut self,
         facts: ContractValuePathFacts,
+        branch_facts: ContractValuePathFacts,
         source_null_tolerant: bool,
         lowerable_guards: Option<Vec<ConditionalGuard>>,
         provider_schema_use: Option<ProviderSchemaUse>,
@@ -2073,7 +2157,7 @@ impl ContractPathAccumulator {
                 branch.facts.is_nullable = true;
                 branch.record_nullable_observation(source_null_tolerant);
                 branch.record_metadata_field_kind(metadata_field_kind);
-                branch.record_facts(facts);
+                branch.record_facts(branch_facts);
 
                 if let Some(provider_schema_use) = provider_schema_use {
                     branch.record_provider_schema_use(provider_schema_use);
@@ -2334,6 +2418,7 @@ fn provider_schema_use(
         template_supplied_member_keys: contract_use.template_supplied_member_keys.clone(),
         split_segment: contract_use.split_segment.clone(),
         merge_layers: contract_use.merge_layers.clone(),
+        range_key: contract_use.range_key,
         is_self_range_collection: self_range_guarded
             && contract_use
                 .path
@@ -2369,6 +2454,13 @@ fn predicate_to_guard(
             )?)))
         }
         Predicate::And(predicates) => {
+            // `Range(P) ∧ Eq(P.*.M, V)` at the document level means SOME
+            // iterated item's member equals the literal — the joined form
+            // of a range-sentinel flag (`$found = true` under the member
+            // test) — and lowers to the `contains` guard.
+            if let Some(contains) = existential_member_guard(predicates) {
+                return Some(contains);
+            }
             let mut guards = predicates
                 .iter()
                 .map(|predicate| predicate_to_guard(predicate, target_value_path))
@@ -2444,14 +2536,91 @@ fn extend_lowerable_predicate(
         // its tested types, and an executing complement arm's requirements
         // hold exactly for the untested ones — so it stays ON the overlay
         // key rather than leaking the arm's shape over the whole domain.
+        // On a `.*` member row the partition keys the MEMBER overlay: the
+        // wildcard guard path is encodable at the member slot, exactly like
+        // its negated complement (signoz's per-member object-versus-scalar
+        // EnvVar dispatch).
         other if predicate_is_self_type_partition(other, target_value_path) => {
-            out.push(predicate_to_guard(other, Some(target_value_path))?);
+            let target = if path_contains_wildcard(target_value_path) {
+                None
+            } else {
+                Some(target_value_path)
+            };
+            out.push(predicate_to_guard(other, target)?);
         }
         other => {
             out.push(predicate_to_guard(other, Some(target_value_path))?);
         }
     }
     Some(())
+}
+
+/// The exact conjunction shape a joined range-sentinel flag produces: one
+/// direct iteration conjunct plus one literal equality on a single member
+/// of the iterated item, and nothing else. Any extra conjunct abstains —
+/// the existential reading holds only when the flag's truthiness is
+/// exactly "some item's member equals the literal".
+fn existential_member_guard(predicates: &[Predicate]) -> Option<ConditionalGuard> {
+    fn flatten<'a>(predicates: &'a [Predicate], out: &mut Vec<&'a Predicate>) {
+        for predicate in predicates {
+            match predicate {
+                Predicate::True => {}
+                Predicate::And(inner) => flatten(inner, out),
+                other => out.push(other),
+            }
+        }
+    }
+    let mut conjuncts = Vec::new();
+    flatten(predicates, &mut conjuncts);
+    let [a, b] = conjuncts.as_slice() else {
+        return None;
+    };
+    let (range_path, eq_path, value) = match (a, b) {
+        (
+            Predicate::Guard(Guard::Range { path: range_path }),
+            Predicate::Guard(Guard::Eq { path, value }),
+        )
+        | (
+            Predicate::Guard(Guard::Eq { path, value }),
+            Predicate::Guard(Guard::Range { path: range_path }),
+        ) => (range_path, path, value),
+        _ => return None,
+    };
+    let member = eq_path
+        .strip_prefix(range_path.as_str())?
+        .strip_prefix(".*.")?;
+    if member.is_empty() || member.contains('.') || member.contains('*') {
+        return None;
+    }
+    Some(ConditionalGuard::ContainsMemberEquals {
+        path: range_path.clone(),
+        member: member.to_string(),
+        value: value.clone(),
+    })
+}
+
+/// A terminal-clause conjunct may lower through an approximate predicate's
+/// recognized SOUND SUBSET: the clause then rejects a subset of the real
+/// failing states (firing less often is safe in this positive position).
+/// The subset must never lower through a negation — `predicate_to_guard`'s
+/// `Not` arm keeps returning `None` for approximate inners.
+fn terminal_clause_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
+    if let Predicate::Approximate { sound_subset, .. } = predicate
+        && !sound_subset.is_empty()
+    {
+        let mut guards = sound_subset
+            .iter()
+            .map(|guard| guard_to_conditional_guard(guard, None))
+            .collect::<Option<Vec<_>>>()?;
+        guards.sort();
+        guards.dedup();
+        return match guards.as_slice() {
+            [] => None,
+            [guard] => Some(guard.clone()),
+            _ => Some(ConditionalGuard::AllOf(guards)),
+        };
+    }
+    predicate_to_guard(predicate, None)
 }
 
 fn guard_to_conditional_guard(

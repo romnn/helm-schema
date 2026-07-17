@@ -140,6 +140,21 @@ impl ContractIr {
     /// This is used for chart-structural activation predicates that apply to
     /// an already-scoped batch of claims, such as dependency `condition:` /
     /// `tags:` liveness from `Chart.yaml`.
+    /// Record that rendering FAILS whenever `condition` holds — an
+    /// unconditionally reached `include` whose helper only an inactive
+    /// optional dependency defines aborts with "no template". The predicate
+    /// lowers through the standard terminal-clause machinery.
+    pub fn add_terminal_fail_condition(&mut self, condition: helm_schema_core::Predicate) {
+        let capture = crate::eval_effect::FailCapture {
+            conjunction: vec![condition],
+            ranged: crate::range_modes::RangeModes::default(),
+            kind: crate::eval_effect::CaptureKind::Fail,
+        };
+        if !self.fail_conditions.contains(&capture) {
+            self.fail_conditions.push(capture);
+        }
+    }
+
     pub fn append_guards_to_all_uses(&mut self, guards: &[Guard]) {
         for contract_use in self.uses.iter_mut().chain(&mut self.dependency_uses) {
             contract_use.condition = contract_use

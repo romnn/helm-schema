@@ -395,6 +395,7 @@ fn project_structured_taint_value(
         AbstractValue::Top
         | AbstractValue::Unknown
         | AbstractValue::RangeKey(_)
+        | AbstractValue::KeysList(_)
         | AbstractValue::RootContext
         | AbstractValue::StringSet(_)
         | AbstractValue::DerivedBoolean(_)

@@ -51,6 +51,13 @@ pub(crate) fn collect_conditional_schemas(
             contract_schema_signals,
             provider,
         )
+        .into_iter()
+        .chain(
+            crate::required_source_backprojection::synthesized_range_key_implications(
+                contract_schema_signals,
+                provider,
+            ),
+        )
     {
         let entries = synthesized_implications.entry(path).or_default();
         for implication in split_implications {
@@ -530,7 +537,8 @@ fn kind_selector_path(guards: &[ConditionalGuard], kinds: &BTreeSet<String>) -> 
             | ConditionalGuard::TypeIs { .. }
             | ConditionalGuard::MatchesPattern { .. }
             | ConditionalGuard::IntGt { .. }
-            | ConditionalGuard::HasKey { .. } => {}
+            | ConditionalGuard::HasKey { .. }
+            | ConditionalGuard::ContainsMemberEquals { .. } => {}
         }
     }
 
@@ -674,7 +682,7 @@ fn fail_requirement_runtime_types(
     }
 }
 
-fn schema_runtime_types(schema: &Value) -> BTreeSet<&'static str> {
+pub(crate) fn schema_runtime_types(schema: &Value) -> BTreeSet<&'static str> {
     let all_types = || {
         BTreeSet::from([
             "array", "boolean", "integer", "null", "number", "object", "string",
@@ -836,7 +844,8 @@ fn implication_guards_supported(
             | ConditionalGuard::TypeIs { .. }
             | ConditionalGuard::MatchesPattern { .. }
             | ConditionalGuard::IntGt { .. }
-            | ConditionalGuard::HasKey { .. } => true,
+            | ConditionalGuard::HasKey { .. }
+            | ConditionalGuard::ContainsMemberEquals { .. } => true,
             ConditionalGuard::Not(inner) => implication_guards_supported(
                 std::slice::from_ref(inner),
                 target_value_path,
@@ -872,7 +881,8 @@ fn guards_supported_with_self_path(
             | ConditionalGuard::TypeIs { .. }
             | ConditionalGuard::MatchesPattern { .. }
             | ConditionalGuard::IntGt { .. }
-            | ConditionalGuard::HasKey { .. } => true,
+            | ConditionalGuard::HasKey { .. }
+            | ConditionalGuard::ContainsMemberEquals { .. } => true,
             ConditionalGuard::Not(inner) => guards_supported_with_self_path(
                 std::slice::from_ref(inner),
                 self_path,
@@ -941,7 +951,8 @@ fn guard_holds_vacuously(guard: &ConditionalGuard) -> bool {
         | ConditionalGuard::TypeIs { .. }
         | ConditionalGuard::MatchesPattern { .. }
         | ConditionalGuard::IntGt { .. }
-        | ConditionalGuard::HasKey { .. } => false,
+        | ConditionalGuard::HasKey { .. }
+        | ConditionalGuard::ContainsMemberEquals { .. } => false,
         ConditionalGuard::Eq { value, .. } => matches!(value, GuardValue::Null),
         ConditionalGuard::NotEq { .. }
         | ConditionalGuard::Absent { .. }

@@ -129,6 +129,18 @@ fn destructured_range_with_len_guard_preserves_shape_erased_members() {
                 }),
             ),
         }),
+        // The range KEY renders at the string-only `name:` slot, so a
+        // non-empty list's integer keys are excluded.
+        root_property_schema(
+            "environment",
+            serde_json::json!({
+                "anyOf": [
+                    { "type": "object" },
+                    { "maxItems": 0, "type": "array" },
+                    { "type": "null" },
+                ]
+            }),
+        ),
         root_property_schema(
             "environment",
             serde_json::json!({ "not": { "type": "boolean" } }),
@@ -453,6 +465,7 @@ fn wildcard_source_path_types_both_collection_lanes_without_empty_variant() {
         template_supplied_member_keys: Default::default(),
         split_segment: None,
         merge_layers: None,
+        range_key: false,
     }];
     let values_yaml = indoc! {"
         image:

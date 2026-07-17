@@ -1003,7 +1003,166 @@ impl ValuePathContext<'_> {
         if !subset.is_empty() {
             return subset;
         }
-        self.int_cast_comparison_sound_subset(expr)
+        let subset = self.int_cast_comparison_sound_subset(expr);
+        if !subset.is_empty() {
+            return subset;
+        }
+        let subset = self.len_comparison_sound_subset(expr);
+        if !subset.is_empty() {
+            return subset;
+        }
+        let subset = self.int_cast_inequality_sound_subset(expr);
+        if !subset.is_empty() {
+            return subset;
+        }
+        self.negated_membership_sound_subset(expr)
+    }
+
+    /// `gt (len .Values.x) N` admits a bounded string strengthening: a
+    /// string of more than N CHARACTERS has more than N bytes, so it always
+    /// satisfies Go's byte-length comparison (cilium's 32-character
+    /// `cluster.name` bound). Long collections also satisfy the guard but
+    /// have no pattern encoding, so they stay outside the subset.
+    fn len_comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
+        let TemplateExpr::Call { function, args } = expr.deparen() else {
+            return Vec::new();
+        };
+        let (len_expr, bound) = match (function.as_str(), args.as_slice()) {
+            ("gt", [left, right]) => match right.deparen() {
+                TemplateExpr::Literal(Literal::Int(bound)) => (left.deparen(), *bound),
+                _ => return Vec::new(),
+            },
+            ("lt", [left, right]) => match left.deparen() {
+                TemplateExpr::Literal(Literal::Int(bound)) => (right.deparen(), *bound),
+                _ => return Vec::new(),
+            },
+            _ => return Vec::new(),
+        };
+        let TemplateExpr::Call { function, args } = len_expr else {
+            return Vec::new();
+        };
+        if function != "len" || args.len() != 1 {
+            return Vec::new();
+        }
+        let (Some(path), Ok(bound)) = (
+            self.single_resolved_values_path_expr(&args[0]),
+            usize::try_from(bound),
+        ) else {
+            return Vec::new();
+        };
+        vec![Guard::MatchesPattern {
+            path,
+            pattern: format!("^[\\s\\S]{{{},}}$", bound + 1),
+            templated: false,
+        }]
+    }
+
+    /// `ne (int x) L` admits a raw-integer strengthening: an integer input
+    /// is its own coercion, so a raw JSON integer different from the
+    /// literal always satisfies the comparison (cilium's 255-or-511
+    /// `maxConnectedClusters` check). Strings and other kinds coerce and
+    /// stay outside the subset.
+    fn int_cast_inequality_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
+        let TemplateExpr::Call { function, args } = expr.deparen() else {
+            return Vec::new();
+        };
+        if function != "ne" {
+            return Vec::new();
+        }
+        let [left, right] = args.as_slice() else {
+            return Vec::new();
+        };
+        let (cast_expr, literal) = match (left.deparen(), right.deparen()) {
+            (cast, TemplateExpr::Literal(Literal::Int(literal))) => (cast, *literal),
+            (TemplateExpr::Literal(Literal::Int(literal)), cast) => (cast, *literal),
+            _ => return Vec::new(),
+        };
+        let TemplateExpr::Call { function, args } = cast_expr else {
+            return Vec::new();
+        };
+        if !matches!(function.as_str(), "int" | "int64") || args.len() != 1 {
+            return Vec::new();
+        }
+        let Some(path) = self.single_resolved_values_path_expr(&args[0]) else {
+            return Vec::new();
+        };
+        vec![
+            Guard::TypeIs {
+                path: path.clone(),
+                schema_type: "integer".to_string(),
+            },
+            Guard::NotEq {
+                path,
+                value: helm_schema_core::GuardValue::Int(literal),
+            },
+        ]
+    }
+
+    /// `not (list "a" "b" | has .Values.x)` is EXACTLY "x differs from
+    /// every listed literal" (Sprig `has` is deep equality against each
+    /// item), so the negated membership lowers to the NotEq conjunction
+    /// (cilium's internal-or-external `kvstoreMode` check).
+    fn negated_membership_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
+        let TemplateExpr::Call { function, args } = expr.deparen() else {
+            return Vec::new();
+        };
+        if function != "not" || args.len() != 1 {
+            return Vec::new();
+        }
+        let (subject, list_args) = match args[0].deparen() {
+            TemplateExpr::Call { function, args } if function == "has" && args.len() == 2 => {
+                (&args[0], &args[1])
+            }
+            TemplateExpr::Pipeline(stages) => match stages.as_slice() {
+                [list, has] => match (list.deparen(), has.deparen()) {
+                    (
+                        list @ TemplateExpr::Call { function, .. },
+                        TemplateExpr::Call {
+                            function: has_name,
+                            args: has_args,
+                        },
+                    ) if matches!(function.as_str(), "list" | "tuple")
+                        && has_name == "has"
+                        && has_args.len() == 1 =>
+                    {
+                        (&has_args[0], list)
+                    }
+                    _ => return Vec::new(),
+                },
+                _ => return Vec::new(),
+            },
+            _ => return Vec::new(),
+        };
+        let TemplateExpr::Call {
+            function: list_name,
+            args: literals,
+        } = list_args.deparen()
+        else {
+            return Vec::new();
+        };
+        if !matches!(list_name.as_str(), "list" | "tuple") || literals.is_empty() {
+            return Vec::new();
+        }
+        let Some(path) = self.single_resolved_values_path_expr(subject) else {
+            return Vec::new();
+        };
+        let mut guards = Vec::new();
+        for literal in literals {
+            let value = match literal.deparen() {
+                TemplateExpr::Literal(Literal::String(text) | Literal::RawString(text)) => {
+                    helm_schema_core::GuardValue::string(text.clone())
+                }
+                TemplateExpr::Literal(Literal::Int(value)) => {
+                    helm_schema_core::GuardValue::Int(*value)
+                }
+                _ => return Vec::new(),
+            };
+            guards.push(Guard::NotEq {
+                path: path.clone(),
+                value,
+            });
+        }
+        guards
     }
 
     /// `semverCompare "<constraint>" .Values.path` with a literal bounded
@@ -1221,12 +1380,13 @@ impl ValuePathContext<'_> {
     ) -> Option<std::collections::BTreeMap<String, crate::helper_meta::HelperOutputMeta>> {
         match expr.deparen() {
             TemplateExpr::Call { function, args }
-                if matches!(function.as_str(), "typeOf" | "kindOf") && args.len() == 1 =>
+                if helm_schema_ast::type_descriptor_call_subject(function, args).is_some() =>
             {
                 // Selectors and bound locals (a range's value variable,
                 // a `$x := .Values.y` binding) both describe a single
                 // resolvable path.
-                let subject = args[0].deparen();
+                let subject =
+                    helm_schema_ast::type_descriptor_call_subject(function, args)?.deparen();
                 let subject = matches!(
                     subject,
                     TemplateExpr::Field(_)
@@ -1507,6 +1667,7 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
         AbstractValue::Top
         | AbstractValue::Unknown
         | AbstractValue::RangeKey(_)
+        | AbstractValue::KeysList(_)
         | AbstractValue::OutputPath(_, _)
         | AbstractValue::RootContext
         | AbstractValue::StringSet(_)

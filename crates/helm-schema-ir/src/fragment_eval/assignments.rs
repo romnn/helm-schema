@@ -33,10 +33,7 @@ pub(super) fn type_descriptor_sources(
     let TemplateExpr::Call { function, args } = expr.deparen() else {
         return None;
     };
-    if !matches!(function.as_str(), "typeOf" | "kindOf") || args.len() != 1 {
-        return None;
-    }
-    let subject = args[0].deparen();
+    let subject = helm_schema_ast::type_descriptor_call_subject(function, args)?.deparen();
     if !matches!(
         subject,
         TemplateExpr::Field(_) | TemplateExpr::Selector { .. } | TemplateExpr::Variable(_)

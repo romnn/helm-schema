@@ -9148,6 +9148,67 @@
       "if": {
         "anyOf": [
           {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema163"
+              },
+              {
+                "properties": {
+                  "daemonset": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "daemonset"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "deployment": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "deployment"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraContainers": {
+            "additionalProperties": {},
+            "description": "Extra containers created as part of a Promtail Deployment resource\n- spec for Container:\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#container-v1-core\nNote that the key is used as the `name` field, i.e. below will create a\ncontainer named `promtail-proxy`.\npromtail-proxy:\nimage: nginx\n...",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "anyOf": [
@@ -9234,6 +9295,77 @@
               },
               {
                 "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Extra containers created as part of a Promtail Deployment resource\n- spec for Container:\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#container-v1-core\nNote that the key is used as the `name` field, i.e. below will create a\ncontainer named `promtail-proxy`.\npromtail-proxy:\nimage: nginx\n..."
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema163"
+              },
+              {
+                "properties": {
+                  "daemonset": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "daemonset"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "deployment": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "deployment"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "extraContainers": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
               },
               {
                 "type": "null"
@@ -9400,12 +9532,33 @@
         "extraObjects": {
           "anyOf": [
             {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "type": "array"
             },
             {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "type": "object"
             },
             {
+              "maximum": 0,
               "type": "integer"
             },
             {

@@ -25,8 +25,8 @@ mod value_facts;
 use collections::{
     direct_raw_identity_path, eval_append, eval_coalesce, eval_concat, eval_default, eval_dict,
     eval_first, eval_first_result, eval_last, eval_last_result, eval_list, eval_merge,
-    eval_nonempty_split, eval_nonempty_split_pipeline, eval_omit, eval_pick, eval_prepend,
-    eval_regex_split, eval_reverse, eval_reverse_result, eval_split_list,
+    eval_nonempty_split, eval_nonempty_split_pipeline, eval_omit, eval_pick, eval_pluck,
+    eval_prepend, eval_regex_split, eval_reverse, eval_reverse_result, eval_split_list,
     is_nonempty_string_literal,
 };
 use comparisons::{eval_comparison, eval_pipeline_comparison, eval_ternary, eval_type_is};
@@ -249,6 +249,33 @@ pub(crate) fn eval_call_with_helper_calls(
                 identity_value_paths(&operand.value),
                 &mut result.effects,
             );
+            // `keys m` over a single values-backed map keeps the map
+            // identity: ranging the result binds the key domain, and
+            // plucking a ranged key back out of the same map is a member
+            // projection.
+            if function == "keys"
+                && let Some(AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)) =
+                    &operand.value
+            {
+                result.value = Some(AbstractValue::KeysList(path.clone()));
+            }
+            result
+        }
+        // `sortAlpha` stringifies and reorders list items. Over a keys list
+        // the items are already strings, so the collection identity
+        // survives; other operands keep the widened-call semantics (it
+        // coerces non-lists to a singleton, so it imposes no operand kind).
+        "sortAlpha" if args.len() == 1 => {
+            let operand = eval_expr_with_helper_calls(&args[0], env, resolver);
+            match &operand.value {
+                Some(AbstractValue::KeysList(_)) => operand,
+                _ => eval_unknown_call(args, Effects::default(), env, resolver),
+            }
+        }
+        "pluck" if args.len() >= 2 => {
+            let mut result = eval_pluck(args, env, resolver);
+            record_strict_kind_operands(&args[..1], "string", env, resolver, &mut result.effects);
+            record_strict_kind_operands(&args[1..], "object", env, resolver, &mut result.effects);
             result
         }
         "uniq" | "mustUniq" if args.len() == 1 => {
@@ -627,8 +654,22 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                     identity_value_paths(&operand.value),
                     &mut result.effects,
                 );
+                if function == "keys"
+                    && let Some(
+                        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path),
+                    ) = &operand.value
+                {
+                    result.value = Some(AbstractValue::KeysList(path.clone()));
+                }
                 result
             }
+            // `sortAlpha` stringifies and reorders items; a keys list
+            // survives (its items are already strings), other operands keep
+            // the widened-stage semantics.
+            "sortAlpha" if args.is_empty() => match &current.value {
+                Some(AbstractValue::KeysList(_)) => current,
+                _ => eval_unknown_call(args, current.effects, env, resolver),
+            },
             "uniq" | "mustUniq" => {
                 let piped_operand = current.clone();
                 let mut effects = current.effects;

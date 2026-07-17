@@ -39,6 +39,7 @@ fn contract_document_serializes_stable_guard_shape() {
         template_supplied_member_keys: Default::default(),
         split_segment: None,
         merge_layers: None,
+        range_key: false,
     };
     let earlier_use = ContractUse {
         source_expr: "alpha.enabled".to_string(),
@@ -51,6 +52,7 @@ fn contract_document_serializes_stable_guard_shape() {
         template_supplied_member_keys: Default::default(),
         split_segment: None,
         merge_layers: None,
+        range_key: false,
     };
     let document = ContractDocument::from_contract_uses(vec![value_use, earlier_use]);
 

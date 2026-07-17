@@ -581,3 +581,47 @@ fn parse_float_literal(raw: &str) -> Option<f64> {
 #[cfg(test)]
 #[path = "tests/expr.rs"]
 mod tests;
+
+/// Helper names `include`d or `template`d OUTSIDE every control region of
+/// the template. Helm parses and renders each manifest template whole, so
+/// reaching the document at all executes these calls; `if`/`range`/`with`
+/// bodies render conditionally and `define`/`block` bodies run only when
+/// included, so both are excluded.
+#[must_use]
+pub fn unconditional_include_names(source: &str) -> std::collections::BTreeSet<String> {
+    let mut names = std::collections::BTreeSet::new();
+    let Some(tree) = crate::parse_go_template(source) else {
+        return names;
+    };
+    let root = tree.root_node();
+    let mut cursor = root.walk();
+    for child in root.named_children(&mut cursor) {
+        match child.kind() {
+            "if_action"
+            | "range_action"
+            | "with_action"
+            | "define_action"
+            | "block_action"
+            | "text"
+            | "yaml_no_injection_text"
+            | "comment" => {}
+            _ => {
+                let mut exprs = Vec::new();
+                collect_from_node(child, source, &mut exprs);
+                for expr in exprs {
+                    expr.walk(|inner| {
+                        if let TemplateExpr::Call { function, args } = inner
+                            && matches!(function.as_str(), "include" | "template")
+                            && let Some(TemplateExpr::Literal(
+                                Literal::String(name) | Literal::RawString(name),
+                            )) = args.first().map(TemplateExpr::deparen)
+                        {
+                            names.insert(name.clone());
+                        }
+                    });
+                }
+            }
+        }
+    }
+    names
+}

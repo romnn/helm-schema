@@ -57,6 +57,7 @@ fn contract_default_guard_excludes_path_without_external_fallback_scan() {
             template_supplied_member_keys: Default::default(),
             split_segment: None,
             merge_layers: None,
+            range_key: false,
         },
         ContractUse {
             source_expr: "feature".to_string(),
@@ -71,6 +72,7 @@ fn contract_default_guard_excludes_path_without_external_fallback_scan() {
             template_supplied_member_keys: Default::default(),
             split_segment: None,
             merge_layers: None,
+            range_key: false,
         },
     ]);
     let schema_signals = contract.finalize().into_schema_signals();
@@ -102,6 +104,7 @@ fn plain_pathless_scalar_use_does_not_mark_required_without_header_guard() {
         template_supplied_member_keys: Default::default(),
         split_segment: None,
         merge_layers: None,
+        range_key: false,
     }]);
     let schema_signals = contract.finalize().into_schema_signals();
     let mut schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
@@ -135,6 +138,7 @@ fn explicit_nested_values_defaults_suppress_required_inference() {
         template_supplied_member_keys: Default::default(),
         split_segment: None,
         merge_layers: None,
+        range_key: false,
     }]);
     let schema_signals = contract.finalize().into_schema_signals();
     let mut schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));

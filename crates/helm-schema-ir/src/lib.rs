@@ -21,6 +21,7 @@ mod symbolic;
 mod symbolic_local_state;
 mod value_path_context;
 
+pub use analysis_db::{define_bodies_in_source, define_names_in_source};
 pub use contract::{ContractDocument, ContractIr, ContractUse, FinalizedContract};
 pub use helm_schema_core::{
     CapabilityGuard, ConditionalGuard, ConditionalPathOverlay, ContractPathSchemaEvidence,

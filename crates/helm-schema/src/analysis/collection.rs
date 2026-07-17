@@ -5,7 +5,10 @@ use helm_schema_ir::{ContractIr, SymbolicIrContext};
 use helm_schema_k8s::LocalSchemaUniverse;
 
 use super::local_crd_projection::collect_static_crd_universe;
-use super::manifest_contract::{ManifestContractAnalysis, collect_manifest_contract_for_chart};
+use super::manifest_contract::{
+    ManifestContractAnalysis, collect_manifest_contract_for_chart,
+    optional_dependency_helpers_for_chart,
+};
 use super::values_seed::seed_top_level_values_yaml_keys;
 use crate::chart;
 use crate::error::EngineResult;
@@ -48,10 +51,17 @@ pub(crate) fn analyze_charts(
             defines,
             values_roots.string_defaults_for_prefix(&chart.values_prefix),
         );
+        let optional_helpers = optional_dependency_helpers_for_chart(chart, charts, defines);
         let ManifestContractAnalysis {
             contract: manifest_contract,
             local_resource_schemas,
-        } = collect_manifest_contract_for_chart(chart, &symbolic_context, include_tests)?;
+        } = collect_manifest_contract_for_chart(
+            chart,
+            &symbolic_context,
+            include_tests,
+            &optional_helpers,
+            defines,
+        )?;
         contract.append(manifest_contract);
         for resource_schema in local_resource_schemas {
             local_schema_universe.insert_resource_schema(resource_schema);

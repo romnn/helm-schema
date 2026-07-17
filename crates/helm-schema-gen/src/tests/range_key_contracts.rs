@@ -427,3 +427,113 @@ fn guarded_ranged_member_access_constrains_collection_lanes() {
         );
     }
 }
+
+/// signoz's `renderAdditionalEnv` walks a values-backed map through
+/// `range keys . | sortAlpha` and reads the CURRENT member with
+/// `pluck . $dict | first`, then dispatches on the member's Go type
+/// (`printf "%T"`). Plucking the ranged key from the same map is a member
+/// projection, so the map arm's `toYaml` splice at the EnvVar slot must
+/// type arbitrary members while the scalar arm's quoted lane stays open.
+#[test]
+fn same_map_pluck_of_ranged_key_projects_member_identity() {
+    let helpers = indoc! {r#"
+        {{- define "test.renderEnv" -}}
+        {{- $dict := . -}}
+        {{- range keys . | sortAlpha }}
+        {{- $val := pluck . $dict | first -}}
+        {{- $key := upper . -}}
+        {{- $valueType := printf "%T" $val -}}
+        {{- if eq $valueType "map[string]interface {}" }}
+        - name: {{ $key }}
+        {{ toYaml $val | indent 2 -}}
+        {{- else }}
+        - name: {{ $key }}
+          value: {{ $val | quote }}
+        {{- end }}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            spec:
+              containers:
+                - name: main
+                  env:
+                    {{- include "test.renderEnv" .Values.additionalEnvs | nindent 20 }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("additionalEnvs: {}\n"),
+    );
+    for (instance, want) in [
+        // The map arm splices the member as EnvVar fields: a numeric
+        // `value` violates the provider's string field.
+        (
+            serde_json::json!({ "additionalEnvs": { "AUDIT": { "value": 7 } } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "additionalEnvs": { "AUDIT": { "value": "ok" } } }),
+            true,
+        ),
+        // Scalar members render through the quoted `value:` lane.
+        (
+            serde_json::json!({ "additionalEnvs": { "AUDIT": 7 } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "additionalEnvs": { "AUDIT": "ok" } }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "same-map pluck member projection: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// minio renders each `environment` range KEY at the EnvVar `name:` slot.
+/// A list supplies integer keys, so a non-empty list renders `name: 0`
+/// against the provider's string-only field; the map lane and the empty
+/// list (zero iterations) stay open.
+#[test]
+fn range_key_at_string_slot_excludes_integer_key_lanes() {
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            spec:
+              containers:
+                - name: main
+                  env:
+                    {{- range $key, $val := .Values.environment }}
+                    - name: {{ $key }}
+                      value: {{ $val | quote }}
+                    {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("environment: {}\n"));
+    for (instance, want) in [
+        (serde_json::json!({ "environment": ["audit"] }), false),
+        (
+            serde_json::json!({ "environment": { "AUDIT": "ok" } }),
+            true,
+        ),
+        (serde_json::json!({ "environment": [] }), true),
+        (serde_json::json!({}), true),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "range keys at a string-only slot exclude integer key lanes: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}

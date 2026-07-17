@@ -99,7 +99,7 @@ fn range_over_values_splices_list_and_mapping_sources() {
                       splice env fragment
                     when always:
                       mapping:
-                        key dynamic []:
+                        key dynamic [splice env partial range-key]:
                           when range(env):
                             splice env.* scalar
         reads:

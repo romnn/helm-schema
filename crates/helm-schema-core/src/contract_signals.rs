@@ -45,6 +45,16 @@ pub enum ConditionalGuard {
         path: String,
         key: String,
     },
+    /// SOME iterated item of the collection at `path` has `member` equal to
+    /// `value` — the document-level meaning of a range-sentinel flag
+    /// (`Range(path) ∧ Eq(path.*.member, value)`). Lowers to `contains`
+    /// over the array lane and the double-negated member quantifier over
+    /// the object lane.
+    ContainsMemberEquals {
+        path: String,
+        member: String,
+        value: GuardValue,
+    },
     Not(Box<ConditionalGuard>),
     AllOf(Vec<ConditionalGuard>),
     AnyOf(Vec<ConditionalGuard>),
@@ -68,7 +78,8 @@ impl ConditionalGuard {
             | Self::TypeIs { path, .. }
             | Self::MatchesPattern { path, .. }
             | Self::IntGt { path, .. }
-            | Self::HasKey { path, .. } => {
+            | Self::HasKey { path, .. }
+            | Self::ContainsMemberEquals { path, .. } => {
                 paths.insert(path.clone());
             }
             Self::Not(inner) => inner.collect_value_paths(paths),

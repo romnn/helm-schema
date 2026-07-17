@@ -43,6 +43,27 @@ pub fn go_type_descriptor_spellings(schema_type: &str) -> &'static [&'static str
     }
 }
 
+/// The subject of a Go type-descriptor call: `typeOf x`, `kindOf x`, or the
+/// equivalent `printf "%T" x` (`typeOf` is exactly `fmt.Sprintf("%T", …)`;
+/// signoz binds `printf "%T" $val` and dispatches on the result).
+pub fn type_descriptor_call_subject<'a>(
+    function: &str,
+    args: &'a [TemplateExpr],
+) -> Option<&'a TemplateExpr> {
+    match function {
+        "typeOf" | "kindOf" if args.len() == 1 => Some(&args[0]),
+        "printf" if args.len() == 2 => match args[0].deparen() {
+            TemplateExpr::Literal(Literal::String(format) | Literal::RawString(format))
+                if format == "%T" =>
+            {
+                Some(&args[1])
+            }
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
 pub fn is_string_transform_function(function: &str) -> bool {
     matches!(
         function,

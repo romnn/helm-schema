@@ -3548,6 +3548,54 @@
       "then": {
         "additionalProperties": {},
         "properties": {
+          "env": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Environment variables to set for aws-load-balancer-controller pod.\nWe strongly discourage programming access credentials in the controller environment. You should setup IRSA or\ncomparable solutions like kube2iam, kiam etc instead.\nENV_1: \"\"\nENV_2: \"\""
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "env": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "env"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "envSecretName": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "envSecretName"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
           "envSecretName": {
             "anyOf": [
               {

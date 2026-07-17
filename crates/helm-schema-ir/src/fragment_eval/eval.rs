@@ -62,8 +62,8 @@ use crate::{ContractProvenance, Guard, ResourceRef, SourceSpan};
 use helm_schema_core::{GuardDnf, Predicate};
 
 use super::domain::{
-    AbstractFragment, AbstractString, EntryKey, Guarded, Mapping, MappingEntry, PathCondition,
-    Sequence, SiteFacts, StringPart, and_conditions,
+    AbstractFragment, AbstractString, EntryKey, Guarded, Mapping, MappingEntry, Opaque,
+    PathCondition, Sequence, SiteFacts, StringPart, and_conditions,
 };
 
 /// The result of evaluating one template source: the abstract rendered
@@ -865,7 +865,7 @@ impl<'a> Interpreter<'a> {
 
     /// The ambient predicates plus `tail`, with active direct range facts
     /// present even when a caller constructed the capture indirectly.
-    fn fail_capture_conjunction(&self, tail: Vec<Predicate>) -> Vec<Predicate> {
+    pub(super) fn fail_capture_conjunction(&self, tail: Vec<Predicate>) -> Vec<Predicate> {
         let mut conjunction = self.active_predicates.clone();
         for path in &self.active_direct_ranged_paths {
             let range = Predicate::from(Guard::Range { path: path.clone() });
@@ -881,7 +881,7 @@ impl<'a> Interpreter<'a> {
     /// capture site are `direct` (only these have member identities), while
     /// the JSON-decoded and destructured flavors carry every occurrence
     /// observed in this source.
-    fn capture_ranged_modes(&self) -> crate::range_modes::RangeModes {
+    pub(super) fn capture_ranged_modes(&self) -> crate::range_modes::RangeModes {
         let mut ranged = crate::range_modes::RangeModes::default();
         for path in &self.active_direct_ranged_paths {
             ranged.mark_direct(path);
@@ -1011,6 +1011,9 @@ impl<'a> Interpreter<'a> {
         for part in &string.parts {
             match part {
                 StringPart::Text(_) => {}
+                // A rendered RANGE KEY in a templated key says nothing about
+                // the collection's VALUE domain.
+                StringPart::Splice(splice) if splice.meta.range_key => {}
                 StringPart::Splice(splice) => {
                     let mut extra = Vec::new();
                     if splice.meta.defaulted {
@@ -1550,7 +1553,18 @@ impl<'a> Interpreter<'a> {
                     value.extend(self.eval_block_scalar(block));
                 }
                 if let Some(parts) = &entry.value {
-                    value.extend(self.eval_scalar_parts(parts));
+                    let evaluated = self.eval_scalar_parts(parts);
+                    // A sourced value hole that lowered to nothing still
+                    // occupies the value position: without an arm the entry
+                    // would read as an OPEN header and adopt a following
+                    // floated splice as its own value.
+                    if evaluated.is_empty() {
+                        value.extend(Guarded::unconditional(AbstractFragment::Opaque(
+                            Opaque::default(),
+                        )));
+                    } else {
+                        value.extend(evaluated);
+                    }
                 }
                 let (children, siblings) = self.split_structural_children(view, entry.indent);
                 if !children.is_empty() {

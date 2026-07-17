@@ -61769,6 +61769,78 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "not": {
+          "anyOf": [
+            {
+              "properties": {
+                "tags": {
+                  "properties": {
+                    "bitnami-common": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "bitnami-common"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "tags"
+              ],
+              "type": "object"
+            },
+            {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "tags": {
+                        "properties": {
+                          "bitnami-common": {}
+                        },
+                        "required": [
+                          "bitnami-common"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tags"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "tags": {
+                      "properties": {
+                        "bitnami-common": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "bitnami-common"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tags"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "then": false
     }
   ],
   "properties": {

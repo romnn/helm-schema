@@ -871,6 +871,33 @@
       "type": "object"
     },
     "schema133": {
+      "properties": {
+        "global": {
+          "properties": {
+            "imagePullSecrets": {
+              "properties": {
+                "*": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "*"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "imagePullSecrets"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "global"
+      ],
+      "type": "object"
+    },
+    "schema134": {
       "not": {
         "properties": {
           "server": {
@@ -897,7 +924,7 @@
         "type": "object"
       }
     },
-    "schema134": {
+    "schema135": {
       "not": {
         "properties": {
           "server": {
@@ -1118,7 +1145,7 @@
         }
       ]
     },
-    "schema140": {
+    "schema141": {
       "properties": {
         "csi": {
           "properties": {
@@ -1145,7 +1172,7 @@
       ],
       "type": "object"
     },
-    "schema141": {
+    "schema142": {
       "properties": {
         "csi": {
           "properties": {
@@ -1172,7 +1199,7 @@
       ],
       "type": "object"
     },
-    "schema142": {
+    "schema143": {
       "properties": {
         "csi": {
           "properties": {
@@ -1199,7 +1226,7 @@
       ],
       "type": "object"
     },
-    "schema144": {
+    "schema145": {
       "properties": {
         "csi": {
           "properties": {
@@ -1226,14 +1253,14 @@
       ],
       "type": "object"
     },
-    "schema145": {
+    "schema146": {
       "description": "Extra annotations for the serviceAccount definition. This can either be\nYAML or a YAML-formatted multi-line templated string map of the\nannotations to apply to the serviceAccount."
     },
-    "schema146": {
+    "schema147": {
       "description": "Host networking requested for this pod. Use the host's network namespace. If this option is set, the ports that will be used must be specified. Default to false.",
       "type": "boolean"
     },
-    "schema148": {
+    "schema149": {
       "description": "Host networking requested for this pod. Use the host's network namespace. If this option is set, the ports that will be used must be specified. Default to false.",
       "type": "null"
     },
@@ -1396,7 +1423,7 @@
         }
       ]
     },
-    "schema150": {
+    "schema151": {
       "properties": {
         "injector": {
           "properties": {
@@ -1415,7 +1442,7 @@
       ],
       "type": "object"
     },
-    "schema156": {
+    "schema157": {
       "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
       "type": "null"
     },
@@ -1586,7 +1613,7 @@
         }
       ]
     },
-    "schema160": {
+    "schema161": {
       "properties": {
         "injector": {
           "properties": {
@@ -1605,7 +1632,7 @@
       ],
       "type": "object"
     },
-    "schema164": {
+    "schema165": {
       "properties": {
         "injector": {
           "properties": {
@@ -1624,7 +1651,7 @@
       ],
       "type": "object"
     },
-    "schema166": {
+    "schema167": {
       "additionalProperties": {},
       "properties": {
         "failureThreshold": {
@@ -1632,7 +1659,7 @@
         }
       }
     },
-    "schema167": {
+    "schema168": {
       "properties": {
         "injector": {
           "properties": {
@@ -1651,7 +1678,7 @@
       ],
       "type": "object"
     },
-    "schema168": {
+    "schema169": {
       "properties": {
         "injector": {
           "properties": {
@@ -1837,7 +1864,7 @@
         }
       ]
     },
-    "schema170": {
+    "schema171": {
       "not": {
         "properties": {
           "injector": {
@@ -1860,14 +1887,14 @@
         "type": "object"
       }
     },
-    "schema172": {
+    "schema174": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
     },
-    "schema174": {
+    "schema176": {
       "properties": {
         "injector": {
           "properties": {
@@ -1942,15 +1969,8 @@
       "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
       "type": "string"
     },
-    "schema187": {
+    "schema189": {
       "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "schema188": {
-      "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
@@ -1998,7 +2018,14 @@
         "null"
       ]
     },
-    "schema191": {
+    "schema190": {
+      "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "schema193": {
       "not": {
         "properties": {
           "injector": {
@@ -2013,44 +2040,6 @@
         },
         "required": [
           "injector"
-        ],
-        "type": "object"
-      }
-    },
-    "schema198": {
-      "not": {
-        "properties": {
-          "global": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      }
-    },
-    "schema199": {
-      "not": {
-        "properties": {
-          "server": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "server"
         ],
         "type": "object"
       }
@@ -2304,6 +2293,44 @@
       ]
     },
     "schema200": {
+      "not": {
+        "properties": {
+          "global": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      }
+    },
+    "schema201": {
+      "not": {
+        "properties": {
+          "server": {
+            "properties": {
+              "enabled": {}
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "server"
+        ],
+        "type": "object"
+      }
+    },
+    "schema202": {
       "anyOf": [
         {
           "additionalProperties": {},
@@ -2320,7 +2347,7 @@
         }
       ]
     },
-    "schema208": {
+    "schema210": {
       "additionalProperties": {},
       "properties": {
         "hosts": {
@@ -2337,28 +2364,23 @@
         }
       }
     },
-    "schema211": {
+    "schema213": {
       "description": "Minimum consecutive successes for the probe to be considered successful after having failed",
       "type": "integer"
     },
-    "schema214": {
+    "schema216": {
       "description": "When a probe fails, Kubernetes will try failureThreshold times before giving up",
       "type": "integer"
     },
-    "schema216": {
+    "schema218": {
       "description": "Name of the storage class to use.  If null it will use the\nconfigured default Storage Class."
     },
-    "schema217": {
+    "schema219": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
-    },
-    "schema219": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
     },
     "schema22": {
       "allOf": [
@@ -2416,11 +2438,16 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "schema220": {
+    "schema221": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "schema222": {
       "description": "Number of seconds after the container has started before probe initiates",
       "type": "integer"
     },
-    "schema227": {
+    "schema229": {
       "description": "The key of the secret to select from.  Must be a valid secret key.",
       "type": "string"
     },
@@ -2480,7 +2507,7 @@
       "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
       "type": "string"
     },
-    "schema231": {
+    "schema233": {
       "anyOf": [
         {
           "pattern": "^-?(0|[1-9][0-9]*)$",
@@ -2494,7 +2521,7 @@
         }
       ]
     },
-    "schema233": {
+    "schema235": {
       "properties": {
         "createSecret": {
           "enum": [
@@ -2507,7 +2534,7 @@
       ],
       "type": "object"
     },
-    "schema236": {
+    "schema238": {
       "properties": {
         "createSecret": {
           "enum": [
@@ -2562,15 +2589,15 @@
         "null"
       ]
     },
-    "schema241": {
+    "schema243": {
       "description": "Access Mode of the storage device being used for the PVC",
       "type": "string"
     },
-    "schema242": {
+    "schema244": {
       "description": "Specify whether the Secret or its key must be defined",
       "type": "boolean"
     },
-    "schema247": {
+    "schema249": {
       "additionalProperties": {},
       "properties": {
         "repository": {},
@@ -2722,7 +2749,7 @@
         }
       ]
     },
-    "schema250": {
+    "schema252": {
       "properties": {
         "create": {
           "enum": [
@@ -2735,7 +2762,7 @@
       ],
       "type": "object"
     },
-    "schema253": {
+    "schema255": {
       "properties": {
         "create": {
           "enum": [
@@ -2748,12 +2775,12 @@
       ],
       "type": "object"
     },
-    "schema256": {
+    "schema258": {
       "not": {
         "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
       }
     },
-    "schema257": {
+    "schema259": {
       "not": {
         "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
       }
@@ -2788,7 +2815,7 @@
         "null"
       ]
     },
-    "schema262": {
+    "schema264": {
       "properties": {
         "create": {}
       },
@@ -2797,7 +2824,7 @@
       ],
       "type": "object"
     },
-    "schema263": {
+    "schema265": {
       "oneOf": [
         {
           "type": [
@@ -2813,16 +2840,16 @@
         }
       ]
     },
-    "schema267": {
+    "schema269": {
       "not": {
         "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
       }
     },
-    "schema268": {
+    "schema270": {
       "pattern": "^-?(0|[1-9][0-9]*)$",
       "type": "string"
     },
-    "schema270": {
+    "schema272": {
       "anyOf": [
         {
           "type": "string"
@@ -2832,26 +2859,26 @@
         }
       ]
     },
-    "schema272": {
+    "schema274": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema273": {
+    "schema275": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema274": {
+    "schema276": {
       "additionalProperties": {},
       "type": "object"
     },
-    "schema275": {
+    "schema277": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema278": {
+    "schema280": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -4502,7 +4529,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema274"
+                        "$ref": "#/$defs/schema276"
                       },
                       {
                         "not": {
@@ -4692,13 +4719,13 @@
                   "providersDir": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema273"
-                      },
-                      {
                         "$ref": "#/$defs/schema275"
                       },
                       {
-                        "$ref": "#/$defs/schema278"
+                        "$ref": "#/$defs/schema277"
+                      },
+                      {
+                        "$ref": "#/$defs/schema280"
                       },
                       {
                         "not": {
@@ -4711,19 +4738,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema272"
+                        "$ref": "#/$defs/schema274"
                       },
                       {
-                        "$ref": "#/$defs/schema219"
+                        "$ref": "#/$defs/schema221"
                       },
                       {
-                        "$ref": "#/$defs/schema256"
+                        "$ref": "#/$defs/schema258"
                       },
                       {
-                        "$ref": "#/$defs/schema257"
+                        "$ref": "#/$defs/schema259"
                       },
                       {
-                        "$ref": "#/$defs/schema267"
+                        "$ref": "#/$defs/schema269"
                       }
                     ],
                     "description": "Provider host path (must match the CSI provider's path)",
@@ -4843,7 +4870,7 @@
                       "container": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema274"
+                            "$ref": "#/$defs/schema276"
                           },
                           {
                             "not": {
@@ -4926,7 +4953,7 @@
                     "description": "Security context for the pod template and container in the csi provider\ndaemonSet. For OpenShift, the container securityContext defaults to\n`privileged: true`.",
                     "properties": {
                       "container": {
-                        "$ref": "#/$defs/schema270"
+                        "$ref": "#/$defs/schema272"
                       }
                     }
                   }
@@ -5016,7 +5043,7 @@
                       "pod": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema274"
+                            "$ref": "#/$defs/schema276"
                           },
                           {
                             "not": {
@@ -5099,7 +5126,7 @@
                     "description": "Security context for the pod template and container in the csi provider\ndaemonSet. For OpenShift, the container securityContext defaults to\n`privileged: true`.",
                     "properties": {
                       "pod": {
-                        "$ref": "#/$defs/schema270"
+                        "$ref": "#/$defs/schema272"
                       }
                     }
                   }
@@ -5439,7 +5466,7 @@
                                 "$ref": "#/$defs/schema44"
                               },
                               {
-                                "$ref": "#/$defs/schema231"
+                                "$ref": "#/$defs/schema233"
                               }
                             ]
                           }
@@ -5477,13 +5504,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema273"
-                              },
-                              {
                                 "$ref": "#/$defs/schema275"
                               },
                               {
-                                "$ref": "#/$defs/schema278"
+                                "$ref": "#/$defs/schema277"
+                              },
+                              {
+                                "$ref": "#/$defs/schema280"
                               },
                               {
                                 "not": {
@@ -5496,19 +5523,19 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema272"
+                                "$ref": "#/$defs/schema274"
                               },
                               {
-                                "$ref": "#/$defs/schema219"
+                                "$ref": "#/$defs/schema221"
                               },
                               {
-                                "$ref": "#/$defs/schema256"
+                                "$ref": "#/$defs/schema258"
                               },
                               {
-                                "$ref": "#/$defs/schema257"
+                                "$ref": "#/$defs/schema259"
                               },
                               {
-                                "$ref": "#/$defs/schema267"
+                                "$ref": "#/$defs/schema269"
                               }
                             ],
                             "description": "Type of daemon set update. Can be \"RollingUpdate\" or \"OnDelete\". Default is RollingUpdate.",
@@ -6033,10 +6060,10 @@
               "hostNetwork": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema146"
+                    "$ref": "#/$defs/schema147"
                   },
                   {
-                    "$ref": "#/$defs/schema148"
+                    "$ref": "#/$defs/schema149"
                   },
                   {
                     "pattern": "^(true|false|True|False|TRUE|FALSE)$",
@@ -6069,13 +6096,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema273"
-                          },
-                          {
                             "$ref": "#/$defs/schema275"
                           },
                           {
-                            "$ref": "#/$defs/schema278"
+                            "$ref": "#/$defs/schema277"
+                          },
+                          {
+                            "$ref": "#/$defs/schema280"
                           },
                           {
                             "not": {
@@ -6088,19 +6115,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema272"
+                            "$ref": "#/$defs/schema274"
                           },
                           {
-                            "$ref": "#/$defs/schema219"
+                            "$ref": "#/$defs/schema221"
                           },
                           {
-                            "$ref": "#/$defs/schema256"
+                            "$ref": "#/$defs/schema258"
                           },
                           {
-                            "$ref": "#/$defs/schema257"
+                            "$ref": "#/$defs/schema259"
                           },
                           {
-                            "$ref": "#/$defs/schema267"
+                            "$ref": "#/$defs/schema269"
                           }
                         ],
                         "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -6344,7 +6371,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/schema144"
+              "$ref": "#/$defs/schema145"
             }
           },
           {
@@ -6538,7 +6565,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema144"
+            "$ref": "#/$defs/schema145"
           },
           {
             "$ref": "#/$defs/schema25"
@@ -6558,7 +6585,7 @@
                   "affinity": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema274"
+                        "$ref": "#/$defs/schema276"
                       },
                       {
                         "not": {
@@ -6609,7 +6636,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema144"
+            "$ref": "#/$defs/schema145"
           },
           {
             "$ref": "#/$defs/schema25"
@@ -6648,7 +6675,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema141"
+            "$ref": "#/$defs/schema142"
           },
           {
             "$ref": "#/$defs/schema25"
@@ -6668,7 +6695,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema274"
+                        "$ref": "#/$defs/schema276"
                       },
                       {
                         "not": {
@@ -6693,7 +6720,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/schema141"
+              "$ref": "#/$defs/schema142"
             }
           },
           {
@@ -6765,7 +6792,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema141"
+            "$ref": "#/$defs/schema142"
           },
           {
             "$ref": "#/$defs/schema25"
@@ -6842,7 +6869,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/schema140"
+              "$ref": "#/$defs/schema141"
             }
           },
           {
@@ -6887,7 +6914,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema140"
+            "$ref": "#/$defs/schema141"
           },
           {
             "$ref": "#/$defs/schema25"
@@ -6907,7 +6934,7 @@
                   "nodeSelector": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema274"
+                        "$ref": "#/$defs/schema276"
                       },
                       {
                         "not": {
@@ -6958,7 +6985,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema140"
+            "$ref": "#/$defs/schema141"
           },
           {
             "$ref": "#/$defs/schema25"
@@ -6998,7 +7025,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/schema142"
+              "$ref": "#/$defs/schema143"
             }
           },
           {
@@ -7043,7 +7070,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema142"
+            "$ref": "#/$defs/schema143"
           },
           {
             "$ref": "#/$defs/schema25"
@@ -7115,7 +7142,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema142"
+            "$ref": "#/$defs/schema143"
           },
           {
             "$ref": "#/$defs/schema25"
@@ -7387,7 +7414,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema274"
+                        "$ref": "#/$defs/schema276"
                       },
                       {
                         "not": {
@@ -7900,7 +7927,7 @@
                               ]
                             },
                             "readOnly": {
-                              "$ref": "#/$defs/schema188"
+                              "$ref": "#/$defs/schema190"
                             }
                           },
                           "required": [
@@ -7917,7 +7944,7 @@
                           "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                           "properties": {
                             "readOnly": {
-                              "$ref": "#/$defs/schema187"
+                              "$ref": "#/$defs/schema189"
                             },
                             "secretName": {
                               "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -8041,10 +8068,10 @@
                               "$ref": "#/$defs/schema12"
                             },
                             "name": {
-                              "$ref": "#/$defs/schema172"
+                              "$ref": "#/$defs/schema174"
                             },
                             "optional": {
-                              "$ref": "#/$defs/schema217"
+                              "$ref": "#/$defs/schema219"
                             }
                           },
                           "type": [
@@ -8139,7 +8166,7 @@
                               ]
                             },
                             "sizeLimit": {
-                              "$ref": "#/$defs/schema263"
+                              "$ref": "#/$defs/schema265"
                             }
                           },
                           "type": [
@@ -8949,7 +8976,7 @@
                               ]
                             },
                             "readOnly": {
-                              "$ref": "#/$defs/schema187"
+                              "$ref": "#/$defs/schema189"
                             },
                             "volumeID": {
                               "description": "volumeID uniquely identifies a Portworx volume",
@@ -9031,10 +9058,10 @@
                                         "$ref": "#/$defs/schema12"
                                       },
                                       "name": {
-                                        "$ref": "#/$defs/schema172"
+                                        "$ref": "#/$defs/schema174"
                                       },
                                       "optional": {
-                                        "$ref": "#/$defs/schema217"
+                                        "$ref": "#/$defs/schema219"
                                       }
                                     },
                                     "type": [
@@ -9077,7 +9104,7 @@
                                         ]
                                       },
                                       "name": {
-                                        "$ref": "#/$defs/schema172"
+                                        "$ref": "#/$defs/schema174"
                                       },
                                       "optional": {
                                         "description": "optional field specify whether the Secret or its key must be defined",
@@ -9280,14 +9307,14 @@
                               ]
                             },
                             "readOnly": {
-                              "$ref": "#/$defs/schema188"
+                              "$ref": "#/$defs/schema190"
                             },
                             "secretRef": {
                               "additionalProperties": false,
                               "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                               "properties": {
                                 "name": {
-                                  "$ref": "#/$defs/schema172"
+                                  "$ref": "#/$defs/schema174"
                                 }
                               },
                               "type": "object",
@@ -9386,7 +9413,7 @@
                               "$ref": "#/$defs/schema121"
                             },
                             "readOnly": {
-                              "$ref": "#/$defs/schema187"
+                              "$ref": "#/$defs/schema189"
                             },
                             "secretRef": {
                               "$ref": "#/$defs/schema70"
@@ -9653,7 +9680,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema198"
+                    "$ref": "#/$defs/schema200"
                   },
                   {
                     "properties": {
@@ -9679,7 +9706,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema134"
+                    "$ref": "#/$defs/schema135"
                   },
                   {
                     "properties": {
@@ -9713,7 +9740,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema199"
+                    "$ref": "#/$defs/schema201"
                   },
                   {
                     "properties": {
@@ -9739,7 +9766,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema133"
+                    "$ref": "#/$defs/schema134"
                   },
                   {
                     "properties": {
@@ -9823,7 +9850,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema133"
+                    "$ref": "#/$defs/schema134"
                   },
                   {
                     "properties": {
@@ -9867,7 +9894,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema133"
+                    "$ref": "#/$defs/schema134"
                   },
                   {
                     "properties": {
@@ -10101,7 +10128,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema198"
+                    "$ref": "#/$defs/schema200"
                   },
                   {
                     "properties": {
@@ -10127,7 +10154,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema134"
+                    "$ref": "#/$defs/schema135"
                   },
                   {
                     "properties": {
@@ -10161,7 +10188,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema199"
+                    "$ref": "#/$defs/schema201"
                   },
                   {
                     "properties": {
@@ -10187,7 +10214,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema133"
+                    "$ref": "#/$defs/schema134"
                   },
                   {
                     "properties": {
@@ -10297,7 +10324,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema133"
+                    "$ref": "#/$defs/schema134"
                   },
                   {
                     "properties": {
@@ -10352,7 +10379,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema133"
+                    "$ref": "#/$defs/schema134"
                   },
                   {
                     "properties": {
@@ -10606,7 +10633,7 @@
         "additionalProperties": {},
         "properties": {
           "fullnameOverride": {
-            "$ref": "#/$defs/schema270"
+            "$ref": "#/$defs/schema272"
           }
         }
       }
@@ -10647,6 +10674,103 @@
               "externalVaultAddr": {
                 "$ref": "#/$defs/helm-double-quoted-safe",
                 "description": "External vault server address for the injector and CSI provider to use.\nSetting this will disable deployment of a vault server."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "imagePullSecrets": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "imagePullSecrets"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema133"
+              },
+              {
+                "$ref": "#/$defs/schema25"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "global": {
+                    "properties": {
+                      "imagePullSecrets": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "imagePullSecrets"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "global"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/schema133"
+              },
+              {
+                "$ref": "#/$defs/schema16"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "global": {
+            "additionalProperties": {},
+            "properties": {
+              "imagePullSecrets": {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {}
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "description": "Image pull secret to use for registry authentication.\nAlternatively, the value may be specified as an array of strings.\nimagePullSecrets:\n- name: image-pull-secret",
+                "items": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {}
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
               }
             }
           }
@@ -10911,13 +11035,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema273"
-                      },
-                      {
                         "$ref": "#/$defs/schema275"
                       },
                       {
-                        "$ref": "#/$defs/schema278"
+                        "$ref": "#/$defs/schema277"
+                      },
+                      {
+                        "$ref": "#/$defs/schema280"
                       },
                       {
                         "not": {
@@ -10930,19 +11054,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema272"
+                        "$ref": "#/$defs/schema274"
                       },
                       {
-                        "$ref": "#/$defs/schema219"
+                        "$ref": "#/$defs/schema221"
                       },
                       {
-                        "$ref": "#/$defs/schema256"
+                        "$ref": "#/$defs/schema258"
                       },
                       {
-                        "$ref": "#/$defs/schema257"
+                        "$ref": "#/$defs/schema259"
                       },
                       {
-                        "$ref": "#/$defs/schema267"
+                        "$ref": "#/$defs/schema269"
                       }
                     ],
                     "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
@@ -10971,7 +11095,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema198"
+                "$ref": "#/$defs/schema200"
               },
               {
                 "properties": {
@@ -10997,7 +11121,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema134"
+                "$ref": "#/$defs/schema135"
               },
               {
                 "properties": {
@@ -11031,7 +11155,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema199"
+                "$ref": "#/$defs/schema201"
               },
               {
                 "properties": {
@@ -11057,7 +11181,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema133"
+                "$ref": "#/$defs/schema134"
               },
               {
                 "properties": {
@@ -11128,13 +11252,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema273"
-                      },
-                      {
                         "$ref": "#/$defs/schema275"
                       },
                       {
-                        "$ref": "#/$defs/schema278"
+                        "$ref": "#/$defs/schema277"
+                      },
+                      {
+                        "$ref": "#/$defs/schema280"
                       },
                       {
                         "not": {
@@ -11147,19 +11271,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema272"
+                        "$ref": "#/$defs/schema274"
                       },
                       {
-                        "$ref": "#/$defs/schema219"
+                        "$ref": "#/$defs/schema221"
                       },
                       {
-                        "$ref": "#/$defs/schema256"
+                        "$ref": "#/$defs/schema258"
                       },
                       {
-                        "$ref": "#/$defs/schema257"
+                        "$ref": "#/$defs/schema259"
                       },
                       {
-                        "$ref": "#/$defs/schema267"
+                        "$ref": "#/$defs/schema269"
                       }
                     ],
                     "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
@@ -11197,13 +11321,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema273"
-                      },
-                      {
                         "$ref": "#/$defs/schema275"
                       },
                       {
-                        "$ref": "#/$defs/schema278"
+                        "$ref": "#/$defs/schema277"
+                      },
+                      {
+                        "$ref": "#/$defs/schema280"
                       },
                       {
                         "not": {
@@ -11216,19 +11340,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema272"
+                        "$ref": "#/$defs/schema274"
                       },
                       {
-                        "$ref": "#/$defs/schema219"
+                        "$ref": "#/$defs/schema221"
                       },
                       {
-                        "$ref": "#/$defs/schema256"
+                        "$ref": "#/$defs/schema258"
                       },
                       {
-                        "$ref": "#/$defs/schema257"
+                        "$ref": "#/$defs/schema259"
                       },
                       {
-                        "$ref": "#/$defs/schema267"
+                        "$ref": "#/$defs/schema269"
                       }
                     ],
                     "description": "`namespace` is the namespace of the service. Required",
@@ -11436,7 +11560,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema191"
+                "$ref": "#/$defs/schema193"
               },
               {
                 "properties": {
@@ -12174,7 +12298,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/schema167"
+              "$ref": "#/$defs/schema168"
             }
           },
           {
@@ -12220,7 +12344,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema167"
+            "$ref": "#/$defs/schema168"
           },
           {
             "$ref": "#/$defs/schema16"
@@ -12236,7 +12360,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema274"
+                    "$ref": "#/$defs/schema276"
                   },
                   {
                     "not": {
@@ -12277,7 +12401,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema167"
+            "$ref": "#/$defs/schema168"
           },
           {
             "$ref": "#/$defs/schema16"
@@ -12782,7 +12906,7 @@
                     "$ref": "#/$defs/schema36"
                   },
                   {
-                    "$ref": "#/$defs/schema156"
+                    "$ref": "#/$defs/schema157"
                   }
                 ],
                 "description": "Deprecated: please use 'webhook.failurePolicy' instead\nConfigures failurePolicy of the webhook. The \"unspecified\" default behaviour depends on the\nAPI Version of the WebHook.\nTo block pod creation while webhook is unavailable, set the policy to `Fail` below.\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#failure-policy"
@@ -12872,7 +12996,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema268"
+                    "$ref": "#/$defs/schema270"
                   }
                 ]
               }
@@ -12919,10 +13043,10 @@
               "hostNetwork": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema146"
+                    "$ref": "#/$defs/schema147"
                   },
                   {
-                    "$ref": "#/$defs/schema148"
+                    "$ref": "#/$defs/schema149"
                   },
                   {
                     "pattern": "^(true|false|True|False|TRUE|FALSE)$",
@@ -13402,7 +13526,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/schema164"
+              "$ref": "#/$defs/schema165"
             }
           },
           {
@@ -13441,7 +13565,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema164"
+            "$ref": "#/$defs/schema165"
           },
           {
             "$ref": "#/$defs/schema16"
@@ -13457,7 +13581,7 @@
               "nodeSelector": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema274"
+                    "$ref": "#/$defs/schema276"
                   },
                   {
                     "not": {
@@ -13498,7 +13622,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema164"
+            "$ref": "#/$defs/schema165"
           },
           {
             "$ref": "#/$defs/schema16"
@@ -13613,7 +13737,7 @@
                 {
                   "allOf": [
                     {
-                      "$ref": "#/$defs/schema160"
+                      "$ref": "#/$defs/schema161"
                     },
                     {
                       "not": {
@@ -13831,7 +13955,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema160"
+                    "$ref": "#/$defs/schema161"
                   },
                   {
                     "not": {
@@ -13944,7 +14068,7 @@
               "objectSelector": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema274"
+                    "$ref": "#/$defs/schema276"
                   },
                   {
                     "type": "string"
@@ -14099,7 +14223,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema160"
+                    "$ref": "#/$defs/schema161"
                   },
                   {
                     "not": {
@@ -14185,7 +14309,7 @@
                     "$ref": "#/$defs/schema44"
                   },
                   {
-                    "$ref": "#/$defs/schema231"
+                    "$ref": "#/$defs/schema233"
                   }
                 ]
               }
@@ -14391,7 +14515,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema268"
+                    "$ref": "#/$defs/schema270"
                   }
                 ]
               }
@@ -14517,7 +14641,7 @@
                   "container": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema274"
+                        "$ref": "#/$defs/schema276"
                       },
                       {
                         "not": {
@@ -14585,7 +14709,7 @@
                 "description": "Security context for the pod template and the injector container\nThe default pod securityContext is:\nrunAsNonRoot: true\nrunAsGroup: {{ .Values.injector.gid | default 1000 }}\nrunAsUser: {{ .Values.injector.uid | default 100 }}\nfsGroup: {{ .Values.injector.gid | default 1000 }}\nand for container is\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL",
                 "properties": {
                   "container": {
-                    "$ref": "#/$defs/schema270"
+                    "$ref": "#/$defs/schema272"
                   }
                 }
               }
@@ -14661,7 +14785,7 @@
                   "pod": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema274"
+                        "$ref": "#/$defs/schema276"
                       },
                       {
                         "not": {
@@ -14729,7 +14853,7 @@
                 "description": "Security context for the pod template and the injector container\nThe default pod securityContext is:\nrunAsNonRoot: true\nrunAsGroup: {{ .Values.injector.gid | default 1000 }}\nrunAsUser: {{ .Values.injector.uid | default 100 }}\nfsGroup: {{ .Values.injector.gid | default 1000 }}\nand for container is\nallowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL",
                 "properties": {
                   "pod": {
-                    "$ref": "#/$defs/schema270"
+                    "$ref": "#/$defs/schema272"
                   }
                 }
               }
@@ -15005,7 +15129,7 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema274"
+                        "$ref": "#/$defs/schema276"
                       },
                       {
                         "not": {
@@ -15417,7 +15541,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema174"
+            "$ref": "#/$defs/schema176"
           },
           {
             "$ref": "#/$defs/schema16"
@@ -15433,7 +15557,7 @@
               "strategy": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema274"
+                    "$ref": "#/$defs/schema276"
                   },
                   {
                     "not": {
@@ -15474,7 +15598,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema174"
+            "$ref": "#/$defs/schema176"
           },
           {
             "$ref": "#/$defs/schema16"
@@ -15508,7 +15632,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/schema168"
+              "$ref": "#/$defs/schema169"
             }
           },
           {
@@ -15547,7 +15671,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema168"
+            "$ref": "#/$defs/schema169"
           },
           {
             "$ref": "#/$defs/schema16"
@@ -15605,7 +15729,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema168"
+            "$ref": "#/$defs/schema169"
           },
           {
             "$ref": "#/$defs/schema16"
@@ -15639,7 +15763,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/schema150"
+              "$ref": "#/$defs/schema151"
             }
           },
           {
@@ -15753,7 +15877,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema150"
+            "$ref": "#/$defs/schema151"
           },
           {
             "$ref": "#/$defs/schema16"
@@ -15811,7 +15935,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema150"
+            "$ref": "#/$defs/schema151"
           },
           {
             "$ref": "#/$defs/schema16"
@@ -15922,7 +16046,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema268"
+                    "$ref": "#/$defs/schema270"
                   }
                 ]
               }
@@ -15950,7 +16074,7 @@
                         "$ref": "#/$defs/schema36"
                       },
                       {
-                        "$ref": "#/$defs/schema156"
+                        "$ref": "#/$defs/schema157"
                       },
                       {
                         "not": {
@@ -15985,13 +16109,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema273"
-                          },
-                          {
                             "$ref": "#/$defs/schema275"
                           },
                           {
-                            "$ref": "#/$defs/schema278"
+                            "$ref": "#/$defs/schema277"
+                          },
+                          {
+                            "$ref": "#/$defs/schema280"
                           },
                           {
                             "not": {
@@ -16004,19 +16128,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema272"
+                            "$ref": "#/$defs/schema274"
                           },
                           {
-                            "$ref": "#/$defs/schema219"
+                            "$ref": "#/$defs/schema221"
                           },
                           {
-                            "$ref": "#/$defs/schema256"
+                            "$ref": "#/$defs/schema258"
                           },
                           {
-                            "$ref": "#/$defs/schema257"
+                            "$ref": "#/$defs/schema259"
                           },
                           {
-                            "$ref": "#/$defs/schema267"
+                            "$ref": "#/$defs/schema269"
                           }
                         ],
                         "description": "matchPolicy defines how the \"rules\" list is used to match incoming requests. Allowed values are \"Exact\" or \"Equivalent\".\n\n- Exact: match a request only if it exactly matches a specified rule. For example, if deployments can be modified via apps/v1, apps/v1beta1, and extensions/v1beta1, but \"rules\" only included `apiGroups:[\"apps\"], apiVersions:[\"v1\"], resources: [\"deployments\"]`, a request to apps/v1beta1 or extensions/v1beta1 would not be sent to the webhook.\n\n- Equivalent: match a request if modifies a resource listed in rules, even via another API group or version. For example, if deployments can be modified via apps/v1, apps/v1beta1, and extensions/v1beta1, and \"rules\" only included `apiGroups:[\"apps\"], apiVersions:[\"v1\"], resources: [\"deployments\"]`, a request to apps/v1beta1 or extensions/v1beta1 would be converted to apps/v1 and sent to the webhook.\n\nDefaults to \"Equivalent\"",
@@ -16191,7 +16315,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema160"
+                    "$ref": "#/$defs/schema161"
                   },
                   {
                     "not": {
@@ -16464,7 +16588,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema160"
+                    "$ref": "#/$defs/schema161"
                   },
                   {
                     "not": {
@@ -16569,7 +16693,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema268"
+                        "$ref": "#/$defs/schema270"
                       }
                     ],
                     "description": "timeoutSeconds is the amount of seconds before the webhook request will be ignored\nor fails.\nIf it is ignored or fails depends on the failurePolicy\nSee https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts\nfor more details."
@@ -16608,7 +16732,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/schema170"
+                "$ref": "#/$defs/schema171"
               },
               {
                 "$ref": "#/$defs/schema16"
@@ -16618,7 +16742,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema170"
+                "$ref": "#/$defs/schema171"
               },
               {
                 "anyOf": [
@@ -16678,7 +16802,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema170"
+                "$ref": "#/$defs/schema171"
               },
               {
                 "anyOf": [
@@ -17286,7 +17410,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema170"
+                    "$ref": "#/$defs/schema171"
                   },
                   {
                     "$ref": "#/$defs/schema16"
@@ -17296,7 +17420,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema170"
+                    "$ref": "#/$defs/schema171"
                   },
                   {
                     "anyOf": [
@@ -17356,7 +17480,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema170"
+                    "$ref": "#/$defs/schema171"
                   },
                   {
                     "anyOf": [
@@ -17437,7 +17561,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema198"
+                    "$ref": "#/$defs/schema200"
                   },
                   {
                     "properties": {
@@ -17463,7 +17587,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema134"
+                    "$ref": "#/$defs/schema135"
                   },
                   {
                     "properties": {
@@ -17497,7 +17621,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema199"
+                    "$ref": "#/$defs/schema201"
                   },
                   {
                     "properties": {
@@ -17523,7 +17647,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema133"
+                    "$ref": "#/$defs/schema134"
                   },
                   {
                     "properties": {
@@ -17840,7 +17964,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema198"
+                    "$ref": "#/$defs/schema200"
                   },
                   {
                     "properties": {
@@ -17877,7 +18001,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema134"
+                    "$ref": "#/$defs/schema135"
                   },
                   {
                     "properties": {
@@ -17911,7 +18035,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema199"
+                    "$ref": "#/$defs/schema201"
                   },
                   {
                     "properties": {
@@ -17937,7 +18061,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema133"
+                    "$ref": "#/$defs/schema134"
                   },
                   {
                     "properties": {
@@ -18349,7 +18473,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/schema270"
+            "$ref": "#/$defs/schema272"
           }
         }
       }
@@ -18684,7 +18808,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema198"
+                "$ref": "#/$defs/schema200"
               },
               {
                 "properties": {
@@ -18710,7 +18834,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema134"
+                "$ref": "#/$defs/schema135"
               },
               {
                 "properties": {
@@ -18744,7 +18868,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema199"
+                "$ref": "#/$defs/schema201"
               },
               {
                 "properties": {
@@ -18770,7 +18894,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema133"
+                "$ref": "#/$defs/schema134"
               },
               {
                 "properties": {
@@ -18818,13 +18942,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema273"
-                          },
-                          {
                             "$ref": "#/$defs/schema275"
                           },
                           {
-                            "$ref": "#/$defs/schema278"
+                            "$ref": "#/$defs/schema277"
+                          },
+                          {
+                            "$ref": "#/$defs/schema280"
                           },
                           {
                             "not": {
@@ -18837,19 +18961,19 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema272"
+                            "$ref": "#/$defs/schema274"
                           },
                           {
-                            "$ref": "#/$defs/schema219"
+                            "$ref": "#/$defs/schema221"
                           },
                           {
-                            "$ref": "#/$defs/schema256"
+                            "$ref": "#/$defs/schema258"
                           },
                           {
-                            "$ref": "#/$defs/schema257"
+                            "$ref": "#/$defs/schema259"
                           },
                           {
-                            "$ref": "#/$defs/schema267"
+                            "$ref": "#/$defs/schema269"
                           }
                         ],
                         "description": "Name of the object being referenced.",
@@ -19401,13 +19525,13 @@
                             "description": "credentials defines a key of a Secret in the namespace that contains the credentials for authentication.",
                             "properties": {
                               "key": {
-                                "$ref": "#/$defs/schema227"
+                                "$ref": "#/$defs/schema229"
                               },
                               "name": {
                                 "$ref": "#/$defs/schema85"
                               },
                               "optional": {
-                                "$ref": "#/$defs/schema242"
+                                "$ref": "#/$defs/schema244"
                               }
                             },
                             "required": [
@@ -19511,13 +19635,13 @@
                   "interval": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema273"
-                      },
-                      {
                         "$ref": "#/$defs/schema275"
                       },
                       {
-                        "$ref": "#/$defs/schema278"
+                        "$ref": "#/$defs/schema277"
+                      },
+                      {
+                        "$ref": "#/$defs/schema280"
                       },
                       {
                         "not": {
@@ -19530,19 +19654,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema272"
+                        "$ref": "#/$defs/schema274"
                       },
                       {
-                        "$ref": "#/$defs/schema219"
+                        "$ref": "#/$defs/schema221"
                       },
                       {
-                        "$ref": "#/$defs/schema256"
+                        "$ref": "#/$defs/schema258"
                       },
                       {
-                        "$ref": "#/$defs/schema257"
+                        "$ref": "#/$defs/schema259"
                       },
                       {
-                        "$ref": "#/$defs/schema267"
+                        "$ref": "#/$defs/schema269"
                       }
                     ],
                     "description": "Interval at which Prometheus scrapes metrics",
@@ -19879,13 +20003,13 @@
                   "scrapeTimeout": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema273"
-                      },
-                      {
                         "$ref": "#/$defs/schema275"
                       },
                       {
-                        "$ref": "#/$defs/schema278"
+                        "$ref": "#/$defs/schema277"
+                      },
+                      {
+                        "$ref": "#/$defs/schema280"
                       },
                       {
                         "not": {
@@ -19898,19 +20022,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema272"
+                        "$ref": "#/$defs/schema274"
                       },
                       {
-                        "$ref": "#/$defs/schema219"
+                        "$ref": "#/$defs/schema221"
                       },
                       {
-                        "$ref": "#/$defs/schema256"
+                        "$ref": "#/$defs/schema258"
                       },
                       {
-                        "$ref": "#/$defs/schema257"
+                        "$ref": "#/$defs/schema259"
                       },
                       {
-                        "$ref": "#/$defs/schema267"
+                        "$ref": "#/$defs/schema269"
                       }
                     ],
                     "description": "Timeout for Prometheus scrapes",
@@ -20140,13 +20264,13 @@
                             "description": "keySecret defines the Secret containing the client key file for the targets.",
                             "properties": {
                               "key": {
-                                "$ref": "#/$defs/schema227"
+                                "$ref": "#/$defs/schema229"
                               },
                               "name": {
                                 "$ref": "#/$defs/schema85"
                               },
                               "optional": {
-                                "$ref": "#/$defs/schema242"
+                                "$ref": "#/$defs/schema244"
                               }
                             },
                             "required": [
@@ -20425,7 +20549,7 @@
               "additionalProperties": {},
               "properties": {
                 "image": {
-                  "$ref": "#/$defs/schema247"
+                  "$ref": "#/$defs/schema249"
                 },
                 "logFormat": {},
                 "logLevel": {},
@@ -20518,14 +20642,14 @@
               }
             },
             {
-              "$ref": "#/$defs/schema247"
+              "$ref": "#/$defs/schema249"
             }
           ]
         },
         "livenessProbe": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema166"
+              "$ref": "#/$defs/schema167"
             },
             {
               "$ref": "#/$defs/schema57"
@@ -20563,7 +20687,7 @@
         "readinessProbe": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema166"
+              "$ref": "#/$defs/schema167"
             },
             {
               "$ref": "#/$defs/schema57"
@@ -20580,7 +20704,7 @@
               "additionalProperties": {},
               "properties": {
                 "annotations": {
-                  "$ref": "#/$defs/schema145"
+                  "$ref": "#/$defs/schema146"
                 }
               }
             },
@@ -20790,7 +20914,7 @@
               }
             },
             {
-              "$ref": "#/$defs/schema247"
+              "$ref": "#/$defs/schema249"
             }
           ],
           "description": "image sets the repo and tag of the vault-k8s image to use for the injector."
@@ -20805,7 +20929,7 @@
         "livenessProbe": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema166"
+              "$ref": "#/$defs/schema167"
             },
             {
               "$ref": "#/$defs/schema57"
@@ -20914,7 +21038,7 @@
         "readinessProbe": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema166"
+              "$ref": "#/$defs/schema167"
             },
             {
               "$ref": "#/$defs/schema57"
@@ -20969,7 +21093,7 @@
         "startupProbe": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema166"
+              "$ref": "#/$defs/schema167"
             },
             {
               "$ref": "#/$defs/schema57"
@@ -21041,17 +21165,17 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema250"
+                            "$ref": "#/$defs/schema252"
                           },
                           {
                             "anyOf": [
                               {
                                 "not": {
-                                  "$ref": "#/$defs/schema262"
+                                  "$ref": "#/$defs/schema264"
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema253"
+                                "$ref": "#/$defs/schema255"
                               }
                             ]
                           }
@@ -21060,10 +21184,10 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema233"
+                            "$ref": "#/$defs/schema235"
                           },
                           {
-                            "$ref": "#/$defs/schema236"
+                            "$ref": "#/$defs/schema238"
                           }
                         ]
                       }
@@ -21109,7 +21233,7 @@
           "description": "This configures the Vault Statefulset to create a PVC for audit\nlogs.  Once Vault is deployed, initialized, and unsealed, Vault must\nbe configured to use this for audit logs.  This will be mounted to\n/vault/audit\nSee https://developer.hashicorp.com/vault/docs/audit to know more",
           "properties": {
             "accessMode": {
-              "$ref": "#/$defs/schema241"
+              "$ref": "#/$defs/schema243"
             },
             "annotations": {
               "description": "Annotations to apply to the PVC"
@@ -21127,7 +21251,7 @@
               "type": "string"
             },
             "storageClass": {
-              "$ref": "#/$defs/schema216"
+              "$ref": "#/$defs/schema218"
             }
           },
           "type": "object"
@@ -21146,7 +21270,7 @@
           "description": "This configures the Vault Statefulset to create a PVC for data\nstorage when using the file or raft backend storage engines.\nSee https://developer.hashicorp.com/vault/docs/configuration/storage to know more",
           "properties": {
             "accessMode": {
-              "$ref": "#/$defs/schema241"
+              "$ref": "#/$defs/schema243"
             },
             "annotations": {
               "description": "Annotations to apply to the PVC"
@@ -21164,7 +21288,7 @@
               "type": "string"
             },
             "storageClass": {
-              "$ref": "#/$defs/schema216"
+              "$ref": "#/$defs/schema218"
             }
           },
           "type": "object"
@@ -21234,13 +21358,13 @@
           "anyOf": [
             {
               "additionalProperties": {
-                "$ref": "#/$defs/schema200"
+                "$ref": "#/$defs/schema202"
               },
               "type": "object"
             },
             {
               "items": {
-                "$ref": "#/$defs/schema200"
+                "$ref": "#/$defs/schema202"
               },
               "type": "array"
             }
@@ -21353,7 +21477,7 @@
               "type": "array"
             },
             "labels": {
-              "$ref": "#/$defs/schema274"
+              "$ref": "#/$defs/schema276"
             },
             "matches": {
               "items": {
@@ -21473,7 +21597,7 @@
               "type": "string"
             },
             "labels": {
-              "$ref": "#/$defs/schema274"
+              "$ref": "#/$defs/schema276"
             },
             "pathType": {
               "description": "As of Kubernetes 1.19, all Ingress Paths must have a pathType configured. The default value below should be sufficient in most cases.\nSee: https://kubernetes.io/docs/concepts/services-networking/ingress/#path-types for other possible values.",
@@ -21483,13 +21607,13 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema208"
+                    "$ref": "#/$defs/schema210"
                   },
                   "type": "object"
                 },
                 {
                   "items": {
-                    "$ref": "#/$defs/schema208"
+                    "$ref": "#/$defs/schema210"
                   },
                   "type": "array"
                 }
@@ -21530,10 +21654,10 @@
               "description": "Used to define a liveness exec command. If provided, exec is preferred to httpGet (path) as the livenessProbe handler."
             },
             "failureThreshold": {
-              "$ref": "#/$defs/schema214"
+              "$ref": "#/$defs/schema216"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/schema220"
+              "$ref": "#/$defs/schema222"
             },
             "path": {
               "description": "- /bin/sh\n- -c\n- /vault/userconfig/mylivenessscript/run.sh\nPath for the livenessProbe to use httpGet as the livenessProbe handler"
@@ -21547,7 +21671,7 @@
               "type": "integer"
             },
             "successThreshold": {
-              "$ref": "#/$defs/schema211"
+              "$ref": "#/$defs/schema213"
             },
             "timeoutSeconds": {
               "description": "Number of seconds after which the probe times out.",
@@ -21581,7 +21705,7 @@
                       "additionalProperties": {},
                       "properties": {
                         "namespaceSelector": {
-                          "$ref": "#/$defs/schema274"
+                          "$ref": "#/$defs/schema276"
                         }
                       },
                       "type": "object"
@@ -21663,10 +21787,10 @@
               "description": "If you need to use a http path instead of the default exec\npath: /v1/sys/health?standbyok=true"
             },
             "failureThreshold": {
-              "$ref": "#/$defs/schema214"
+              "$ref": "#/$defs/schema216"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/schema220"
+              "$ref": "#/$defs/schema222"
             },
             "path": {},
             "periodSeconds": {
@@ -21678,7 +21802,7 @@
               "type": "integer"
             },
             "successThreshold": {
-              "$ref": "#/$defs/schema211"
+              "$ref": "#/$defs/schema213"
             },
             "timeoutSeconds": {
               "description": "Number of seconds after which the probe times out.",
@@ -21716,7 +21840,7 @@
               "type": "string"
             },
             "labels": {
-              "$ref": "#/$defs/schema274"
+              "$ref": "#/$defs/schema276"
             },
             "tls": {
               "additionalProperties": {},
@@ -21799,7 +21923,7 @@
           "description": "Definition of the serviceAccount used to run Vault.\nThese options are also used when using an external Vault server to validate\nKubernetes tokens.",
           "properties": {
             "annotations": {
-              "$ref": "#/$defs/schema145"
+              "$ref": "#/$defs/schema146"
             },
             "create": {
               "description": "Specifies whether a service account should be created"

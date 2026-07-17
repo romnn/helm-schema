@@ -38,6 +38,7 @@ fn provider_use(path: YamlPath, resource: ResourceRef) -> ProviderSchemaUse {
         template_supplied_member_keys: Default::default(),
         split_segment: None,
         merge_layers: None,
+        range_key: false,
     }
 }
 

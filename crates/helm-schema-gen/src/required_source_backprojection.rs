@@ -146,6 +146,60 @@ pub(crate) fn synthesized_split_segment_implications(
     implications
 }
 
+/// Range-KEY slot uses: `- name: {{ $key }}` renders each key of a directly
+/// ranged collection at a provider slot. When that slot admits only
+/// strings, the integer keys of a non-empty LIST lane cannot render
+/// validly, so the collection's key domain must be strings; an empty list
+/// runs zero iterations and stays open, as do maps (JSON object keys are
+/// always strings, so the arm is vacuous for them beyond documentation).
+pub(crate) fn synthesized_range_key_implications(
+    contract_schema_signals: &ContractSchemaSignals,
+    provider: &dyn ResourceSchemaOracle,
+) -> BTreeMap<String, Vec<ContractFailImplication>> {
+    let mut implications: BTreeMap<String, Vec<ContractFailImplication>> = BTreeMap::new();
+    for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
+        let overlay_uses = evidence.conditional_overlays.iter().flat_map(|overlay| {
+            overlay
+                .evidence
+                .provider_schema_uses
+                .iter()
+                .map(move |use_| (overlay.guards.as_slice(), use_))
+        });
+        for (branch_guards, use_) in evidence
+            .provider_schema_uses
+            .iter()
+            .map(|use_| (&[] as &[helm_schema_core::ConditionalGuard], use_))
+            .chain(overlay_uses)
+        {
+            if !use_.range_key || use_.kind != ValueKind::Scalar {
+                continue;
+            }
+            let Some(fragment) = provider.schema_fragment_for_use(use_) else {
+                continue;
+            };
+            if crate::overlay_lowering::schema_runtime_types(fragment.schema())
+                != std::collections::BTreeSet::from(["string"])
+            {
+                continue;
+            }
+            // No self-truthy guard: the Keys encoding itself leaves the
+            // empty-array, null, and (vacuously) absent lanes open, and a
+            // self-truthy guard would trip the base-replacement rule for
+            // self-guarded arms, erasing the path's independent base facts.
+            push_implication(
+                &mut implications,
+                value_path.clone(),
+                ContractFailImplication {
+                    outer_guards: branch_guards.to_vec(),
+                    target: ContractRequirementTarget::Keys,
+                    requirements: vec![FailValueRequirement::SchemaType("string".to_string())],
+                },
+            );
+        }
+    }
+    implications
+}
+
 fn push_implication(
     implications: &mut BTreeMap<String, Vec<ContractFailImplication>>,
     target_value_path: String,

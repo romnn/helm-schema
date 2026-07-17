@@ -38,6 +38,7 @@ pub(super) fn identity_value_paths(value: &Option<AbstractValue>) -> BTreeSet<St
             AbstractValue::Top
             | AbstractValue::Unknown
             | AbstractValue::RangeKey(_)
+            | AbstractValue::KeysList(_)
             | AbstractValue::RootContext
             | AbstractValue::StringSet(_)
             | AbstractValue::DerivedBoolean(_)
@@ -101,6 +102,7 @@ pub(super) fn serialization_payload_paths(value: &Option<AbstractValue>) -> BTre
             AbstractValue::Top
             | AbstractValue::Unknown
             | AbstractValue::RangeKey(_)
+            | AbstractValue::KeysList(_)
             | AbstractValue::RootContext
             | AbstractValue::StringSet(_)
             | AbstractValue::DerivedBoolean(_)

@@ -232,6 +232,7 @@ fn parser_operand_identity_paths(
             AbstractValue::Top
             | AbstractValue::Unknown
             | AbstractValue::RangeKey(_)
+            | AbstractValue::KeysList(_)
             | AbstractValue::RootContext
             | AbstractValue::StringSet(_)
             | AbstractValue::DerivedBoolean(_)
@@ -337,6 +338,7 @@ fn parser_output_metas(
             | AbstractValue::ValuesPath(_)
             | AbstractValue::JsonDecodedPath(_)
             | AbstractValue::RangeKey(_)
+            | AbstractValue::KeysList(_)
             | AbstractValue::OutputPath(_, _)
             | AbstractValue::RootContext
             | AbstractValue::StringSet(_)
@@ -541,6 +543,7 @@ pub(super) fn record_collection_item_kind_result(
             AbstractValue::Top
             | AbstractValue::Unknown
             | AbstractValue::RangeKey(_)
+            | AbstractValue::KeysList(_)
             | AbstractValue::RootContext
             | AbstractValue::StringSet(_)
             | AbstractValue::DerivedBoolean(_)

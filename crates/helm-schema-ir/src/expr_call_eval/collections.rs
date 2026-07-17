@@ -15,7 +15,7 @@ use super::strict_operands::{
     record_string_consumer_effects,
 };
 use super::value_facts::{identity_value_paths, split_transformed_value, value_strings};
-use super::{eval_all_args, merge_arg_effects, merge_arg_values};
+use super::{eval_all_args, eval_unknown_call, merge_arg_effects, merge_arg_values};
 
 /// `default FALLBACK PRIMARY` and `PRIMARY | default FALLBACK` are one rule:
 /// the primary's identity paths become defaulted (typed by a literal
@@ -243,6 +243,36 @@ pub(super) fn eval_prepend(
         None => {}
     }
     EvalResult::with_effects(Some(AbstractValue::List(items)), list.effects)
+}
+
+/// `pluck KEY MAP` whose KEY is the current ranged key of the SAME map
+/// selects exactly the current member: the result is the singleton list
+/// holding that member's identity (signoz's `pluck . $dict | first` member
+/// read inside `range keys .`). Other shapes keep widened-call semantics.
+pub(super) fn eval_pluck(
+    args: &[TemplateExpr],
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
+    if args.len() == 2 {
+        let key = eval_expr_with_helper_calls(&args[0], env, resolver);
+        if let Some(AbstractValue::RangeKey(key_source)) = &key.value {
+            let map = eval_expr_with_helper_calls(&args[1], env, resolver);
+            let member = match &map.value {
+                Some(
+                    value
+                    @ (AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path)),
+                ) if path == key_source => value.fragment_range_item(),
+                _ => None,
+            };
+            if let Some(member) = member {
+                let mut effects = key.effects;
+                effects.merge(map.effects);
+                return EvalResult::with_effects(Some(AbstractValue::List(vec![member])), effects);
+            }
+        }
+    }
+    eval_unknown_call(args, Effects::default(), env, resolver)
 }
 
 pub(super) fn eval_first(

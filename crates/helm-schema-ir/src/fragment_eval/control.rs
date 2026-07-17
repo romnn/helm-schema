@@ -168,6 +168,13 @@ impl Interpreter<'_> {
                 contributions.take_loop_control();
             }
             self.locals.exit_local_scope();
+            // A branch-local reassignment's truthiness holds only where the
+            // arm RAN: stamping the arm condition makes the cross-branch
+            // union the exact disjunction (the range-sentinel flag pattern:
+            // `$found = true` under `if eq .name "…"` inside `range env`
+            // joins to the existential `Range(env) ∧ Eq(env.*.name, …)`).
+            self.locals
+                .conjoin_changed_truthy_reductions(&entry_locals, &arm_condition);
             outcomes.push(self.locals.clone());
 
             contributions.extend(extra);
@@ -552,9 +559,10 @@ impl Interpreter<'_> {
             self.locals.insert_range_domain(variable.to_string(), keys);
         }
         self.absorb_header_execution_effects(header.expr());
-        let range_is_statically_nonempty = self
-            .range_iterable_fragment_value(header)
-            .is_some_and(|value| value.definitely_nonempty_iterable());
+        let iterable_value = self.range_iterable_fragment_value(header);
+        let range_is_statically_nonempty = iterable_value
+            .as_ref()
+            .is_some_and(AbstractValue::definitely_nonempty_iterable);
         let range_source = header_range_source(header.expr());
         let derived_range_condition = match range_source.deparen() {
             TemplateExpr::Variable(name)
@@ -728,8 +736,7 @@ impl Interpreter<'_> {
                 }
             });
         if self.helper_scope {
-            let iterable = self.range_iterable_fragment_value(header);
-            let item_dot = iterable
+            let item_dot = iterable_value
                 .as_ref()
                 .and_then(AbstractValue::fragment_range_item)
                 .map(|binding| binding.to_context_value());
@@ -741,6 +748,16 @@ impl Interpreter<'_> {
             {
                 self.locals.fragment_values.insert(variable, binding);
             }
+        }
+        // Ranging a derived keys list binds the item dot to the collection's
+        // key outside helper scope too (`range keys m` at a template site),
+        // so a same-map `pluck` member read keeps its identity.
+        if dot.is_none()
+            && let Some(item @ AbstractValue::RangeKey(_)) = iterable_value
+                .as_ref()
+                .and_then(AbstractValue::fragment_range_item)
+        {
+            dot = Some(item);
         }
         // The value binding carries the member identity (`x.*`), while the
         // key binding retains its distinct collection-key provenance. This

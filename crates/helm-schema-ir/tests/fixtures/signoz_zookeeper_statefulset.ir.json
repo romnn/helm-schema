@@ -6441,13 +6441,6 @@
             "type": "not"
           },
           {
-            "paths": [
-              "global.storageClass",
-              "persistence.storageClass"
-            ],
-            "type": "or"
-          },
-          {
             "alternatives": [
               [
                 {
@@ -6455,20 +6448,17 @@
                   "type": "truthy"
                 },
                 {
-                  "path": "global.storageClass",
-                  "type": "truthy"
-                },
-                {
-                  "path": "global.storageClass",
-                  "type": "eq",
-                  "value": "-"
+                  "paths": [
+                    "global.storageClass",
+                    "persistence.storageClass"
+                  ],
+                  "type": "or"
                 }
               ],
               [
                 {
                   "path": "persistence.storageClass",
-                  "type": "eq",
-                  "value": "-"
+                  "type": "truthy"
                 }
               ]
             ],
@@ -6487,15 +6477,8 @@
             "type": "truthy"
           },
           {
-            "path": "persistence.existingClaim",
-            "type": "not"
-          },
-          {
-            "paths": [
-              "global.storageClass",
-              "persistence.storageClass"
-            ],
-            "type": "or"
+            "path": "volumePermissions.enabled",
+            "type": "truthy"
           },
           {
             "alternatives": [
@@ -6505,20 +6488,51 @@
                   "type": "truthy"
                 },
                 {
-                  "path": "global.storageClass",
+                  "paths": [
+                    "global.imageRegistry",
+                    "volumePermissions.image.registry"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "path": "persistence.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "persistence.existingClaim",
+            "type": "not"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
                   "type": "truthy"
                 },
                 {
-                  "path": "global.storageClass",
-                  "type": "eq",
-                  "value": "-"
+                  "paths": [
+                    "global.storageClass",
+                    "persistence.storageClass"
+                  ],
+                  "type": "or"
                 }
               ],
               [
                 {
                   "path": "persistence.storageClass",
-                  "type": "eq",
-                  "value": "-"
+                  "type": "truthy"
                 }
               ]
             ],
@@ -6540,6 +6554,27 @@
               ],
               [
                 {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "global",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "global.imagePullSecrets",
+                        "type": "range"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "image.pullSecrets",
+                        "type": "range"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
                   "path": "image.pullSecrets",
                   "type": "range"
                 }
@@ -6548,6 +6583,32 @@
                 {
                   "path": "volumePermissions.image.pullSecrets",
                   "type": "range"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.imageRegistry",
+                    "image.registry"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
                 }
               ]
             ],
@@ -6620,6 +6681,16 @@
         },
         {
           "helper_chain": [
+            "common.images.image"
+          ],
+          "span": {
+            "end": 851,
+            "start": 649
+          },
+          "template_path": "<inline:1>"
+        },
+        {
+          "helper_chain": [
             "common.images.pullSecrets"
           ],
           "span": {
@@ -6645,6 +6716,16 @@
           "span": {
             "end": 408,
             "start": 273
+          },
+          "template_path": "<inline:7>"
+        },
+        {
+          "helper_chain": [
+            "common.storage.class"
+          ],
+          "span": {
+            "end": 614,
+            "start": 410
           },
           "template_path": "<inline:7>"
         },
@@ -6684,6 +6765,27 @@
                 }
               ],
               [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "global",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "global.imagePullSecrets",
+                        "type": "range"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "image.pullSecrets",
+                        "type": "range"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
                 {
                   "path": "image.pullSecrets",
                   "type": "range"
@@ -6753,6 +6855,27 @@
                 }
               ],
               [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "global",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "global.imagePullSecrets",
+                        "type": "range"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "image.pullSecrets",
+                        "type": "range"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
                 {
                   "path": "image.pullSecrets",
                   "type": "range"
@@ -6859,6 +6982,27 @@
                 }
               ],
               [
+                {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "global",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "global.imagePullSecrets",
+                        "type": "range"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "image.pullSecrets",
+                        "type": "range"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
                 {
                   "path": "image.pullSecrets",
                   "type": "range"
@@ -6971,20 +7115,54 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "global.imageRegistry",
-              "volumePermissions.image.registry"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.imageRegistry",
+                    "volumePermissions.image.registry"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ],
         [
           {
-            "paths": [
-              "global.imageRegistry",
-              "image.registry"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.imageRegistry",
+                    "image.registry"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ]
       ],
@@ -7047,11 +7225,28 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "global.imageRegistry",
-              "image.registry"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.imageRegistry",
+                    "image.registry"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ]
       ],
@@ -7137,11 +7332,28 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "global.imageRegistry",
-              "volumePermissions.image.registry"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.imageRegistry",
+                    "volumePermissions.image.registry"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ],
         [
@@ -7155,17 +7367,34 @@
           },
           {
             "paths": [
-              "global.imageRegistry",
-              "image.registry"
-            ],
-            "type": "or"
-          },
-          {
-            "paths": [
               "tls.client.enabled",
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.imageRegistry",
+                    "image.registry"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -7310,11 +7539,28 @@
             "type": "not"
           },
           {
-            "paths": [
-              "global.storageClass",
-              "persistence.storageClass"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.storageClass",
+                    "persistence.storageClass"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ],
         [
@@ -7345,11 +7591,28 @@
             "type": "not"
           },
           {
-            "paths": [
-              "global.storageClass",
-              "persistence.storageClass"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.storageClass",
+                    "persistence.storageClass"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ]
       ],
@@ -7414,11 +7677,28 @@
             "type": "not"
           },
           {
-            "paths": [
-              "global.storageClass",
-              "persistence.storageClass"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.storageClass",
+                    "persistence.storageClass"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ],
         [
@@ -7439,11 +7719,28 @@
             "type": "not"
           },
           {
-            "paths": [
-              "global.storageClass",
-              "persistence.storageClass"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.storageClass",
+                    "persistence.storageClass"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ]
       ],
@@ -8188,6 +8485,27 @@
               ],
               [
                 {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "global",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "global.imagePullSecrets",
+                        "type": "range"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "image.pullSecrets",
+                        "type": "range"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
                   "path": "image.pullSecrets",
                   "type": "range"
                 }
@@ -8294,6 +8612,27 @@
               ],
               [
                 {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "global",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "global.imagePullSecrets",
+                        "type": "range"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "image.pullSecrets",
+                        "type": "range"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
                   "path": "image.pullSecrets",
                   "type": "range"
                 }
@@ -8387,11 +8726,28 @@
       "condition": [
         [
           {
-            "paths": [
-              "global.imageRegistry",
-              "image.registry"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.imageRegistry",
+                    "image.registry"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ]
       ],
@@ -8426,11 +8782,28 @@
       "condition": [
         [
           {
-            "paths": [
-              "global.imageRegistry",
-              "image.registry"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.imageRegistry",
+                    "image.registry"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ]
       ],
@@ -8501,17 +8874,34 @@
         [
           {
             "paths": [
-              "global.imageRegistry",
-              "image.registry"
-            ],
-            "type": "or"
-          },
-          {
-            "paths": [
               "tls.client.enabled",
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.imageRegistry",
+                    "image.registry"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "image.registry",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -14342,11 +14732,28 @@
             "type": "not"
           },
           {
-            "paths": [
-              "global.storageClass",
-              "persistence.storageClass"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.storageClass",
+                    "persistence.storageClass"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ],
         [
@@ -14359,11 +14766,28 @@
             "type": "not"
           },
           {
-            "paths": [
-              "global.storageClass",
-              "persistence.storageClass"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.storageClass",
+                    "persistence.storageClass"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ]
       ],
@@ -14410,11 +14834,28 @@
             "type": "not"
           },
           {
-            "paths": [
-              "global.storageClass",
-              "persistence.storageClass"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.storageClass",
+                    "persistence.storageClass"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ],
         [
@@ -14427,11 +14868,28 @@
             "type": "not"
           },
           {
-            "paths": [
-              "global.storageClass",
-              "persistence.storageClass"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.storageClass",
+                    "persistence.storageClass"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "persistence.storageClass",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ]
       ],
@@ -20798,6 +21256,27 @@
               ],
               [
                 {
+                  "alternatives": [
+                    [
+                      {
+                        "path": "global",
+                        "type": "truthy"
+                      },
+                      {
+                        "path": "global.imagePullSecrets",
+                        "type": "range"
+                      }
+                    ],
+                    [
+                      {
+                        "path": "image.pullSecrets",
+                        "type": "range"
+                      }
+                    ]
+                  ],
+                  "type": "any_of"
+                },
+                {
                   "path": "image.pullSecrets",
                   "type": "range"
                 }
@@ -20899,11 +21378,28 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "global.imageRegistry",
-              "volumePermissions.image.registry"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.imageRegistry",
+                    "volumePermissions.image.registry"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ]
       ],
@@ -20946,11 +21442,28 @@
             "type": "truthy"
           },
           {
-            "paths": [
-              "global.imageRegistry",
-              "volumePermissions.image.registry"
+            "alternatives": [
+              [
+                {
+                  "path": "global",
+                  "type": "truthy"
+                },
+                {
+                  "paths": [
+                    "global.imageRegistry",
+                    "volumePermissions.image.registry"
+                  ],
+                  "type": "or"
+                }
+              ],
+              [
+                {
+                  "path": "volumePermissions.image.registry",
+                  "type": "truthy"
+                }
+              ]
             ],
-            "type": "or"
+            "type": "any_of"
           }
         ]
       ],

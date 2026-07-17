@@ -12,6 +12,8 @@ pub(crate) fn collect_manifest_contract_for_chart(
     chart: &chart::ChartContext,
     symbolic_context: &SymbolicIrContext,
     include_tests: bool,
+    optional_helpers: &[OptionalDependencyHelpers],
+    defines: &helm_schema_ast::DefineIndex,
 ) -> EngineResult<ManifestContractAnalysis> {
     let mut contract = ContractIr::default();
     let mut local_resource_schemas = Vec::new();
@@ -23,10 +25,25 @@ pub(crate) fn collect_manifest_contract_for_chart(
         chart::FileRole::ManifestTemplate,
     )?;
     for path in manifests {
+        let source = path.read_to_string()?;
         let (mut manifest_contract, template_local_resource_schemas) =
             collect_manifest_contract_for_template(&path, symbolic_context)?;
         manifest_contract
             .map_value_paths(|path| chart::scope_values_path(path, &chart.values_prefix));
+        // Rendering this template unconditionally reaches these helper
+        // names; a name only an inactive optional dependency defines aborts
+        // with "no template". The activation predicates are already
+        // root-relative, so the clause is added AFTER this chart's own path
+        // scoping and BEFORE its activation guards (an optional chart's
+        // clause must itself only fire while the chart is active).
+        if !optional_helpers.is_empty() {
+            let reached = unconditional_include_closure(&source, defines);
+            for entry in optional_helpers {
+                if reached.iter().any(|name| entry.helper_names.contains(name)) {
+                    manifest_contract.add_terminal_fail_condition(entry.inactive.clone());
+                }
+            }
+        }
         manifest_contract =
             apply_chart_activation_guard_sets(manifest_contract, &activation_guard_sets);
         contract.append(manifest_contract);
@@ -171,4 +188,115 @@ fn truthy_tag_guard(tag_paths: &[String]) -> Guard {
             paths: paths.to_vec(),
         },
     }
+}
+
+/// Helper names owned SOLELY by one optional direct dependency of a chart,
+/// with the predicate under which that dependency is INACTIVE. An
+/// unconditionally reached include of such a helper aborts rendering with
+/// "no template" while the dependency is inactive, so the inactive states
+/// become terminal clauses on the including chart.
+pub(crate) struct OptionalDependencyHelpers {
+    pub(crate) helper_names: std::collections::BTreeSet<String>,
+    pub(crate) inactive: helm_schema_core::Predicate,
+}
+
+pub(crate) fn optional_dependency_helpers_for_chart(
+    chart: &chart::ChartContext,
+    charts: &[chart::ChartContext],
+    defines: &helm_schema_ast::DefineIndex,
+) -> Vec<OptionalDependencyHelpers> {
+    // Owner of each define: the deepest chart whose directory contains the
+    // defining file. Names defined in several places have ambiguous
+    // resolution (Helm's global namespace, last parse wins) and abstain.
+    let mut owner_dirs: std::collections::BTreeMap<String, std::collections::BTreeSet<String>> =
+        std::collections::BTreeMap::new();
+    // Define-index paths are chart-relative while chart dirs carry a
+    // leading slash; compare both without it and on directory boundaries.
+    let normalized_dir =
+        |chart: &chart::ChartContext| chart.chart_dir.as_str().trim_start_matches('/').to_string();
+    let file_in_dir = |file: &str, dir: &str| {
+        let file = file.trim_start_matches('/');
+        dir.is_empty() || file == dir || file.starts_with(&format!("{dir}/"))
+    };
+    for (path, src) in defines.file_sources() {
+        let Some(owner) = charts
+            .iter()
+            .map(normalized_dir)
+            .filter(|dir| file_in_dir(path, dir))
+            .max_by_key(String::len)
+        else {
+            continue;
+        };
+        for name in helm_schema_ir::define_names_in_source(src) {
+            owner_dirs.entry(name).or_default().insert(owner.clone());
+        }
+    }
+    let mut out = Vec::new();
+    for dependency in charts {
+        let direct_child = dependency.values_prefix.len() == chart.values_prefix.len() + 1
+            && dependency.values_prefix.starts_with(&chart.values_prefix);
+        if !direct_child {
+            continue;
+        }
+        let activation_sets = chart_activation_guard_sets(&dependency.dependency_activation);
+        if activation_sets.is_empty() {
+            continue;
+        }
+        let dependency_dir = normalized_dir(dependency);
+        let helper_names: std::collections::BTreeSet<String> = owner_dirs
+            .iter()
+            .filter(|(_, owners)| {
+                owners.iter().all(|owner| {
+                    owner == &dependency_dir || owner.starts_with(&format!("{dependency_dir}/"))
+                })
+            })
+            .map(|(name, _)| name.clone())
+            .collect();
+        if helper_names.is_empty() {
+            continue;
+        }
+        let alternatives: Vec<helm_schema_core::Predicate> = activation_sets
+            .into_iter()
+            .map(|set| {
+                helm_schema_core::Predicate::all(
+                    set.into_iter()
+                        .map(helm_schema_core::Predicate::from)
+                        .collect(),
+                )
+            })
+            .collect();
+        out.push(OptionalDependencyHelpers {
+            helper_names,
+            inactive: helm_schema_core::Predicate::Or(alternatives).negated(),
+        });
+    }
+    out
+}
+
+/// The transitive closure of helper names a template source reaches through
+/// UNCONDITIONAL includes: the source's own top-level includes, plus each
+/// reached helper body's top-level includes.
+pub(crate) fn unconditional_include_closure(
+    source: &str,
+    defines: &helm_schema_ast::DefineIndex,
+) -> std::collections::BTreeSet<String> {
+    let mut bodies: std::collections::BTreeMap<String, String> = std::collections::BTreeMap::new();
+    for (_, src) in defines.file_sources() {
+        for (name, body) in helm_schema_ir::define_bodies_in_source(src) {
+            bodies.insert(name, body);
+        }
+    }
+    let mut reached = std::collections::BTreeSet::new();
+    let mut queue: Vec<String> = helm_schema_ast::unconditional_include_names(source)
+        .into_iter()
+        .collect();
+    while let Some(name) = queue.pop() {
+        if !reached.insert(name.clone()) {
+            continue;
+        }
+        if let Some(body) = bodies.get(&name) {
+            queue.extend(helm_schema_ast::unconditional_include_names(body));
+        }
+    }
+    reached
 }

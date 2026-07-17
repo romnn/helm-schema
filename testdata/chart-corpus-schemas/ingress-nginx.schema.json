@@ -7294,6 +7294,66 @@
         "null"
       ]
     },
+    "schema203": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "controller": {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "type": {}
+                    },
+                    "required": [
+                      "type"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "controller"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "controller": {
+              "properties": {
+                "service": {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "LoadBalancer"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "service"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "controller"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "schema204": {
       "additionalProperties": {},
       "properties": {
@@ -8762,6 +8822,35 @@
         "null"
       ]
     },
+    "schema361": {
+      "properties": {
+        "controller": {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "NodePort"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "controller"
+      ],
+      "type": "object"
+    },
     "schema367": {
       "not": {
         "properties": {
@@ -8949,6 +9038,34 @@
           "description": "Annotations to be added to controller pods"
         }
       }
+    },
+    "schema425": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "type": {}
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "type": {
+              "enum": [
+                "LoadBalancer"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      ]
     },
     "schema427": {
       "anyOf": [
@@ -9801,6 +9918,19 @@
         ],
         "type": "object"
       }
+    },
+    "schema584": {
+      "properties": {
+        "type": {
+          "enum": [
+            "NodePort"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
     },
     "schema585": {
       "additionalProperties": false,
@@ -23545,7 +23675,55 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema136"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema203"
+                  },
+                  {
+                    "$ref": "#/$defs/schema361"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema359"
+                          },
+                          {
+                            "properties": {
+                              "controller": {
+                                "properties": {
+                                  "service": {
+                                    "properties": {
+                                      "enableHttp": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "enableHttp"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "service"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "controller"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "#/$defs/schema136"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -25006,7 +25184,55 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema136"
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema203"
+                      },
+                      {
+                        "$ref": "#/$defs/schema361"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/schema359"
+                              },
+                              {
+                                "properties": {
+                                  "controller": {
+                                    "properties": {
+                                      "service": {
+                                        "properties": {
+                                          "enableHttp": {
+                                            "$ref": "#/$defs/helm-truthy"
+                                          }
+                                        },
+                                        "required": [
+                                          "enableHttp"
+                                        ],
+                                        "type": "object"
+                                      }
+                                    },
+                                    "required": [
+                                      "service"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "controller"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/schema136"
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -25336,7 +25562,55 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema136"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema203"
+                  },
+                  {
+                    "$ref": "#/$defs/schema361"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema359"
+                          },
+                          {
+                            "properties": {
+                              "controller": {
+                                "properties": {
+                                  "service": {
+                                    "properties": {
+                                      "enableHttp": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "enableHttp"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "service"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "controller"
+                            ],
+                            "type": "object"
+                          }
+                        ]
+                      },
+                      {
+                        "$ref": "#/$defs/schema136"
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           },
@@ -29384,7 +29658,55 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema136"
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema203"
+                      },
+                      {
+                        "$ref": "#/$defs/schema361"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/schema359"
+                              },
+                              {
+                                "properties": {
+                                  "controller": {
+                                    "properties": {
+                                      "service": {
+                                        "properties": {
+                                          "enableHttp": {
+                                            "$ref": "#/$defs/helm-truthy"
+                                          }
+                                        },
+                                        "required": [
+                                          "enableHttp"
+                                        ],
+                                        "type": "object"
+                                      }
+                                    },
+                                    "required": [
+                                      "service"
+                                    ],
+                                    "type": "object"
+                                  }
+                                },
+                                "required": [
+                                  "controller"
+                                ],
+                                "type": "object"
+                              }
+                            ]
+                          },
+                          {
+                            "$ref": "#/$defs/schema136"
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               },
@@ -29639,6 +29961,135 @@
         "properties": {
           "controller": {
             "$ref": "#/$defs/schema290"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema450"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "podSecurityContext": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "podSecurityContext"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "sysctls": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "sysctls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/schema271"
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "podSecurityContext": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "podSecurityContext"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "controller": {
+                        "properties": {
+                          "sysctls": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "sysctls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "controller": {
+            "additionalProperties": {},
+            "properties": {
+              "sysctls": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "maxItems": 0,
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "sysctls for controller pods\nRef: https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/\nsysctls:\n\"net.core.somaxconn\": \"8192\""
+              }
+            }
           }
         }
       }
@@ -41668,6 +42119,88 @@
               {
                 "allOf": [
                   {
+                    "$ref": "#/$defs/schema582"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "podSecurityContext": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "podSecurityContext"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "sysctls": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "sysctls"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/schema427"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "properties": {
+                          "podSecurityContext": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "podSecurityContext"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "properties": {
+                          "sysctls": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "sysctls"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "sysctls": {
+                "additionalProperties": {},
+                "description": "sysctls for controller pods\nRef: https://kubernetes.io/docs/tasks/administer-cluster/sysctl-cluster/\nsysctls:\n\"net.core.somaxconn\": \"8192\"",
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
                     "properties": {
                       "sysctls": {
                         "$ref": "#/$defs/helm-truthy"
@@ -49751,7 +50284,39 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/schema301"
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema425"
+                          },
+                          {
+                            "$ref": "#/$defs/schema584"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/$defs/schema583"
+                                  },
+                                  {
+                                    "properties": {
+                                      "enableHttp": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "enableHttp"
+                                    ],
+                                    "type": "object"
+                                  }
+                                ]
+                              },
+                              {
+                                "$ref": "#/$defs/schema301"
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   },
@@ -51022,7 +51587,39 @@
                         ]
                       },
                       {
-                        "$ref": "#/$defs/schema301"
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema425"
+                          },
+                          {
+                            "$ref": "#/$defs/schema584"
+                          },
+                          {
+                            "allOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/$defs/schema583"
+                                  },
+                                  {
+                                    "properties": {
+                                      "enableHttp": {
+                                        "$ref": "#/$defs/helm-truthy"
+                                      }
+                                    },
+                                    "required": [
+                                      "enableHttp"
+                                    ],
+                                    "type": "object"
+                                  }
+                                ]
+                              },
+                              {
+                                "$ref": "#/$defs/schema301"
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   },

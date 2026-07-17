@@ -847,3 +847,106 @@ fn multiple_default_sources_for_one_values_target_abstain() {
         "order-sensitive default sources must abstain instead of selecting lexical set order: {schema}"
     );
 }
+
+/// airflow's celery-broker sentinel accumulates a Boolean while ranging
+/// `env` and terminates when neither `brokerUrlSecretName` nor an item
+/// named `BROKER_URL_CMD` exists. The flag's truthiness is the existential
+/// "some ranged item's member equals the literal", which Draft-07 encodes
+/// with `contains`.
+#[test]
+fn existential_range_sentinel_lowers_to_contains() {
+    let src = indoc! {r#"
+        {{- if .Values.redis.enabled }}
+        {{- $found := false }}
+        {{- range .Values.env }}
+        {{- if eq .name "BROKER_URL_CMD" }}
+        {{- $found = true }}
+        {{- break -}}
+        {{- end }}
+        {{- end }}
+        {{- if not (or .Values.brokerUrlSecretName $found) }}
+        {{ required "set brokerUrlSecretName or BROKER_URL_CMD in env" nil }}
+        {{- end }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data: {}
+    "#};
+    let values_yaml = indoc! {r#"
+        redis:
+          enabled: true
+        brokerUrlSecretName: ""
+        env: []
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (instance, want) in [
+        (serde_json::json!({ "redis": { "enabled": true } }), false),
+        (
+            serde_json::json!({ "redis": { "enabled": true }, "env": [{ "name": "OTHER" }] }),
+            false,
+        ),
+        (
+            serde_json::json!({ "redis": { "enabled": true }, "brokerUrlSecretName": "s" }),
+            true,
+        ),
+        (
+            serde_json::json!({ "redis": { "enabled": true }, "env": [{ "name": "BROKER_URL_CMD" }] }),
+            true,
+        ),
+        (serde_json::json!({ "redis": { "enabled": false } }), true),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "existential sentinel: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// cilium's validators state finite scalar domains through `fail` guards: a
+/// `len` bound, an `int`-coerced inequality pair, and a negated literal
+/// membership. Each conjunct lowers through its sound subset, so the
+/// terminal clauses reject exactly the strengthened domains while coerced
+/// spellings outside the subsets stay open.
+#[test]
+fn scalar_domain_fail_guards_lower_through_sound_subsets() {
+    let src = indoc! {r#"
+        {{- if gt (len .Values.clusterName) 8 }}
+        {{ fail "cluster name too long" }}
+        {{- end }}
+        {{- if and (ne (int .Values.maxClusters) 255) (ne (int .Values.maxClusters) 511) }}
+        {{ fail "must be 255 or 511" }}
+        {{- end }}
+        {{- if not (list "internal" "external" | has .Values.mode) }}
+        {{ fail "mode must be internal or external" }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data: {}
+    "#};
+    let values_yaml = indoc! {r#"
+        clusterName: default
+        maxClusters: 255
+        mode: internal
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    for (instance, want) in [
+        (serde_json::json!({ "clusterName": "123456789" }), false),
+        (serde_json::json!({ "clusterName": "12345678" }), true),
+        (serde_json::json!({ "maxClusters": 300 }), false),
+        (serde_json::json!({ "maxClusters": 511 }), true),
+        // A numeric string coerces to the same bound and stays outside
+        // the raw-integer subset.
+        (serde_json::json!({ "maxClusters": "255" }), true),
+        (serde_json::json!({ "mode": "bogus" }), false),
+        (serde_json::json!({ "mode": "external" }), true),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "scalar-domain fail guards: instance={instance}; schema={schema}"
+        );
+    }
+}

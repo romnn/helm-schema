@@ -323,6 +323,11 @@ pub struct SpliceMeta {
     pub split_segment: Option<helm_schema_core::SplitSegmentUse>,
     /// Set when the splice renders one layer of an ordered `merge`.
     pub merge_layers: Option<helm_schema_core::MergeLayersUse>,
+    /// The splice renders the collection's RANGE KEY, not its value: sinks
+    /// constrain the key domain (a string-only slot excludes the integer
+    /// keys of a non-empty list lane), and raw-identity consumers must not
+    /// read it as the collection's value.
+    pub range_key: bool,
     /// Helper-body source sites this splice was derived through.
     pub provenance: Vec<ContractProvenance>,
     /// The render site the splice materializes at.

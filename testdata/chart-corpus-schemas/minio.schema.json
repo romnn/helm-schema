@@ -10019,6 +10019,31 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/schema152"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "environment": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "maxItems": 0,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Use this field to add environment variables relevant to MinIO server. These fields will be passed on to MinIO container(s)\nwhen Chart is deployed\nPlease refer for comprehensive list https://min.io/docs/minio/linux/reference/minio-server/minio-server.html\nMINIO_SUBNET_LICENSE: \"License key obtained from https://subnet.min.io\"\nMINIO_BROWSER: \"off\""
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "properties": {

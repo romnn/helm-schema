@@ -18,4 +18,8 @@ pub struct ProviderSchemaUse {
     /// shadowed layer's members reach the slot only where every earlier
     /// layer lacks them.
     pub merge_layers: Option<MergeLayersUse>,
+    /// Set when the rendered text is the collection's RANGE KEY rather than
+    /// its value: a string-only slot then excludes the integer keys of a
+    /// non-empty list lane.
+    pub range_key: bool,
 }
