@@ -971,11 +971,15 @@
         "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
       }
     },
-    "schema182": {
+    "schema181": {
+      "pattern": "^([\\s\\S]*:)?[+-]?[0-9]+$",
+      "type": "string"
+    },
+    "schema183": {
       "pattern": "^-?(0|[1-9][0-9]*)$",
       "type": "string"
     },
-    "schema184": {
+    "schema185": {
       "anyOf": [
         {
           "type": "string"
@@ -985,17 +989,17 @@
         }
       ]
     },
-    "schema185": {
+    "schema186": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema186": {
+    "schema187": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema187": {
+    "schema188": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
@@ -1037,7 +1041,7 @@
         "null"
       ]
     },
-    "schema190": {
+    "schema191": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -3724,7 +3728,31 @@
           "additionalProperties": {},
           "properties": {
             "type": {
-              "$ref": "#/$defs/schema184"
+              "$ref": "#/$defs/schema185"
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "tempo": {
+          "additionalProperties": {},
+          "properties": {
+            "extraArgs": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "allowPrivilegeEscalation: false\ncapabilities:\ndrop:\n- ALL\nreadOnlyRootFilesystem: true\nAdditional container arguments"
             }
           }
         }
@@ -4262,10 +4290,10 @@
                                     }
                                   },
                                   {
-                                    "type": "null"
+                                    "$ref": "#/$defs/schema181"
                                   },
                                   {
-                                    "type": "string"
+                                    "type": "null"
                                   }
                                 ]
                               }
@@ -4449,10 +4477,10 @@
                                     }
                                   },
                                   {
-                                    "type": "null"
+                                    "$ref": "#/$defs/schema181"
                                   },
                                   {
-                                    "type": "string"
+                                    "type": "null"
                                   }
                                 ]
                               }
@@ -4676,10 +4704,10 @@
                                     }
                                   },
                                   {
-                                    "type": "null"
+                                    "$ref": "#/$defs/schema181"
                                   },
                                   {
-                                    "type": "string"
+                                    "type": "null"
                                   }
                                 ]
                               }
@@ -4903,10 +4931,10 @@
                                     }
                                   },
                                   {
-                                    "type": "null"
+                                    "$ref": "#/$defs/schema181"
                                   },
                                   {
-                                    "type": "string"
+                                    "type": "null"
                                   }
                                 ]
                               }
@@ -5244,10 +5272,10 @@
                                     }
                                   },
                                   {
-                                    "type": "null"
+                                    "$ref": "#/$defs/schema181"
                                   },
                                   {
-                                    "type": "string"
+                                    "type": "null"
                                   }
                                 ]
                               }
@@ -5431,10 +5459,10 @@
                                     }
                                   },
                                   {
-                                    "type": "null"
+                                    "$ref": "#/$defs/schema181"
                                   },
                                   {
-                                    "type": "string"
+                                    "type": "null"
                                   }
                                 ]
                               }
@@ -5864,7 +5892,7 @@
             "additionalProperties": {},
             "properties": {
               "tag": {
-                "$ref": "#/$defs/schema184"
+                "$ref": "#/$defs/schema185"
               }
             }
           }
@@ -6547,7 +6575,7 @@
                         "$ref": "#/$defs/schema38"
                       },
                       {
-                        "$ref": "#/$defs/schema182"
+                        "$ref": "#/$defs/schema183"
                       }
                     ]
                   }
@@ -9195,13 +9223,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema186"
-                      },
-                      {
                         "$ref": "#/$defs/schema187"
                       },
                       {
-                        "$ref": "#/$defs/schema190"
+                        "$ref": "#/$defs/schema188"
+                      },
+                      {
+                        "$ref": "#/$defs/schema191"
                       },
                       {
                         "not": {
@@ -9214,7 +9242,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema185"
+                        "$ref": "#/$defs/schema186"
                       },
                       {
                         "$ref": "#/$defs/schema133"
@@ -9312,13 +9340,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema186"
-            },
-            {
               "$ref": "#/$defs/schema187"
             },
             {
-              "$ref": "#/$defs/schema190"
+              "$ref": "#/$defs/schema188"
+            },
+            {
+              "$ref": "#/$defs/schema191"
             },
             {
               "not": {
@@ -9331,7 +9359,7 @@
               }
             },
             {
-              "$ref": "#/$defs/schema185"
+              "$ref": "#/$defs/schema186"
             },
             {
               "$ref": "#/$defs/schema133"
@@ -9377,7 +9405,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema182"
+          "$ref": "#/$defs/schema183"
         }
       ],
       "description": "Define the amount of instances"
@@ -9400,7 +9428,7 @@
           }
         },
         {
-          "$ref": "#/$defs/schema182"
+          "$ref": "#/$defs/schema183"
         }
       ]
     },
@@ -9569,13 +9597,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema186"
-                      },
-                      {
                         "$ref": "#/$defs/schema187"
                       },
                       {
-                        "$ref": "#/$defs/schema190"
+                        "$ref": "#/$defs/schema188"
+                      },
+                      {
+                        "$ref": "#/$defs/schema191"
                       },
                       {
                         "not": {
@@ -9588,7 +9616,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema185"
+                        "$ref": "#/$defs/schema186"
                       },
                       {
                         "$ref": "#/$defs/schema133"
@@ -9732,13 +9760,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema186"
-                      },
-                      {
                         "$ref": "#/$defs/schema187"
                       },
                       {
-                        "$ref": "#/$defs/schema190"
+                        "$ref": "#/$defs/schema188"
+                      },
+                      {
+                        "$ref": "#/$defs/schema191"
                       },
                       {
                         "not": {
@@ -9751,7 +9779,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema185"
+                        "$ref": "#/$defs/schema186"
                       },
                       {
                         "$ref": "#/$defs/schema133"
@@ -10153,13 +10181,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema186"
-                      },
-                      {
                         "$ref": "#/$defs/schema187"
                       },
                       {
-                        "$ref": "#/$defs/schema190"
+                        "$ref": "#/$defs/schema188"
+                      },
+                      {
+                        "$ref": "#/$defs/schema191"
                       },
                       {
                         "not": {
@@ -10172,7 +10200,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema185"
+                        "$ref": "#/$defs/schema186"
                       },
                       {
                         "$ref": "#/$defs/schema133"
@@ -10250,13 +10278,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema186"
-                },
-                {
                   "$ref": "#/$defs/schema187"
                 },
                 {
-                  "$ref": "#/$defs/schema190"
+                  "$ref": "#/$defs/schema188"
+                },
+                {
+                  "$ref": "#/$defs/schema191"
                 },
                 {
                   "not": {
@@ -10269,7 +10297,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema185"
+                  "$ref": "#/$defs/schema186"
                 },
                 {
                   "$ref": "#/$defs/schema133"
@@ -10389,13 +10417,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema186"
-                      },
-                      {
                         "$ref": "#/$defs/schema187"
                       },
                       {
-                        "$ref": "#/$defs/schema190"
+                        "$ref": "#/$defs/schema188"
+                      },
+                      {
+                        "$ref": "#/$defs/schema191"
                       },
                       {
                         "not": {
@@ -10408,7 +10436,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema185"
+                        "$ref": "#/$defs/schema186"
                       },
                       {
                         "$ref": "#/$defs/schema133"
@@ -10457,13 +10485,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema186"
-                      },
-                      {
                         "$ref": "#/$defs/schema187"
                       },
                       {
-                        "$ref": "#/$defs/schema190"
+                        "$ref": "#/$defs/schema188"
+                      },
+                      {
+                        "$ref": "#/$defs/schema191"
                       },
                       {
                         "not": {
@@ -10476,7 +10504,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema185"
+                        "$ref": "#/$defs/schema186"
                       },
                       {
                         "$ref": "#/$defs/schema133"
@@ -11473,13 +11501,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema186"
-                              },
-                              {
                                 "$ref": "#/$defs/schema187"
                               },
                               {
-                                "$ref": "#/$defs/schema190"
+                                "$ref": "#/$defs/schema188"
+                              },
+                              {
+                                "$ref": "#/$defs/schema191"
                               },
                               {
                                 "not": {
@@ -11492,7 +11520,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema185"
+                                "$ref": "#/$defs/schema186"
                               },
                               {
                                 "$ref": "#/$defs/schema133"
@@ -11652,7 +11680,6 @@
               "type": "array"
             },
             "hosts": {},
-            "ingressClassName": {},
             "labels": {
               "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
             },

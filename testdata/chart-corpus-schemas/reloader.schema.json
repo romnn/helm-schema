@@ -3467,6 +3467,76 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "reloader": {
+          "additionalProperties": {},
+          "properties": {
+            "deployment": {
+              "additionalProperties": {},
+              "properties": {
+                "env": {
+                  "additionalProperties": {},
+                  "description": "Support for extra environment variables.",
+                  "properties": {
+                    "field": {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ALERT_ON_RELOAD: <\"true\"|\"false\">\nALERT_SINK: <\"slack\"> # By default it will be a raw text based webhook\nALERT_WEBHOOK_URL: <\"webhook_url\">\nALERT_ADDITIONAL_INFO: <\"Additional Info like Cluster Name if needed\">\nfield supports Key value pair as environment variables. It gets the values from other fields of pod."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "reloader": {
+          "additionalProperties": {},
+          "properties": {
+            "deployment": {
+              "additionalProperties": {},
+              "properties": {
+                "env": {
+                  "additionalProperties": {},
+                  "description": "Support for extra environment variables.",
+                  "properties": {
+                    "open": {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Open supports Key value pair as environment variables."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "allOf": [
           {
@@ -3913,6 +3983,41 @@
                           }
                         }
                       }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "reloader": {
+          "additionalProperties": {},
+          "properties": {
+            "deployment": {
+              "additionalProperties": {},
+              "properties": {
+                "env": {
+                  "additionalProperties": {},
+                  "description": "Support for extra environment variables.",
+                  "properties": {
+                    "secret": {
+                      "anyOf": [
+                        {
+                          "type": "array"
+                        },
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any."
                     }
                   }
                 }
@@ -10807,23 +10912,7 @@
             }
           ]
         },
-        "isArgoRollouts": {
-          "anyOf": [
-            {
-              "enum": [
-                true
-              ]
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
+        "isArgoRollouts": {},
         "isOpenshift": {
           "type": "boolean"
         },
@@ -10861,8 +10950,7 @@
           ]
         },
         "namespaceSelector": {
-          "description": "Comma separated list of k8s label selectors for namespaces selection",
-          "type": "string"
+          "description": "Comma separated list of k8s label selectors for namespaces selection"
         },
         "netpol": {
           "additionalProperties": {},
@@ -10949,8 +11037,7 @@
           "type": "object"
         },
         "pprofAddr": {
-          "description": "Address to start pprof server on. Default is \":6060\"",
-          "type": "string"
+          "description": "Address to start pprof server on. Default is \":6060\""
         },
         "rbac": {
           "additionalProperties": {},
@@ -10984,51 +11071,9 @@
           ],
           "description": "Set to true if you have a pod security policy that enforces readOnlyRootFilesystem"
         },
-        "reloadOnCreate": {
-          "anyOf": [
-            {
-              "enum": [
-                true
-              ]
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
-        "reloadOnDelete": {
-          "anyOf": [
-            {
-              "enum": [
-                true
-              ]
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
+        "reloadOnCreate": {},
+        "reloadOnDelete": {},
         "reloadStrategy": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Set to default, env-vars or annotations"
         },
         "resourceLabelSelector": {
@@ -11189,9 +11234,7 @@
           },
           "type": "object"
         },
-        "syncAfterRestart": {
-          "type": "boolean"
-        },
+        "syncAfterRestart": {},
         "verticalPodAutoscaler": {
           "additionalProperties": {},
           "description": "Enable vertical pod autoscaler",

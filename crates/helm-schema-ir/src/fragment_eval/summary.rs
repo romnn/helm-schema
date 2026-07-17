@@ -390,6 +390,7 @@ fn project_structured_taint_value(
         | AbstractValue::StringSet(_)
         | AbstractValue::DerivedBoolean(_)
         | AbstractValue::SplitList { .. }
+        | AbstractValue::SplitSegment { .. }
         | AbstractValue::Widened(_) => value.clone(),
     }
 }

@@ -809,6 +809,18 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "natsBox": {
+          "anyOf": [
+            {
+              "type": "object"
+            }
+          ]
+        }
+      }
+    },
+    {
       "if": {
         "allOf": [
           {
@@ -1340,669 +1352,705 @@
           }
         }
       }
-    }
-  ],
-  "properties": {
-    "config": {
+    },
+    {
       "additionalProperties": {},
       "properties": {
-        "cluster": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "merge": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "noAdvertise": {
-              "type": "boolean"
-            },
-            "patch": {
-              "items": {},
-              "type": "array"
-            },
-            "port": {
-              "type": "integer"
-            },
-            "replicas": {
-              "type": "integer"
-            },
-            "routeURLs": {
-              "additionalProperties": {},
-              "properties": {
-                "k8sClusterDomain": {
-                  "type": "string"
-                },
-                "password": {},
-                "useFQDN": {
-                  "type": "boolean"
-                },
-                "user": {}
+        "service": {
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                ]
               },
-              "type": "object"
-            },
-            "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "cert": {
-                  "type": "string"
-                },
-                "dir": {
-                  "type": "string"
-                },
-                "enabled": {
-                  "type": "boolean"
-                },
-                "key": {
-                  "type": "string"
-                },
-                "merge": {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                "patch": {
-                  "items": {},
-                  "type": "array"
-                },
-                "secretName": {}
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "gateway": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "merge": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "patch": {
-              "items": {},
-              "type": "array"
-            },
-            "port": {
-              "type": "integer"
-            },
-            "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "cert": {
-                  "type": "string"
-                },
-                "dir": {
-                  "type": "string"
-                },
-                "enabled": {
-                  "type": "boolean"
-                },
-                "key": {
-                  "type": "string"
-                },
-                "merge": {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                "patch": {
-                  "items": {},
-                  "type": "array"
-                },
-                "secretName": {}
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "leafnodes": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "merge": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "patch": {
-              "items": {},
-              "type": "array"
-            },
-            "port": {
-              "type": "integer"
-            },
-            "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "cert": {
-                  "type": "string"
-                },
-                "dir": {
-                  "type": "string"
-                },
-                "enabled": {
-                  "type": "boolean"
-                },
-                "key": {
-                  "type": "string"
-                },
-                "merge": {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                "patch": {
-                  "items": {},
-                  "type": "array"
-                },
-                "secretName": {}
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "merge": {},
-        "monitor": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "port": {
-              "type": "integer"
-            },
-            "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "allOf": [
+                          {
+                            "not": {
+                              "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^[-?:]([ \\t]|$)"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": ":[ \\t]|:$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[ \\t]#"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "[\\r\\n]"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(|~|null|Null|NULL)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                            }
+                          },
+                          {
+                            "not": {
+                              "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                            }
+                          }
+                        ],
+                        "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                        "type": "string"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ]
+                  }
                 }
-              },
-              "type": "object"
+              }
             }
-          },
-          "type": "object"
-        },
-        "mqtt": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "merge": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "patch": {
-              "items": {},
-              "type": "array"
-            },
-            "port": {
-              "type": "integer"
-            },
-            "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "cert": {
-                  "type": "string"
-                },
-                "dir": {
-                  "type": "string"
-                },
-                "enabled": {
-                  "type": "boolean"
-                },
-                "key": {
-                  "type": "string"
-                },
-                "merge": {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                "patch": {
-                  "items": {},
-                  "type": "array"
-                },
-                "secretName": {}
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "nats": {
-          "additionalProperties": {},
-          "properties": {
-            "port": {
-              "type": "integer"
-            },
-            "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "cert": {
-                  "type": "string"
-                },
-                "dir": {
-                  "type": "string"
-                },
-                "enabled": {
-                  "type": "boolean"
-                },
-                "key": {
-                  "type": "string"
-                },
-                "merge": {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                "patch": {
-                  "items": {},
-                  "type": "array"
-                },
-                "secretName": {}
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
-        },
-        "profiling": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "port": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "websocket": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "ingress": {
-              "additionalProperties": {},
-              "properties": {
-                "className": {},
-                "enabled": {
-                  "type": "boolean"
-                },
-                "hosts": {
-                  "items": {},
-                  "type": "array"
-                },
-                "merge": {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                "name": {},
-                "patch": {
-                  "items": {},
-                  "type": "array"
-                },
-                "path": {
-                  "type": "string"
-                },
-                "pathType": {
-                  "type": "string"
-                },
-                "tlsSecretName": {}
-              },
-              "type": "object"
-            },
-            "merge": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "patch": {
-              "items": {},
-              "type": "array"
-            },
-            "port": {
-              "type": "integer"
-            },
-            "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "cert": {
-                  "type": "string"
-                },
-                "dir": {
-                  "type": "string"
-                },
-                "enabled": {
-                  "type": "boolean"
-                },
-                "key": {
-                  "type": "string"
-                },
-                "merge": {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                "patch": {
-                  "items": {},
-                  "type": "array"
-                },
-                "secretName": {}
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          ]
         }
       }
-    },
-    "fullnameOverride": {},
-    "global": {
+    }
+  ],
+  "anyOf": [
+    {
       "additionalProperties": {},
       "properties": {
-        "labels": {}
-      }
-    },
-    "nameOverride": {},
-    "namespaceOverride": {},
-    "natsBox": {
-      "additionalProperties": {},
-      "properties": {
-        "contexts": {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "creds": {}
-                }
-              },
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "nkey": {},
-                  "tls": {}
-                },
-                "type": "object"
-              }
-            ]
-          },
-          "properties": {
-            "default": {
+        "config": {
+          "anyOf": [
+            {
               "additionalProperties": {},
               "properties": {
-                "creds": {
+                "cluster": {
                   "additionalProperties": {},
                   "properties": {
-                    "contents": {},
-                    "dir": {},
-                    "key": {
-                      "type": "string"
+                    "enabled": {
+                      "type": "boolean"
                     },
-                    "secretName": {}
+                    "merge": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "noAdvertise": {
+                      "type": "boolean"
+                    },
+                    "patch": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "port": {
+                      "type": "integer"
+                    },
+                    "replicas": {
+                      "type": "integer"
+                    },
+                    "routeURLs": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "k8sClusterDomain": {
+                          "type": "string"
+                        },
+                        "password": {},
+                        "useFQDN": {
+                          "type": "boolean"
+                        },
+                        "user": {}
+                      },
+                      "type": "object"
+                    },
+                    "tls": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "cert": {
+                          "type": "string"
+                        },
+                        "dir": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "key": {
+                          "type": "string"
+                        },
+                        "merge": {
+                          "additionalProperties": {},
+                          "type": "object"
+                        },
+                        "patch": {
+                          "items": {},
+                          "type": "array"
+                        },
+                        "secretName": {}
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "gateway": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "merge": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "patch": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "port": {
+                      "type": "integer"
+                    },
+                    "tls": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "cert": {
+                          "type": "string"
+                        },
+                        "dir": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "key": {
+                          "type": "string"
+                        },
+                        "merge": {
+                          "additionalProperties": {},
+                          "type": "object"
+                        },
+                        "patch": {
+                          "items": {},
+                          "type": "array"
+                        },
+                        "secretName": {}
+                      },
+                      "type": "object"
+                    }
                   },
                   "type": "object"
                 },
-                "merge": {
-                  "additionalProperties": {},
-                  "type": "object"
-                },
-                "nkey": {
+                "leafnodes": {
                   "additionalProperties": {},
                   "properties": {
-                    "contents": {},
-                    "dir": {},
-                    "key": {
-                      "type": "string"
+                    "enabled": {
+                      "type": "boolean"
                     },
-                    "secretName": {}
+                    "merge": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "patch": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "port": {
+                      "type": "integer"
+                    },
+                    "tls": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "cert": {
+                          "type": "string"
+                        },
+                        "dir": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "key": {
+                          "type": "string"
+                        },
+                        "merge": {
+                          "additionalProperties": {},
+                          "type": "object"
+                        },
+                        "patch": {
+                          "items": {},
+                          "type": "array"
+                        },
+                        "secretName": {}
+                      },
+                      "type": "object"
+                    }
                   },
                   "type": "object"
                 },
-                "patch": {
-                  "items": {},
-                  "type": "array"
-                },
-                "tls": {
+                "merge": {},
+                "monitor": {
                   "additionalProperties": {},
                   "properties": {
-                    "cert": {
-                      "type": "string"
+                    "enabled": {
+                      "type": "boolean"
                     },
-                    "dir": {},
-                    "key": {
-                      "type": "string"
+                    "port": {
+                      "type": "integer"
                     },
-                    "secretName": {}
+                    "tls": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "mqtt": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "merge": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "patch": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "port": {
+                      "type": "integer"
+                    },
+                    "tls": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "cert": {
+                          "type": "string"
+                        },
+                        "dir": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "key": {
+                          "type": "string"
+                        },
+                        "merge": {
+                          "additionalProperties": {},
+                          "type": "object"
+                        },
+                        "patch": {
+                          "items": {},
+                          "type": "array"
+                        },
+                        "secretName": {}
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "nats": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "port": {
+                      "type": "integer"
+                    },
+                    "tls": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "cert": {
+                          "type": "string"
+                        },
+                        "dir": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "key": {
+                          "type": "string"
+                        },
+                        "merge": {
+                          "additionalProperties": {},
+                          "type": "object"
+                        },
+                        "patch": {
+                          "items": {},
+                          "type": "array"
+                        },
+                        "secretName": {}
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "profiling": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "port": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                },
+                "websocket": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "ingress": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "className": {},
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "hosts": {
+                          "items": {},
+                          "type": "array"
+                        },
+                        "merge": {
+                          "additionalProperties": {},
+                          "type": "object"
+                        },
+                        "name": {},
+                        "patch": {
+                          "items": {},
+                          "type": "array"
+                        },
+                        "path": {
+                          "type": "string"
+                        },
+                        "pathType": {
+                          "type": "string"
+                        },
+                        "tlsSecretName": {}
+                      },
+                      "type": "object"
+                    },
+                    "merge": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "patch": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "port": {
+                      "type": "integer"
+                    },
+                    "tls": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "cert": {
+                          "type": "string"
+                        },
+                        "dir": {
+                          "type": "string"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "key": {
+                          "type": "string"
+                        },
+                        "merge": {
+                          "additionalProperties": {},
+                          "type": "object"
+                        },
+                        "patch": {
+                          "items": {},
+                          "type": "array"
+                        },
+                        "secretName": {}
+                      },
+                      "type": "object"
+                    }
                   },
                   "type": "object"
                 }
               },
               "type": "object"
             }
-          },
-          "type": "object"
+          ]
+        },
+        "fullnameOverride": {},
+        "global": {
+          "additionalProperties": {},
+          "properties": {
+            "labels": {}
+          }
+        },
+        "nameOverride": {},
+        "namespaceOverride": {},
+        "natsBox": {
+          "additionalProperties": {},
+          "properties": {
+            "contexts": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "creds": {}
+                    }
+                  },
+                  {
+                    "additionalProperties": {},
+                    "properties": {
+                      "nkey": {},
+                      "tls": {}
+                    },
+                    "type": "object"
+                  }
+                ]
+              },
+              "properties": {
+                "default": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "creds": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "contents": {},
+                        "dir": {},
+                        "key": {
+                          "type": "string"
+                        },
+                        "secretName": {}
+                      },
+                      "type": "object"
+                    },
+                    "merge": {
+                      "additionalProperties": {},
+                      "type": "object"
+                    },
+                    "nkey": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "contents": {},
+                        "dir": {},
+                        "key": {
+                          "type": "string"
+                        },
+                        "secretName": {}
+                      },
+                      "type": "object"
+                    },
+                    "patch": {
+                      "items": {},
+                      "type": "array"
+                    },
+                    "tls": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "cert": {
+                          "type": "string"
+                        },
+                        "dir": {},
+                        "key": {
+                          "type": "string"
+                        },
+                        "secretName": {}
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          }
+        },
+        "service": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "merge": {},
+                "name": {},
+                "ports": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "cluster": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "gateway": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "leafnodes": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "monitor": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "mqtt": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "nats": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "profiling": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "websocket": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          ]
         }
       },
       "type": "object"
     },
-    "service": {
-      "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "properties": {
-                        "enabled": {}
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "allOf": [
-                      {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[ \\t]#"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "[\\r\\n]"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
-                        }
-                      },
-                      {
-                        "not": {
-                          "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-                        }
-                      }
-                    ],
-                    "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-                    "type": "string"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ]
-              }
-            }
-          }
-        }
-      ],
-      "properties": {
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
-        "merge": {},
-        "name": {},
-        "ports": {
-          "additionalProperties": {},
-          "properties": {
-            "cluster": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
-            },
-            "gateway": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
-            },
-            "leafnodes": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
-            },
-            "monitor": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
-            },
-            "mqtt": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
-            },
-            "nats": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
-            },
-            "profiling": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
-            },
-            "websocket": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
-            }
-          }
-        }
-      }
+    {
+      "items": {},
+      "type": "array"
     }
-  },
-  "type": "object"
+  ]
 }

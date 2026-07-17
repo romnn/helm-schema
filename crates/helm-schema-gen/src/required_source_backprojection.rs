@@ -102,6 +102,50 @@ pub(crate) fn synthesized_required_source_implications(
     implications
 }
 
+/// Fail implications for provider slots observed through a SPLIT SEGMENT
+/// of the raw string (tempo's `regexSplit ":" . -1 | last` port suffix):
+/// wherever the source is truthy, its named segment must satisfy the
+/// integer slot. Base provider uses are self-scoped or unconditional by
+/// construction, so the self-truthy guard never over-fires — falsy sources
+/// skip their `with`-scoped render (or render an empty segment the sibling
+/// string-contract arm already governs).
+pub(crate) fn synthesized_split_segment_implications(
+    contract_schema_signals: &ContractSchemaSignals,
+    provider: &dyn ResourceSchemaOracle,
+) -> BTreeMap<String, Vec<ContractFailImplication>> {
+    let mut implications: BTreeMap<String, Vec<ContractFailImplication>> = BTreeMap::new();
+    for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
+        for use_ in &evidence.provider_schema_uses {
+            let Some(segment) = &use_.split_segment else {
+                continue;
+            };
+            if use_.kind != ValueKind::Scalar {
+                continue;
+            }
+            let Some(pattern) = provider.schema_fragment_for_use(use_).and_then(|fragment| {
+                crate::resolve_policy::split_segment_pattern(fragment.schema(), segment)
+            }) else {
+                continue;
+            };
+            push_implication(
+                &mut implications,
+                value_path.clone(),
+                ContractFailImplication {
+                    outer_guards: vec![helm_schema_core::ConditionalGuard::Truthy {
+                        path: value_path.clone(),
+                    }],
+                    target: ContractRequirementTarget::Value,
+                    requirements: vec![FailValueRequirement::MatchesPattern {
+                        pattern,
+                        templated: false,
+                    }],
+                },
+            );
+        }
+    }
+    implications
+}
+
 fn push_implication(
     implications: &mut BTreeMap<String, Vec<ContractFailImplication>>,
     target_value_path: String,

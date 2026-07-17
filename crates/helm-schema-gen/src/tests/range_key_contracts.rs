@@ -248,9 +248,21 @@ fn non_string_range_key_operand_does_not_infer_a_string_contract() {
             ]
         }),
     );
+    // The unconditional two-variable range still demands an iterable
+    // collection even though the key operand infers no string contract.
+    let all_of = vec![root_property_schema(
+        "items",
+        serde_json::json!({
+            "anyOf": [
+                { "type": "array" },
+                { "type": "object" },
+                { "type": "null" },
+            ]
+        }),
+    )];
     sim_assert_eq!(
         have: &schema,
-        want: &expected_values_schema(properties, Vec::new(), false)
+        want: &expected_values_schema(properties, all_of, false)
     );
 
     assert!(

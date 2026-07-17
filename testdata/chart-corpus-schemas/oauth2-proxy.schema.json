@@ -12863,6 +12863,28 @@
     {
       "additionalProperties": {},
       "properties": {
+        "extraObjects": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Extra K8s manifests to deploy\n- apiVersion: secrets-store.csi.x-k8s.io/v1\nkind: SecretProviderClass\nmetadata:\nname: oauth2-proxy-secrets-store\nspec:\nprovider: aws\nparameters:\nobjects: |\n- objectName: \"oauth2-proxy\"\nobjectType: \"secretsmanager\"\njmesPath:\n- path: \"client_id\"\nobjectAlias: \"client-id\"\n- path: \"client_secret\"\nobjectAlias: \"client-secret\"\n- path: \"cookie_secret\"\nobjectAlias: \"cookie-secret\"\nsecretObjects:\n- data:\n- key: client-id\nobjectName: client-id\n- key: client-secret\nobjectName: client-secret\n- key: cookie-secret\nobjectName: cookie-secret\nsecretName: oauth2-proxy-secrets-store\ntype: Opaque"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
         "extraVolumeMounts": {
           "description": "- mountPath: /etc/ssl/certs/\nname: ca-bundle-cert",
           "not": {
@@ -45528,12 +45550,8 @@
                 "pullPolicy": {
                   "type": "string"
                 },
-                "repository": {
-                  "type": "string"
-                },
-                "tag": {
-                  "type": "string"
-                }
+                "repository": {},
+                "tag": {}
               },
               "type": "object"
             },
@@ -45582,9 +45600,7 @@
               },
               "type": "object"
             },
-            "timeout": {
-              "type": "integer"
-            }
+            "timeout": {}
           },
           "type": "object"
         }
@@ -69811,12 +69827,10 @@
               "description": "Override all other affinity settings for the haproxy pods with a string."
             },
             "checkFall": {
-              "description": "haproxy.cfg `check fall` setting",
-              "type": "integer"
+              "description": "haproxy.cfg `check fall` setting"
             },
             "checkInterval": {
-              "description": "haproxy.cfg `check inter` setting",
-              "type": "string"
+              "description": "haproxy.cfg `check inter` setting"
             },
             "containerPort": {
               "description": "Modify HAProxy deployment container port"
@@ -70565,6 +70579,15 @@
             "s3": {
               "additionalProperties": {},
               "properties": {
+                "access_key": {
+                  "description": "Restore init container - AWS AWS_ACCESS_KEY_ID to access restore.s3.source"
+                },
+                "region": {
+                  "description": "Restore init container - AWS AWS_REGION to access restore.s3.source"
+                },
+                "secret_key": {
+                  "description": "Restore init container - AWS AWS_SECRET_ACCESS_KEY to access restore.s3.source"
+                },
                 "source": {
                   "description": "Restore init container - AWS S3 location of dump - i.e. s3://bucket/dump.rdb or false\nIf using existingSecret, that secret must contain:\nAWS_SECRET_ACCESS_KEY: <YOUR_ACCESS_KEY:>\nAWS_ACCESS_KEY_ID: <YOUR_KEY_ID>\nIf not set the key and ID as strings below:"
                 }
@@ -70573,10 +70596,16 @@
             "ssh": {
               "additionalProperties": {},
               "properties": {
+                "key": {
+                  "description": "Restore init container - SSH private key to scp restore.ssh.source to init container.\nKey should be in one line separated with \\n.\ni.e. `-----BEGIN RSA PRIVATE KEY-----\\n...\\n...\\n-----END RSA PRIVATE KEY-----`"
+                },
                 "source": {
                   "description": "Restore init container - SSH scp location of dump - i.e. user@server:/path/dump.rdb or false"
                 }
               }
+            },
+            "timeout": {
+              "description": "Timeout for the restore"
             }
           }
         },
@@ -71567,9 +71596,6 @@
             },
             {
               "$ref": "#/$defs/schema537"
-            },
-            {
-              "type": "string"
             }
           ],
           "description": "when service.type is ClusterIP ...\nclusterIP: 192.0.2.20\nwhen service.type is LoadBalancer ...\nloadBalancerIP: 198.51.100.40\nloadBalancerSourceRanges: 203.0.113.0/24\nwhen service.type is NodePort ...\nnodePort: 80"

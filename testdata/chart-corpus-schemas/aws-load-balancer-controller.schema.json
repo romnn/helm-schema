@@ -3031,6 +3031,127 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "not": {
+              "allOf": [
+                {
+                  "properties": {
+                    "keepTLSSecret": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "keepTLSSecret"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "enableCertManager": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enableCertManager"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "properties": {
+                    "webhookTLS": {
+                      "properties": {
+                        "caCert": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "caCert"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhookTLS"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "webhookTLS": {
+                      "properties": {
+                        "cert": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "cert"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhookTLS"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "webhookTLS": {
+                      "properties": {
+                        "key": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "key"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "webhookTLS"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "cluster": {
+            "additionalProperties": {},
+            "description": "cluster contains configurations specific to the kubernetes cluster",
+            "properties": {
+              "dnsDomain": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Cluster DNS domain (required for requesting TLS certificates)"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "enableCertManager": {
             "$ref": "#/$defs/helm-truthy"

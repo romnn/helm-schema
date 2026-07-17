@@ -862,22 +862,38 @@
       "x-kubernetes-map-type": "atomic"
     },
     "schema51": {
+      "anyOf": [
+        {
+          "type": "array"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema52": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema53": {
+    "schema54": {
       "not": {
         "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
       }
     },
-    "schema54": {
+    "schema55": {
       "not": {
         "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
       }
     },
-    "schema56": {
+    "schema57": {
       "oneOf": [
         {
           "type": [
@@ -892,11 +908,6 @@
           ]
         }
       ]
-    },
-    "schema59": {
-      "not": {
-        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-      }
     },
     "schema6": {
       "description": "items if unspecified, each key-value pair in the Data field of the referenced ConfigMap will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the ConfigMap, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
@@ -935,17 +946,22 @@
         "null"
       ]
     },
-    "schema61": {
+    "schema60": {
       "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
+        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
       }
     },
     "schema62": {
       "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+        "pattern": "^(|~|null|Null|NULL)$"
       }
     },
     "schema63": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "schema64": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
@@ -1520,20 +1536,7 @@
             "additionalProperties": {},
             "properties": {
               "additionalArguments": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/schema51"
               }
             }
           }
@@ -1711,6 +1714,24 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "natskafka": {
+          "additionalProperties": {},
+          "properties": {
+            "nats": {
+              "additionalProperties": {},
+              "properties": {
+                "servers": {
+                  "$ref": "#/$defs/schema51"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "if": {
         "properties": {
           "natskafka": {
@@ -1780,10 +1801,10 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema63"
                 },
                 {
-                  "$ref": "#/$defs/schema63"
+                  "$ref": "#/$defs/schema64"
                 },
                 {
                   "not": {
@@ -1801,19 +1822,19 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema61"
+                  "$ref": "#/$defs/schema62"
                 },
                 {
                   "$ref": "#/$defs/schema46"
                 },
                 {
-                  "$ref": "#/$defs/schema53"
-                },
-                {
                   "$ref": "#/$defs/schema54"
                 },
                 {
-                  "$ref": "#/$defs/schema59"
+                  "$ref": "#/$defs/schema55"
+                },
+                {
+                  "$ref": "#/$defs/schema60"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -1885,20 +1906,7 @@
                     ]
                   },
                   "then": {
-                    "anyOf": [
-                      {
-                        "type": "array"
-                      },
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "$ref": "#/$defs/schema51"
                   }
                 }
               ]
@@ -2079,7 +2087,7 @@
         "additionalVolumeMounts": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema51"
+              "$ref": "#/$defs/schema52"
             },
             {
               "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
@@ -2150,7 +2158,7 @@
         "additionalVolumes": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema51"
+              "$ref": "#/$defs/schema52"
             },
             {
               "description": "List of volumes that can be mounted by containers belonging to the pod. More info: https://kubernetes.io/docs/concepts/storage/volumes",
@@ -2470,7 +2478,7 @@
                         ]
                       },
                       "sizeLimit": {
-                        "$ref": "#/$defs/schema56"
+                        "$ref": "#/$defs/schema57"
                       }
                     },
                     "type": [
@@ -3958,7 +3966,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema51"
+              "$ref": "#/$defs/schema52"
             },
             {
               "not": {
@@ -4004,7 +4012,7 @@
         "deploymentLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema51"
+              "$ref": "#/$defs/schema52"
             },
             {
               "$ref": "#/$defs/schema27"
@@ -4179,7 +4187,7 @@
         "nodeSelector": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema51"
+              "$ref": "#/$defs/schema52"
             },
             {
               "additionalProperties": {
@@ -4206,7 +4214,7 @@
         "podLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema51"
+              "$ref": "#/$defs/schema52"
             },
             {
               "$ref": "#/$defs/schema27"
@@ -4268,7 +4276,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema51"
+              "$ref": "#/$defs/schema52"
             },
             {
               "type": "null"
@@ -4383,10 +4391,10 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema62"
+                        "$ref": "#/$defs/schema63"
                       },
                       {
-                        "$ref": "#/$defs/schema63"
+                        "$ref": "#/$defs/schema64"
                       },
                       {
                         "not": {
@@ -4404,19 +4412,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema61"
+                        "$ref": "#/$defs/schema62"
                       },
                       {
                         "$ref": "#/$defs/schema46"
                       },
                       {
-                        "$ref": "#/$defs/schema53"
-                      },
-                      {
                         "$ref": "#/$defs/schema54"
                       },
                       {
-                        "$ref": "#/$defs/schema59"
+                        "$ref": "#/$defs/schema55"
+                      },
+                      {
+                        "$ref": "#/$defs/schema60"
                       }
                     ],
                     "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -4455,10 +4463,10 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema63"
                 },
                 {
-                  "$ref": "#/$defs/schema63"
+                  "$ref": "#/$defs/schema64"
                 },
                 {
                   "not": {
@@ -4476,19 +4484,19 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema61"
+                  "$ref": "#/$defs/schema62"
                 },
                 {
                   "$ref": "#/$defs/schema46"
                 },
                 {
-                  "$ref": "#/$defs/schema53"
-                },
-                {
                   "$ref": "#/$defs/schema54"
                 },
                 {
-                  "$ref": "#/$defs/schema59"
+                  "$ref": "#/$defs/schema55"
+                },
+                {
+                  "$ref": "#/$defs/schema60"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",

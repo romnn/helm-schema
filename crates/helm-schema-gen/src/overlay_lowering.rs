@@ -41,11 +41,24 @@ pub(crate) fn collect_conditional_schemas(
     values_yaml_doc: &YamlValue,
     provider: &dyn ResourceSchemaOracle,
 ) -> Vec<ConditionalResolvedSchema> {
-    let synthesized_implications =
+    let mut synthesized_implications =
         crate::required_source_backprojection::synthesized_required_source_implications(
             contract_schema_signals,
             provider,
         );
+    for (path, split_implications) in
+        crate::required_source_backprojection::synthesized_split_segment_implications(
+            contract_schema_signals,
+            provider,
+        )
+    {
+        let entries = synthesized_implications.entry(path).or_default();
+        for implication in split_implications {
+            if !entries.contains(&implication) {
+                entries.push(implication);
+            }
+        }
+    }
     let resolved_by_path = resolved_paths
         .iter()
         .map(|resolved| (resolved.value_path.as_str(), resolved))

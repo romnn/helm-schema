@@ -509,6 +509,37 @@ fn merge_into_schema_slot(slot: &mut SchemaNode, schema: SchemaNode) {
         return;
     }
 
+    // A TYPELESS member-host carrier (`{"additionalProperties": …}` with no
+    // type of its own) merged into an object-typed slot must not degrade
+    // the slot into a union whose typeless alternative matches scalars
+    // (jenkins' additionalAgents member-map contract): conjoin the
+    // carrier's member slot into the object instead.
+    if let SchemaNode::Foreign(Value::Object(carrier)) = &schema
+        && !carrier.contains_key("type")
+        && !carrier.contains_key("anyOf")
+        && !carrier.contains_key("oneOf")
+        && carrier.contains_key("additionalProperties")
+        && carrier
+            .keys()
+            .all(|key| matches!(key.as_str(), "additionalProperties" | "description"))
+        && let SchemaNode::Foreign(Value::Object(object)) = slot
+        && object.get("type").and_then(Value::as_str) == Some("object")
+        && object
+            .get("additionalProperties")
+            .is_none_or(|additional| additional != &Value::Bool(false))
+    {
+        let carrier_member = carrier
+            .get("additionalProperties")
+            .cloned()
+            .unwrap_or(Value::Object(serde_json::Map::new()));
+        let member = match object.remove("additionalProperties") {
+            None | Some(Value::Bool(true)) => carrier_member,
+            Some(existing) => crate::merge::merge_two_schemas(existing, carrier_member),
+        };
+        object.insert("additionalProperties".to_string(), member);
+        return;
+    }
+
     if schema.opens_unknown_object_fields()
         || (schema.is_exact_empty_object() && slot.has_object_descendants())
     {

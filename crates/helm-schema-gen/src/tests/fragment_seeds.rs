@@ -290,6 +290,7 @@ fn parent_values_seed_does_not_override_exact_defaulted_child_path() {
         provenance: Vec::new(),
         has_string_contract: false,
         template_supplied_member_keys: Default::default(),
+        split_segment: None,
     }]);
     contract.push_pathless_scalar("signoz-otel-gateway");
     contract.add_type_hint("signoz-otel-gateway.serviceAccount.name", "string");
@@ -352,6 +353,7 @@ fn guarded_fragment_parent_seed_stays_open_after_guard_child_insert() {
         provenance: Vec::new(),
         has_string_contract: false,
         template_supplied_member_keys: Default::default(),
+        split_segment: None,
     }]);
     contract.push_pathless_scalar("clickhouse");
     let schema = generate_values_schema(
@@ -397,6 +399,7 @@ fn referenced_empty_string_child_survives_parent_pruning() {
             provenance: Vec::new(),
             has_string_contract: false,
             template_supplied_member_keys: Default::default(),
+            split_segment: None,
         },
         ContractUse {
             source_expr: "signoz.smtpVars.existingSecret.name".to_string(),
@@ -414,6 +417,7 @@ fn referenced_empty_string_child_survives_parent_pruning() {
             provenance: Vec::new(),
             has_string_contract: false,
             template_supplied_member_keys: Default::default(),
+            split_segment: None,
         },
     ]);
     contract.push_pathless_scalar("signoz");
@@ -484,6 +488,7 @@ fn guarded_array_fragment_parent_seed_stays_array_shaped() {
         provenance: Vec::new(),
         has_string_contract: false,
         template_supplied_member_keys: Default::default(),
+        split_segment: None,
     }]);
     contract.push_pathless_scalar("alertmanager");
     contract.add_type_hint("alertmanager.enabled", "boolean");
@@ -524,6 +529,7 @@ fn guarded_null_object_fragment_parent_seed_preserves_null_default() {
         provenance: Vec::new(),
         has_string_contract: false,
         template_supplied_member_keys: Default::default(),
+        split_segment: None,
     }]);
     contract.push_pathless_scalar("clickhouse");
     contract.add_type_hint("clickhouse.enabled", "boolean");
@@ -614,6 +620,7 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
                 provenance: Vec::new(),
                 has_string_contract: false,
                 template_supplied_member_keys: Default::default(),
+                split_segment: None,
             },
             ContractUse {
                 source_expr: "serviceAccount.name".to_string(),
@@ -631,6 +638,7 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
                 provenance: Vec::new(),
                 has_string_contract: false,
                 template_supplied_member_keys: Default::default(),
+                split_segment: None,
             },
         ]),
         &[("serviceAccount.name", "string")],

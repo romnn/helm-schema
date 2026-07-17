@@ -9347,6 +9347,28 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "extraObjects": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Extra K8s manifests to deploy\n- apiVersion: \"kubernetes-client.io/v1\"\nkind: ExternalSecret\nmetadata:\nname: promtail-secrets\nspec:\nbackendType: gcpSecretsManager\ndata:\n- key: promtail-oauth2-creds\nname: client_secret"
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -10747,6 +10769,32 @@
             "allOf": [
               {
                 "properties": {
+                  "extraPorts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraPorts"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "fullnameOverride": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "fullnameOverride"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
                   "fullnameOverride": {
                     "$ref": "#/$defs/helm-truthy"
                   }
@@ -11809,6 +11857,40 @@
                 },
                 "required": [
                   "deployment"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "image": {
+                    "properties": {
+                      "tag": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "tag"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "extraPorts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraPorts"
                 ],
                 "type": "object"
               },
@@ -13116,6 +13198,32 @@
                 },
                 "required": [
                   "deployment"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "nameOverride": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "nameOverride"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "extraPorts": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "extraPorts"
                 ],
                 "type": "object"
               },

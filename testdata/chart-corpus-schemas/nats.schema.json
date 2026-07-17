@@ -81,7 +81,10 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "schema103": {
+    "schema100": {
+      "description": "merge or patch the container\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#container-v1-core"
+    },
+    "schema104": {
       "anyOf": [
         {
           "type": "object"
@@ -96,10 +99,10 @@
       ],
       "description": "env var map, see nats.env for an example"
     },
-    "schema104": {
+    "schema105": {
       "description": "merge or patch the pod template\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#pod-v1-core"
     },
-    "schema107": {
+    "schema108": {
       "not": {
         "properties": {
           "tlsCA": {
@@ -151,17 +154,6 @@
           "config"
         ],
         "type": "object"
-      }
-    },
-    "schema110": {
-      "additionalProperties": {},
-      "properties": {
-        "digest": {},
-        "fullImageName": {},
-        "pullPolicy": {},
-        "registry": {},
-        "repository": {},
-        "tag": {}
       }
     },
     "schema116": {
@@ -1244,6 +1236,24 @@
         "type": "object"
       }
     },
+    "schema6": {
+      "additionalProperties": {},
+      "properties": {
+        "cert": {},
+        "dir": {},
+        "enabled": {
+          "type": "boolean"
+        },
+        "key": {},
+        "merge": {
+          "description": "merge or patch the tls config\nhttps://docs.nats.io/running-a-nats-service/configuration/securing_nats/tls"
+        },
+        "secretName": {
+          "description": "set secretName in order to mount an existing secret to dir"
+        }
+      },
+      "type": "object"
+    },
     "schema61": {
       "not": {
         "properties": {
@@ -1323,23 +1333,6 @@
         "type": "object"
       }
     },
-    "schema7": {
-      "additionalProperties": {},
-      "properties": {
-        "cert": {},
-        "dir": {},
-        "enabled": {
-          "type": "boolean"
-        },
-        "key": {},
-        "merge": {
-          "description": "merge or patch the tls config\nhttps://docs.nats.io/running-a-nats-service/configuration/securing_nats/tls"
-        },
-        "secretName": {
-          "description": "set secretName in order to mount an existing secret to dir"
-        }
-      }
-    },
     "schema70": {
       "not": {
         "properties": {
@@ -1379,6 +1372,18 @@
       }
     },
     "schema72": {
+      "additionalProperties": {},
+      "properties": {
+        "digest": {},
+        "fullImageName": {},
+        "pullPolicy": {},
+        "registry": {},
+        "repository": {},
+        "tag": {}
+      },
+      "type": "object"
+    },
+    "schema73": {
       "not": {
         "properties": {
           "config": {
@@ -1397,7 +1402,7 @@
         "type": "object"
       }
     },
-    "schema73": {
+    "schema74": {
       "additionalProperties": {},
       "properties": {
         "tls": {
@@ -1417,7 +1422,7 @@
         }
       }
     },
-    "schema74": {
+    "schema75": {
       "not": {
         "properties": {
           "natsBox": {
@@ -1436,7 +1441,7 @@
         "type": "object"
       }
     },
-    "schema76": {
+    "schema77": {
       "not": {
         "properties": {
           "service": {
@@ -1455,7 +1460,7 @@
         "type": "object"
       }
     },
-    "schema77": {
+    "schema78": {
       "not": {
         "properties": {
           "config": {
@@ -1509,7 +1514,7 @@
         "type": "object"
       }
     },
-    "schema81": {
+    "schema82": {
       "not": {
         "properties": {
           "config": {
@@ -1528,7 +1533,7 @@
         "type": "object"
       }
     },
-    "schema82": {
+    "schema83": {
       "not": {
         "properties": {
           "config": {
@@ -1547,7 +1552,7 @@
         "type": "object"
       }
     },
-    "schema83": {
+    "schema84": {
       "not": {
         "properties": {
           "config": {
@@ -1601,7 +1606,7 @@
         "type": "object"
       }
     },
-    "schema95": {
+    "schema96": {
       "not": {
         "properties": {
           "config": {
@@ -1620,7 +1625,7 @@
         "type": "object"
       }
     },
-    "schema97": {
+    "schema98": {
       "not": {
         "properties": {
           "config": {
@@ -1638,13 +1643,9 @@
         ],
         "type": "object"
       }
-    },
-    "schema99": {
-      "description": "merge or patch the container\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#container-v1-core"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "additionalProperties": false,
   "allOf": [
     {
       "if": {
@@ -1677,7 +1678,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema81"
+                "$ref": "#/$defs/schema82"
               },
               {
                 "properties": {
@@ -1917,7 +1918,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -2006,7 +2007,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -2165,7 +2166,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -2289,7 +2290,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -2441,7 +2442,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema81"
+                "$ref": "#/$defs/schema82"
               },
               {
                 "properties": {
@@ -2679,7 +2680,7 @@
             "description": "NATS config",
             "properties": {
               "cluster": {
-                "$ref": "#/$defs/schema73"
+                "$ref": "#/$defs/schema74"
               }
             }
           }
@@ -2717,7 +2718,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema81"
+                "$ref": "#/$defs/schema82"
               },
               {
                 "properties": {
@@ -2839,7 +2840,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema81"
+                "$ref": "#/$defs/schema82"
               },
               {
                 "properties": {
@@ -3055,7 +3056,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema81"
+                "$ref": "#/$defs/schema82"
               },
               {
                 "properties": {
@@ -3238,7 +3239,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -3327,7 +3328,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -3457,7 +3458,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -3622,7 +3623,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -3840,7 +3841,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema81"
+                "$ref": "#/$defs/schema82"
               },
               {
                 "properties": {
@@ -3947,7 +3948,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -4009,7 +4010,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -4098,7 +4099,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -4257,7 +4258,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -4381,7 +4382,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -4612,7 +4613,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema81"
+                        "$ref": "#/$defs/schema82"
                       },
                       {
                         "properties": {
@@ -4701,7 +4702,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema81"
+                        "$ref": "#/$defs/schema82"
                       },
                       {
                         "properties": {
@@ -4860,7 +4861,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema81"
+                        "$ref": "#/$defs/schema82"
                       },
                       {
                         "properties": {
@@ -4984,7 +4985,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema81"
+                        "$ref": "#/$defs/schema82"
                       },
                       {
                         "properties": {
@@ -5112,7 +5113,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema81"
+                        "$ref": "#/$defs/schema82"
                       },
                       {
                         "properties": {
@@ -5201,7 +5202,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema81"
+                        "$ref": "#/$defs/schema82"
                       },
                       {
                         "properties": {
@@ -5331,7 +5332,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema81"
+                        "$ref": "#/$defs/schema82"
                       },
                       {
                         "properties": {
@@ -5496,7 +5497,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema81"
+                        "$ref": "#/$defs/schema82"
                       },
                       {
                         "properties": {
@@ -5716,7 +5717,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema82"
+                "$ref": "#/$defs/schema83"
               },
               {
                 "properties": {
@@ -5861,7 +5862,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema82"
+                "$ref": "#/$defs/schema83"
               },
               {
                 "properties": {
@@ -6099,7 +6100,7 @@
             "description": "NATS config",
             "properties": {
               "gateway": {
-                "$ref": "#/$defs/schema73"
+                "$ref": "#/$defs/schema74"
               }
             }
           }
@@ -6137,7 +6138,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema82"
+                "$ref": "#/$defs/schema83"
               },
               {
                 "properties": {
@@ -6353,7 +6354,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema82"
+                "$ref": "#/$defs/schema83"
               },
               {
                 "properties": {
@@ -6536,7 +6537,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema83"
                   },
                   {
                     "properties": {
@@ -6666,7 +6667,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema83"
                   },
                   {
                     "properties": {
@@ -6831,7 +6832,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema83"
                   },
                   {
                     "properties": {
@@ -7049,7 +7050,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema82"
+                "$ref": "#/$defs/schema83"
               },
               {
                 "properties": {
@@ -7156,7 +7157,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema83"
                   },
                   {
                     "properties": {
@@ -7218,7 +7219,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema83"
                   },
                   {
                     "properties": {
@@ -7429,7 +7430,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema83"
                   },
                   {
                     "properties": {
@@ -7559,7 +7560,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema83"
                   },
                   {
                     "properties": {
@@ -7724,7 +7725,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema83"
                   },
                   {
                     "properties": {
@@ -12687,7 +12688,7 @@
             "description": "NATS config",
             "properties": {
               "leafnodes": {
-                "$ref": "#/$defs/schema73"
+                "$ref": "#/$defs/schema74"
               }
             }
           }
@@ -14936,7 +14937,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema84"
                   },
                   {
                     "properties": {
@@ -15007,7 +15008,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema84"
                   },
                   {
                     "properties": {
@@ -15296,7 +15297,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema84"
                   },
                   {
                     "properties": {
@@ -15358,7 +15359,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema84"
                   },
                   {
                     "properties": {
@@ -15454,7 +15455,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema84"
                   },
                   {
                     "properties": {
@@ -15585,7 +15586,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema84"
                   },
                   {
                     "properties": {
@@ -15693,7 +15694,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema84"
                   },
                   {
                     "properties": {
@@ -15839,7 +15840,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema84"
                   },
                   {
                     "properties": {
@@ -16098,7 +16099,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema84"
                   },
                   {
                     "properties": {
@@ -16169,7 +16170,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema84"
                   },
                   {
                     "properties": {
@@ -16456,7 +16457,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema95"
+                "$ref": "#/$defs/schema96"
               },
               {
                 "properties": {
@@ -16601,7 +16602,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema95"
+                "$ref": "#/$defs/schema96"
               },
               {
                 "properties": {
@@ -16839,7 +16840,7 @@
             "description": "NATS config",
             "properties": {
               "mqtt": {
-                "$ref": "#/$defs/schema73"
+                "$ref": "#/$defs/schema74"
               }
             }
           }
@@ -16877,7 +16878,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema95"
+                "$ref": "#/$defs/schema96"
               },
               {
                 "properties": {
@@ -17093,7 +17094,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema95"
+                "$ref": "#/$defs/schema96"
               },
               {
                 "properties": {
@@ -17276,7 +17277,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema95"
+                    "$ref": "#/$defs/schema96"
                   },
                   {
                     "properties": {
@@ -17406,7 +17407,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema95"
+                    "$ref": "#/$defs/schema96"
                   },
                   {
                     "properties": {
@@ -17571,7 +17572,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema95"
+                    "$ref": "#/$defs/schema96"
                   },
                   {
                     "properties": {
@@ -17789,7 +17790,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema95"
+                "$ref": "#/$defs/schema96"
               },
               {
                 "properties": {
@@ -17896,7 +17897,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema95"
+                    "$ref": "#/$defs/schema96"
                   },
                   {
                     "properties": {
@@ -17958,7 +17959,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema95"
+                    "$ref": "#/$defs/schema96"
                   },
                   {
                     "properties": {
@@ -18071,7 +18072,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema95"
+                    "$ref": "#/$defs/schema96"
                   },
                   {
                     "properties": {
@@ -18201,7 +18202,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema95"
+                    "$ref": "#/$defs/schema96"
                   },
                   {
                     "properties": {
@@ -18366,7 +18367,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema95"
+                    "$ref": "#/$defs/schema96"
                   },
                   {
                     "properties": {
@@ -18584,7 +18585,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema97"
+                "$ref": "#/$defs/schema98"
               },
               {
                 "properties": {
@@ -18795,7 +18796,7 @@
             "description": "NATS config",
             "properties": {
               "nats": {
-                "$ref": "#/$defs/schema73"
+                "$ref": "#/$defs/schema74"
               }
             }
           }
@@ -18833,7 +18834,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema97"
+                "$ref": "#/$defs/schema98"
               },
               {
                 "properties": {
@@ -19022,7 +19023,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema97"
+                "$ref": "#/$defs/schema98"
               },
               {
                 "properties": {
@@ -19178,7 +19179,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema97"
+                    "$ref": "#/$defs/schema98"
                   },
                   {
                     "properties": {
@@ -19281,7 +19282,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema97"
+                    "$ref": "#/$defs/schema98"
                   },
                   {
                     "properties": {
@@ -19419,7 +19420,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema97"
+                    "$ref": "#/$defs/schema98"
                   },
                   {
                     "properties": {
@@ -19610,7 +19611,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema97"
+                "$ref": "#/$defs/schema98"
               },
               {
                 "properties": {
@@ -19694,7 +19695,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema97"
+                    "$ref": "#/$defs/schema98"
                   },
                   {
                     "properties": {
@@ -19797,7 +19798,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema97"
+                    "$ref": "#/$defs/schema98"
                   },
                   {
                     "properties": {
@@ -19935,7 +19936,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema97"
+                    "$ref": "#/$defs/schema98"
                   },
                   {
                     "properties": {
@@ -20128,7 +20129,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema72"
+                    "$ref": "#/$defs/schema73"
                   },
                   {
                     "properties": {
@@ -20190,7 +20191,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema72"
+                    "$ref": "#/$defs/schema73"
                   },
                   {
                     "properties": {
@@ -20301,7 +20302,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema77"
+                "$ref": "#/$defs/schema78"
               },
               {
                 "properties": {
@@ -20525,7 +20526,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema77"
+                "$ref": "#/$defs/schema78"
               },
               {
                 "properties": {
@@ -20732,7 +20733,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema77"
+                "$ref": "#/$defs/schema78"
               },
               {
                 "properties": {
@@ -20941,7 +20942,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema77"
+                "$ref": "#/$defs/schema78"
               },
               {
                 "properties": {
@@ -21075,7 +21076,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema77"
+                    "$ref": "#/$defs/schema78"
                   },
                   {
                     "properties": {
@@ -21247,7 +21248,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema77"
+                    "$ref": "#/$defs/schema78"
                   },
                   {
                     "properties": {
@@ -21428,7 +21429,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema77"
+                    "$ref": "#/$defs/schema78"
                   },
                   {
                     "properties": {
@@ -21567,7 +21568,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema77"
+                    "$ref": "#/$defs/schema78"
                   },
                   {
                     "properties": {
@@ -21709,7 +21710,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema77"
+                "$ref": "#/$defs/schema78"
               },
               {
                 "properties": {
@@ -21791,7 +21792,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema77"
+                    "$ref": "#/$defs/schema78"
                   },
                   {
                     "properties": {
@@ -21963,7 +21964,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema77"
+                    "$ref": "#/$defs/schema78"
                   },
                   {
                     "properties": {
@@ -22144,7 +22145,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema77"
+                    "$ref": "#/$defs/schema78"
                   },
                   {
                     "properties": {
@@ -22283,7 +22284,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema77"
+                    "$ref": "#/$defs/schema78"
                   },
                   {
                     "properties": {
@@ -22487,7 +22488,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema77"
               },
               {
                 "properties": {
@@ -22745,7 +22746,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema77"
               },
               {
                 "properties": {
@@ -22990,7 +22991,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema77"
               },
               {
                 "properties": {
@@ -23235,7 +23236,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema77"
               },
               {
                 "properties": {
@@ -23485,7 +23486,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema77"
               },
               {
                 "properties": {
@@ -23802,7 +23803,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema77"
                   },
                   {
                     "properties": {
@@ -24012,7 +24013,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema77"
                   },
                   {
                     "properties": {
@@ -24561,7 +24562,7 @@
             "description": "NATS config",
             "properties": {
               "websocket": {
-                "$ref": "#/$defs/schema73"
+                "$ref": "#/$defs/schema74"
               }
             }
           }
@@ -26185,7 +26186,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema76"
+                        "$ref": "#/$defs/schema77"
                       },
                       {
                         "properties": {
@@ -26395,7 +26396,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema76"
+                        "$ref": "#/$defs/schema77"
                       },
                       {
                         "properties": {
@@ -28886,6 +28887,25 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "extraResources": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Extra user-defined resources\nadd arbitrary user-generated resources\nexample:\nconfig:\nwebsocket:\nenabled: true\nextraResources:\n- apiVersion: networking.istio.io/v1beta1\nkind: VirtualService\nmetadata:\nname:\n$tplYaml: >\n{{ include \"nats.fullname\" $ | quote }}\nlabels:\n$tplYaml: |\n{{ include \"nats.labels\" $ }}\nspec:\nhosts:\n- demo.nats.io\ngateways:\n- my-gateway\nhttp:\n- name: default\nmatch:\n- name: root\nuri:\nexact: /\nroute:\n- destination:\nhost:\n$tplYaml: >\n{{ .Values.service.name | quote }}\nport:\nnumber:\n$tplYaml: >\n{{ .Values.config.websocket.port }}"
+        }
+      }
+    },
+    {
       "if": {
         "properties": {
           "fullnameOverride": {
@@ -28922,7 +28942,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -29248,7 +29268,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -29486,7 +29506,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema77"
                   },
                   {
                     "properties": {
@@ -29599,7 +29619,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -29689,7 +29709,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -29777,7 +29797,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -29920,7 +29940,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema77"
                   },
                   {
                     "properties": {
@@ -30143,7 +30163,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -30517,7 +30537,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -30879,7 +30899,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -31109,7 +31129,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema77"
                   },
                   {
                     "properties": {
@@ -31222,7 +31242,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -31312,7 +31332,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -31400,7 +31420,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -31543,7 +31563,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema77"
                   },
                   {
                     "properties": {
@@ -31984,7 +32004,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema77"
                   },
                   {
                     "properties": {
@@ -32108,7 +32128,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -32209,7 +32229,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -32308,7 +32328,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -32592,7 +32612,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema77"
                   },
                   {
                     "properties": {
@@ -32936,7 +32956,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -33117,7 +33137,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -33265,7 +33285,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -33419,7 +33439,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -33686,7 +33706,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -33867,7 +33887,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -34015,7 +34035,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -34169,7 +34189,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -34374,7 +34394,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -34542,7 +34562,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -34665,7 +34685,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -34761,7 +34781,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -34893,7 +34913,7 @@
                 "description": "deployment -> pod template -> nats-box container",
                 "properties": {
                   "env": {
-                    "$ref": "#/$defs/schema103"
+                    "$ref": "#/$defs/schema104"
                   }
                 }
               }
@@ -34943,7 +34963,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -35097,7 +35117,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -35218,7 +35238,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -35423,7 +35443,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -35599,7 +35619,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -35868,7 +35888,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -35983,7 +36003,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -36089,7 +36109,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -36207,7 +36227,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -36379,7 +36399,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -36467,7 +36487,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -36580,7 +36600,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -36698,7 +36718,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -36868,7 +36888,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -36919,7 +36939,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -37089,7 +37109,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -37234,7 +37254,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -37367,7 +37387,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema74"
+                "$ref": "#/$defs/schema75"
               },
               {
                 "properties": {
@@ -37541,7 +37561,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -37695,7 +37715,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -37818,7 +37838,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -37881,7 +37901,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -38054,7 +38074,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema74"
+                    "$ref": "#/$defs/schema75"
                   },
                   {
                     "properties": {
@@ -38144,7 +38164,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema74"
+                        "$ref": "#/$defs/schema75"
                       },
                       {
                         "properties": {
@@ -38232,7 +38252,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema74"
+                        "$ref": "#/$defs/schema75"
                       },
                       {
                         "properties": {
@@ -38357,7 +38377,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema74"
+                        "$ref": "#/$defs/schema75"
                       },
                       {
                         "properties": {
@@ -38511,7 +38531,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema74"
+                        "$ref": "#/$defs/schema75"
                       },
                       {
                         "properties": {
@@ -38634,7 +38654,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema74"
+                        "$ref": "#/$defs/schema75"
                       },
                       {
                         "properties": {
@@ -38697,7 +38717,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema74"
+                        "$ref": "#/$defs/schema75"
                       },
                       {
                         "properties": {
@@ -41125,7 +41145,7 @@
             "description": "stateful set -> pod template -> prom-exporter container\nconfig.monitor must be enabled",
             "properties": {
               "env": {
-                "$ref": "#/$defs/schema103"
+                "$ref": "#/$defs/schema104"
               }
             }
           }
@@ -44101,7 +44121,7 @@
             "description": "stateful set -> pod template -> reloader container",
             "properties": {
               "env": {
-                "$ref": "#/$defs/schema103"
+                "$ref": "#/$defs/schema104"
               }
             }
           }
@@ -44615,91 +44635,6 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema135"
-              },
-              {
-                "properties": {
-                  "statefulSet": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "statefulSet"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "reloader": {
-            "additionalProperties": {},
-            "description": "stateful set -> pod template -> reloader container",
-            "properties": {
-              "natsVolumeMountPrefixes": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "all nats container volume mounts with the following prefixes\nwill be mounted into the reloader container"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema69"
-              },
-              {
-                "properties": {
-                  "reloader": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "reloader"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "anyOf": [
-              {
                 "$ref": "#/$defs/schema136"
               },
               {
@@ -45054,7 +44989,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema77"
               },
               {
                 "properties": {
@@ -45177,7 +45112,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema77"
               },
               {
                 "properties": {
@@ -45228,7 +45163,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema77"
               },
               {
                 "properties": {
@@ -45353,7 +45288,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema77"
                   },
                   {
                     "properties": {
@@ -45425,7 +45360,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema77"
               },
               {
                 "properties": {
@@ -46020,7 +45955,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -46109,7 +46044,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema83"
                   },
                   {
                     "properties": {
@@ -46242,7 +46177,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema82"
                   },
                   {
                     "properties": {
@@ -46403,7 +46338,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema107"
+                    "$ref": "#/$defs/schema108"
                   },
                   {
                     "properties": {
@@ -46519,7 +46454,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema83"
                   },
                   {
                     "properties": {
@@ -46680,7 +46615,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema107"
+                    "$ref": "#/$defs/schema108"
                   },
                   {
                     "properties": {
@@ -46957,7 +46892,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema107"
+                    "$ref": "#/$defs/schema108"
                   },
                   {
                     "properties": {
@@ -47073,7 +47008,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema95"
+                    "$ref": "#/$defs/schema96"
                   },
                   {
                     "properties": {
@@ -47234,7 +47169,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema107"
+                    "$ref": "#/$defs/schema108"
                   },
                   {
                     "properties": {
@@ -47350,7 +47285,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema97"
+                    "$ref": "#/$defs/schema98"
                   },
                   {
                     "properties": {
@@ -47484,7 +47419,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema107"
+                    "$ref": "#/$defs/schema108"
                   },
                   {
                     "properties": {
@@ -47761,7 +47696,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema107"
+                    "$ref": "#/$defs/schema108"
                   },
                   {
                     "properties": {
@@ -47871,116 +47806,1081 @@
           }
         }
       }
-    }
-  ],
-  "properties": {
-    "config": {
+    },
+    {
       "additionalProperties": {},
-      "description": "NATS config",
       "properties": {
-        "cluster": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
+        "configMap": {
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
                     "$ref": "#/$defs/helm-truthy"
                   }
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
-            "merge": {
-              "description": "merge or patch the cluster config\nhttps://docs.nats.io/running-a-nats-service/configuration/clustering/cluster_config"
-            },
-            "port": {},
-            "replicas": {
-              "description": "must be 2 or higher when jetstream is enabled"
-            },
-            "routeURLs": {
-              "additionalProperties": {},
-              "description": "apply to generated route URLs that connect to other pods in the StatefulSet",
-              "properties": {
-                "k8sClusterDomain": {},
-                "password": {},
-                "useFQDN": {
-                  "description": "set to true to use FQDN in route URLs",
-                  "type": "boolean"
-                },
-                "user": {
-                  "description": "if both user and password are set, they will be added to route URLs\nand the cluster authorization block"
-                }
-              }
-            },
-            "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "cert": {},
-                "dir": {},
-                "enabled": {},
-                "key": {},
-                "merge": {
-                  "$ref": "#/$defs/schema116"
-                },
-                "secretName": {
-                  "$ref": "#/$defs/schema148"
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema1"
+                      },
+                      {
+                        "$ref": "#/$defs/schema4"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}-config\""
+                  }
                 }
               }
             }
-          }
-        },
-        "gateway": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "merge": {
-              "description": "merge or patch the gateway config\nhttps://docs.nats.io/running-a-nats-service/configuration/gateways/gateway#gateway-configuration-block"
-            },
-            "tls": {
-              "$ref": "#/$defs/schema7"
-            }
-          }
-        },
-        "jetstream": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
+          ],
+          "description": "config map"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "headlessService": {
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
                     "$ref": "#/$defs/helm-truthy"
                   }
-                },
-                {
-                  "type": "boolean"
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema1"
+                      },
+                      {
+                        "$ref": "#/$defs/schema4"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}-headless\""
+                  }
                 }
-              ]
-            },
-            "fileStore": {
-              "additionalProperties": {},
-              "properties": {
-                "dir": {},
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
+              }
+            }
+          ],
+          "description": "headless service"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "natsBox": {
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema150"
+                      },
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "container": {
+                        "properties": {
+                          "env": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "env"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "container"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/schema154"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "deployment": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "deployment"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema136"
+                      },
+                      {
+                        "properties": {
+                          "podTemplate": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "podTemplate"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "container": {
+                    "$ref": "#/$defs/schema20"
+                  }
+                }
+              }
+            }
+          ],
+          "description": "natsBox\nNATS Box Deployment and associated resources"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "natsBox": {
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema150"
+                      },
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema131"
+                      },
+                      {
+                        "properties": {
+                          "contextsSecret": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "contextsSecret"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "contexts": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "properties": {
+                          "default": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "creds": {
+                                "additionalProperties": {},
+                                "properties": {
+                                  "contents": {
+                                    "description": "set contents in order to create a secret with the creds file contents"
+                                  },
+                                  "dir": {
+                                    "description": "defaults to /etc/nats-creds/<context-name>"
+                                  },
+                                  "key": {
+                                    "type": "string"
+                                  },
+                                  "secretName": {
+                                    "$ref": "#/$defs/schema148"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "merge": {
+                                "additionalProperties": {},
+                                "description": "merge or patch the context\nhttps://docs.nats.io/using-nats/nats-tools/nats_cli#nats-contexts",
+                                "type": "object"
+                              },
+                              "nkey": {
+                                "additionalProperties": {},
+                                "properties": {
+                                  "contents": {
+                                    "description": "set contents in order to create a secret with the nkey file contents"
+                                  },
+                                  "dir": {
+                                    "description": "defaults to /etc/nats-nkeys/<context-name>"
+                                  },
+                                  "key": {
+                                    "type": "string"
+                                  },
+                                  "secretName": {
+                                    "$ref": "#/$defs/schema148"
+                                  }
+                                },
+                                "type": "object"
+                              },
+                              "patch": {
+                                "items": {},
+                                "type": "array"
+                              },
+                              "tls": {
+                                "additionalProperties": {},
+                                "description": "used to connect with client certificates",
+                                "properties": {
+                                  "cert": {
+                                    "type": "string"
+                                  },
+                                  "dir": {
+                                    "description": "defaults to /etc/nats-certs/<context-name>"
+                                  },
+                                  "key": {
+                                    "type": "string"
+                                  },
+                                  "secretName": {
+                                    "$ref": "#/$defs/schema148"
+                                  }
+                                },
+                                "type": "object"
+                              }
+                            },
+                            "type": "object"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "NATS contexts"
+                  }
+                }
+              }
+            }
+          ],
+          "description": "natsBox\nNATS Box Deployment and associated resources"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "natsBox": {
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema150"
+                      },
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema131"
+                      },
+                      {
+                        "properties": {
+                          "contextsSecret": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "contextsSecret"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "contexts": {
+                    "$ref": "#/$defs/schema129"
+                  }
+                }
+              }
+            }
+          ],
+          "description": "natsBox\nNATS Box Deployment and associated resources"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "natsBox": {
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema150"
+                      },
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema131"
+                      },
+                      {
+                        "properties": {
+                          "contextsSecret": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "contextsSecret"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "contextsSecret": {
+                    "additionalProperties": {},
+                    "description": "contexts secret",
+                    "properties": {
+                      "name": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema1"
+                          },
+                          {
+                            "$ref": "#/$defs/schema4"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          }
+                        ],
+                        "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box-contexts\""
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "description": "natsBox\nNATS Box Deployment and associated resources"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "natsBox": {
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema150"
+                      },
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/schema154"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "deployment": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "deployment"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "deployment": {
+                    "additionalProperties": {},
+                    "description": "deployment",
+                    "properties": {
+                      "name": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema1"
+                          },
+                          {
+                            "$ref": "#/$defs/schema4"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          }
+                        ],
+                        "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box\""
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "description": "natsBox\nNATS Box Deployment and associated resources"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "natsBox": {
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema150"
+                      },
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "serviceAccount": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "serviceAccount"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema130"
+                      },
+                      {
+                        "properties": {
+                          "serviceAccount": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "serviceAccount"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "serviceAccount": {
+                    "additionalProperties": {},
+                    "description": "service account",
+                    "properties": {
+                      "name": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema1"
+                          },
+                          {
+                            "$ref": "#/$defs/schema4"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          }
+                        ],
+                        "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box\""
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "description": "natsBox\nNATS Box Deployment and associated resources"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "podDisruptionBudget": {
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema150"
+                      },
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema1"
+                      },
+                      {
+                        "$ref": "#/$defs/schema4"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+                  }
+                }
+              }
+            }
+          ],
+          "description": "pod disruption budget"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "promExporter": {
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
                         "$ref": "#/$defs/helm-truthy"
                       }
                     },
-                    {
-                      "type": "boolean"
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "podMonitor": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "podMonitor"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/schema156"
+                        }
+                      },
+                      {
+                        "properties": {
+                          "podMonitor": {
+                            "anyOf": [
+                              {
+                                "type": "object"
+                              },
+                              {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "podMonitor"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "podMonitor": {
+                    "additionalProperties": {},
+                    "description": "prometheus pod monitor",
+                    "properties": {
+                      "name": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/schema2"
+                          },
+                          {
+                            "not": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          }
+                        ],
+                        "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+                      }
                     }
-                  ]
-                },
-                "maxSize": {
-                  "description": "defaults to the PVC size"
-                },
-                "pvc": {
+                  }
+                }
+              }
+            }
+          ],
+          "description": "stateful set -> pod template -> prom-exporter container\nconfig.monitor must be enabled"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "service": {
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema150"
+                      },
+                      {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema1"
+                      },
+                      {
+                        "$ref": "#/$defs/schema4"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+                  }
+                }
+              }
+            }
+          ],
+          "description": "service"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "serviceAccount": {
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema1"
+                      },
+                      {
+                        "$ref": "#/$defs/schema4"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+                  }
+                }
+              }
+            }
+          ],
+          "description": "service account"
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "statefulSet": {
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              },
+              "then": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema1"
+                      },
+                      {
+                        "$ref": "#/$defs/schema4"
+                      },
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      }
+                    ],
+                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
+                  }
+                }
+              }
+            }
+          ],
+          "description": "stateful set"
+        }
+      }
+    }
+  ],
+  "anyOf": [
+    {
+      "additionalProperties": {},
+      "properties": {
+        "config": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "cluster": {
                   "anyOf": [
                     {
                       "additionalProperties": {},
@@ -48003,1072 +48903,1018 @@
                       "additionalProperties": {},
                       "properties": {
                         "merge": {
-                          "description": "merge or patch the jetstream pvc\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#persistentvolumeclaim-v1-core"
+                          "description": "merge or patch the cluster config\nhttps://docs.nats.io/running-a-nats-service/configuration/clustering/cluster_config"
+                        },
+                        "port": {},
+                        "replicas": {
+                          "description": "must be 2 or higher when jetstream is enabled"
+                        },
+                        "routeURLs": {
+                          "additionalProperties": {},
+                          "description": "apply to generated route URLs that connect to other pods in the StatefulSet",
+                          "properties": {
+                            "k8sClusterDomain": {},
+                            "password": {},
+                            "useFQDN": {
+                              "description": "set to true to use FQDN in route URLs",
+                              "type": "boolean"
+                            },
+                            "user": {
+                              "description": "if both user and password are set, they will be added to route URLs\nand the cluster authorization block"
+                            }
+                          },
+                          "type": "object"
+                        },
+                        "tls": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "cert": {},
+                            "dir": {},
+                            "enabled": {},
+                            "key": {},
+                            "merge": {
+                              "$ref": "#/$defs/schema116"
+                            },
+                            "secretName": {
+                              "$ref": "#/$defs/schema148"
+                            }
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "gateway": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "merge": {
+                      "description": "merge or patch the gateway config\nhttps://docs.nats.io/running-a-nats-service/configuration/gateways/gateway#gateway-configuration-block"
+                    },
+                    "tls": {
+                      "$ref": "#/$defs/schema6"
+                    }
+                  },
+                  "type": "object"
+                },
+                "jetstream": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        {
+                          "type": "boolean"
+                        }
+                      ]
+                    },
+                    "fileStore": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "dir": {},
+                        "enabled": {
+                          "anyOf": [
+                            {
+                              "not": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        },
+                        "maxSize": {
+                          "description": "defaults to the PVC size"
+                        },
+                        "pvc": {
+                          "additionalProperties": {},
+                          "description": "stateful set -> volume claim templates -> jetstream pvc",
+                          "properties": {
+                            "enabled": {
+                              "anyOf": [
+                                {
+                                  "not": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                {
+                                  "type": "boolean"
+                                }
+                              ]
+                            },
+                            "merge": {
+                              "description": "merge or patch the jetstream pvc\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#persistentvolumeclaim-v1-core"
+                            },
+                            "name": {
+                              "description": "defaults to \"{{ include \"nats.fullname\" $ }}-js\""
+                            },
+                            "size": {},
+                            "storageClassName": {}
+                          },
+                          "type": "object"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "memoryStore": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean"
+                        },
+                        "maxSize": {
+                          "description": "ensure that container has a sufficient memory limit greater than maxSize",
+                          "type": "string"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "merge": {
+                      "description": "merge or patch the jetstream config\nhttps://docs.nats.io/running-a-nats-service/configuration#jetstream"
+                    }
+                  },
+                  "type": "object"
+                },
+                "leafnodes": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "merge": {
+                      "description": "merge or patch the leafnodes config\nhttps://docs.nats.io/running-a-nats-service/configuration/leafnodes/leafnode_conf"
+                    },
+                    "tls": {
+                      "$ref": "#/$defs/schema6"
+                    }
+                  },
+                  "type": "object"
+                },
+                "merge": {
+                  "description": "merge or patch the nats config\nhttps://docs.nats.io/running-a-nats-service/configuration\nfollowing special rules apply\n1. strings that start with << and end with >> will be unquoted\nuse this for variables and numbers with units\n2. keys ending in $include will be switched to include directives\nkeys are sorted alphabetically, use prefix before $includes to control includes ordering\npaths should be relative to /etc/nats-config/nats.conf\nexample:\nmerge:\n$include: ./my-config.conf\nzzz$include: ./my-config-last.conf\nserver_name: nats\nauthorization:\ntoken: << $TOKEN >>\njetstream:\nmax_memory_store: << 1GB >>\nwill yield the config:\n{\ninclude ./my-config.conf;\n\"authorization\": {\n\"token\": $TOKEN\n},\n\"jetstream\": {\n\"max_memory_store\": 1GB\n},\n\"server_name\": \"nats\",\ninclude ./my-config-last.conf;\n}"
+                },
+                "monitor": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "port": {},
+                    "tls": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "enabled": {
+                          "description": "config.nats.tls must be enabled also\nwhen enabled, monitoring port will use HTTPS with the options from config.nats.tls\nif promExporter is also enabled, consider setting promExporter.monitorDomain"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "mqtt": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "merge": {
+                      "description": "merge or patch the mqtt config\nhttps://docs.nats.io/running-a-nats-service/configuration/mqtt/mqtt_config"
+                    },
+                    "tls": {
+                      "$ref": "#/$defs/schema6"
+                    }
+                  },
+                  "type": "object"
+                },
+                "nats": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "tls": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "cert": {},
+                        "dir": {},
+                        "enabled": {
+                          "anyOf": [
+                            {
+                              "not": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        },
+                        "key": {},
+                        "merge": {
+                          "$ref": "#/$defs/schema116"
+                        },
+                        "secretName": {
+                          "$ref": "#/$defs/schema148"
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                },
+                "profiling": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "port": {
+                      "type": "integer"
+                    }
+                  },
+                  "type": "object"
+                },
+                "resolver": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "dir": {},
+                    "enabled": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        {
+                          "type": "boolean"
+                        }
+                      ]
+                    },
+                    "merge": {
+                      "description": "merge or patch the resolver\nhttps://docs.nats.io/running-a-nats-service/configuration/securing_nats/auth_intro/jwt/resolver"
+                    },
+                    "pvc": {
+                      "additionalProperties": {},
+                      "description": "stateful set -> volume claim templates -> resolver pvc",
+                      "properties": {
+                        "enabled": {
+                          "anyOf": [
+                            {
+                              "not": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        },
+                        "merge": {
+                          "description": "merge or patch the pvc\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#persistentvolumeclaim-v1-core"
                         },
                         "name": {
-                          "description": "defaults to \"{{ include \"nats.fullname\" $ }}-js\""
+                          "description": "defaults to \"{{ include \"nats.fullname\" $ }}-resolver\""
                         },
                         "size": {},
                         "storageClassName": {}
                       },
                       "type": "object"
                     }
-                  ],
-                  "description": "stateful set -> volume claim templates -> jetstream pvc"
-                }
-              },
-              "type": "object"
-            },
-            "memoryStore": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "type": "boolean"
-                },
-                "maxSize": {
-                  "description": "ensure that container has a sufficient memory limit greater than maxSize",
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            "merge": {
-              "description": "merge or patch the jetstream config\nhttps://docs.nats.io/running-a-nats-service/configuration#jetstream"
-            }
-          }
-        },
-        "leafnodes": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "merge": {
-              "description": "merge or patch the leafnodes config\nhttps://docs.nats.io/running-a-nats-service/configuration/leafnodes/leafnode_conf"
-            },
-            "tls": {
-              "$ref": "#/$defs/schema7"
-            }
-          }
-        },
-        "merge": {
-          "description": "merge or patch the nats config\nhttps://docs.nats.io/running-a-nats-service/configuration\nfollowing special rules apply\n1. strings that start with << and end with >> will be unquoted\nuse this for variables and numbers with units\n2. keys ending in $include will be switched to include directives\nkeys are sorted alphabetically, use prefix before $includes to control includes ordering\npaths should be relative to /etc/nats-config/nats.conf\nexample:\nmerge:\n$include: ./my-config.conf\nzzz$include: ./my-config-last.conf\nserver_name: nats\nauthorization:\ntoken: << $TOKEN >>\njetstream:\nmax_memory_store: << 1GB >>\nwill yield the config:\n{\ninclude ./my-config.conf;\n\"authorization\": {\n\"token\": $TOKEN\n},\n\"jetstream\": {\n\"max_memory_store\": 1GB\n},\n\"server_name\": \"nats\",\ninclude ./my-config-last.conf;\n}"
-        },
-        "monitor": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "port": {},
-            "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "description": "config.nats.tls must be enabled also\nwhen enabled, monitoring port will use HTTPS with the options from config.nats.tls\nif promExporter is also enabled, consider setting promExporter.monitorDomain"
-                }
-              }
-            }
-          },
-          "type": "object"
-        },
-        "mqtt": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "merge": {
-              "description": "merge or patch the mqtt config\nhttps://docs.nats.io/running-a-nats-service/configuration/mqtt/mqtt_config"
-            },
-            "tls": {
-              "$ref": "#/$defs/schema7"
-            }
-          }
-        },
-        "nats": {
-          "additionalProperties": {},
-          "properties": {
-            "tls": {
-              "additionalProperties": {},
-              "properties": {
-                "cert": {},
-                "dir": {},
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                },
-                "key": {},
-                "merge": {
-                  "$ref": "#/$defs/schema116"
-                },
-                "secretName": {
-                  "$ref": "#/$defs/schema148"
-                }
-              }
-            }
-          }
-        },
-        "profiling": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
-            "port": {
-              "type": "integer"
-            }
-          },
-          "type": "object"
-        },
-        "resolver": {
-          "additionalProperties": {},
-          "properties": {
-            "dir": {},
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
-            "merge": {
-              "description": "merge or patch the resolver\nhttps://docs.nats.io/running-a-nats-service/configuration/securing_nats/auth_intro/jwt/resolver"
-            },
-            "pvc": {
-              "additionalProperties": {},
-              "description": "stateful set -> volume claim templates -> resolver pvc",
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                },
-                "merge": {
-                  "description": "merge or patch the pvc\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#persistentvolumeclaim-v1-core"
-                },
-                "name": {
-                  "description": "defaults to \"{{ include \"nats.fullname\" $ }}-resolver\""
-                },
-                "size": {},
-                "storageClassName": {}
-              }
-            }
-          }
-        },
-        "serverNamePrefix": {
-          "description": "adds a prefix to the server name, which defaults to the pod name\nhelpful for ensuring server name is unique in a super cluster"
-        },
-        "websocket": {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
-            "ingress": {
-              "additionalProperties": {},
-              "description": "ingress\nservice must be enabled also",
-              "properties": {
-                "className": {
-                  "description": "sets to the ingress class name"
-                },
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                },
-                "hosts": {
-                  "description": "must contain at least 1 host otherwise ingress will not be created"
-                },
-                "merge": {
-                  "description": "merge or patch the ingress\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#ingress-v1-networking-k8s-io"
-                },
-                "name": {
-                  "description": "defaults to \"{{ include \"nats.fullname\" $ }}-ws\""
-                },
-                "path": {},
-                "pathType": {},
-                "tlsSecretName": {
-                  "description": "set to an existing secret name to enable TLS on the ingress; applies to all hosts"
-                }
-              }
-            },
-            "merge": {
-              "description": "merge or patch the websocket config\nhttps://docs.nats.io/running-a-nats-service/configuration/websocket/websocket_conf"
-            },
-            "tls": {
-              "$ref": "#/$defs/schema7"
-            }
-          }
-        }
-      }
-    },
-    "configMap": {
-      "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema1"
                   },
-                  {
-                    "$ref": "#/$defs/schema4"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "defaults to \"{{ include \"nats.fullname\" $ }}-config\""
-              }
-            }
-          }
-        }
-      ],
-      "description": "config map",
-      "properties": {
-        "merge": {
-          "description": "merge or patch the config map\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#configmap-v1-core"
-        },
-        "name": {
-          "description": "defaults to \"{{ include \"nats.fullname\" $ }}-config\""
-        }
-      }
-    },
-    "container": {
-      "additionalProperties": {},
-      "description": "stateful set -> pod template -> nats container",
-      "properties": {
-        "env": {
-          "description": "map with key as env var name, value can be string or map\nexample:\nenv:\nGOMEMLIMIT: 7GiB\nTOKEN:\nvalueFrom:\nsecretKeyRef:\nname: nats-auth\nkey: token"
-        },
-        "image": {
-          "additionalProperties": {},
-          "properties": {
-            "digest": {
-              "description": "if digest is provided, it overrides tag (example: \"sha256:abcdef1234567890\")"
-            },
-            "fullImageName": {
-              "description": "if fullImageName is provided, it overrides registry, repository, tag, and digest"
-            },
-            "pullPolicy": {},
-            "registry": {},
-            "repository": {},
-            "tag": {}
-          }
-        },
-        "merge": {
-          "$ref": "#/$defs/schema99"
-        },
-        "ports": {
-          "additionalProperties": {},
-          "description": "container port options\nmust be enabled in the config section also\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#containerport-v1-core",
-          "properties": {
-            "cluster": {
-              "$ref": "#/$defs/schema195"
-            },
-            "gateway": {
-              "$ref": "#/$defs/schema195"
-            },
-            "leafnodes": {
-              "$ref": "#/$defs/schema195"
-            },
-            "monitor": {
-              "$ref": "#/$defs/schema195"
-            },
-            "mqtt": {
-              "$ref": "#/$defs/schema195"
-            },
-            "nats": {
-              "$ref": "#/$defs/schema195"
-            },
-            "profiling": {
-              "$ref": "#/$defs/schema195"
-            },
-            "websocket": {
-              "$ref": "#/$defs/schema195"
-            }
-          }
-        }
-      }
-    },
-    "extraResources": {
-      "anyOf": [
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "items": {},
-          "type": "array"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/schema195"
-        }
-      ],
-      "description": "Extra user-defined resources\nadd arbitrary user-generated resources\nexample:\nconfig:\nwebsocket:\nenabled: true\nextraResources:\n- apiVersion: networking.istio.io/v1beta1\nkind: VirtualService\nmetadata:\nname:\n$tplYaml: >\n{{ include \"nats.fullname\" $ | quote }}\nlabels:\n$tplYaml: |\n{{ include \"nats.labels\" $ }}\nspec:\nhosts:\n- demo.nats.io\ngateways:\n- my-gateway\nhttp:\n- name: default\nmatch:\n- name: root\nuri:\nexact: /\nroute:\n- destination:\nhost:\n$tplYaml: >\n{{ .Values.service.name | quote }}\nport:\nnumber:\n$tplYaml: >\n{{ .Values.config.websocket.port }}"
-    },
-    "fullnameOverride": {
-      "description": "override full name of the chart+release"
-    },
-    "global": {
-      "additionalProperties": {},
-      "description": "Global options",
-      "properties": {
-        "image": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "pullPolicy": {
-                  "description": "global image pull policy to use for all container images in the chart\ncan be overridden by individual image pullPolicy"
-                }
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "pullSecretNames": {
-                  "description": "global list of secret names to use as image pull secrets for all pod specs in the chart\nsecrets must exist in the same namespace\nhttps://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/"
-                },
-                "registry": {
-                  "description": "global registry to use for all container images in the chart\ncan be overridden by individual image registry"
-                }
-              },
-              "type": "object"
-            }
-          ]
-        },
-        "labels": {
-          "description": "global labels will be applied to all resources deployed by the chart"
-        }
-      },
-      "type": "object"
-    },
-    "headlessService": {
-      "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema1"
-                  },
-                  {
-                    "$ref": "#/$defs/schema4"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "defaults to \"{{ include \"nats.fullname\" $ }}-headless\""
-              }
-            }
-          }
-        }
-      ],
-      "description": "headless service",
-      "properties": {
-        "merge": {
-          "description": "merge or patch the headless service\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#service-v1-core"
-        },
-        "name": {
-          "description": "defaults to \"{{ include \"nats.fullname\" $ }}-headless\""
-        }
-      }
-    },
-    "nameOverride": {
-      "description": "Common options\noverride name of the chart"
-    },
-    "namespaceOverride": {
-      "description": "override the namespace that resources are installed into"
-    },
-    "natsBox": {
-      "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema150"
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "container": {
-                    "properties": {
-                      "env": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "env"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "container"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/schema154"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "deployment": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "deployment"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema136"
-                  },
-                  {
-                    "properties": {
-                      "podTemplate": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "podTemplate"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "container": {
-                "$ref": "#/$defs/schema20"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema150"
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema131"
-                  },
-                  {
-                    "properties": {
-                      "contextsSecret": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "contextsSecret"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "contexts": {
-                "anyOf": [
-                  {
-                    "additionalProperties": {},
-                    "properties": {
-                      "default": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "creds": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "contents": {
-                                "description": "set contents in order to create a secret with the creds file contents"
-                              },
-                              "dir": {
-                                "description": "defaults to /etc/nats-creds/<context-name>"
-                              },
-                              "key": {
-                                "type": "string"
-                              },
-                              "secretName": {
-                                "$ref": "#/$defs/schema148"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          "merge": {
-                            "additionalProperties": {},
-                            "description": "merge or patch the context\nhttps://docs.nats.io/using-nats/nats-tools/nats_cli#nats-contexts",
-                            "type": "object"
-                          },
-                          "nkey": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "contents": {
-                                "description": "set contents in order to create a secret with the nkey file contents"
-                              },
-                              "dir": {
-                                "description": "defaults to /etc/nats-nkeys/<context-name>"
-                              },
-                              "key": {
-                                "type": "string"
-                              },
-                              "secretName": {
-                                "$ref": "#/$defs/schema148"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          "patch": {
-                            "items": {},
-                            "type": "array"
-                          },
-                          "tls": {
-                            "additionalProperties": {},
-                            "description": "used to connect with client certificates",
-                            "properties": {
-                              "cert": {
-                                "type": "string"
-                              },
-                              "dir": {
-                                "description": "defaults to /etc/nats-certs/<context-name>"
-                              },
-                              "key": {
-                                "type": "string"
-                              },
-                              "secretName": {
-                                "$ref": "#/$defs/schema148"
-                              }
-                            },
-                            "type": "object"
-                          }
-                        },
-                        "type": "object"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "NATS contexts"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema150"
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema131"
-                  },
-                  {
-                    "properties": {
-                      "contextsSecret": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "contextsSecret"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "contexts": {
-                "$ref": "#/$defs/schema129"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema150"
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema131"
-                  },
-                  {
-                    "properties": {
-                      "contextsSecret": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "contextsSecret"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "contextsSecret": {
-                "additionalProperties": {},
-                "description": "contexts secret",
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema1"
-                      },
-                      {
-                        "$ref": "#/$defs/schema4"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      }
-                    ],
-                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box-contexts\""
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema150"
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/schema154"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "deployment": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "deployment"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "deployment": {
-                "additionalProperties": {},
-                "description": "deployment",
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema1"
-                      },
-                      {
-                        "$ref": "#/$defs/schema4"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      }
-                    ],
-                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box\""
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema150"
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "properties": {
-                  "serviceAccount": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "serviceAccount"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema130"
-                  },
-                  {
-                    "properties": {
-                      "serviceAccount": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "serviceAccount"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "serviceAccount": {
-                "additionalProperties": {},
-                "description": "service account",
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema1"
-                      },
-                      {
-                        "$ref": "#/$defs/schema4"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      }
-                    ],
-                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box\""
-                  }
-                }
-              }
-            }
-          }
-        }
-      ],
-      "description": "natsBox\nNATS Box Deployment and associated resources",
-      "properties": {
-        "container": {
-          "additionalProperties": {},
-          "description": "deployment -> pod template -> nats-box container",
-          "properties": {
-            "env": {
-              "$ref": "#/$defs/schema186"
-            },
-            "image": {
-              "$ref": "#/$defs/schema110"
-            },
-            "merge": {
-              "$ref": "#/$defs/schema99"
-            },
-            "resources": {}
-          }
-        },
-        "contentsSecret": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "merge": {
-                  "additionalProperties": {},
-                  "description": "merge or patch the contents secret\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#secret-v1-core",
                   "type": "object"
                 },
-                "name": {
-                  "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box-contents\""
+                "serverNamePrefix": {
+                  "description": "adds a prefix to the server name, which defaults to the pod name\nhelpful for ensuring server name is unique in a super cluster"
                 },
-                "patch": {
-                  "items": {},
-                  "type": "array"
+                "websocket": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "enabled": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        {
+                          "type": "boolean"
+                        }
+                      ]
+                    },
+                    "ingress": {
+                      "additionalProperties": {},
+                      "description": "ingress\nservice must be enabled also",
+                      "properties": {
+                        "className": {
+                          "description": "sets to the ingress class name"
+                        },
+                        "enabled": {
+                          "anyOf": [
+                            {
+                              "not": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        },
+                        "hosts": {
+                          "description": "must contain at least 1 host otherwise ingress will not be created"
+                        },
+                        "merge": {
+                          "description": "merge or patch the ingress\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#ingress-v1-networking-k8s-io"
+                        },
+                        "name": {
+                          "description": "defaults to \"{{ include \"nats.fullname\" $ }}-ws\""
+                        },
+                        "path": {},
+                        "pathType": {},
+                        "tlsSecretName": {
+                          "description": "set to an existing secret name to enable TLS on the ingress; applies to all hosts"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "merge": {
+                      "description": "merge or patch the websocket config\nhttps://docs.nats.io/running-a-nats-service/configuration/websocket/websocket_conf"
+                    },
+                    "tls": {
+                      "$ref": "#/$defs/schema6"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          ],
+          "description": "NATS config"
+        },
+        "configMap": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "merge": {
+                  "description": "merge or patch the config map\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#configmap-v1-core"
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "name": {
+                  "description": "defaults to \"{{ include \"nats.fullname\" $ }}-config\""
+                }
+              },
+              "type": "object"
+            }
+          ],
+          "description": "config map"
+        },
+        "container": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "env": {
+                  "description": "map with key as env var name, value can be string or map\nexample:\nenv:\nGOMEMLIMIT: 7GiB\nTOKEN:\nvalueFrom:\nsecretKeyRef:\nname: nats-auth\nkey: token"
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "image": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "digest": {
+                      "description": "if digest is provided, it overrides tag (example: \"sha256:abcdef1234567890\")"
+                    },
+                    "fullImageName": {
+                      "description": "if fullImageName is provided, it overrides registry, repository, tag, and digest"
+                    },
+                    "pullPolicy": {},
+                    "registry": {},
+                    "repository": {},
+                    "tag": {}
+                  },
+                  "type": "object"
+                },
+                "merge": {
+                  "$ref": "#/$defs/schema100"
+                },
+                "ports": {
+                  "additionalProperties": {},
+                  "description": "container port options\nmust be enabled in the config section also\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#containerport-v1-core",
+                  "properties": {
+                    "cluster": {
+                      "$ref": "#/$defs/schema195"
+                    },
+                    "gateway": {
+                      "$ref": "#/$defs/schema195"
+                    },
+                    "leafnodes": {
+                      "$ref": "#/$defs/schema195"
+                    },
+                    "monitor": {
+                      "$ref": "#/$defs/schema195"
+                    },
+                    "mqtt": {
+                      "$ref": "#/$defs/schema195"
+                    },
+                    "nats": {
+                      "$ref": "#/$defs/schema195"
+                    },
+                    "profiling": {
+                      "$ref": "#/$defs/schema195"
+                    },
+                    "websocket": {
+                      "$ref": "#/$defs/schema195"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          ],
+          "description": "stateful set -> pod template -> nats container"
+        },
+        "extraResources": {
+          "anyOf": [
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "items": {},
+              "type": "array"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/schema195"
+            }
+          ],
+          "description": "Extra user-defined resources\nadd arbitrary user-generated resources\nexample:\nconfig:\nwebsocket:\nenabled: true\nextraResources:\n- apiVersion: networking.istio.io/v1beta1\nkind: VirtualService\nmetadata:\nname:\n$tplYaml: >\n{{ include \"nats.fullname\" $ | quote }}\nlabels:\n$tplYaml: |\n{{ include \"nats.labels\" $ }}\nspec:\nhosts:\n- demo.nats.io\ngateways:\n- my-gateway\nhttp:\n- name: default\nmatch:\n- name: root\nuri:\nexact: /\nroute:\n- destination:\nhost:\n$tplYaml: >\n{{ .Values.service.name | quote }}\nport:\nnumber:\n$tplYaml: >\n{{ .Values.config.websocket.port }}"
+        },
+        "fullnameOverride": {
+          "description": "override full name of the chart+release"
+        },
+        "global": {
+          "additionalProperties": {},
+          "description": "Global options",
+          "properties": {
+            "image": {
+              "anyOf": [
+                {
+                  "additionalProperties": {},
+                  "properties": {
+                    "pullPolicy": {
+                      "description": "global image pull policy to use for all container images in the chart\ncan be overridden by individual image pullPolicy"
+                    }
+                  }
+                },
+                {
+                  "additionalProperties": {},
+                  "properties": {
+                    "pullSecretNames": {
+                      "description": "global list of secret names to use as image pull secrets for all pod specs in the chart\nsecrets must exist in the same namespace\nhttps://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/"
+                    },
+                    "registry": {
+                      "description": "global registry to use for all container images in the chart\ncan be overridden by individual image registry"
+                    }
+                  },
+                  "type": "object"
+                }
+              ]
+            },
+            "labels": {
+              "description": "global labels will be applied to all resources deployed by the chart"
+            }
+          },
+          "type": "object"
+        },
+        "headlessService": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "merge": {
+                  "description": "merge or patch the headless service\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#service-v1-core"
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "name": {
+                  "description": "defaults to \"{{ include \"nats.fullname\" $ }}-headless\""
+                }
+              },
+              "type": "object"
+            }
+          ],
+          "description": "headless service"
+        },
+        "nameOverride": {
+          "description": "Common options\noverride name of the chart"
+        },
+        "namespaceOverride": {
+          "description": "override the namespace that resources are installed into"
+        },
+        "natsBox": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "container": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "env": {
+                          "$ref": "#/$defs/schema186"
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "image": {
+                          "$ref": "#/$defs/schema72"
+                        },
+                        "merge": {
+                          "$ref": "#/$defs/schema100"
+                        },
+                        "resources": {}
+                      },
+                      "type": "object"
+                    }
+                  ],
+                  "description": "deployment -> pod template -> nats-box container"
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "contentsSecret": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "properties": {
+                        "merge": {
+                          "additionalProperties": {},
+                          "description": "merge or patch the contents secret\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#secret-v1-core",
+                          "type": "object"
+                        },
+                        "name": {
+                          "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box-contents\""
+                        },
+                        "patch": {
+                          "items": {},
+                          "type": "array"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    }
+                  ],
+                  "description": "contents secret"
+                },
+                "contexts": {
+                  "description": "NATS contexts"
+                },
+                "contextsSecret": {
+                  "additionalProperties": {},
+                  "description": "contexts secret",
+                  "properties": {
+                    "merge": {
+                      "description": "merge or patch the context secret\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#secret-v1-core"
+                    },
+                    "name": {
+                      "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box-contexts\""
+                    }
+                  },
+                  "type": "object"
+                },
+                "defaultContextName": {
+                  "description": "name of context to select by default"
+                },
+                "deployment": {
+                  "additionalProperties": {},
+                  "description": "deployment",
+                  "properties": {
+                    "merge": {
+                      "description": "merge or patch the deployment\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#deployment-v1-apps"
+                    },
+                    "name": {
+                      "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box\""
+                    }
+                  },
+                  "type": "object"
+                },
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "podTemplate": {
+                  "additionalProperties": {},
+                  "description": "deployment -> pod template",
+                  "properties": {
+                    "merge": {
+                      "$ref": "#/$defs/schema105"
+                    }
+                  },
+                  "type": "object"
+                },
+                "serviceAccount": {
+                  "additionalProperties": {},
+                  "description": "service account",
+                  "properties": {
+                    "enabled": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        {
+                          "type": "boolean"
+                        }
+                      ]
+                    },
+                    "merge": {
+                      "$ref": "#/$defs/schema67"
+                    },
+                    "name": {
+                      "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box\""
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          ],
+          "description": "natsBox\nNATS Box Deployment and associated resources"
+        },
+        "podDisruptionBudget": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "merge": {
+                  "description": "merge or patch the pod disruption budget\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#poddisruptionbudget-v1-policy"
+                },
+                "name": {
+                  "$ref": "#/$defs/schema175"
+                }
+              },
+              "type": "object"
+            }
+          ],
+          "description": "pod disruption budget"
+        },
+        "podTemplate": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "configChecksumAnnotation": {
+                  "description": "adds a hash of the ConfigMap as a pod annotation\nthis will cause the StatefulSet to roll when the ConfigMap is updated\nset to true to force pod rollouts on config changes instead of using the reloader for hot updates",
+                  "type": "boolean"
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "merge": {
+                  "$ref": "#/$defs/schema105"
+                },
+                "topologySpreadConstraints": {
+                  "description": "map of topologyKey: topologySpreadConstraint\nlabelSelector will be added to match StatefulSet pods\ntopologySpreadConstraints:\nkubernetes.io/hostname:\nmaxSkew: 1"
+                }
+              },
+              "type": "object"
+            }
+          ],
+          "description": "stateful set -> pod template"
+        },
+        "promExporter": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "env": {
+                  "$ref": "#/$defs/schema186"
+                },
+                "image": {
+                  "$ref": "#/$defs/schema72"
+                },
+                "merge": {
+                  "$ref": "#/$defs/schema100"
+                },
+                "monitorDomain": {
+                  "description": "if config.monitor.tls.enabled is set to true, monitorDomain must be set to the common name\nor a SAN used in the tls certificate"
+                },
+                "podMonitor": {
+                  "additionalProperties": {},
+                  "description": "prometheus pod monitor",
+                  "properties": {
+                    "enabled": {
+                      "anyOf": [
+                        {
+                          "not": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        {
+                          "type": "boolean"
+                        }
+                      ]
+                    },
+                    "merge": {
+                      "description": "merge or patch the pod monitor\nhttps://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor"
+                    },
+                    "name": {
+                      "$ref": "#/$defs/schema175"
+                    }
+                  },
+                  "type": "object"
+                },
+                "port": {}
+              },
+              "type": "object"
+            }
+          ],
+          "description": "stateful set -> pod template -> prom-exporter container\nconfig.monitor must be enabled"
+        },
+        "reloader": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "env": {
+                  "$ref": "#/$defs/schema186"
+                },
+                "image": {
+                  "$ref": "#/$defs/schema72"
+                },
+                "merge": {
+                  "$ref": "#/$defs/schema100"
+                }
+              },
+              "type": "object"
+            }
+          ],
+          "description": "stateful set -> pod template -> reloader container"
+        },
+        "service": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "merge": {
+                  "description": "merge or patch the service\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#service-v1-core"
+                },
+                "name": {
+                  "$ref": "#/$defs/schema175"
+                },
+                "ports": {
+                  "additionalProperties": {},
+                  "description": "service port options\nadditional boolean field enable to control whether port is exposed in the service\nmust be enabled in the config section also\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#serviceport-v1-core",
+                  "properties": {
+                    "cluster": {
+                      "$ref": "#/$defs/schema133"
+                    },
+                    "gateway": {
+                      "$ref": "#/$defs/schema133"
+                    },
+                    "leafnodes": {
+                      "$ref": "#/$defs/schema133"
+                    },
+                    "monitor": {
+                      "$ref": "#/$defs/schema133"
+                    },
+                    "mqtt": {
+                      "$ref": "#/$defs/schema133"
+                    },
+                    "nats": {
+                      "$ref": "#/$defs/schema133"
+                    },
+                    "profiling": {
+                      "$ref": "#/$defs/schema133"
+                    },
+                    "websocket": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "enabled": {
+                          "anyOf": [
+                            {
+                              "not": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        }
+                      },
+                      "type": "object"
+                    }
+                  },
+                  "type": "object"
+                }
+              },
+              "type": "object"
+            }
+          ],
+          "description": "service"
+        },
+        "serviceAccount": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "merge": {
+                  "$ref": "#/$defs/schema67"
+                },
+                "name": {
+                  "$ref": "#/$defs/schema175"
+                }
+              },
+              "type": "object"
+            }
+          ],
+          "description": "service account"
+        },
+        "statefulSet": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "merge": {
+                  "description": "merge or patch the stateful set\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#statefulset-v1-apps"
+                }
+              }
+            },
+            {
+              "additionalProperties": {},
+              "properties": {
+                "name": {
+                  "$ref": "#/$defs/schema175"
+                }
+              },
+              "type": "object"
+            }
+          ],
+          "description": "stateful set"
+        },
+        "tlsCA": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "properties": {
+                "configMapName": {
+                  "description": "set configMapName in order to mount an existing configMap to dir"
+                },
+                "dir": {
+                  "description": "directory to mount the configMap or secret to"
+                },
+                "enabled": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    {
+                      "type": "boolean"
+                    }
+                  ]
+                },
+                "key": {
+                  "description": "key in the configMap or secret that contains the CA Certificate or Bundle"
+                },
+                "secretName": {
+                  "description": "set secretName in order to mount an existing secretName to dir"
                 }
               },
               "type": "object"
@@ -49079,653 +49925,14 @@
               }
             }
           ],
-          "description": "contents secret"
-        },
-        "contexts": {
-          "description": "NATS contexts"
-        },
-        "contextsSecret": {
-          "additionalProperties": {},
-          "description": "contexts secret",
-          "properties": {
-            "merge": {
-              "description": "merge or patch the context secret\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#secret-v1-core"
-            },
-            "name": {
-              "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box-contexts\""
-            }
-          }
-        },
-        "defaultContextName": {
-          "description": "name of context to select by default"
-        },
-        "deployment": {
-          "additionalProperties": {},
-          "description": "deployment",
-          "properties": {
-            "merge": {
-              "description": "merge or patch the deployment\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#deployment-v1-apps"
-            },
-            "name": {
-              "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box\""
-            }
-          }
-        },
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
-        "podTemplate": {
-          "additionalProperties": {},
-          "description": "deployment -> pod template",
-          "properties": {
-            "merge": {
-              "$ref": "#/$defs/schema104"
-            }
-          }
-        },
-        "serviceAccount": {
-          "additionalProperties": {},
-          "description": "service account",
-          "properties": {
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
-            "merge": {
-              "$ref": "#/$defs/schema67"
-            },
-            "name": {
-              "description": "defaults to \"{{ include \"nats.fullname\" $ }}-box\""
-            }
-          }
+          "description": "reference a common CA Certificate or Bundle in all nats config `tls` blocks and nats-box contexts\nnote: `tls.verify` still must be set in the appropriate nats config `tls` blocks to require mTLS"
         }
-      }
+      },
+      "type": "object"
     },
-    "podDisruptionBudget": {
-      "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema150"
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema1"
-                  },
-                  {
-                    "$ref": "#/$defs/schema4"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
-              }
-            }
-          }
-        }
-      ],
-      "description": "pod disruption budget",
-      "properties": {
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
-        "merge": {
-          "description": "merge or patch the pod disruption budget\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#poddisruptionbudget-v1-policy"
-        },
-        "name": {
-          "$ref": "#/$defs/schema175"
-        }
-      }
-    },
-    "podTemplate": {
-      "additionalProperties": {},
-      "description": "stateful set -> pod template",
-      "properties": {
-        "configChecksumAnnotation": {
-          "description": "adds a hash of the ConfigMap as a pod annotation\nthis will cause the StatefulSet to roll when the ConfigMap is updated\nset to true to force pod rollouts on config changes instead of using the reloader for hot updates",
-          "type": "boolean"
-        },
-        "merge": {
-          "$ref": "#/$defs/schema104"
-        },
-        "topologySpreadConstraints": {
-          "description": "map of topologyKey: topologySpreadConstraint\nlabelSelector will be added to match StatefulSet pods\ntopologySpreadConstraints:\nkubernetes.io/hostname:\nmaxSkew: 1"
-        }
-      }
-    },
-    "promExporter": {
-      "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "podMonitor": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "podMonitor"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/schema156"
-                    }
-                  },
-                  {
-                    "properties": {
-                      "podMonitor": {
-                        "anyOf": [
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        ]
-                      }
-                    },
-                    "required": [
-                      "podMonitor"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "podMonitor": {
-                "additionalProperties": {},
-                "description": "prometheus pod monitor",
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema2"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      }
-                    ],
-                    "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
-                  }
-                }
-              }
-            }
-          }
-        }
-      ],
-      "description": "stateful set -> pod template -> prom-exporter container\nconfig.monitor must be enabled",
-      "properties": {
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
-        "env": {
-          "$ref": "#/$defs/schema186"
-        },
-        "image": {
-          "$ref": "#/$defs/schema110"
-        },
-        "merge": {
-          "$ref": "#/$defs/schema99"
-        },
-        "monitorDomain": {
-          "description": "if config.monitor.tls.enabled is set to true, monitorDomain must be set to the common name\nor a SAN used in the tls certificate"
-        },
-        "podMonitor": {
-          "additionalProperties": {},
-          "description": "prometheus pod monitor",
-          "properties": {
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
-            "merge": {
-              "description": "merge or patch the pod monitor\nhttps://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.PodMonitor"
-            },
-            "name": {
-              "$ref": "#/$defs/schema175"
-            }
-          }
-        },
-        "port": {}
-      }
-    },
-    "reloader": {
-      "additionalProperties": {},
-      "description": "stateful set -> pod template -> reloader container",
-      "properties": {
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
-        "env": {
-          "$ref": "#/$defs/schema186"
-        },
-        "image": {
-          "$ref": "#/$defs/schema110"
-        },
-        "merge": {
-          "$ref": "#/$defs/schema99"
-        },
-        "natsVolumeMountPrefixes": {
-          "description": "all nats container volume mounts with the following prefixes\nwill be mounted into the reloader container"
-        }
-      }
-    },
-    "service": {
-      "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema150"
-                  },
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                ]
-              },
-              {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema1"
-                  },
-                  {
-                    "$ref": "#/$defs/schema4"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
-              }
-            }
-          }
-        }
-      ],
-      "description": "service",
-      "properties": {
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
-        "merge": {
-          "description": "merge or patch the service\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#service-v1-core"
-        },
-        "name": {
-          "$ref": "#/$defs/schema175"
-        },
-        "ports": {
-          "additionalProperties": {},
-          "description": "service port options\nadditional boolean field enable to control whether port is exposed in the service\nmust be enabled in the config section also\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#serviceport-v1-core",
-          "properties": {
-            "cluster": {
-              "$ref": "#/$defs/schema133"
-            },
-            "gateway": {
-              "$ref": "#/$defs/schema133"
-            },
-            "leafnodes": {
-              "$ref": "#/$defs/schema133"
-            },
-            "monitor": {
-              "$ref": "#/$defs/schema133"
-            },
-            "mqtt": {
-              "$ref": "#/$defs/schema133"
-            },
-            "nats": {
-              "$ref": "#/$defs/schema133"
-            },
-            "profiling": {
-              "$ref": "#/$defs/schema133"
-            },
-            "websocket": {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ]
-                }
-              },
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    "serviceAccount": {
-      "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema1"
-                  },
-                  {
-                    "$ref": "#/$defs/schema4"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
-              }
-            }
-          }
-        }
-      ],
-      "description": "service account",
-      "properties": {
-        "enabled": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
-        "merge": {
-          "$ref": "#/$defs/schema67"
-        },
-        "name": {
-          "$ref": "#/$defs/schema175"
-        }
-      }
-    },
-    "statefulSet": {
-      "additionalProperties": {},
-      "allOf": [
-        {
-          "if": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema1"
-                  },
-                  {
-                    "$ref": "#/$defs/schema4"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "defaults to \"{{ include \"nats.fullname\" $ }}\""
-              }
-            }
-          }
-        }
-      ],
-      "description": "stateful set",
-      "properties": {
-        "merge": {
-          "description": "merge or patch the stateful set\nhttps://kubernetes.io/docs/reference/generated/kubernetes-api/v1.24/#statefulset-v1-apps"
-        },
-        "name": {
-          "$ref": "#/$defs/schema175"
-        }
-      }
-    },
-    "tlsCA": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "configMapName": {
-              "description": "set configMapName in order to mount an existing configMap to dir"
-            },
-            "dir": {
-              "description": "directory to mount the configMap or secret to"
-            },
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
-            "key": {
-              "description": "key in the configMap or secret that contains the CA Certificate or Bundle"
-            },
-            "secretName": {
-              "description": "set secretName in order to mount an existing secretName to dir"
-            }
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        }
-      ],
-      "description": "reference a common CA Certificate or Bundle in all nats config `tls` blocks and nats-box contexts\nnote: `tls.verify` still must be set in the appropriate nats config `tls` blocks to require mTLS"
+    {
+      "items": {},
+      "type": "array"
     }
-  },
-  "type": "object"
+  ]
 }

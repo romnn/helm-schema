@@ -23,7 +23,7 @@ pub use contract_signals::{
     ContractSchemaSignals, ContractValuePathFacts, FailValueRequirement, MetadataFieldKind,
     ValuesDefaultSource,
 };
-pub use contract_use::ContractUse;
+pub use contract_use::{ContractUse, SplitSegmentUse};
 pub use guard::{Guard, GuardValue};
 pub use guard_dnf::GuardDnf;
 pub use output_path::{

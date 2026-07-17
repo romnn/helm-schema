@@ -2741,6 +2741,28 @@
     {
       "additionalProperties": {},
       "properties": {
+        "args": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Add custom arguments to the Crossplane pod."
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
         "configuration": {
           "additionalProperties": {},
           "properties": {
@@ -2877,6 +2899,25 @@
         "extraEnvVarsCrossplane": {
           "anyOf": [
             {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "extraEnvVarsCrossplane": {
+          "anyOf": [
+            {
               "type": "object"
             },
             {
@@ -2888,6 +2929,25 @@
             }
           ],
           "description": "Add custom environmental variables to the Crossplane pod deployment application container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "extraEnvVarsCrossplaneInit": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Add custom environmental variables to the Crossplane pod deployment init container.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
         }
       }
     },
@@ -3003,6 +3063,28 @@
             ],
             "description": "Add custom environmental variables to the RBAC Manager pod deployment.\nReplaces any `.` in a variable name with `_`. For example, `SAMPLE.KEY=value1` becomes `SAMPLE_KEY=value1`."
           }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "extraObjects": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "To add arbitrary Kubernetes Objects during a Helm Install"
         }
       }
     },

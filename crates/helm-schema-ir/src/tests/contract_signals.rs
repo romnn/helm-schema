@@ -1289,8 +1289,18 @@ data:
         .expect("strict consumer evidence");
 
     assert!(
-        evidence.fail_implications.is_empty(),
-        "a strict call that only executes inside a foreign range cannot constrain the path globally: {evidence:#?}",
+        !evidence.fail_implications.is_empty()
+            && evidence.fail_implications.iter().all(|implication| {
+                implication.outer_guards.iter().any(|guard| {
+                    matches!(
+                        guard,
+                        helm_schema_core::ConditionalGuard::Truthy { path } if path == "items"
+                    )
+                })
+            }),
+        "a strict call that only executes inside a foreign range binds only behind \
+         the iteration's liveness (the body executed, so the direct collection is \
+         truthy), never globally: {evidence:#?}",
     );
 }
 

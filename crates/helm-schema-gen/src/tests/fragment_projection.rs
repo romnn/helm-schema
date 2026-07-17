@@ -1021,6 +1021,7 @@ fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
         resource: ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string()),
         is_self_range_collection: false,
         template_supplied_member_keys: Default::default(),
+        split_segment: None,
     };
 
     let schema = provider

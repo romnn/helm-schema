@@ -45,15 +45,24 @@ mod shape_alternatives;
 mod string_transform_contracts;
 mod validator_reachability;
 
+/// Provider chains resolve against the COMMITTED bundle with downloads off:
+/// provider availability is a test input, never ambient user-cache state.
+pub(crate) fn bundle_cache_dir() -> std::path::PathBuf {
+    test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache")
+}
+
 fn provider() -> Chain {
     Chain::new(vec![Box::new(
-        KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true),
+        KubernetesJsonSchemaProvider::new("v1.35.0")
+            .with_cache_dir(bundle_cache_dir())
+            .with_allow_download(false),
     )])
 }
 
 fn production_chain_provider() -> Chain {
     let k8s_provider = KubernetesJsonSchemaProvider::new("v1.35.0")
-        .with_allow_download(true)
+        .with_cache_dir(bundle_cache_dir())
+        .with_allow_download(false)
         .with_api_version_guess(true);
     Chain::new(vec![Box::new(k8s_provider)]).with_inference_enabled(true)
 }
@@ -194,16 +203,30 @@ fn expected_range_key_string_schema(path: &str) -> Value {
     );
     expected_values_schema(
         properties,
-        vec![root_property_schema(
-            path,
-            serde_json::json!({
-                "anyOf": [
-                    { "type": "object" },
-                    { "maxItems": 0, "type": "array" },
-                    { "type": "null" },
-                ]
-            }),
-        )],
+        vec![
+            // The unconditional two-variable range demands an iterable
+            // collection in every state, beside the key-contract arm.
+            root_property_schema(
+                path,
+                serde_json::json!({
+                    "anyOf": [
+                        { "type": "array" },
+                        { "type": "object" },
+                        { "type": "null" },
+                    ]
+                }),
+            ),
+            root_property_schema(
+                path,
+                serde_json::json!({
+                    "anyOf": [
+                        { "type": "object" },
+                        { "maxItems": 0, "type": "array" },
+                        { "type": "null" },
+                    ]
+                }),
+            ),
+        ],
         false,
     )
 }

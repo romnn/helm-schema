@@ -151,6 +151,13 @@ impl ResolvePolicy {
             ValueKind::Scalar if use_.is_self_range_collection => {
                 ForeignSchemaRestriction::ScalarCollection.apply(schema.clone())
             }
+            // The slot observes ONE separator-delimited segment of the raw
+            // string, so the preimage constrains that segment instead of the
+            // whole spelling.
+            ValueKind::Scalar if use_.split_segment.is_some() => use_
+                .split_segment
+                .as_ref()
+                .and_then(|segment| split_segment_provider_preimage(schema, segment)),
             ValueKind::Scalar => ForeignSchemaRestriction::Scalar
                 .apply(schema.clone())
                 .map(plain_scalar_provider_preimage),
@@ -583,6 +590,37 @@ fn relax_template_supplied_required(
         }
     }
     schema
+}
+
+/// Preimage of a provider slot observed through ONE separator-delimited
+/// segment of the raw string (tempo's `regexSplit ":" . -1 | last` port
+/// suffix): an integer-typed slot admits exactly the strings whose named
+/// segment spells an integer. Any other slot type abstains — a string
+/// segment leaves the source effectively unconstrained.
+fn split_segment_provider_preimage(
+    schema: &Value,
+    segment: &helm_schema_core::SplitSegmentUse,
+) -> Option<Value> {
+    let pattern = split_segment_pattern(schema, segment)?;
+    Some(serde_json::json!({ "type": "string", "pattern": pattern }))
+}
+
+/// The accepted-source pattern for a slot observed through one separator
+/// segment: only integer-typed slots have a composable segment grammar; any
+/// other slot type abstains.
+pub(crate) fn split_segment_pattern(
+    schema: &Value,
+    segment: &helm_schema_core::SplitSegmentUse,
+) -> Option<String> {
+    if schema_type(schema) != Some("integer") {
+        return None;
+    }
+    let separator = regex::escape(&segment.separator);
+    Some(if segment.last {
+        format!("^([\\s\\S]*{separator})?[+-]?[0-9]+$")
+    } else {
+        format!("^[+-]?[0-9]+({separator}[\\s\\S]*)?$")
+    })
 }
 
 fn plain_scalar_provider_preimage(schema: Value) -> Value {

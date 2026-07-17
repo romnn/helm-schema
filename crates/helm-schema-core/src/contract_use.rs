@@ -2,6 +2,16 @@ use serde::{Deserialize, Serialize};
 
 use crate::{ContractProvenance, Guard, GuardDnf, ResourceRef, ValueKind, YamlPath};
 
+/// The rendered text is ONE SEGMENT of the source string split by a literal
+/// separator (`regexSplit ":" . -1 | last` extracting a port suffix): the
+/// sink schema constrains that segment, never the whole raw value.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub struct SplitSegmentUse {
+    pub separator: String,
+    /// The LAST segment when true, the first otherwise.
+    pub last: bool,
+}
+
 /// A contract claim for one observed values path.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 pub struct ContractUse {
@@ -23,6 +33,10 @@ pub struct ContractUse {
     /// requiredness must not re-demand them from the user value.
     #[serde(default, skip_serializing_if = "std::collections::BTreeSet::is_empty")]
     pub template_supplied_member_keys: std::collections::BTreeSet<String>,
+    /// Set when the rendered text is one separator-delimited segment of the
+    /// source string rather than the raw value.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub split_segment: Option<SplitSegmentUse>,
 }
 
 impl<'de> Deserialize<'de> for ContractUse {
@@ -43,6 +57,8 @@ impl<'de> Deserialize<'de> for ContractUse {
             has_string_contract: bool,
             #[serde(default)]
             template_supplied_member_keys: std::collections::BTreeSet<String>,
+            #[serde(default)]
+            split_segment: Option<SplitSegmentUse>,
         }
 
         let wire = WireContractUse::deserialize(deserializer)?;
@@ -55,6 +71,7 @@ impl<'de> Deserialize<'de> for ContractUse {
             provenance: wire.provenance,
             has_string_contract: wire.has_string_contract,
             template_supplied_member_keys: wire.template_supplied_member_keys,
+            split_segment: wire.split_segment,
         })
     }
 }
@@ -106,6 +123,7 @@ impl ContractUse {
             provenance: provenance.into_iter().collect(),
             has_string_contract: false,
             template_supplied_member_keys: std::collections::BTreeSet::new(),
+            split_segment: None,
         }
     }
 

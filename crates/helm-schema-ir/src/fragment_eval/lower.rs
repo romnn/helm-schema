@@ -103,6 +103,7 @@ impl LowerScope<'_> {
                 lexical_escapes: helper_meta
                     .map(|meta| meta.lexical_escapes.clone())
                     .unwrap_or_default(),
+                split_segment: None,
                 provenance: helper_meta
                     .map(|meta| meta.provenance.clone())
                     .unwrap_or_default(),
@@ -255,8 +256,36 @@ pub(crate) fn lower_value(
             }
             out
         }
+        AbstractValue::SplitSegment {
+            source_paths,
+            separator,
+            last,
+            // False only when the split SUBJECT was the raw string itself
+            // (a pre-transformed subject severs segment-to-source identity).
+            total_text_preimage: false,
+        } if source_paths.len() == 1 && source_paths.iter().all(|path| !path.is_empty()) => {
+            // A single-source segment of the RAW string keeps a splice with
+            // segment provenance: the sink schema constrains that segment
+            // of the value (tempo's `regexSplit ":" . -1 | last` port
+            // suffix), never the whole raw text.
+            let mut out = Guarded::empty();
+            for path in source_paths {
+                for (condition, mut splice) in scope.path_splice_arms(path, kind) {
+                    splice.meta.split_segment = Some(helm_schema_core::SplitSegmentUse {
+                        separator: separator.clone(),
+                        last: *last,
+                    });
+                    out.arms.push((condition, AbstractFragment::Splice(splice)));
+                }
+            }
+            out
+        }
         AbstractValue::Widened(paths)
         | AbstractValue::SplitList {
+            source_paths: paths,
+            ..
+        }
+        | AbstractValue::SplitSegment {
             source_paths: paths,
             ..
         } => {
@@ -434,6 +463,10 @@ pub(crate) fn lower_value_scalar_arms(
         }
         AbstractValue::Widened(paths)
         | AbstractValue::SplitList {
+            source_paths: paths,
+            ..
+        }
+        | AbstractValue::SplitSegment {
             source_paths: paths,
             ..
         } => {

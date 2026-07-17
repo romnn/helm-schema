@@ -234,6 +234,7 @@ fn parser_operand_identity_paths(
             | AbstractValue::List(_)
             | AbstractValue::Overlay { .. }
             | AbstractValue::SplitList { .. }
+            | AbstractValue::SplitSegment { .. }
             | AbstractValue::Widened(_) => {}
         }
     }
@@ -334,6 +335,7 @@ fn parser_output_metas(
             | AbstractValue::List(_)
             | AbstractValue::Overlay { .. }
             | AbstractValue::SplitList { .. }
+            | AbstractValue::SplitSegment { .. }
             | AbstractValue::Widened(_) => {}
         }
     }
@@ -529,6 +531,7 @@ pub(super) fn record_collection_item_kind_result(
             | AbstractValue::DerivedBoolean(_)
             | AbstractValue::Dict(_)
             | AbstractValue::SplitList { .. }
+            | AbstractValue::SplitSegment { .. }
             | AbstractValue::Widened(_) => {}
         }
     }

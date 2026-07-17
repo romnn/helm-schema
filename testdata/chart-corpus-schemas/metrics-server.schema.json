@@ -4328,6 +4328,27 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "args": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -4530,6 +4551,27 @@
               }
             ]
           }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "defaultArgs": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },
@@ -6795,8 +6837,7 @@
           "description": "Annotations to add to the API service"
         },
         "caBundle": {
-          "description": "The PEM encoded CA bundle for TLS verification",
-          "type": "string"
+          "description": "The PEM encoded CA bundle for TLS verification"
         },
         "create": {
           "anyOf": [
@@ -8813,26 +8854,12 @@
           ]
         },
         "helm": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "certDurationDays": {
-                  "description": "Cert validity duration in days"
-                }
-              }
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "lookup": {
-                  "description": "Use helm lookup function to reuse Secret created in previous helm install",
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "certDurationDays": {
+              "description": "Cert validity duration in days"
             }
-          ]
+          }
         },
         "type": {
           "anyOf": [

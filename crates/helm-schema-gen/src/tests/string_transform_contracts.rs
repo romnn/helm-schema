@@ -434,3 +434,35 @@ fn tpl_program_contract_survives_default_chain() {
         );
     }
 }
+
+/// tempo's jaeger receivers: `regexSplit ":" . -1 | last` extracts the
+/// port suffix of an endpoint string into a Service port slot, so the
+/// accepted endpoints are strings whose LAST `:`-segment is numeric.
+#[test]
+fn split_last_segment_into_numeric_slot_requires_numeric_suffix() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: test
+        spec:
+          ports:
+            {{- with .Values.endpoint }}
+            - name: grpc
+              port: {{ regexSplit ":" . -1 | last }}
+              protocol: TCP
+            {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("endpoint: ~\n"));
+    for (instance, want) in [
+        (serde_json::json!({ "endpoint": "0.0.0.0:audit" }), false),
+        (serde_json::json!({ "endpoint": "0.0.0.0:14250" }), true),
+        (serde_json::json!({ "endpoint": null }), true),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "the endpoint's port suffix feeds an integer slot: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}

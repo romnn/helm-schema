@@ -176,14 +176,19 @@ impl ValuePathContext<'_> {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             return Predicate::approximate(marker, self.resolved_values_paths_from_expr(expr));
         };
-        if function != "or" {
+        // `and`/`or` decompose per argument so exact conjuncts survive
+        // beside undecodable siblings: a fail-arm consumer can then
+        // strengthen the residue soundly (drop approximate disjuncts, or
+        // negate only the decodable conjuncts) instead of abstaining on
+        // one opaque blob.
+        if function != "or" && function != "and" {
             return Predicate::approximate_with_sound_subset(
                 marker,
                 self.resolved_values_paths_from_expr(expr),
                 self.int_cast_comparison_sound_subset(expr),
             );
         }
-        let alternatives = args
+        let parts: Vec<Predicate> = args
             .iter()
             .enumerate()
             .map(|(index, arg)| {
@@ -198,7 +203,11 @@ impl ValuePathContext<'_> {
                 }
             })
             .collect();
-        predicate_any(alternatives)
+        if function == "and" {
+            Predicate::all(parts)
+        } else {
+            predicate_any(parts)
+        }
     }
 
     pub(crate) fn with_condition_predicate_expr(&self, expr: &TemplateExpr) -> Predicate {
@@ -1444,6 +1453,7 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
         | AbstractValue::DerivedBoolean(_)
         | AbstractValue::List(_)
         | AbstractValue::SplitList { .. }
+        | AbstractValue::SplitSegment { .. }
         | AbstractValue::Widened(_) => None,
     }
 }

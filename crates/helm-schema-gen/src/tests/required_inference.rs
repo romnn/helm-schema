@@ -14,7 +14,9 @@ use helm_schema_k8s::{Chain, KubernetesJsonSchemaProvider};
 
 fn provider() -> Chain {
     Chain::new(vec![Box::new(
-        KubernetesJsonSchemaProvider::new("v1.35.0").with_allow_download(true),
+        KubernetesJsonSchemaProvider::new("v1.35.0")
+            .with_cache_dir(crate::tests::bundle_cache_dir())
+            .with_allow_download(false),
     )])
 }
 
@@ -53,6 +55,7 @@ fn contract_default_guard_excludes_path_without_external_fallback_scan() {
             provenance: Vec::new(),
             has_string_contract: false,
             template_supplied_member_keys: Default::default(),
+            split_segment: None,
         },
         ContractUse {
             source_expr: "feature".to_string(),
@@ -65,6 +68,7 @@ fn contract_default_guard_excludes_path_without_external_fallback_scan() {
             provenance: Vec::new(),
             has_string_contract: false,
             template_supplied_member_keys: Default::default(),
+            split_segment: None,
         },
     ]);
     let schema_signals = contract.finalize().into_schema_signals();
@@ -94,6 +98,7 @@ fn plain_pathless_scalar_use_does_not_mark_required_without_header_guard() {
         provenance: Vec::new(),
         has_string_contract: false,
         template_supplied_member_keys: Default::default(),
+        split_segment: None,
     }]);
     let schema_signals = contract.finalize().into_schema_signals();
     let mut schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));
@@ -125,6 +130,7 @@ fn explicit_nested_values_defaults_suppress_required_inference() {
         provenance: Vec::new(),
         has_string_contract: false,
         template_supplied_member_keys: Default::default(),
+        split_segment: None,
     }]);
     let schema_signals = contract.finalize().into_schema_signals();
     let mut schema = generate_values_schema(ValuesSchemaInput::new(&schema_signals, &provider()));

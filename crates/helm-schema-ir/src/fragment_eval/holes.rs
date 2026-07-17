@@ -692,6 +692,7 @@ impl Interpreter<'_> {
                             && !splice.meta.yaml_serialized
                             && !splice.meta.string_contract
                             && !splice.meta.json_serialized
+                            && splice.meta.split_segment.is_none()
                             && !splice.values_path.is_empty();
                         if !raw {
                             continue;

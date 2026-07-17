@@ -32,6 +32,16 @@ pub(crate) enum AbstractValue {
         separator: String,
         total_text_preimage: bool,
     },
+    /// One separator-delimited segment of split derived text (`regexSplit
+    /// ":" . -1 | last`). Like [`Self::SplitList`], the source paths are
+    /// influences, but a typed sink can constrain the named segment.
+    SplitSegment {
+        source_paths: BTreeSet<String>,
+        separator: String,
+        /// The LAST segment when true, the first otherwise.
+        last: bool,
+        total_text_preimage: bool,
+    },
     /// Result of a call without a transfer function: the value itself is
     /// unknown (structural operations treat it like `Unknown`), but the
     /// `.Values` paths that flowed into the call are kept so output
@@ -90,6 +100,7 @@ impl AbstractValue {
             | Self::StringSet(_)
             | Self::DerivedBoolean(_)
             | Self::SplitList { .. }
+            | Self::SplitSegment { .. }
             | Self::Widened(_) => {}
         }
     }
@@ -136,6 +147,10 @@ impl AbstractValue {
             Self::Widened(paths)
             | Self::DerivedBoolean(paths)
             | Self::SplitList {
+                source_paths: paths,
+                ..
+            }
+            | Self::SplitSegment {
                 source_paths: paths,
                 ..
             } => {
@@ -252,6 +267,7 @@ impl AbstractValue {
             | Self::StringSet(_)
             | Self::DerivedBoolean(_)
             | Self::SplitList { .. }
+            | Self::SplitSegment { .. }
             | Self::Widened(_) => {}
         }
     }
@@ -311,7 +327,7 @@ impl AbstractValue {
             }
             Self::OutputPath(path, meta) => Some(Self::OutputPath(path.clone(), meta.clone())),
             Self::List(items) => Self::choice(items.clone()),
-            Self::SplitList { .. } => Some(Self::Unknown),
+            Self::SplitList { .. } | Self::SplitSegment { .. } => Some(Self::Unknown),
             Self::Choice(choices) => Self::choice(
                 choices
                     .iter()
@@ -375,6 +391,7 @@ impl AbstractValue {
             | Self::OutputPath(_, _)
             | Self::DerivedBoolean(_)
             | Self::SplitList { .. }
+            | Self::SplitSegment { .. }
             | Self::Widened(_) => None,
         }
     }
@@ -448,7 +465,8 @@ impl AbstractValue {
             | Self::RootContext
             | Self::StringSet(_)
             | Self::DerivedBoolean(_)
-            | Self::SplitList { .. } => self,
+            | Self::SplitList { .. }
+            | Self::SplitSegment { .. } => self,
         }
     }
 
@@ -513,6 +531,7 @@ impl AbstractValue {
             | Self::DerivedBoolean(_)
             | Self::List(_)
             | Self::SplitList { .. }
+            | Self::SplitSegment { .. }
             | Self::Widened(_) => None,
         }
     }
@@ -562,6 +581,7 @@ impl AbstractValue {
             | Self::StringSet(_)
             | Self::DerivedBoolean(_)
             | Self::SplitList { .. }
+            | Self::SplitSegment { .. }
             | Self::Widened(_) => false,
         }
     }
@@ -640,6 +660,7 @@ impl AbstractValue {
             | Self::Widened(_)
             | Self::DerivedBoolean(_)
             | Self::SplitList { .. }
+            | Self::SplitSegment { .. }
             | Self::RangeKey(_) => None,
             Self::StringSet(_) => None,
             Self::Choice(choices) => {
@@ -807,6 +828,21 @@ impl AbstractValue {
                     total_text_preimage,
                 })
             }
+            Self::SplitSegment {
+                source_paths,
+                separator,
+                last,
+                total_text_preimage,
+            } => {
+                let source_paths: BTreeSet<String> =
+                    source_paths.difference(remove).cloned().collect();
+                (!source_paths.is_empty()).then_some(Self::SplitSegment {
+                    source_paths,
+                    separator,
+                    last,
+                    total_text_preimage,
+                })
+            }
             Self::Dict(entries) => {
                 let entries = Self::remove_fragment_paths_from_entries(entries, remove);
                 if entries.is_empty() {
@@ -883,6 +919,7 @@ impl AbstractValue {
             | Self::DerivedBoolean(_)
             | Self::Choice(_)
             | Self::SplitList { .. }
+            | Self::SplitSegment { .. }
             | Self::Widened(_) => None,
         }
     }

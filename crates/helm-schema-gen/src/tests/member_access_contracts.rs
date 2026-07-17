@@ -304,7 +304,10 @@ fn member_local_guard_does_not_leak_its_string_contract() {
         }),
     );
     // The unconditional arm's carrier stays untyped: it must hold vacuously
-    // for falsy ancestors a `with` chain would skip.
+    // for falsy ancestors a `with` chain would skip. Grafting the untyped
+    // `enabled` carrier into the arm keeps the member's OBJECT kind — the
+    // typeless carrier conjoins into the typed member slot instead of
+    // widening it into a union alternative.
     let all_of = vec![serde_json::json!({
         "additionalProperties": {},
         "properties": {

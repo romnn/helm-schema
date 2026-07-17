@@ -30,6 +30,10 @@ struct ProviderSchemaLookupKey {
     path: YamlPath,
     kind: ValueKind,
     is_self_range_collection: bool,
+    /// Both fields change the restricted schema a use resolves to, so an
+    /// under-keyed cache hit would leak one use's preimage into another.
+    template_supplied_member_keys: std::collections::BTreeSet<String>,
+    split_segment: Option<helm_schema_core::SplitSegmentUse>,
 }
 
 pub(crate) struct PathSchemaResolver<'a> {
@@ -176,6 +180,8 @@ fn provider_schemas_for_path_evidence(
             path: provider_use.path.clone(),
             kind: provider_use.kind,
             is_self_range_collection: provider_use.is_self_range_collection,
+            template_supplied_member_keys: provider_use.template_supplied_member_keys.clone(),
+            split_segment: provider_use.split_segment.clone(),
         };
         let schema = match provider_schema_cache.entry(lookup_key) {
             std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),
@@ -372,11 +378,20 @@ pub(crate) fn fail_requirement_schema<'a>(
             } => {
                 // Nil-tolerant requirements (comparison operands) hold only
                 // when the leaf is present, so the wrapper must not demand
-                // the field itself.
+                // the field itself. A `NotSchemaType` requirement is
+                // likewise satisfied by an absent leaf: the failing test it
+                // negates fired only on values OF that type (a quoted-token
+                // splice constrains strings; members without the field
+                // never render it).
                 let tolerant_leaf = implication.requirements.iter().all(|requirement| {
                     matches!(
                         requirement,
                         helm_schema_core::FailValueRequirement::ComparableKind(_)
+                    )
+                }) || implication.requirements.iter().any(|requirement| {
+                    matches!(
+                        requirement,
+                        helm_schema_core::FailValueRequirement::NotSchemaType(_)
                     )
                 });
                 let member = if tolerant_leaf {

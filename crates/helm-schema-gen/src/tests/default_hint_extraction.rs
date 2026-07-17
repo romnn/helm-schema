@@ -110,6 +110,7 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
         provenance: Vec::new(),
         has_string_contract: false,
         template_supplied_member_keys: Default::default(),
+        split_segment: None,
     };
     let bare = ContractUse {
         source_expr: "image.tag".into(),
@@ -120,6 +121,7 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
         provenance: Vec::new(),
         has_string_contract: false,
         template_supplied_member_keys: Default::default(),
+        split_segment: None,
     };
 
     let signals = schema_signals_for(vec![guarded, bare]);

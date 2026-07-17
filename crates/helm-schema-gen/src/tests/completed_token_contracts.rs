@@ -199,6 +199,82 @@ fn single_quoted_splice_excludes_undoubled_apostrophes() {
     }
 }
 
+/// A single-quoted SEQUENCE ITEM claims the same contract as a mapping
+/// value: the item's scalar run carries its own quote context (cilium's
+/// `- '--log-level {{ … }}'` container argument).
+#[test]
+fn single_quoted_sequence_item_excludes_undoubled_apostrophes() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: main
+              args:
+                - '-c config.json'
+                - '--log-level {{ .Values.defaultLevel }}'
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("defaultLevel: info\n"));
+    for (instance, want) in [
+        (serde_json::json!({ "defaultLevel": "a'b" }), false),
+        (serde_json::json!({ "defaultLevel": "info" }), true),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "a single-quoted item claims the quoted contract: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// The claim survives an `else if` chain whose earlier arms carry
+/// predicates the schema encoding cannot express (`has … (splitList …)`):
+/// the capture's own ambient guard is the arm's decodable condition, and
+/// abstaining conjuncts must not drop the whole capture when every arm
+/// containing the splice agrees on it (cilium's envoy log-level chain).
+#[test]
+fn single_quoted_item_survives_undecodable_sibling_arms() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: main
+              args:
+                {{- if and (.Values.debug.enabled) (has "envoy" (splitList " " .Values.debug.verbose)) }}
+                - '--log-level trace'
+                {{- else if .Values.defaultLevel }}
+                - '--log-level {{ .Values.defaultLevel }}'
+                {{- else }}
+                - '--log-level info'
+                {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("debug:\n  enabled: false\n  verbose: ~\ndefaultLevel: info\n"),
+    );
+    for (instance, want) in [
+        (
+            serde_json::json!({ "debug": { "enabled": false }, "defaultLevel": "a'b" }),
+            false,
+        ),
+        (
+            serde_json::json!({ "debug": { "enabled": false }, "defaultLevel": "info" }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "the quoted contract holds under undecodable sibling arms: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// The quote context survives literal flow-content text, so a splice inside
 /// a flow-style quoted item (`[ "prefix.{{ … }}" ]`) carries the same
 /// double-quoted contract as a whole quoted token (cilium's clustermesh
@@ -221,6 +297,86 @@ fn flow_style_quoted_splice_keeps_the_quoted_contract() {
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "flow-content quoting keeps the double-quoted contract: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// An inline control region completing the token (`"{{ x }}{{- with y
+/// }}/{{ . }}{{- end }}"`) keeps the quoted contract of the splice BEFORE
+/// it: the region only appends more content to the same double-quoted
+/// scalar (grafana's sidecar folder env value).
+#[test]
+fn double_quoted_splice_before_inline_region_keeps_the_contract() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: main
+              env:
+                - name: FOLDER
+                  value: "{{ .Values.folder }}{{- with .Values.defaultFolderName }}/{{ . }}{{- end }}"
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("folder: /tmp/dashboards\ndefaultFolderName: ~\n"),
+    );
+    for (instance, want) in [
+        (serde_json::json!({ "folder": "a\"b" }), false),
+        (serde_json::json!({ "folder": "a\\qb" }), false),
+        (serde_json::json!({ "folder": "a\\\"b" }), true),
+        (serde_json::json!({ "folder": "/tmp/dashboards" }), true),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "the quoted contract holds before an inline region: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// The quote context reaches splices later in the token than a range
+/// variable's member: the flow item's contract binds both the ranged member
+/// and the root-scoped path spliced after it (cilium's clustermesh
+/// `[ "{{ $cluster.name }}.{{ $.Values…domain }}" ]` hostnames).
+#[test]
+fn flow_quoted_splice_after_range_variable_keeps_the_contract() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          hostAliases:
+            {{- range $cluster := .Values.clusters }}
+            - ip: 10.0.0.1
+              hostnames: [ "{{ $cluster.name }}.{{ $.Values.domain }}" ]
+            {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("clusters: []\ndomain: mesh.cilium.io\n"),
+    );
+    for (instance, want) in [
+        (
+            serde_json::json!({ "clusters": [{ "name": "c1" }], "domain": "a\"b" }),
+            false,
+        ),
+        (
+            serde_json::json!({ "clusters": [{ "name": "a\"b" }], "domain": "mesh.cilium.io" }),
+            false,
+        ),
+        (
+            serde_json::json!({ "clusters": [{ "name": "c1" }], "domain": "mesh.cilium.io" }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "flow quoting binds ranged and root-scoped splices alike: \
              instance={instance}; schema={schema}"
         );
     }

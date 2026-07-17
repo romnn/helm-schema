@@ -40,6 +40,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
             )],
             has_string_contract: false,
             template_supplied_member_keys: Default::default(),
+            split_segment: None,
         },
         ContractUse {
             source_expr: "image.tag".to_string(),
@@ -54,6 +55,7 @@ fn canonicalization_merges_provenance_for_semantically_identical_uses() {
             )],
             has_string_contract: false,
             template_supplied_member_keys: Default::default(),
+            split_segment: None,
         },
     ];
 

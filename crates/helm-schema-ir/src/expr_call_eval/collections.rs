@@ -256,6 +256,16 @@ pub(super) fn eval_first(
 pub(super) fn eval_first_result(result: EvalResult) -> EvalResult {
     let value = match result.value {
         Some(AbstractValue::List(items)) => items.first().cloned(),
+        Some(AbstractValue::SplitList {
+            source_paths,
+            separator,
+            total_text_preimage,
+        }) => Some(AbstractValue::SplitSegment {
+            source_paths,
+            separator,
+            last: false,
+            total_text_preimage,
+        }),
         Some(value) => value.fragment_range_item(),
         None => None,
     };
@@ -273,6 +283,16 @@ pub(super) fn eval_last(
 pub(super) fn eval_last_result(result: EvalResult) -> EvalResult {
     let value = match result.value {
         Some(AbstractValue::List(items)) => items.last().cloned(),
+        Some(AbstractValue::SplitList {
+            source_paths,
+            separator,
+            total_text_preimage,
+        }) => Some(AbstractValue::SplitSegment {
+            source_paths,
+            separator,
+            last: true,
+            total_text_preimage,
+        }),
         Some(value) => value.fragment_range_item(),
         None => None,
     };

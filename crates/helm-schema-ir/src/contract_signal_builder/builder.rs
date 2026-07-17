@@ -339,7 +339,8 @@ fn record_contract_use_conjunction(
     // are unknown, so its NARROWING evidence (sink typing, provider uses,
     // nullability) must abstain — but the conjunction's widen-only evidence
     // survives: a positive self-type dispatch arm under an undecodable
-    // liveness header still proves the chart handles that type (// cluster-autoscaler's `kindIs "string"` expanderPriorities arm under
+    // liveness header still proves the chart handles that type
+    // (cluster-autoscaler's `kindIs "string"` expanderPriorities arm under
     // an `include`-bearing condition).
     let has_approximate = predicates.iter().any(Predicate::contains_approximation);
     if ranged_member_parent(&contract_use.source_expr).is_some_and(|parent| {
@@ -423,6 +424,25 @@ fn record_contract_use_conjunction(
                 )
         });
 
+    // The serialized-tolerance fact is itself widen-only — the use it
+    // records never rejects an input, it only stops intent-grade channels
+    // (declared defaults, fallback hints, standalone guard typing) from
+    // narrowing — so it survives an approximate conjunct: a `typeOf`
+    // dispatch or `toYaml` arm under an undecodable liveness header still
+    // proves values outside its arm render nothing there (loki's
+    // `kindIs "bool"` hostUsers behind a Capabilities semver check,
+    // vault's server affinity helper behind `ne .mode "dev"`). Real
+    // contracts from other rows keep applying.
+    if has_source && has_approximate {
+        let serialized_tolerant = matches!(contract_use.kind, ValueKind::Serialized)
+            || (contract_use.kind == ValueKind::PartialScalar && !path_is_empty)
+            || type_dispatched;
+        if serialized_tolerant {
+            let acc = path_accumulator(paths, &contract_use.source_expr);
+            acc.referenced = true;
+            acc.facts.facts.used_as_serialized = true;
+        }
+    }
     if has_source && !has_approximate {
         let mut facts = ContractValuePathFacts {
             used_as_fragment: matches!(
@@ -581,9 +601,12 @@ fn record_contract_use_conjunction(
                         !parent_mode.destructured && !parent_mode.json_decoded,
                         !path_mode.destructured && !path_mode.json_decoded,
                     );
-                } else if let Some(guards) = outer_guards
-                    && !guards.is_empty()
-                {
+                } else if let Some(guards) = outer_guards {
+                    // Empty guards mean the range provably runs in EVERY
+                    // state (complementary branches across files simplify
+                    // to an unconditional row — jenkins ranges its
+                    // configScripts under both sidecar-reload states), so
+                    // the iterable requirement binds unconditionally.
                     let mode = range_modes.mode(&path);
                     record_guarded_range_requirement(
                         paths,
@@ -603,7 +626,6 @@ fn record_contract_use_conjunction(
 /// fails template rendering on scalars, so inside the guarded branch the
 /// ranged path must be a collection. The branch stays render-free; overlay
 /// lowering recognizes that shape and emits the iterable domain.
-/// Unconditional ranges keep their pre-existing unconstrained lowering.
 fn lowerable_range_outer_guards(
     ranged_path: &str,
     predicates: &[Predicate],
@@ -653,18 +675,22 @@ fn record_guarded_range_requirement(
     destructured: bool,
     json_decoded: bool,
 ) {
-    let branch = path_accumulator(paths, ranged_path)
-        .conditional_overlay_branches
-        .entry(outer_guards.clone())
-        .or_default();
-    branch.facts.is_nullable = true;
-    branch.record_facts(ContractValuePathFacts {
-        is_ranged_source: true,
-        has_destructured_range_use: destructured,
-        has_json_decoded_range_use: json_decoded,
-        is_nullable: true,
-        ..ContractValuePathFacts::default()
-    });
+    // An unconditional row's range facts already live on the base
+    // accumulator; only a real guard set opens its own overlay branch.
+    if !outer_guards.is_empty() {
+        let branch = path_accumulator(paths, ranged_path)
+            .conditional_overlay_branches
+            .entry(outer_guards.clone())
+            .or_default();
+        branch.facts.is_nullable = true;
+        branch.record_facts(ContractValuePathFacts {
+            is_ranged_source: true,
+            has_destructured_range_use: destructured,
+            has_json_decoded_range_use: json_decoded,
+            is_nullable: true,
+            ..ContractValuePathFacts::default()
+        });
+    }
     let implication = ContractFailImplication {
         outer_guards,
         target: ContractRequirementTarget::Value,
@@ -783,12 +809,15 @@ fn record_fail_conjunction(
         );
         return;
     }
-    // An approximate enclosing condition could gate anything (even one with
-    // no resolvable paths), and a `$local` name leaking into predicate paths
-    // means the condition lowering lost the real subject: both make negation
-    // unsound for the whole capture.
+    // An approximate enclosing condition abstains unless it admits a sound
+    // positive strengthening (it can only ever be an OUTER guard — the
+    // requirement extraction below never negates one), and a `$local` name
+    // leaking into predicate paths means the condition lowering lost the
+    // real subject: both make lowering unsound for the whole capture.
     let conjunction = remove_redundant_approximate_conditions(&capture.conjunction);
-    if conjunction.iter().any(Predicate::contains_approximation) {
+    if conjunction.iter().any(|predicate| {
+        predicate.contains_approximation() && fail_outer_guard(predicate).is_none()
+    }) {
         return;
     }
     if conjunction
@@ -863,11 +892,21 @@ fn record_fail_conjunction(
     let member_scope = ranged.map(|path| format!("{path}.*"));
 
     let mut outer_guards = Vec::new();
+    let mut member_tests: Vec<&Predicate> = Vec::new();
     let mut requirements = Vec::new();
     let mut test_paths: BTreeSet<String> = BTreeSet::new();
     for predicate in conjunction {
         if let Predicate::Guard(Guard::Range { path }) = predicate {
             if ranged == Some(path.as_str()) {
+                continue;
+            }
+            // An iteration conjunct outside the member test: the body
+            // executed, so a DIRECTLY ranged collection is Helm-truthy
+            // (a truthy non-collection aborts the range and never reaches
+            // a render-valid document). Indirect ranges lose that
+            // implication and abstain.
+            if range_modes.mode(path).direct || capture.ranged.mode(path).direct {
+                outer_guards.push(ConditionalGuard::Truthy { path: path.clone() });
                 continue;
             }
             return;
@@ -877,41 +916,84 @@ fn record_fail_conjunction(
         // ranged member (or, without a range, to a single path) AND its
         // negation states an enforceable requirement; everything else is
         // an outer condition of the arm.
-        let test_scope = match &member_scope {
-            Some(scope) => (!paths_of.is_empty()
+        if let Some(scope) = &member_scope {
+            if !paths_of.is_empty()
                 && paths_of
                     .iter()
-                    .all(|path| path == scope || path.starts_with(&format!("{scope}."))))
-            .then(|| scope.clone()),
-            None => (paths_of.len() == 1 && predicate_is_negatable_test(predicate))
-                .then(|| paths_of.iter().next().cloned().unwrap_or_default()),
+                    .all(|path| path == scope || path.starts_with(&format!("{scope}.")))
+            {
+                member_tests.push(predicate);
+                continue;
+            }
+        } else if paths_of.len() == 1 && predicate_is_negatable_test(predicate) {
+            let path = paths_of.iter().next().cloned().unwrap_or_default();
+            if let Some(required) =
+                requirements_from_negation(predicate, &path).filter(|required| !required.is_empty())
+            {
+                requirements.extend(required);
+                test_paths.insert(path);
+                continue;
+            }
+        }
+        let Some(guard) = fail_outer_guard(predicate) else {
+            return;
         };
-        let required = test_scope
-            .as_ref()
-            .and_then(|scope| requirements_from_negation(predicate, scope))
-            .filter(|required| !required.is_empty());
-        match (test_scope, required) {
-            (Some(scope), Some(mut required)) => {
-                requirements.append(&mut required);
-                test_paths.insert(scope);
-            }
-            // A member-scoped conjunct whose negation cannot be stated
-            // poisons the member test: the requirement would be missing a
-            // dimension of the real condition.
-            (Some(_), None) if member_scope.is_some() => return,
-            _ => {
-                let Some(guard) = predicate_to_guard(predicate, None) else {
-                    return;
-                };
-                if guard
-                    .value_paths()
+        if guard
+            .value_paths()
+            .iter()
+            .any(|path| path_contains_wildcard(path))
+        {
+            return;
+        }
+        outer_guards.push(guard);
+    }
+    // Member tests negate against the MEMBER scope first — `required`-style
+    // conjuncts name fields relative to the member — and fall back to the
+    // single field path they all share (`clusters.*.name` spliced into a
+    // quoted flow item), where the implication targets the members' field.
+    // A member test that fits neither convention poisons the capture: the
+    // requirement would be missing a dimension of the real condition.
+    let mut member_field: Option<Vec<String>> = None;
+    if let Some(scope) = &member_scope
+        && !member_tests.is_empty()
+    {
+        let requirements_at = |at: &str| -> Option<Vec<FailValueRequirement>> {
+            member_tests
+                .iter()
+                .map(|predicate| {
+                    requirements_from_negation(predicate, at)
+                        .filter(|required| !required.is_empty())
+                })
+                .collect::<Option<Vec<_>>>()
+                .map(|nested| nested.into_iter().flatten().collect())
+        };
+        if let Some(required) = requirements_at(scope) {
+            requirements.extend(required);
+            test_paths.insert(scope.clone());
+        } else {
+            let field_path = {
+                let mut paths: BTreeSet<String> = member_tests
                     .iter()
-                    .any(|path| path_contains_wildcard(path))
-                {
-                    return;
+                    .flat_map(|predicate| predicate.value_paths())
+                    .collect();
+                match paths.pop_first() {
+                    Some(path) if paths.is_empty() && !path[scope.len()..].contains('*') => {
+                        Some(path)
+                    }
+                    _ => None,
                 }
-                outer_guards.push(guard);
-            }
+            };
+            let Some(field_path) = field_path.filter(|path| path != scope) else {
+                return;
+            };
+            let Some(required) = requirements_at(&field_path) else {
+                return;
+            };
+            member_field = Some(helm_schema_core::split_value_path(
+                &field_path[scope.len() + 1..],
+            ));
+            requirements.extend(required);
+            test_paths.insert(field_path);
         }
     }
     if requirements.is_empty() || test_paths.len() != 1 {
@@ -971,12 +1053,15 @@ fn record_fail_conjunction(
     outer_guards.dedup();
     let implication = ContractFailImplication {
         outer_guards,
-        target: ranged.map_or(ContractRequirementTarget::Value, |_| {
-            ContractRequirementTarget::Members {
-                allow_integer: ranged.is_some_and(|path| {
-                    let mode = range_modes.mode(path);
-                    !mode.destructured && !mode.json_decoded
-                }),
+        target: ranged.map_or(ContractRequirementTarget::Value, |path| {
+            let mode = range_modes.mode(path);
+            let allow_integer = !mode.destructured && !mode.json_decoded;
+            match member_field {
+                Some(target_path) => ContractRequirementTarget::MembersAt {
+                    target_path,
+                    allow_integer,
+                },
+                None => ContractRequirementTarget::Members { allow_integer },
             }
         }),
         requirements,
@@ -1041,7 +1126,7 @@ fn record_range_key_prefix_requirement(
                 requirements.append(&mut required);
             }
             _ => {
-                let Some(guard) = predicate_to_guard(predicate, None) else {
+                let Some(guard) = fail_outer_guard(predicate) else {
                     return true;
                 };
                 if guard
@@ -1099,23 +1184,16 @@ fn capture_outer_guards(
             )
         })
         .map(|predicate| match predicate {
-            // A positive approximate conjunct with a recognized sound
-            // strengthening keeps the capture alive: firing on the subset
-            // never fires where the real condition is false. Negated or
-            // nested approximations still abstain (predicate_to_guard
-            // returns None for them), as does a bare approximation.
-            Predicate::Approximate { sound_subset, .. } if !sound_subset.is_empty() => {
-                let guards = sound_subset
-                    .iter()
-                    .map(|guard| guard_to_conditional_guard(guard, None))
-                    .collect::<Option<Vec<_>>>()?;
-                match guards.as_slice() {
-                    [guard] => Some(guard.clone()),
-                    _ => Some(ConditionalGuard::AllOf(guards)),
-                }
-            }
-            predicate if predicate.contains_approximation() => None,
-            predicate => predicate_to_guard(predicate, None),
+            // An iteration conjunct: the body executed, so a DIRECTLY
+            // ranged collection is Helm-truthy (a truthy non-collection
+            // aborts the range and never renders). Indirect ranges lose
+            // that implication and abstain.
+            Predicate::Guard(Guard::Range { path }) => capture
+                .ranged
+                .mode(path)
+                .direct
+                .then(|| ConditionalGuard::Truthy { path: path.clone() }),
+            predicate => fail_outer_guard(predicate),
         })
         .collect::<Option<Vec<_>>>()?;
     if guards
@@ -1128,6 +1206,53 @@ fn capture_outer_guards(
     guards.sort();
     guards.dedup();
     Some(guards)
+}
+
+/// ConditionalGuard for one OUTER conjunct of a FAIL implication.
+///
+/// Fail polarity is positive-only: the emitted guard may hold LESS often
+/// than the real condition — the arm then rejects fewer inputs — but never
+/// more. That admits bounded strengthenings an exact row guard cannot use:
+/// a positive approximate conjunct lowers through its recognized sound
+/// subset, and a NEGATED conjunction lowers as the negation of its
+/// decodable conjuncts (dropping conjuncts weakens a conjunction, so
+/// negating the remainder fires less often than negating all of it —
+/// cilium's `else if` log-level arm behind a `has … (splitList …)` chain).
+fn fail_outer_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
+    if !predicate.contains_approximation() {
+        return predicate_to_guard(predicate, None);
+    }
+    match predicate {
+        Predicate::Approximate { sound_subset, .. } if !sound_subset.is_empty() => {
+            let guards = sound_subset
+                .iter()
+                .map(|guard| guard_to_conditional_guard(guard, None))
+                .collect::<Option<Vec<_>>>()?;
+            match guards.as_slice() {
+                [guard] => Some(guard.clone()),
+                _ => Some(ConditionalGuard::AllOf(guards)),
+            }
+        }
+        Predicate::Not(inner) => {
+            let Predicate::And(items) = inner.as_ref() else {
+                return None;
+            };
+            let mut decodable: Vec<ConditionalGuard> = items
+                .iter()
+                .filter(|item| !item.contains_approximation())
+                .filter_map(|item| predicate_to_guard(item, None))
+                .collect();
+            decodable.sort();
+            decodable.dedup();
+            let inner = match decodable.as_slice() {
+                [] => return None,
+                [guard] => guard.clone(),
+                _ => ConditionalGuard::AllOf(decodable),
+            };
+            Some(ConditionalGuard::Not(Box::new(inner)))
+        }
+        _ => None,
+    }
 }
 
 fn record_value_requirement_capture(
@@ -2132,8 +2257,12 @@ fn provider_schema_use(
         // provider preimage on the raw value would reject programs and
         // pre-transform spellings that render fine (loki's
         // `tpl .Values.loki.configObjectName .` at a secretName slot). The
-        // transform's own string-input contract still types the path.
-        || (contract_use.has_string_contract && contract_use.kind == ValueKind::Scalar)
+        // transform's own string-input contract still types the path. A
+        // split-segment splice is the exception: its declared provenance is
+        // exactly which part of the raw string the slot observes.
+        || (contract_use.has_string_contract
+            && contract_use.kind == ValueKind::Scalar
+            && contract_use.split_segment.is_none())
     {
         return None;
     }
@@ -2145,6 +2274,7 @@ fn provider_schema_use(
         kind: contract_use.kind,
         resource,
         template_supplied_member_keys: contract_use.template_supplied_member_keys.clone(),
+        split_segment: contract_use.split_segment.clone(),
         is_self_range_collection: self_range_guarded
             && contract_use
                 .path

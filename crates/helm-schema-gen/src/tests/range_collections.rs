@@ -451,6 +451,7 @@ fn wildcard_source_path_types_both_collection_lanes_without_empty_variant() {
         provenance: Vec::new(),
         has_string_contract: false,
         template_supplied_member_keys: Default::default(),
+        split_segment: None,
     }];
     let values_yaml = indoc! {"
         image:

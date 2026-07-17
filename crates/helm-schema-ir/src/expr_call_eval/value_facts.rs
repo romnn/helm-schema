@@ -40,6 +40,7 @@ pub(super) fn identity_value_paths(value: &Option<AbstractValue>) -> BTreeSet<St
             | AbstractValue::List(_)
             | AbstractValue::Overlay { .. }
             | AbstractValue::SplitList { .. }
+            | AbstractValue::SplitSegment { .. }
             | AbstractValue::Widened(_) => {}
         }
     }
@@ -94,6 +95,7 @@ pub(super) fn serialization_payload_paths(value: &Option<AbstractValue>) -> BTre
             | AbstractValue::StringSet(_)
             | AbstractValue::DerivedBoolean(_)
             | AbstractValue::SplitList { .. }
+            | AbstractValue::SplitSegment { .. }
             | AbstractValue::Widened(_) => {}
         }
     }

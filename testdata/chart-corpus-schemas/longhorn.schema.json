@@ -2421,6 +2421,28 @@
   "additionalProperties": false,
   "allOf": [
     {
+      "additionalProperties": {},
+      "properties": {
+        "extraObjects": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Add extra objects manifests"
+        }
+      }
+    },
+    {
       "if": {
         "anyOf": [
           {
@@ -11732,16 +11754,6 @@
           "description": "Global override for image pull secrets for container registry."
         },
         "imageRegistry": {
-          "anyOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ],
           "description": "Global override for container image registry."
         },
         "nodeSelector": {
@@ -12411,16 +12423,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Registry for the CSI attacher image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
@@ -12436,16 +12438,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Registry for the CSI liveness probe image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
@@ -12461,16 +12453,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Registry for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
@@ -12486,16 +12468,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Registry for the CSI Provisioner image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
@@ -12511,16 +12483,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Registry for the CSI Resizer image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
@@ -12536,16 +12498,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Registry for the CSI Snapshotter image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
@@ -12567,16 +12519,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Registry for the Backing Image Manager image. When unspecified, Longhorn uses the default value."
                 },
                 "repository": {
@@ -12592,16 +12534,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Registry for the Longhorn Engine image."
                 },
                 "repository": {
@@ -12617,16 +12549,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Registry for the Longhorn Instance Manager image."
                 },
                 "repository": {
@@ -12642,16 +12564,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Registry for the Longhorn Manager image."
                 },
                 "repository": {
@@ -12667,16 +12579,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Registry for the Longhorn Share Manager image."
                 },
                 "repository": {
@@ -12692,16 +12594,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Registry for the Longhorn Support Bundle Manager image."
                 },
                 "repository": {
@@ -12717,16 +12609,6 @@
               "additionalProperties": {},
               "properties": {
                 "registry": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
                   "description": "Registry for the Longhorn UI image."
                 },
                 "repository": {
@@ -12750,16 +12632,6 @@
                   "additionalProperties": {},
                   "properties": {
                     "registry": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
                       "description": "Registry for the OAuth Proxy image. Specify the upstream image (for example, \"quay.io/openshift/origin-oauth-proxy\"). This setting applies only to OpenShift users."
                     }
                   }

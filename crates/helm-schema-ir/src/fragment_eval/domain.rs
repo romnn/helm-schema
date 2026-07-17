@@ -316,6 +316,11 @@ pub struct SpliceMeta {
     /// rendered value (`replace`/split-prefix chains); lexical captures
     /// exempt raw strings containing any of them.
     pub lexical_escapes: BTreeSet<String>,
+    /// The rendered text is one separator-delimited segment of the source
+    /// string (`regexSplit ":" . -1 | last`): sinks constrain that segment,
+    /// and raw-identity consumers (quoted-token claims, parser preimages)
+    /// must not read the splice as the raw value.
+    pub split_segment: Option<helm_schema_core::SplitSegmentUse>,
     /// Helper-body source sites this splice was derived through.
     pub provenance: Vec<ContractProvenance>,
     /// The render site the splice materializes at.

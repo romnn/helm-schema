@@ -4243,6 +4243,50 @@
       }
     },
     {
+      "additionalProperties": {},
+      "properties": {
+        "domainFilters": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Limit possible target zones by domain suffixes."
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "excludeDomains": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Intentionally exclude domains from being managed."
+        }
+      }
+    },
+    {
       "if": {
         "properties": {
           "extraArgs": {
@@ -6376,6 +6420,28 @@
             ],
             "description": "Image pull secrets."
           }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "managedRecordTypes": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Record types to manage (default: A, AAAA, CNAME)"
         }
       }
     },
@@ -9600,6 +9666,28 @@
             ],
             "description": "_Kubernetes_ resources to monitor for DNS entries."
           }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "sources": {
+          "anyOf": [
+            {
+              "type": "array"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "_Kubernetes_ resources to monitor for DNS entries."
         }
       }
     },

@@ -1,4 +1,4 @@
-use crate::{ResourceRef, ValueKind, YamlPath};
+use crate::{ResourceRef, SplitSegmentUse, ValueKind, YamlPath};
 
 /// Contract fact that needs a Kubernetes resource schema lookup.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -11,4 +11,7 @@ pub struct ProviderSchemaUse {
     /// Literal member keys the template writes beside the splice in the
     /// same mapping; the slot schema's `required` must not re-demand them.
     pub template_supplied_member_keys: std::collections::BTreeSet<String>,
+    /// Set when the rendered text is one separator-delimited segment of the
+    /// source string; the slot schema constrains that segment only.
+    pub split_segment: Option<SplitSegmentUse>,
 }

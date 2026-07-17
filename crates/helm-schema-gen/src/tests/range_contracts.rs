@@ -689,3 +689,152 @@ fn literal_dict_range_key_domain_decodes_get_conditions() {
          requires a string: {schema}"
     );
 }
+
+/// jenkins' JCasC config: a guarded document-level `range $key, $val`
+/// aborts rendering on scalar collections (the two-variable form never
+/// admits Go's integer ranging), so the iterable requirement binds behind
+/// the guard instead of vanishing with it.
+#[test]
+fn guarded_destructured_range_rejects_scalar_collections() {
+    let src = indoc! {r#"
+        {{- if .Values.autoReload }}
+        {{- range $key, $val := .Values.configScripts }}
+        {{- if $val }}
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: cfg-{{ $key }}
+        data:
+          config.yaml: |-
+            {{- $val | nindent 4 }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let schema =
+        schema_for_values_yaml(parse_ir(src), Some("autoReload: true\nconfigScripts: {}\n"));
+    for (instance, want) in [
+        (
+            serde_json::json!({ "autoReload": true, "configScripts": 7 }),
+            false,
+        ),
+        (
+            serde_json::json!({ "autoReload": true, "configScripts": { "a": "b: c" } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "autoReload": false, "configScripts": 7 }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "a two-variable range needs a real collection where its guard holds: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// jenkins' additionalAgents: `hasKey` and `merge` consume each ranged
+/// member as a mapping, so scalar members abort rendering and the member
+/// requirement must say object.
+#[test]
+fn ranged_member_map_consumers_reject_scalar_members() {
+    let helpers = indoc! {r#"
+        {{- define "test.podTemplate" -}}
+        template: {{ .Values.agent.image | default "agent" }}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          templates: |-
+            {{- $agent := .Values.agent }}
+            {{- range $name, $additionalAgent := .Values.additionalAgents }}
+              {{- $additionalContainersEmpty := and (hasKey $additionalAgent "additionalContainers") (empty $additionalAgent.additionalContainers) }}
+              {{- $additionalAgent := merge $additionalAgent $agent }}
+              {{- $_ := set $.Values "agent" $additionalAgent }}
+              {{- include "test.podTemplate" $ | nindent 4 }}
+            {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("agent: {}\nadditionalAgents: {}\n"),
+    );
+    for (instance, want) in [
+        (
+            serde_json::json!({ "additionalAgents": { "audit": 7 } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "additionalAgents": { "kaniko": { "image": "k" } } }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "map consumers of a ranged member reject scalar members: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// jenkins ranges `configScripts` under BOTH sidecar-reload states (the
+/// jcasc ConfigMaps when auto-reload is on, the startup script when it is
+/// off): complementary guards must compose into an unconditional iterable
+/// requirement, not cancel each other.
+#[test]
+fn complementary_guarded_ranges_keep_the_iterable_requirement() {
+    let src = indoc! {r#"
+        {{- if .Values.autoReload }}
+        {{- range $key, $val := .Values.configScripts }}
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: cfg-{{ $key }}
+        data:
+          config.yaml: |-
+        {{ tpl $val $| indent 4 }}
+        {{- end }}
+        {{- end }}
+        {{- if not .Values.autoReload }}
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: static-config
+        data:
+          {{- range $key, $val := .Values.configScripts }}
+          {{ $key }}.yaml: |-
+        {{ tpl $val $| indent 4 }}
+          {{- end }}
+        {{- end }}
+    "#};
+    let schema =
+        schema_for_values_yaml(parse_ir(src), Some("autoReload: true\nconfigScripts: {}\n"));
+    for (instance, want) in [
+        (
+            serde_json::json!({ "autoReload": true, "configScripts": 7 }),
+            false,
+        ),
+        (
+            serde_json::json!({ "autoReload": false, "configScripts": 7 }),
+            false,
+        ),
+        (
+            serde_json::json!({ "autoReload": true, "configScripts": { "a": "b: c" } }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "complementary range guards keep the collection contract: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}

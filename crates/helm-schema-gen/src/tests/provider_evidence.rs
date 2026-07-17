@@ -456,6 +456,7 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
         provenance: Vec::new(),
         has_string_contract: false,
         template_supplied_member_keys: Default::default(),
+        split_segment: None,
     }]);
     contract.push_pathless_dependency_fragment("webhook");
 
@@ -495,6 +496,7 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
         provenance: Vec::new(),
         has_string_contract: false,
         template_supplied_member_keys: Default::default(),
+        split_segment: None,
     }];
     let contract = with_type_hints(
         ContractIr::from_contract_uses(uses),
@@ -549,10 +551,17 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() {
         serde_yaml::from_str(&test_util::read_testdata("charts/surveyor/values.yaml"))
             .expect("values yaml");
     let provider = Chain::new(vec![
-        Box::new(CrdsCatalogSchemaProvider::new().with_allow_download(true)),
+        Box::new(
+            CrdsCatalogSchemaProvider::new()
+                .with_cache_dir(
+                    test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"),
+                )
+                .with_allow_download(false),
+        ),
         Box::new(
             KubernetesJsonSchemaProvider::new("v1.35.0")
-                .with_allow_download(true)
+                .with_cache_dir(super::bundle_cache_dir())
+                .with_allow_download(false)
                 .with_api_version_guess(true),
         ),
     ])
@@ -817,6 +826,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             provenance: Vec::new(),
             has_string_contract: false,
             template_supplied_member_keys: Default::default(),
+            split_segment: None,
         },
         ContractUse {
             source_expr: "serviceMonitor.metricRelabelings".to_string(),
@@ -836,6 +846,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             provenance: Vec::new(),
             has_string_contract: false,
             template_supplied_member_keys: Default::default(),
+            split_segment: None,
         },
     ];
 
@@ -897,6 +908,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             provenance: Vec::new(),
             has_string_contract: false,
             template_supplied_member_keys: Default::default(),
+            split_segment: None,
         },
         ContractUse {
             source_expr: "second".to_string(),
@@ -907,6 +919,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             provenance: Vec::new(),
             has_string_contract: false,
             template_supplied_member_keys: Default::default(),
+            split_segment: None,
         },
     ];
     let schema_signals = schema_signals_for(uses);
@@ -954,6 +967,7 @@ fn values_yaml_comments_override_provider_descriptions() {
         provenance: Vec::new(),
         has_string_contract: false,
         template_supplied_member_keys: Default::default(),
+        split_segment: None,
     }];
     let descriptions = BTreeMap::from([("name".to_string(), "chart description".to_string())]);
     let schema_signals = schema_signals_for(uses);

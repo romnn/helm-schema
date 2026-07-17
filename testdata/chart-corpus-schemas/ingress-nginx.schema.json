@@ -8101,11 +8101,7 @@
         }
       }
     },
-    "schema298": {
-      "description": "for backwards compatibility consider setting the full image url via the repository value below\nuse *either* current default registry/image or repository format or installing chart by providing the values.yaml will fail\nrepository:",
-      "type": "string"
-    },
-    "schema300": {
+    "schema299": {
       "additionalProperties": {},
       "properties": {
         "containerSecurityContext": {},
@@ -8131,7 +8127,7 @@
       },
       "type": "object"
     },
-    "schema301": {
+    "schema300": {
       "anyOf": [
         {
           "anyOf": [
@@ -8176,7 +8172,7 @@
         }
       ]
     },
-    "schema303": {
+    "schema302": {
       "anyOf": [
         {
           "properties": {
@@ -8220,6 +8216,9 @@
           ]
         }
       ]
+    },
+    "schema309": {
+      "description": "for backwards compatibility consider setting the full image url via the repository value below\nuse *either* current default registry/image or repository format or installing chart by providing the values.yaml will fail\nrepository:"
     },
     "schema311": {
       "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
@@ -16950,6 +16949,30 @@
             "config": {
               "anyOf": [
                 {
+                  "type": "array"
+                },
+                {
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Global configuration passed to the ConfigMap consumed by the controller. Values may contain Helm templates.\nRef.: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/"
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "controller": {
+          "additionalProperties": {},
+          "properties": {
+            "config": {
+              "anyOf": [
+                {
                   "type": "object"
                 },
                 {
@@ -18806,13 +18829,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/schema300"
+                      "$ref": "#/$defs/schema299"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/schema300"
+                      "$ref": "#/$defs/schema299"
                     },
                     "type": "object"
                   },
@@ -36784,7 +36807,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "allOf": [
@@ -36796,7 +36819,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -37487,7 +37510,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -37605,7 +37628,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -37693,7 +37716,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -38239,7 +38262,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -38325,7 +38348,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -38380,7 +38403,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -38409,7 +38432,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -38439,7 +38462,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -39570,7 +39593,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -39629,7 +39652,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -39660,7 +39683,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -39873,7 +39896,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "$ref": "#/$defs/schema73"
@@ -40915,7 +40938,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -40951,7 +40974,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -41256,7 +41279,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -41282,7 +41305,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -41350,7 +41373,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -41502,7 +41525,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -41527,7 +41550,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -41573,7 +41596,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -41604,7 +41627,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -41760,7 +41783,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -41788,7 +41811,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -41814,7 +41837,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/schema303"
+            "$ref": "#/$defs/schema302"
           },
           "then": {
             "additionalProperties": {},
@@ -49624,7 +49647,7 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/schema301"
+                        "$ref": "#/$defs/schema300"
                       }
                     ]
                   },
@@ -49750,7 +49773,7 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/schema301"
+                        "$ref": "#/$defs/schema300"
                       }
                     ]
                   },
@@ -50912,7 +50935,7 @@
                         ]
                       },
                       {
-                        "$ref": "#/$defs/schema301"
+                        "$ref": "#/$defs/schema300"
                       }
                     ]
                   },
@@ -51021,7 +51044,7 @@
                         ]
                       },
                       {
-                        "$ref": "#/$defs/schema301"
+                        "$ref": "#/$defs/schema300"
                       }
                     ]
                   },
@@ -52284,26 +52307,15 @@
                         {
                           "additionalProperties": {},
                           "properties": {
-                            "digest": {
-                              "anyOf": [
-                                {
-                                  "not": {
-                                    "$ref": "#/$defs/helm-truthy"
-                                  }
-                                },
-                                {
-                                  "type": "string"
-                                }
-                              ]
-                            },
+                            "digest": {},
                             "image": {
-                              "description": "registry: registry.k8s.io",
-                              "type": "string"
+                              "description": "registry: registry.k8s.io"
                             },
                             "pullPolicy": {},
+                            "registry": {},
                             "repository": {},
                             "tag": {
-                              "$ref": "#/$defs/schema298"
+                              "$ref": "#/$defs/schema309"
                             }
                           },
                           "type": "object"
@@ -52679,6 +52691,7 @@
                 },
                 "pullPolicy": {},
                 "readOnlyRootFilesystem": {},
+                "registry": {},
                 "repository": {},
                 "runAsGroup": {
                   "$ref": "#/$defs/schema508"
@@ -52689,7 +52702,7 @@
                 },
                 "seccompProfile": {},
                 "tag": {
-                  "$ref": "#/$defs/schema298"
+                  "$ref": "#/$defs/schema309"
                 }
               },
               "type": "object"
@@ -53181,10 +53194,6 @@
                 "annotations": {
                   "description": "Annotations to be added to the external controller service. See `controller.service.internal.annotations` for annotations to be added to the internal controller service."
                 },
-                "appProtocol": {
-                  "description": "Declare the app protocol of the external HTTP and HTTPS listeners or not. Supersedes provider-specific annotations for declaring the backend protocol.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol",
-                  "type": "boolean"
-                },
                 "clusterIP": {
                   "description": "Pre-defined cluster internal IP address of the external controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
                 },
@@ -53265,10 +53274,6 @@
                     "allocateLoadBalancerNodePorts": {},
                     "annotations": {
                       "description": "Annotations to be added to the internal controller service. Mandatory for the internal controller service to be created. Varies with the cloud service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer"
-                    },
-                    "appProtocol": {
-                      "description": "Declare the app protocol of the internal HTTP and HTTPS listeners or not. Supersedes provider-specific annotations for declaring the backend protocol.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol",
-                      "type": "boolean"
                     },
                     "clusterIP": {
                       "description": "Pre-defined cluster internal IP address of the internal controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
@@ -55739,11 +55744,11 @@
                 "allowPrivilegeEscalation": {},
                 "digest": {},
                 "image": {
-                  "description": "registry: registry.k8s.io",
-                  "type": "string"
+                  "description": "registry: registry.k8s.io"
                 },
                 "pullPolicy": {},
                 "readOnlyRootFilesystem": {},
+                "registry": {},
                 "repository": {},
                 "runAsGroup": {},
                 "runAsNonRoot": {},
@@ -55752,7 +55757,7 @@
                 },
                 "seccompProfile": {},
                 "tag": {
-                  "$ref": "#/$defs/schema298"
+                  "$ref": "#/$defs/schema309"
                 }
               },
               "type": "object"
@@ -55992,8 +55997,7 @@
                 "distroless": {},
                 "image": {},
                 "registry": {
-                  "description": "Registry host to pull images from.\nOverrides for generated resource names\nSee templates/_helpers.tpl\nnameOverride:\nfullnameOverride:",
-                  "type": "string"
+                  "description": "Registry host to pull images from.\nOverrides for generated resource names\nSee templates/_helpers.tpl\nnameOverride:\nfullnameOverride:"
                 },
                 "repository": {},
                 "tag": {}
