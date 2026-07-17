@@ -1251,3 +1251,58 @@ fn ternary_condition_identity_stays_out_of_output_paths() {
         );
     }
 }
+
+/// `merge` keeps the FIRST occurrence of a key across its arguments, so
+/// values-backed operands form ordered layers with the destination first;
+/// `mergeOverwrite` keeps the LAST and reverses them. An operand without a
+/// single values identity abstains to the unordered fold.
+#[test]
+fn merge_of_values_paths_forms_ordered_layers() {
+    let merged = eval_expr(
+        &single_expr(r"merge (.Values.preferred | default dict) (.Values.legacy | default dict)"),
+        &EvalEnv::default(),
+    );
+    let Some(AbstractValue::MergedLayers(layers)) = merged.value else {
+        panic!(
+            "merge of two values paths forms layers, got {:?}",
+            merged.value
+        );
+    };
+    sim_assert_eq!(
+        have: layers
+            .iter()
+            .map(|layer| layer.paths().into_iter().collect::<Vec<_>>())
+            .collect::<Vec<_>>(),
+        want: vec![vec!["preferred".to_string()], vec!["legacy".to_string()]]
+    );
+
+    let overwritten = eval_expr(
+        &single_expr(
+            r"mergeOverwrite (.Values.legacy | default dict) (.Values.preferred | default dict)",
+        ),
+        &EvalEnv::default(),
+    );
+    let Some(AbstractValue::MergedLayers(layers)) = overwritten.value else {
+        panic!(
+            "mergeOverwrite of two values paths forms layers, got {:?}",
+            overwritten.value
+        );
+    };
+    sim_assert_eq!(
+        have: layers
+            .iter()
+            .map(|layer| layer.paths().into_iter().collect::<Vec<_>>())
+            .collect::<Vec<_>>(),
+        want: vec![vec!["preferred".to_string()], vec!["legacy".to_string()]]
+    );
+
+    let literal_operand = eval_expr(
+        &single_expr(r#"merge (dict "a" 1) .Values.legacy"#),
+        &EvalEnv::default(),
+    );
+    assert!(
+        !matches!(literal_operand.value, Some(AbstractValue::MergedLayers(_))),
+        "a literal dict operand abstains from layering, got {:?}",
+        literal_operand.value
+    );
+}

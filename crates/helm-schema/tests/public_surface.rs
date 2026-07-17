@@ -16,6 +16,25 @@ use vfs::VfsPath;
 const SAFE_QUOTED_CONTENT: &str =
     r#"^([^"\\]|\\["\\/0abtnvfre N_LP]|\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8})*$"#;
 
+/// The self-recursive accepted-value definition a manually quoted splice
+/// references: every string the value contributes to the token — itself,
+/// or any nested string or mapping key of a Go-fmt-serialized collection —
+/// must be valid double-quoted YAML content; other scalars format safely.
+fn double_quoted_safe_definition() -> Value {
+    json!({
+        "anyOf": [
+            { "type": ["boolean", "integer", "null", "number"] },
+            { "pattern": SAFE_QUOTED_CONTENT, "type": "string" },
+            { "items": { "$ref": "#/$defs/helm-double-quoted-safe" }, "type": "array" },
+            {
+                "additionalProperties": { "$ref": "#/$defs/helm-double-quoted-safe" },
+                "propertyNames": { "pattern": SAFE_QUOTED_CONTENT },
+                "type": "object"
+            }
+        ]
+    })
+}
+
 fn generate_values_schema_for_chart(
     opts: &GenerateOptions,
 ) -> helm_schema::EngineResult<serde_json::Value> {
@@ -76,23 +95,18 @@ data:
     sim_assert_eq!(
         have: schema,
         want: json!({
+            "$defs": { "helm-double-quoted-safe": double_quoted_safe_definition() },
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             // the manually quoted splice (`enabled: "{{ … }}"`) breaks on
-            // strings that are not valid double-quoted YAML content (an
-            // unescaped `"`, a dangling `\`); valid escapes and
-            // non-strings format safely inside the quotes.
+            // content that corrupts the double-quoted token — an unescaped
+            // `"` or dangling `\` in a string, or the same inside a
+            // Go-fmt-serialized collection's nested strings.
             "allOf": [{
                 "additionalProperties": {},
                 "properties": {
                     "enabled": {
-                        "anyOf": [
-                            { "not": { "type": "string" } },
-                            {
-                                "pattern": SAFE_QUOTED_CONTENT,
-                                "type": "string"
-                            }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Whether the config map is enabled"
                     }
                 }
@@ -470,6 +484,7 @@ data:
         have: &resolved.schema,
         want: &json!({
             "$defs": {
+                "helm-double-quoted-safe": double_quoted_safe_definition(),
                 "helm-truthy": {
                     "anyOf": [
                         { "const": true },
@@ -502,12 +517,7 @@ data:
                 "then": {
                     "additionalProperties": {},
                     "properties": {
-                        "mode": {
-                            "anyOf": [
-                                { "not": { "type": "string" } },
-                                { "pattern": SAFE_QUOTED_CONTENT, "type": "string" }
-                            ]
-                        }
+                        "mode": { "$ref": "#/$defs/helm-double-quoted-safe" }
                     }
                 }
             }],
@@ -987,19 +997,15 @@ data:
     sim_assert_eq!(
         have: &schema,
         want: &json!({
+            "$defs": { "helm-double-quoted-safe": double_quoted_safe_definition() },
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             // the manually quoted `mode: "{{ … }}"` splice breaks on
-            // strings that are not valid double-quoted YAML content.
+            // content that corrupts the double-quoted token.
             "allOf": [{
                 "additionalProperties": {},
                 "properties": {
-                    "mode": {
-                        "anyOf": [
-                            { "not": { "type": "string" } },
-                            { "pattern": SAFE_QUOTED_CONTENT, "type": "string" }
-                        ]
-                    }
+                    "mode": { "$ref": "#/$defs/helm-double-quoted-safe" }
                 }
             }],
             "properties": {

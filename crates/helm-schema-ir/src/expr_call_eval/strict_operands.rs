@@ -224,6 +224,11 @@ fn parser_operand_identity_paths(
                     collect(choice, effects, total_string_preimage, paths);
                 }
             }
+            AbstractValue::MergedLayers(layers) => {
+                for layer in layers {
+                    collect(layer, effects, total_string_preimage, paths);
+                }
+            }
             AbstractValue::Top
             | AbstractValue::Unknown
             | AbstractValue::RangeKey(_)
@@ -320,6 +325,11 @@ fn parser_output_metas(
             AbstractValue::Choice(choices) => {
                 for choice in choices {
                     collect(choice, path, metas);
+                }
+            }
+            AbstractValue::MergedLayers(layers) => {
+                for layer in layers {
+                    collect(layer, path, metas);
                 }
             }
             AbstractValue::Top
@@ -510,6 +520,11 @@ pub(super) fn record_collection_item_kind_result(
                         individual_paths,
                         direct_collection,
                     );
+                }
+            }
+            AbstractValue::MergedLayers(layers) => {
+                for layer in layers {
+                    collect(layer, collection_paths, individual_paths, direct_collection);
                 }
             }
             AbstractValue::Overlay { entries, fallback } => {

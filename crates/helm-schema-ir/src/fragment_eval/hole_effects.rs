@@ -367,6 +367,8 @@ impl Interpreter<'_> {
         self.apply_root_set_mutations(&effects.root_set_mutations, &effects.root_set_predicates);
         self.values_default_sources_observed
             .extend(effects.values_default_sources.iter().cloned());
+        self.values_root_helper_includes_observed
+            .extend(effects.values_root_helper_includes.iter().cloned());
         self.chart_defaults_observed
             .extend(effects.chart_default_paths.iter().cloned());
         let mut chart_defaults = effects.chart_default_paths.clone();
@@ -574,7 +576,8 @@ fn runtime_requirement_paths(
         CaptureKind::SplitIndexAccess { paths, .. } => paths.clone(),
         CaptureKind::ValueType { path, .. }
         | CaptureKind::ComparableKind { path, .. }
-        | CaptureKind::ValuePattern { path, .. } => [path.clone()].into_iter().collect(),
+        | CaptureKind::ValuePattern { path, .. }
+        | CaptureKind::QuotedSerialization { path, .. } => [path.clone()].into_iter().collect(),
         CaptureKind::Fail | CaptureKind::MemberAccess { .. } => capture
             .conjunction
             .last()

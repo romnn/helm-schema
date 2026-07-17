@@ -1,5 +1,36 @@
 {
   "$defs": {
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
     "helm-truthy": {
       "anyOf": [
         {
@@ -428,10 +459,6 @@
       "type": "integer"
     },
     "schema135": {
-      "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-      "type": "string"
-    },
-    "schema136": {
       "not": {
         "properties": {
           "ui": {
@@ -449,6 +476,17 @@
         ],
         "type": "object"
       }
+    },
+    "schema139": {
+      "additionalProperties": {},
+      "properties": {
+        "group": {},
+        "kind": {},
+        "name": {},
+        "namespace": {},
+        "sectionName": {}
+      },
+      "type": "object"
     },
     "schema14": {
       "allOf": [
@@ -506,23 +544,12 @@
       "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
       "type": "string"
     },
-    "schema140": {
-      "additionalProperties": {},
-      "properties": {
-        "group": {},
-        "kind": {},
-        "name": {},
-        "namespace": {},
-        "sectionName": {}
-      },
-      "type": "object"
-    },
-    "schema143": {
+    "schema142": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema149": {
+    "schema148": {
       "additionalProperties": {},
       "properties": {
         "certificate": {},
@@ -531,11 +558,7 @@
       },
       "type": "object"
     },
-    "schema15": {
-      "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
-      "type": "null"
-    },
-    "schema150": {
+    "schema149": {
       "properties": {
         "certificate": {
           "type": "string"
@@ -546,7 +569,11 @@
       ],
       "type": "object"
     },
-    "schema151": {
+    "schema15": {
+      "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+      "type": "null"
+    },
+    "schema150": {
       "properties": {
         "createStorageClass": {}
       },
@@ -555,7 +582,7 @@
       ],
       "type": "object"
     },
-    "schema152": {
+    "schema151": {
       "properties": {
         "type": {
           "enum": [
@@ -568,22 +595,22 @@
       ],
       "type": "object"
     },
-    "schema154": {
+    "schema153": {
       "description": "key is the label key that the selector applies to.",
       "type": "string"
     },
-    "schema155": {
+    "schema154": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema157": {
+    "schema156": {
       "not": {
         "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
       }
     },
-    "schema159": {
+    "schema158": {
       "not": {
         "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
       }
@@ -630,22 +657,22 @@
         "null"
       ]
     },
-    "schema164": {
+    "schema163": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema165": {
+    "schema164": {
       "not": {
         "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
       }
     },
-    "schema167": {
+    "schema166": {
       "pattern": "^-?(0|[1-9][0-9]*)$",
       "type": "string"
     },
-    "schema168": {
+    "schema167": {
       "anyOf": [
         {
           "type": "null"
@@ -655,9 +682,14 @@
         }
       ]
     },
-    "schema169": {
+    "schema168": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "schema169": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
     "schema17": {
@@ -704,20 +736,15 @@
     },
     "schema170": {
       "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "schema171": {
-      "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema174": {
+    "schema173": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema175": {
+    "schema174": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -5266,13 +5293,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/schema140"
+                      "$ref": "#/$defs/schema139"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/schema140"
+                      "$ref": "#/$defs/schema139"
                     },
                     "type": "object"
                   },
@@ -5393,16 +5420,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "repository": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema135"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Repository for the CSI attacher image. When unspecified, Longhorn uses the default value."
                       }
                     }
@@ -5516,16 +5534,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "tag": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema135"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Tag for the CSI attacher image. When unspecified, Longhorn uses the default value."
                       }
                     }
@@ -5639,16 +5648,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "repository": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema135"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Repository for the CSI liveness probe image. When unspecified, Longhorn uses the default value."
                       }
                     }
@@ -5762,16 +5762,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "tag": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema135"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Tag for the CSI liveness probe image. When unspecified, Longhorn uses the default value."
                       }
                     }
@@ -5885,16 +5876,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "repository": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema135"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Repository for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value."
                       }
                     }
@@ -6008,16 +5990,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "tag": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema135"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Tag for the CSI Node Driver Registrar image. When unspecified, Longhorn uses the default value."
                       }
                     }
@@ -6131,16 +6104,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "repository": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema135"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Repository for the CSI Provisioner image. When unspecified, Longhorn uses the default value."
                       }
                     }
@@ -6254,16 +6218,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "tag": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema135"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Tag for the CSI Provisioner image. When unspecified, Longhorn uses the default value."
                       }
                     }
@@ -6377,16 +6332,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "repository": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema135"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Repository for the CSI Resizer image. When unspecified, Longhorn uses the default value."
                       }
                     }
@@ -6500,16 +6446,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "tag": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema135"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Tag for the CSI Resizer image. When unspecified, Longhorn uses the default value."
                       }
                     }
@@ -6623,16 +6560,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "repository": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema135"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Repository for the CSI Snapshotter image. When unspecified, Longhorn uses the default value."
                       }
                     }
@@ -6746,16 +6674,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "tag": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema135"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Tag for the CSI Snapshotter image. When unspecified, Longhorn uses the default value."
                       }
                     }
@@ -6793,16 +6712,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "repository": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "type": "string"
-                          }
-                        },
-                        {
-                          "$ref": "#/$defs/schema135"
-                        }
-                      ],
+                      "$ref": "#/$defs/helm-double-quoted-safe",
                       "description": "Repository for the Backing Image Manager image. When unspecified, Longhorn uses the default value."
                     }
                   }
@@ -6826,16 +6736,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "tag": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "type": "string"
-                          }
-                        },
-                        {
-                          "$ref": "#/$defs/schema135"
-                        }
-                      ],
+                      "$ref": "#/$defs/helm-double-quoted-safe",
                       "description": "Tag for the Backing Image Manager image. When unspecified, Longhorn uses the default value."
                     }
                   }
@@ -6859,16 +6760,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "repository": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "type": "string"
-                          }
-                        },
-                        {
-                          "$ref": "#/$defs/schema135"
-                        }
-                      ],
+                      "$ref": "#/$defs/helm-double-quoted-safe",
                       "description": "Repository for the Longhorn Engine image."
                     }
                   }
@@ -6892,16 +6784,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "tag": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "type": "string"
-                          }
-                        },
-                        {
-                          "$ref": "#/$defs/schema135"
-                        }
-                      ],
+                      "$ref": "#/$defs/helm-double-quoted-safe",
                       "description": "Tag for the Longhorn Engine image."
                     }
                   }
@@ -6925,16 +6808,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "repository": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "type": "string"
-                          }
-                        },
-                        {
-                          "$ref": "#/$defs/schema135"
-                        }
-                      ],
+                      "$ref": "#/$defs/helm-double-quoted-safe",
                       "description": "Repository for the Longhorn Instance Manager image."
                     }
                   }
@@ -6958,16 +6832,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "tag": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "type": "string"
-                          }
-                        },
-                        {
-                          "$ref": "#/$defs/schema135"
-                        }
-                      ],
+                      "$ref": "#/$defs/helm-double-quoted-safe",
                       "description": "Tag for the Longhorn Instance Manager image."
                     }
                   }
@@ -6991,16 +6856,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "repository": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "type": "string"
-                          }
-                        },
-                        {
-                          "$ref": "#/$defs/schema135"
-                        }
-                      ],
+                      "$ref": "#/$defs/helm-double-quoted-safe",
                       "description": "Repository for the Longhorn Manager image."
                     }
                   }
@@ -7024,16 +6880,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "tag": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "type": "string"
-                          }
-                        },
-                        {
-                          "$ref": "#/$defs/schema135"
-                        }
-                      ],
+                      "$ref": "#/$defs/helm-double-quoted-safe",
                       "description": "Tag for the Longhorn Manager image."
                     }
                   }
@@ -7057,16 +6904,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "repository": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "type": "string"
-                          }
-                        },
-                        {
-                          "$ref": "#/$defs/schema135"
-                        }
-                      ],
+                      "$ref": "#/$defs/helm-double-quoted-safe",
                       "description": "Repository for the Longhorn Share Manager image."
                     }
                   }
@@ -7090,16 +6928,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "tag": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "type": "string"
-                          }
-                        },
-                        {
-                          "$ref": "#/$defs/schema135"
-                        }
-                      ],
+                      "$ref": "#/$defs/helm-double-quoted-safe",
                       "description": "Tag for the Longhorn Share Manager image."
                     }
                   }
@@ -7123,16 +6952,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "repository": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "type": "string"
-                          }
-                        },
-                        {
-                          "$ref": "#/$defs/schema135"
-                        }
-                      ],
+                      "$ref": "#/$defs/helm-double-quoted-safe",
                       "description": "Repository for the Longhorn Support Bundle Manager image."
                     }
                   }
@@ -7156,16 +6976,7 @@
                   "additionalProperties": {},
                   "properties": {
                     "tag": {
-                      "anyOf": [
-                        {
-                          "not": {
-                            "type": "string"
-                          }
-                        },
-                        {
-                          "$ref": "#/$defs/schema135"
-                        }
-                      ],
+                      "$ref": "#/$defs/helm-double-quoted-safe",
                       "description": "Tag for the Longhorn Support Bundle Manager image."
                     }
                   }
@@ -7826,13 +7637,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/schema149"
+                      "$ref": "#/$defs/schema148"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/schema149"
+                      "$ref": "#/$defs/schema148"
                     },
                     "type": "object"
                   },
@@ -7882,13 +7693,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/schema150"
+                      "$ref": "#/$defs/schema149"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/schema150"
+                      "$ref": "#/$defs/schema149"
                     },
                     "type": "object"
                   },
@@ -9224,6 +9035,74 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "properties": {
+              "openshift": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "openshift"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema101"
+              },
+              {
+                "properties": {
+                  "openshift": {
+                    "properties": {
+                      "ui": {
+                        "properties": {
+                          "route": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "route"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "ui"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "openshift"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "namespaceOverride": {
+            "$ref": "#/$defs/helm-double-quoted-safe",
+            "description": "Specify override namespace, specifically this is useful for using longhorn as sub-chart and its release namespace is not the `longhorn-system`."
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -9315,13 +9194,13 @@
               {
                 "allOf": [
                   {
+                    "$ref": "#/$defs/schema169"
+                  },
+                  {
                     "$ref": "#/$defs/schema170"
                   },
                   {
-                    "$ref": "#/$defs/schema171"
-                  },
-                  {
-                    "$ref": "#/$defs/schema174"
+                    "$ref": "#/$defs/schema173"
                   },
                   {
                     "not": {
@@ -9329,22 +9208,22 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema175"
+                    "$ref": "#/$defs/schema174"
                   },
                   {
-                    "$ref": "#/$defs/schema169"
+                    "$ref": "#/$defs/schema168"
                   },
                   {
-                    "$ref": "#/$defs/schema143"
+                    "$ref": "#/$defs/schema142"
                   },
                   {
-                    "$ref": "#/$defs/schema157"
+                    "$ref": "#/$defs/schema156"
                   },
                   {
-                    "$ref": "#/$defs/schema159"
+                    "$ref": "#/$defs/schema158"
                   },
                   {
-                    "$ref": "#/$defs/schema165"
+                    "$ref": "#/$defs/schema164"
                   }
                 ],
                 "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
@@ -9505,83 +9384,6 @@
               },
               {
                 "type": "string"
-              }
-            ],
-            "description": "Specify override namespace, specifically this is useful for using longhorn as sub-chart and its release namespace is not the `longhorn-system`."
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "openshift": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "openshift"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema101"
-              },
-              {
-                "properties": {
-                  "openshift": {
-                    "properties": {
-                      "ui": {
-                        "properties": {
-                          "route": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "route"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "ui"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "openshift"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "not": {
-                  "type": "string"
-                }
-              },
-              {
-                "$ref": "#/$defs/schema135"
               }
             ],
             "description": "Specify override namespace, specifically this is useful for using longhorn as sub-chart and its release namespace is not the `longhorn-system`."
@@ -11256,7 +11058,7 @@
     "annotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema155"
+          "$ref": "#/$defs/schema154"
         },
         {
           "$ref": "#/$defs/schema40"
@@ -11789,7 +11591,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema164"
+                    "$ref": "#/$defs/schema163"
                   },
                   {
                     "not": {
@@ -12259,13 +12061,13 @@
                   {
                     "allOf": [
                       {
+                        "$ref": "#/$defs/schema169"
+                      },
+                      {
                         "$ref": "#/$defs/schema170"
                       },
                       {
-                        "$ref": "#/$defs/schema171"
-                      },
-                      {
-                        "$ref": "#/$defs/schema174"
+                        "$ref": "#/$defs/schema173"
                       },
                       {
                         "not": {
@@ -12273,22 +12075,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema175"
+                        "$ref": "#/$defs/schema174"
                       },
                       {
-                        "$ref": "#/$defs/schema169"
+                        "$ref": "#/$defs/schema168"
                       },
                       {
-                        "$ref": "#/$defs/schema143"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
-                        "$ref": "#/$defs/schema157"
+                        "$ref": "#/$defs/schema156"
                       },
                       {
-                        "$ref": "#/$defs/schema159"
+                        "$ref": "#/$defs/schema158"
                       },
                       {
-                        "$ref": "#/$defs/schema165"
+                        "$ref": "#/$defs/schema164"
                       }
                     ],
                     "default": "/",
@@ -12327,13 +12129,13 @@
                   {
                     "allOf": [
                       {
+                        "$ref": "#/$defs/schema169"
+                      },
+                      {
                         "$ref": "#/$defs/schema170"
                       },
                       {
-                        "$ref": "#/$defs/schema171"
-                      },
-                      {
-                        "$ref": "#/$defs/schema174"
+                        "$ref": "#/$defs/schema173"
                       },
                       {
                         "not": {
@@ -12341,22 +12143,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema175"
+                        "$ref": "#/$defs/schema174"
                       },
                       {
-                        "$ref": "#/$defs/schema169"
+                        "$ref": "#/$defs/schema168"
                       },
                       {
-                        "$ref": "#/$defs/schema143"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
-                        "$ref": "#/$defs/schema157"
+                        "$ref": "#/$defs/schema156"
                       },
                       {
-                        "$ref": "#/$defs/schema159"
+                        "$ref": "#/$defs/schema158"
                       },
                       {
-                        "$ref": "#/$defs/schema165"
+                        "$ref": "#/$defs/schema164"
                       }
                     ],
                     "default": "PathPrefix",
@@ -12657,13 +12459,13 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/$defs/schema169"
+                },
+                {
                   "$ref": "#/$defs/schema170"
                 },
                 {
-                  "$ref": "#/$defs/schema171"
-                },
-                {
-                  "$ref": "#/$defs/schema174"
+                  "$ref": "#/$defs/schema173"
                 },
                 {
                   "not": {
@@ -12671,22 +12473,22 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema175"
+                  "$ref": "#/$defs/schema174"
                 },
                 {
-                  "$ref": "#/$defs/schema169"
+                  "$ref": "#/$defs/schema168"
                 },
                 {
-                  "$ref": "#/$defs/schema143"
+                  "$ref": "#/$defs/schema142"
                 },
                 {
-                  "$ref": "#/$defs/schema157"
+                  "$ref": "#/$defs/schema156"
                 },
                 {
-                  "$ref": "#/$defs/schema159"
+                  "$ref": "#/$defs/schema158"
                 },
                 {
-                  "$ref": "#/$defs/schema165"
+                  "$ref": "#/$defs/schema164"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -12723,7 +12525,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema164"
+                    "$ref": "#/$defs/schema163"
                   },
                   {
                     "not": {
@@ -12988,13 +12790,13 @@
                   {
                     "allOf": [
                       {
+                        "$ref": "#/$defs/schema169"
+                      },
+                      {
                         "$ref": "#/$defs/schema170"
                       },
                       {
-                        "$ref": "#/$defs/schema171"
-                      },
-                      {
-                        "$ref": "#/$defs/schema174"
+                        "$ref": "#/$defs/schema173"
                       },
                       {
                         "not": {
@@ -13002,22 +12804,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema175"
+                        "$ref": "#/$defs/schema174"
                       },
                       {
-                        "$ref": "#/$defs/schema169"
+                        "$ref": "#/$defs/schema168"
                       },
                       {
-                        "$ref": "#/$defs/schema143"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
-                        "$ref": "#/$defs/schema157"
+                        "$ref": "#/$defs/schema156"
                       },
                       {
-                        "$ref": "#/$defs/schema159"
+                        "$ref": "#/$defs/schema158"
                       },
                       {
-                        "$ref": "#/$defs/schema165"
+                        "$ref": "#/$defs/schema164"
                       }
                     ],
                     "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
@@ -13058,13 +12860,13 @@
                   {
                     "allOf": [
                       {
+                        "$ref": "#/$defs/schema169"
+                      },
+                      {
                         "$ref": "#/$defs/schema170"
                       },
                       {
-                        "$ref": "#/$defs/schema171"
-                      },
-                      {
-                        "$ref": "#/$defs/schema174"
+                        "$ref": "#/$defs/schema173"
                       },
                       {
                         "not": {
@@ -13072,22 +12874,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema175"
+                        "$ref": "#/$defs/schema174"
                       },
                       {
-                        "$ref": "#/$defs/schema169"
+                        "$ref": "#/$defs/schema168"
                       },
                       {
-                        "$ref": "#/$defs/schema143"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
-                        "$ref": "#/$defs/schema157"
+                        "$ref": "#/$defs/schema156"
                       },
                       {
-                        "$ref": "#/$defs/schema159"
+                        "$ref": "#/$defs/schema158"
                       },
                       {
-                        "$ref": "#/$defs/schema165"
+                        "$ref": "#/$defs/schema164"
                       }
                     ],
                     "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
@@ -13128,13 +12930,13 @@
                   {
                     "allOf": [
                       {
+                        "$ref": "#/$defs/schema169"
+                      },
+                      {
                         "$ref": "#/$defs/schema170"
                       },
                       {
-                        "$ref": "#/$defs/schema171"
-                      },
-                      {
-                        "$ref": "#/$defs/schema174"
+                        "$ref": "#/$defs/schema173"
                       },
                       {
                         "not": {
@@ -13142,22 +12944,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema175"
+                        "$ref": "#/$defs/schema174"
                       },
                       {
-                        "$ref": "#/$defs/schema169"
+                        "$ref": "#/$defs/schema168"
                       },
                       {
-                        "$ref": "#/$defs/schema143"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
-                        "$ref": "#/$defs/schema157"
+                        "$ref": "#/$defs/schema156"
                       },
                       {
-                        "$ref": "#/$defs/schema159"
+                        "$ref": "#/$defs/schema158"
                       },
                       {
-                        "$ref": "#/$defs/schema165"
+                        "$ref": "#/$defs/schema164"
                       }
                     ],
                     "description": "pathType determines the interpretation of the path matching. PathType can be one of the following values: * Exact: Matches the URL path exactly. * Prefix: Matches based on a URL path prefix split by '/'. Matching is\n  done on a path element by element basis. A path element refers is the\n  list of labels in the path split by the '/' separator. A request is a\n  match for path p if every p is an element-wise prefix of p of the\n  request path. Note that if the last element of the path is a substring\n  of the last element in request path, it is not a match (e.g. /foo/bar\n  matches /foo/bar/baz, but does not match /foo/barbaz).\n* ImplementationSpecific: Interpretation of the Path matching is up to\n  the IngressClass. Implementations can treat this as a separate PathType\n  or treat it identically to Prefix or Exact path types.\nImplementations are required to support all path types.",
@@ -13310,13 +13112,13 @@
                   {
                     "allOf": [
                       {
+                        "$ref": "#/$defs/schema169"
+                      },
+                      {
                         "$ref": "#/$defs/schema170"
                       },
                       {
-                        "$ref": "#/$defs/schema171"
-                      },
-                      {
-                        "$ref": "#/$defs/schema174"
+                        "$ref": "#/$defs/schema173"
                       },
                       {
                         "not": {
@@ -13324,22 +13126,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema175"
+                        "$ref": "#/$defs/schema174"
                       },
                       {
-                        "$ref": "#/$defs/schema169"
+                        "$ref": "#/$defs/schema168"
                       },
                       {
-                        "$ref": "#/$defs/schema143"
+                        "$ref": "#/$defs/schema142"
                       },
                       {
-                        "$ref": "#/$defs/schema157"
+                        "$ref": "#/$defs/schema156"
                       },
                       {
-                        "$ref": "#/$defs/schema159"
+                        "$ref": "#/$defs/schema158"
                       },
                       {
-                        "$ref": "#/$defs/schema165"
+                        "$ref": "#/$defs/schema164"
                       }
                     ],
                     "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
@@ -13577,7 +13379,7 @@
         "serviceAnnotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema155"
+              "$ref": "#/$defs/schema154"
             },
             {
               "$ref": "#/$defs/schema40"
@@ -13596,7 +13398,7 @@
         "serviceLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema155"
+              "$ref": "#/$defs/schema154"
             },
             {
               "$ref": "#/$defs/schema50"
@@ -13897,7 +13699,7 @@
                                                               "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
                                                               "properties": {
                                                                 "key": {
-                                                                  "$ref": "#/$defs/schema154"
+                                                                  "$ref": "#/$defs/schema153"
                                                                 },
                                                                 "operator": {
                                                                   "$ref": "#/$defs/schema123"
@@ -13907,7 +13709,7 @@
                                                                     {
                                                                       "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
                                                                       "items": {
-                                                                        "$ref": "#/$defs/schema168"
+                                                                        "$ref": "#/$defs/schema167"
                                                                       },
                                                                       "type": "array"
                                                                     },
@@ -14036,7 +13838,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/schema167"
+              "$ref": "#/$defs/schema166"
             }
           ],
           "description": "Replica count for Longhorn UI."
@@ -14073,7 +13875,7 @@
                       "additionalLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema164"
+                            "$ref": "#/$defs/schema163"
                           },
                           {
                             "not": {
@@ -14113,7 +13915,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema164"
+                            "$ref": "#/$defs/schema163"
                           },
                           {
                             "not": {
@@ -14155,13 +13957,13 @@
                           {
                             "allOf": [
                               {
+                                "$ref": "#/$defs/schema169"
+                              },
+                              {
                                 "$ref": "#/$defs/schema170"
                               },
                               {
-                                "$ref": "#/$defs/schema171"
-                              },
-                              {
-                                "$ref": "#/$defs/schema174"
+                                "$ref": "#/$defs/schema173"
                               },
                               {
                                 "not": {
@@ -14169,22 +13971,22 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema175"
+                                "$ref": "#/$defs/schema174"
                               },
                               {
-                                "$ref": "#/$defs/schema169"
+                                "$ref": "#/$defs/schema168"
                               },
                               {
-                                "$ref": "#/$defs/schema143"
+                                "$ref": "#/$defs/schema142"
                               },
                               {
-                                "$ref": "#/$defs/schema157"
+                                "$ref": "#/$defs/schema156"
                               },
                               {
-                                "$ref": "#/$defs/schema159"
+                                "$ref": "#/$defs/schema158"
                               },
                               {
-                                "$ref": "#/$defs/schema165"
+                                "$ref": "#/$defs/schema164"
                               }
                             ],
                             "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
@@ -14327,7 +14129,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema167"
+                            "$ref": "#/$defs/schema166"
                           }
                         ],
                         "description": "Per-scrape sample limit. A value of 0 (default) omits sampleLimit."
@@ -14364,13 +14166,13 @@
                           {
                             "allOf": [
                               {
+                                "$ref": "#/$defs/schema169"
+                              },
+                              {
                                 "$ref": "#/$defs/schema170"
                               },
                               {
-                                "$ref": "#/$defs/schema171"
-                              },
-                              {
-                                "$ref": "#/$defs/schema174"
+                                "$ref": "#/$defs/schema173"
                               },
                               {
                                 "not": {
@@ -14378,22 +14180,22 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema175"
+                                "$ref": "#/$defs/schema174"
                               },
                               {
-                                "$ref": "#/$defs/schema169"
+                                "$ref": "#/$defs/schema168"
                               },
                               {
-                                "$ref": "#/$defs/schema143"
+                                "$ref": "#/$defs/schema142"
                               },
                               {
-                                "$ref": "#/$defs/schema157"
+                                "$ref": "#/$defs/schema156"
                               },
                               {
-                                "$ref": "#/$defs/schema159"
+                                "$ref": "#/$defs/schema158"
                               },
                               {
-                                "$ref": "#/$defs/schema165"
+                                "$ref": "#/$defs/schema164"
                               }
                             ],
                             "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
@@ -14533,7 +14335,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema136"
+                    "$ref": "#/$defs/schema135"
                   },
                   {
                     "properties": {
@@ -14577,7 +14379,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema167"
+                        "$ref": "#/$defs/schema166"
                       }
                     ],
                     "description": "Port for accessing the OpenShift web console."
@@ -14604,7 +14406,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema136"
+                    "$ref": "#/$defs/schema135"
                   },
                   {
                     "properties": {
@@ -14655,7 +14457,7 @@
                           {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema167"
+                                "$ref": "#/$defs/schema166"
                               },
                               {
                                 "type": "integer"
@@ -14668,7 +14470,7 @@
                         ]
                       },
                       {
-                        "$ref": "#/$defs/schema167"
+                        "$ref": "#/$defs/schema166"
                       }
                     ],
                     "description": "Port for proxy that provides access to the OpenShift web console."
@@ -14765,7 +14567,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema151"
+                  "$ref": "#/$defs/schema150"
                 }
               },
               {
@@ -15096,7 +14898,7 @@
               "allOf": [
                 {
                   "if": {
-                    "$ref": "#/$defs/schema152"
+                    "$ref": "#/$defs/schema151"
                   },
                   "then": {
                     "additionalProperties": {},
@@ -15106,13 +14908,13 @@
                           {
                             "allOf": [
                               {
+                                "$ref": "#/$defs/schema169"
+                              },
+                              {
                                 "$ref": "#/$defs/schema170"
                               },
                               {
-                                "$ref": "#/$defs/schema171"
-                              },
-                              {
-                                "$ref": "#/$defs/schema174"
+                                "$ref": "#/$defs/schema173"
                               },
                               {
                                 "not": {
@@ -15120,22 +14922,22 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema175"
+                                "$ref": "#/$defs/schema174"
                               },
                               {
-                                "$ref": "#/$defs/schema169"
+                                "$ref": "#/$defs/schema168"
                               },
                               {
-                                "$ref": "#/$defs/schema143"
+                                "$ref": "#/$defs/schema142"
                               },
                               {
-                                "$ref": "#/$defs/schema157"
+                                "$ref": "#/$defs/schema156"
                               },
                               {
-                                "$ref": "#/$defs/schema159"
+                                "$ref": "#/$defs/schema158"
                               },
                               {
-                                "$ref": "#/$defs/schema165"
+                                "$ref": "#/$defs/schema164"
                               }
                             ],
                             "description": "loadBalancerClass is the class of the load balancer implementation this Service belongs to. If specified, the value of this field must be a label-style identifier, with an optional prefix, e.g. \"internal-vip\" or \"example.com/internal-vip\". Unprefixed names are reserved for end-users. This field can only be set when the Service type is 'LoadBalancer'. If not set, the default load balancer implementation is used, today this is typically done through the cloud provider integration, but should apply for any default implementation. If set, it is assumed that a load balancer implementation is watching for Services with a matching class. Any default load balancer implementation (e.g. cloud providers) should ignore Services that set this field. This field can only be set when creating or updating a Service to type 'LoadBalancer'. Once set, it can not be changed. This field will be wiped when a service is updated to a non 'LoadBalancer' type.",
@@ -15167,7 +14969,7 @@
               "allOf": [
                 {
                   "if": {
-                    "$ref": "#/$defs/schema152"
+                    "$ref": "#/$defs/schema151"
                   },
                   "then": {
                     "additionalProperties": {},
@@ -15177,13 +14979,13 @@
                           {
                             "allOf": [
                               {
+                                "$ref": "#/$defs/schema169"
+                              },
+                              {
                                 "$ref": "#/$defs/schema170"
                               },
                               {
-                                "$ref": "#/$defs/schema171"
-                              },
-                              {
-                                "$ref": "#/$defs/schema174"
+                                "$ref": "#/$defs/schema173"
                               },
                               {
                                 "not": {
@@ -15191,22 +14993,22 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema175"
+                                "$ref": "#/$defs/schema174"
                               },
                               {
-                                "$ref": "#/$defs/schema169"
+                                "$ref": "#/$defs/schema168"
                               },
                               {
-                                "$ref": "#/$defs/schema143"
+                                "$ref": "#/$defs/schema142"
                               },
                               {
-                                "$ref": "#/$defs/schema157"
+                                "$ref": "#/$defs/schema156"
                               },
                               {
-                                "$ref": "#/$defs/schema159"
+                                "$ref": "#/$defs/schema158"
                               },
                               {
-                                "$ref": "#/$defs/schema165"
+                                "$ref": "#/$defs/schema164"
                               }
                             ],
                             "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
@@ -15237,7 +15039,7 @@
               "allOf": [
                 {
                   "if": {
-                    "$ref": "#/$defs/schema152"
+                    "$ref": "#/$defs/schema151"
                   },
                   "then": {
                     "additionalProperties": {},
@@ -15331,7 +15133,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema167"
+                  "$ref": "#/$defs/schema166"
                 }
               ],
               "description": "NodePort port number for Longhorn Manager. When unspecified, Longhorn selects a free port between 30000 and 32767."
@@ -15356,7 +15158,7 @@
             "annotations": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema155"
+                  "$ref": "#/$defs/schema154"
                 },
                 {
                   "$ref": "#/$defs/schema40"
@@ -15375,7 +15177,7 @@
             "labels": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema155"
+                  "$ref": "#/$defs/schema154"
                 },
                 {
                   "$ref": "#/$defs/schema50"
@@ -15410,7 +15212,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema167"
+                  "$ref": "#/$defs/schema166"
                 },
                 {
                   "type": "null"
@@ -15454,7 +15256,7 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema155"
+              "$ref": "#/$defs/schema154"
             },
             {
               "$ref": "#/$defs/schema40"

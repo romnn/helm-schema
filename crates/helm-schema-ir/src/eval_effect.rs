@@ -61,6 +61,10 @@ pub(crate) struct Effects {
     pub(crate) root_set_predicates: BTreeMap<String, helm_schema_core::Predicate>,
     /// Chart value subtrees that supply defaults to a replaced effective `.Values` tree.
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
+    /// Helper names through which the values ROOT was replaced
+    /// (`set . "Values" (get (include NAME …) …)`); the symbolic context
+    /// decides whether a name is a program-wrapper engine.
+    pub(crate) values_root_helper_includes: BTreeSet<String>,
     /// Pathless reads observed inside called helper bodies (guard reads and
     /// dependency-lane rows), carrying helper-internal guards only; the
     /// absorbing site adds its ambient guards and provenance.
@@ -150,6 +154,13 @@ pub(crate) enum CaptureKind {
         pattern: String,
         templated: bool,
     },
+    /// A raw splice inside a manually quoted scalar: whenever the capture's
+    /// execution predicates hold, every string the path's value contributes
+    /// to the rendered token must be valid content for the quoting style.
+    QuotedSerialization {
+        path: String,
+        style: helm_schema_core::QuotedScalarStyle,
+    },
     /// A member-access capture (`[outer…, ¬object(P)]` from a field access
     /// through `P`): the signal builder folds these per path into one
     /// bypass-proof arm instead of lowering each as its own implication.
@@ -167,6 +178,32 @@ impl FailCapture {
         self.conjunction
             .iter()
             .any(helm_schema_core::Predicate::contains_approximation)
+    }
+}
+
+impl CaptureKind {
+    /// Rewrite every values path the kind payload carries (dependency
+    /// namespacing rebases captures under the subchart's key exactly like
+    /// the conjunction's predicate paths).
+    pub(crate) fn map_value_paths<F>(&mut self, map: &mut F)
+    where
+        F: FnMut(&str) -> String,
+    {
+        match self {
+            Self::Fail | Self::MemberAccess { .. } => {}
+            Self::RangeKeyStrings { paths }
+            | Self::CollectionItems { paths, .. }
+            | Self::SplitIndexAccess { paths, .. } => {
+                *paths = paths.iter().map(|path| map(path)).collect();
+            }
+            Self::IndexAccess { path, .. }
+            | Self::ValueType { path, .. }
+            | Self::ComparableKind { path, .. }
+            | Self::ValuePattern { path, .. }
+            | Self::QuotedSerialization { path, .. } => {
+                *path = map(path);
+            }
+        }
     }
 }
 
@@ -208,6 +245,7 @@ impl Effects {
             root_set_mutations,
             root_set_predicates,
             values_default_sources,
+            values_root_helper_includes,
             helper_reads,
             helper_rendered,
             helper_dependency_rendered,
@@ -247,6 +285,8 @@ impl Effects {
         self.root_set_mutations.extend(root_set_mutations);
         self.root_set_predicates.extend(root_set_predicates);
         self.values_default_sources.extend(values_default_sources);
+        self.values_root_helper_includes
+            .extend(values_root_helper_includes);
         for read in helper_reads {
             if !self.helper_reads.contains(&read) {
                 self.helper_reads.push(read);
@@ -328,6 +368,7 @@ impl Effects {
             root_set_mutations,
             root_set_predicates,
             values_default_sources,
+            values_root_helper_includes,
             helper_reads,
             helper_rendered,
             mut helper_dependency_rendered,
@@ -366,6 +407,7 @@ impl Effects {
             root_set_mutations,
             root_set_predicates,
             values_default_sources,
+            values_root_helper_includes,
             helper_reads,
             helper_rendered: Vec::new(),
             helper_dependency_rendered,

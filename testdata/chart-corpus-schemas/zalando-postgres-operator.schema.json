@@ -1,5 +1,36 @@
 {
   "$defs": {
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
     "helm-truthy": {
       "anyOf": [
         {
@@ -594,19 +625,6 @@
       ]
     },
     "schema24": {
-      "anyOf": [
-        {
-          "not": {
-            "type": "string"
-          }
-        },
-        {
-          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-          "type": "string"
-        }
-      ]
-    },
-    "schema25": {
       "not": {
         "properties": {
           "podPriorityClassName": {
@@ -625,7 +643,7 @@
         "type": "object"
       }
     },
-    "schema27": {
+    "schema26": {
       "not": {
         "properties": {
           "podServiceAccount": {
@@ -644,14 +662,14 @@
         "type": "object"
       }
     },
-    "schema28": {
+    "schema27": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
     },
-    "schema29": {
+    "schema28": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -670,14 +688,14 @@
         "type": "object"
       }
     },
-    "schema35": {
+    "schema34": {
       "description": "List of teams which members need the superuser role in each Postgres cluster",
       "items": {
         "type": "string"
       },
       "type": "array"
     },
-    "schema36": {
+    "schema35": {
       "not": {
         "properties": {
           "rbac": {
@@ -696,24 +714,24 @@
         "type": "object"
       }
     },
-    "schema39": {
+    "schema37": {
       "description": "operator watches for postgres objects in the given namespace\nlisten to all namespaces",
       "type": "string"
     },
-    "schema41": {
+    "schema39": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema42": {
+    "schema40": {
       "description": "S3 retention time for stored backups for example \"2 week\" or \"7 days\"",
       "type": "string"
     },
-    "schema44": {
+    "schema42": {
       "default": "https://info.example.com/oauth2/tokeninfo?access_token= uid realm=/employees",
       "type": "string"
     },
-    "schema46": {
+    "schema44": {
       "properties": {
         "configTarget": {
           "enum": [
@@ -726,11 +744,11 @@
       ],
       "type": "object"
     },
-    "schema47": {
+    "schema45": {
       "description": "secret to be used as reference for env variables in cronjob",
       "type": "string"
     },
-    "schema48": {
+    "schema46": {
       "not": {
         "properties": {
           "readinessProbe": {}
@@ -741,7 +759,7 @@
         "type": "object"
       }
     },
-    "schema49": {
+    "schema47": {
       "additionalProperties": {
         "additionalProperties": {}
       },
@@ -791,26 +809,26 @@
         "null"
       ]
     },
-    "schema52": {
+    "schema50": {
       "pattern": "^(\\d+(e\\d+)?|\\d+(\\.\\d+)?(e\\d+)?[EPTGMK]i?)$|^$",
       "type": "string"
     },
-    "schema54": {
+    "schema52": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema55": {
+    "schema53": {
       "pattern": "^(\\d+(e\\d+)?|\\d+(\\.\\d+)?(e\\d+)?[EPTGMK]i?)$",
       "type": "string"
     },
-    "schema58": {
+    "schema56": {
       "not": {
         "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
       }
     },
-    "schema59": {
+    "schema57": {
       "not": {
         "properties": {
           "create": {}
@@ -819,6 +837,22 @@
           "create"
         ],
         "type": "object"
+      }
+    },
+    "schema58": {
+      "properties": {
+        "*": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "*"
+      ],
+      "type": "object"
+    },
+    "schema59": {
+      "not": {
+        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
       }
     },
     "schema6": {
@@ -866,22 +900,6 @@
     "schema60": {
       "properties": {
         "*": {
-          "type": "object"
-        }
-      },
-      "required": [
-        "*"
-      ],
-      "type": "object"
-    },
-    "schema61": {
-      "not": {
-        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
-      }
-    },
-    "schema62": {
-      "properties": {
-        "*": {
           "type": "array"
         }
       },
@@ -890,7 +908,7 @@
       ],
       "type": "object"
     },
-    "schema65": {
+    "schema63": {
       "oneOf": [
         {
           "type": [
@@ -906,15 +924,24 @@
         }
       ]
     },
-    "schema68": {
+    "schema66": {
       "pattern": "^(\\d+m|\\d+(\\.\\d{1,3})?)$|^$",
       "type": "string"
     },
-    "schema69": {
+    "schema67": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
+    },
+    "schema68": {
+      "pattern": "^(\\d+m|\\d+(\\.\\d{1,3})?)$",
+      "type": "string"
+    },
+    "schema69": {
+      "not": {
+        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+      }
     },
     "schema7": {
       "allOf": [
@@ -972,54 +999,45 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "schema70": {
-      "pattern": "^(\\d+m|\\d+(\\.\\d{1,3})?)$",
-      "type": "string"
-    },
     "schema71": {
-      "not": {
-        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-      }
-    },
-    "schema73": {
       "pattern": "^-?(0|[1-9][0-9]*)$",
       "type": "string"
     },
-    "schema74": {
+    "schema72": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema75": {
+    "schema73": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema76": {
+    "schema74": {
       "items": {
         "type": "string"
       },
       "type": "array"
     },
-    "schema77": {
+    "schema75": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema78": {
+    "schema76": {
       "enum": [
         "OperatorConfigurationCRD"
       ]
     },
-    "schema81": {
+    "schema79": {
       "default": false,
       "type": "boolean"
     },
-    "schema82": {
+    "schema80": {
       "default": true,
       "type": "boolean"
     },
-    "schema83": {
+    "schema81": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -1032,13 +1050,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
               "properties": {
                 "configAwsOrGcp": {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -1051,7 +1069,7 @@
             "not": {
               "properties": {
                 "configAwsOrGcp": {
-                  "$ref": "#/$defs/schema60"
+                  "$ref": "#/$defs/schema58"
                 }
               },
               "required": [
@@ -1114,7 +1132,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -1143,7 +1161,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -1223,13 +1241,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
               "properties": {
                 "configConnectionPooler": {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -1242,7 +1260,7 @@
             "not": {
               "properties": {
                 "configConnectionPooler": {
-                  "$ref": "#/$defs/schema60"
+                  "$ref": "#/$defs/schema58"
                 }
               },
               "required": [
@@ -1334,7 +1352,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -1363,7 +1381,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -1396,7 +1414,7 @@
             "description": "configure connection pooler deployment created by the operator",
             "properties": {
               "connection_pooler_default_cpu_limit": {
-                "$ref": "#/$defs/schema70"
+                "$ref": "#/$defs/schema68"
               },
               "connection_pooler_default_cpu_request": {
                 "description": "default resources",
@@ -1404,10 +1422,10 @@
                 "type": "string"
               },
               "connection_pooler_default_memory_limit": {
-                "$ref": "#/$defs/schema55"
+                "$ref": "#/$defs/schema53"
               },
               "connection_pooler_default_memory_request": {
-                "$ref": "#/$defs/schema55"
+                "$ref": "#/$defs/schema53"
               },
               "connection_pooler_image": {
                 "default": "registry.opensource.zalan.do/acid/pgbouncer:master-32",
@@ -1454,13 +1472,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
               "properties": {
                 "configDebug": {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -1473,7 +1491,7 @@
             "not": {
               "properties": {
                 "configDebug": {
-                  "$ref": "#/$defs/schema60"
+                  "$ref": "#/$defs/schema58"
                 }
               },
               "required": [
@@ -1536,7 +1554,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -1565,7 +1583,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -1617,13 +1635,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
               "properties": {
                 "configGeneral": {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -1636,7 +1654,7 @@
             "not": {
               "properties": {
                 "configGeneral": {
-                  "$ref": "#/$defs/schema60"
+                  "$ref": "#/$defs/schema58"
                 }
               },
               "required": [
@@ -1750,7 +1768,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -1779,7 +1797,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -1805,7 +1823,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema36"
+            "$ref": "#/$defs/schema35"
           },
           {
             "properties": {
@@ -1865,7 +1883,7 @@
                     "type": "string"
                   },
                   "enable_ebs_gp3_migration": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "enable_ebs_gp3_migration_max_size": {
                     "default": 1000,
@@ -1895,16 +1913,16 @@
               "connection_pooler": {
                 "properties": {
                   "connection_pooler_default_cpu_limit": {
-                    "$ref": "#/$defs/schema70"
+                    "$ref": "#/$defs/schema68"
                   },
                   "connection_pooler_default_cpu_request": {
-                    "$ref": "#/$defs/schema70"
+                    "$ref": "#/$defs/schema68"
                   },
                   "connection_pooler_default_memory_limit": {
-                    "$ref": "#/$defs/schema55"
+                    "$ref": "#/$defs/schema53"
                   },
                   "connection_pooler_default_memory_request": {
-                    "$ref": "#/$defs/schema55"
+                    "$ref": "#/$defs/schema53"
                   },
                   "connection_pooler_image": {
                     "default": "registry.opensource.zalan.do/acid/pgbouncer:master-32",
@@ -1949,10 +1967,10 @@
               "debug": {
                 "properties": {
                   "debug_logging": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema80"
                   },
                   "enable_database_access": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema80"
                   }
                 },
                 "type": "object"
@@ -2011,7 +2029,7 @@
               "kubernetes": {
                 "properties": {
                   "additional_pod_capabilities": {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema74"
                   },
                   "cluster_domain": {
                     "default": "cluster.local",
@@ -2031,7 +2049,7 @@
                     "type": "string"
                   },
                   "custom_pod_annotations": {
-                    "$ref": "#/$defs/schema69"
+                    "$ref": "#/$defs/schema67"
                   },
                   "delete_annotation_date_key": {
                     "type": "string"
@@ -2040,40 +2058,40 @@
                     "type": "string"
                   },
                   "downscaler_annotations": {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema74"
                   },
                   "enable_cross_namespace_secret": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "enable_finalizers": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "enable_init_containers": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema80"
                   },
                   "enable_owner_references": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "enable_persistent_volume_claim_deletion": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema80"
                   },
                   "enable_pod_antiaffinity": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "enable_pod_disruption_budget": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema80"
                   },
                   "enable_readiness_probe": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "enable_secrets_deletion": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema80"
                   },
                   "enable_sidecars": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema80"
                   },
                   "ignored_annotations": {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema74"
                   },
                   "infrastructure_roles_secret_name": {
                     "type": "string"
@@ -2082,17 +2100,17 @@
                     "$ref": "#/$defs/schema17"
                   },
                   "inherited_annotations": {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema74"
                   },
                   "inherited_labels": {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema74"
                   },
                   "master_pod_move_timeout": {
                     "default": "20m",
                     "type": "string"
                   },
                   "node_readiness_label": {
-                    "$ref": "#/$defs/schema69"
+                    "$ref": "#/$defs/schema67"
                   },
                   "node_readiness_label_merge": {
                     "enum": [
@@ -2106,7 +2124,7 @@
                     "type": "string"
                   },
                   "pdb_master_label_selector": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema80"
                   },
                   "pdb_name_format": {
                     "default": "postgres-{cluster}-pdb",
@@ -2132,7 +2150,7 @@
                     "type": "object"
                   },
                   "pod_antiaffinity_preferred_during_scheduling": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "pod_antiaffinity_topology_key": {
                     "default": "kubernetes.io/hostname",
@@ -2180,16 +2198,16 @@
                     "type": "string"
                   },
                   "share_pgsocket_with_sidecars": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "spilo_allow_privilege_escalation": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema80"
                   },
                   "spilo_fsgroup": {
                     "type": "integer"
                   },
                   "spilo_privileged": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "spilo_runasgroup": {
                     "type": "integer"
@@ -2208,7 +2226,7 @@
                     "type": "string"
                   },
                   "toleration": {
-                    "$ref": "#/$defs/schema69"
+                    "$ref": "#/$defs/schema67"
                   },
                   "watched_namespace": {
                     "type": "string"
@@ -2217,28 +2235,28 @@
                 "type": "object"
               },
               "kubernetes_use_configmaps": {
-                "$ref": "#/$defs/schema81"
+                "$ref": "#/$defs/schema79"
               },
               "load_balancer": {
                 "properties": {
                   "custom_service_annotations": {
-                    "$ref": "#/$defs/schema69"
+                    "$ref": "#/$defs/schema67"
                   },
                   "db_hosted_zone": {
                     "default": "db.example.com",
                     "type": "string"
                   },
                   "enable_master_load_balancer": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema80"
                   },
                   "enable_master_pooler_load_balancer": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "enable_replica_load_balancer": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "enable_replica_pooler_load_balancer": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "external_traffic_policy": {
                     "default": "Cluster",
@@ -2296,10 +2314,10 @@
                     "type": "string"
                   },
                   "logical_backup_cpu_limit": {
-                    "$ref": "#/$defs/schema70"
+                    "$ref": "#/$defs/schema68"
                   },
                   "logical_backup_cpu_request": {
-                    "$ref": "#/$defs/schema70"
+                    "$ref": "#/$defs/schema68"
                   },
                   "logical_backup_cronjob_environment_secret": {
                     "type": "string"
@@ -2316,10 +2334,10 @@
                     "type": "string"
                   },
                   "logical_backup_memory_limit": {
-                    "$ref": "#/$defs/schema55"
+                    "$ref": "#/$defs/schema53"
                   },
                   "logical_backup_memory_request": {
-                    "$ref": "#/$defs/schema55"
+                    "$ref": "#/$defs/schema53"
                   },
                   "logical_backup_provider": {
                     "default": "s3",
@@ -2376,7 +2394,7 @@
                     "type": "string"
                   },
                   "major_version_upgrade_team_allow_list": {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema74"
                   },
                   "minimal_major_version": {
                     "default": "13",
@@ -2404,7 +2422,7 @@
               "patroni": {
                 "properties": {
                   "enable_patroni_failsafe_mode": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   }
                 },
                 "type": "object"
@@ -2412,28 +2430,28 @@
               "postgres_pod_resources": {
                 "properties": {
                   "default_cpu_limit": {
-                    "$ref": "#/$defs/schema68"
+                    "$ref": "#/$defs/schema66"
                   },
                   "default_cpu_request": {
-                    "$ref": "#/$defs/schema68"
+                    "$ref": "#/$defs/schema66"
                   },
                   "default_memory_limit": {
-                    "$ref": "#/$defs/schema52"
+                    "$ref": "#/$defs/schema50"
                   },
                   "default_memory_request": {
-                    "$ref": "#/$defs/schema52"
+                    "$ref": "#/$defs/schema50"
                   },
                   "max_cpu_request": {
-                    "$ref": "#/$defs/schema68"
+                    "$ref": "#/$defs/schema66"
                   },
                   "max_memory_request": {
-                    "$ref": "#/$defs/schema52"
+                    "$ref": "#/$defs/schema50"
                   },
                   "min_cpu_limit": {
-                    "$ref": "#/$defs/schema68"
+                    "$ref": "#/$defs/schema66"
                   },
                   "min_memory_limit": {
-                    "$ref": "#/$defs/schema52"
+                    "$ref": "#/$defs/schema50"
                   }
                 },
                 "type": "object"
@@ -2484,10 +2502,10 @@
                 "type": "object"
               },
               "set_memory_request_to_limit": {
-                "$ref": "#/$defs/schema81"
+                "$ref": "#/$defs/schema79"
               },
               "sidecar_docker_images": {
-                "$ref": "#/$defs/schema69"
+                "$ref": "#/$defs/schema67"
               },
               "sidecars": {
                 "items": {
@@ -2500,32 +2518,32 @@
               "teams_api": {
                 "properties": {
                   "enable_admin_role_for_users": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema80"
                   },
                   "enable_postgres_team_crd": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema80"
                   },
                   "enable_postgres_team_crd_superusers": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "enable_team_member_deprecation": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "enable_team_superuser": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "enable_teams_api": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema80"
                   },
                   "pam_configuration": {
-                    "$ref": "#/$defs/schema44"
+                    "$ref": "#/$defs/schema42"
                   },
                   "pam_role_name": {
                     "default": "zalandos",
                     "type": "string"
                   },
                   "postgres_superuser_teams": {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema74"
                   },
                   "protected_role_names": {
                     "default": [
@@ -2608,7 +2626,7 @@
                     "type": "array"
                   },
                   "enable_password_rotation": {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema79"
                   },
                   "password_rotation_interval": {
                     "default": 90,
@@ -2645,13 +2663,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
               "properties": {
                 "configKubernetes": {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -2664,7 +2682,7 @@
             "not": {
               "properties": {
                 "configKubernetes": {
-                  "$ref": "#/$defs/schema60"
+                  "$ref": "#/$defs/schema58"
                 }
               },
               "required": [
@@ -2822,7 +2840,7 @@
                     "type": "string"
                   },
                   "watched_namespace": {
-                    "$ref": "#/$defs/schema39"
+                    "$ref": "#/$defs/schema37"
                   }
                 },
                 "type": "object"
@@ -2841,7 +2859,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -2870,7 +2888,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -2896,7 +2914,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema36"
+            "$ref": "#/$defs/schema35"
           },
           {
             "properties": {
@@ -2944,7 +2962,7 @@
             "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\"",
             "properties": {
               "additional_pod_capabilities": {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema74"
               },
               "cluster_domain": {
                 "default": "cluster.local",
@@ -2967,7 +2985,7 @@
                 "type": "string"
               },
               "custom_pod_annotations": {
-                "$ref": "#/$defs/schema69"
+                "$ref": "#/$defs/schema67"
               },
               "delete_annotation_date_key": {
                 "type": "string"
@@ -2976,7 +2994,7 @@
                 "type": "string"
               },
               "downscaler_annotations": {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema74"
               },
               "enable_cross_namespace_secret": {
                 "default": false,
@@ -3029,7 +3047,7 @@
                 "type": "boolean"
               },
               "ignored_annotations": {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema74"
               },
               "infrastructure_roles_secret_name": {
                 "type": "string"
@@ -3038,17 +3056,17 @@
                 "$ref": "#/$defs/schema17"
               },
               "inherited_annotations": {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema74"
               },
               "inherited_labels": {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema74"
               },
               "master_pod_move_timeout": {
                 "default": "20m",
                 "type": "string"
               },
               "node_readiness_label": {
-                "$ref": "#/$defs/schema69"
+                "$ref": "#/$defs/schema67"
               },
               "node_readiness_label_merge": {
                 "enum": [
@@ -3182,10 +3200,10 @@
                 "type": "string"
               },
               "toleration": {
-                "$ref": "#/$defs/schema69"
+                "$ref": "#/$defs/schema67"
               },
               "watched_namespace": {
-                "$ref": "#/$defs/schema39"
+                "$ref": "#/$defs/schema37"
               }
             },
             "type": "object"
@@ -3197,13 +3215,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
               "properties": {
                 "configLoadBalancer": {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -3216,7 +3234,7 @@
             "not": {
               "properties": {
                 "configLoadBalancer": {
-                  "$ref": "#/$defs/schema60"
+                  "$ref": "#/$defs/schema58"
                 }
               },
               "required": [
@@ -3311,7 +3329,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -3340,7 +3358,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -3373,7 +3391,7 @@
             "description": "configure behavior of load balancers",
             "properties": {
               "custom_service_annotations": {
-                "$ref": "#/$defs/schema69"
+                "$ref": "#/$defs/schema67"
               },
               "db_hosted_zone": {
                 "default": "db.example.com",
@@ -3439,13 +3457,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
               "properties": {
                 "configLoggingRestApi": {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -3458,7 +3476,7 @@
             "not": {
               "properties": {
                 "configLoggingRestApi": {
-                  "$ref": "#/$defs/schema60"
+                  "$ref": "#/$defs/schema58"
                 }
               },
               "required": [
@@ -3488,7 +3506,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema48"
+            "$ref": "#/$defs/schema46"
           },
           {
             "properties": {
@@ -3532,7 +3550,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema48"
+            "$ref": "#/$defs/schema46"
           },
           {
             "properties": {
@@ -3577,7 +3595,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema73"
+                        "$ref": "#/$defs/schema71"
                       },
                       {
                         "type": "integer"
@@ -3635,7 +3653,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -3664,7 +3682,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -3690,7 +3708,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema48"
+            "$ref": "#/$defs/schema46"
           },
           {
             "properties": {
@@ -3761,7 +3779,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema48"
+            "$ref": "#/$defs/schema46"
           },
           {
             "properties": {
@@ -3797,13 +3815,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
               "properties": {
                 "configLogicalBackup": {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -3816,7 +3834,7 @@
             "not": {
               "properties": {
                 "configLogicalBackup": {
-                  "$ref": "#/$defs/schema60"
+                  "$ref": "#/$defs/schema58"
                 }
               },
               "required": [
@@ -3855,7 +3873,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "logical_backup_cronjob_environment_secret": {
-                    "$ref": "#/$defs/schema47"
+                    "$ref": "#/$defs/schema45"
                   },
                   "logical_backup_docker_image": {
                     "description": "image for pods of the logical backup job (example runs pg_dumpall)\npath of google cloud service account json file\nlogical_backup_google_application_credentials: \"\"",
@@ -3890,7 +3908,7 @@
                     "type": "string"
                   },
                   "logical_backup_s3_retention_time": {
-                    "$ref": "#/$defs/schema42"
+                    "$ref": "#/$defs/schema40"
                   },
                   "logical_backup_s3_secret_access_key": {
                     "description": "S3 Secret Access Key",
@@ -3921,7 +3939,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -3950,7 +3968,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -3992,13 +4010,13 @@
                 "type": "string"
               },
               "logical_backup_cpu_limit": {
-                "$ref": "#/$defs/schema70"
+                "$ref": "#/$defs/schema68"
               },
               "logical_backup_cpu_request": {
-                "$ref": "#/$defs/schema70"
+                "$ref": "#/$defs/schema68"
               },
               "logical_backup_cronjob_environment_secret": {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema45"
               },
               "logical_backup_docker_image": {
                 "default": "ghcr.io/zalando/postgres-operator/logical-backup:v1.15.1",
@@ -4014,10 +4032,10 @@
                 "type": "string"
               },
               "logical_backup_memory_limit": {
-                "$ref": "#/$defs/schema55"
+                "$ref": "#/$defs/schema53"
               },
               "logical_backup_memory_request": {
-                "$ref": "#/$defs/schema55"
+                "$ref": "#/$defs/schema53"
               },
               "logical_backup_provider": {
                 "default": "s3",
@@ -4050,7 +4068,7 @@
                 "type": "string"
               },
               "logical_backup_s3_retention_time": {
-                "$ref": "#/$defs/schema42"
+                "$ref": "#/$defs/schema40"
               },
               "logical_backup_s3_secret_access_key": {
                 "description": "S3 Secret Access Key",
@@ -4076,13 +4094,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
               "properties": {
                 "configMajorVersionUpgrade": {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -4095,7 +4113,7 @@
             "not": {
               "properties": {
                 "configMajorVersionUpgrade": {
-                  "$ref": "#/$defs/schema60"
+                  "$ref": "#/$defs/schema58"
                 }
               },
               "required": [
@@ -4110,7 +4128,7 @@
         "additionalProperties": {},
         "properties": {
           "configMajorVersionUpgrade": {
-            "$ref": "#/$defs/schema49"
+            "$ref": "#/$defs/schema47"
           }
         }
       }
@@ -4155,7 +4173,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -4183,7 +4201,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -4219,7 +4237,7 @@
                 "type": "string"
               },
               "major_version_upgrade_team_allow_list": {
-                "$ref": "#/$defs/schema76"
+                "$ref": "#/$defs/schema74"
               },
               "minimal_major_version": {
                 "default": "13",
@@ -4241,13 +4259,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
               "properties": {
                 "configPatroni": {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -4260,7 +4278,7 @@
             "not": {
               "properties": {
                 "configPatroni": {
-                  "$ref": "#/$defs/schema60"
+                  "$ref": "#/$defs/schema58"
                 }
               },
               "required": [
@@ -4275,7 +4293,7 @@
         "additionalProperties": {},
         "properties": {
           "configPatroni": {
-            "$ref": "#/$defs/schema49"
+            "$ref": "#/$defs/schema47"
           }
         }
       }
@@ -4312,7 +4330,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -4340,7 +4358,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -4463,10 +4481,10 @@
                 "type": "string"
               },
               "max_cpu_request": {
-                "$ref": "#/$defs/schema68"
+                "$ref": "#/$defs/schema66"
               },
               "max_memory_request": {
-                "$ref": "#/$defs/schema52"
+                "$ref": "#/$defs/schema50"
               },
               "min_cpu_limit": {
                 "description": "hard CPU minimum required to properly run a Postgres cluster",
@@ -4503,13 +4521,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
               "properties": {
                 "configTeamsApi": {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -4522,7 +4540,7 @@
             "not": {
               "properties": {
                 "configTeamsApi": {
-                  "$ref": "#/$defs/schema60"
+                  "$ref": "#/$defs/schema58"
                 }
               },
               "required": [
@@ -4589,7 +4607,7 @@
                     "type": "string"
                   },
                   "postgres_superuser_teams": {
-                    "$ref": "#/$defs/schema35"
+                    "$ref": "#/$defs/schema34"
                   },
                   "protected_role_names": {
                     "description": "List of roles that cannot be overwritten by an application, team or infrastructure role",
@@ -4634,7 +4652,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -4663,7 +4681,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -4726,7 +4744,7 @@
                 "type": "boolean"
               },
               "pam_configuration": {
-                "$ref": "#/$defs/schema44"
+                "$ref": "#/$defs/schema42"
               },
               "pam_role_name": {
                 "default": "zalandos",
@@ -4734,7 +4752,7 @@
                 "type": "string"
               },
               "postgres_superuser_teams": {
-                "$ref": "#/$defs/schema35"
+                "$ref": "#/$defs/schema34"
               },
               "protected_role_names": {
                 "default": [
@@ -4781,13 +4799,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
               "properties": {
                 "configTimeouts": {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -4800,7 +4818,7 @@
             "not": {
               "properties": {
                 "configTimeouts": {
-                  "$ref": "#/$defs/schema60"
+                  "$ref": "#/$defs/schema58"
                 }
               },
               "required": [
@@ -4887,7 +4905,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -4916,7 +4934,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -4998,13 +5016,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "not": {
               "properties": {
                 "configUsers": {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -5017,7 +5035,7 @@
             "not": {
               "properties": {
                 "configUsers": {
-                  "$ref": "#/$defs/schema60"
+                  "$ref": "#/$defs/schema58"
                 }
               },
               "required": [
@@ -5092,7 +5110,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -5121,7 +5139,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema46"
+        "$ref": "#/$defs/schema44"
       },
       "then": {
         "additionalProperties": {},
@@ -5197,7 +5215,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema25"
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -5223,7 +5241,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema36"
+                "$ref": "#/$defs/schema35"
               },
               {
                 "properties": {
@@ -5268,7 +5286,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema29"
+                "$ref": "#/$defs/schema28"
               },
               {
                 "properties": {
@@ -5292,7 +5310,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "$ref": "#/$defs/schema23"
@@ -5356,7 +5374,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema25"
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "properties": {
@@ -5407,7 +5425,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema36"
+                    "$ref": "#/$defs/schema35"
                   },
                   {
                     "properties": {
@@ -5434,7 +5452,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema27"
+                      "$ref": "#/$defs/schema26"
                     },
                     {
                       "properties": {
@@ -5463,7 +5481,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema46"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "not": {
@@ -5491,7 +5509,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema25"
+                        "$ref": "#/$defs/schema24"
                       },
                       {
                         "properties": {
@@ -5540,13 +5558,13 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema46"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema27"
+                      "$ref": "#/$defs/schema26"
                     },
                     {
                       "properties": {
@@ -5581,7 +5599,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema27"
+                      "$ref": "#/$defs/schema26"
                     },
                     {
                       "properties": {
@@ -5625,7 +5643,7 @@
           "additionalProperties": {},
           "properties": {
             "registry": {
-              "$ref": "#/$defs/schema24"
+              "$ref": "#/$defs/helm-double-quoted-safe"
             }
           }
         }
@@ -5638,7 +5656,7 @@
           "additionalProperties": {},
           "properties": {
             "repository": {
-              "$ref": "#/$defs/schema24"
+              "$ref": "#/$defs/helm-double-quoted-safe"
             }
           }
         }
@@ -5651,9 +5669,17 @@
           "additionalProperties": {},
           "properties": {
             "tag": {
-              "$ref": "#/$defs/schema24"
+              "$ref": "#/$defs/helm-double-quoted-safe"
             }
           }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/helm-double-quoted-safe"
         }
       }
     },
@@ -5663,7 +5689,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema25"
+                "$ref": "#/$defs/schema24"
               },
               {
                 "properties": {
@@ -5689,7 +5715,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema36"
+                "$ref": "#/$defs/schema35"
               },
               {
                 "properties": {
@@ -5734,7 +5760,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema29"
+                "$ref": "#/$defs/schema28"
               },
               {
                 "properties": {
@@ -5758,7 +5784,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           }
         ]
       },
@@ -5806,14 +5832,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "nameOverride": {
-          "$ref": "#/$defs/schema24"
-        }
-      }
-    },
-    {
       "if": {
         "properties": {
           "nameOverride": {
@@ -5845,14 +5863,14 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "anyOf": [
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema25"
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "properties": {
@@ -5959,7 +5977,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema25"
+            "$ref": "#/$defs/schema24"
           },
           {
             "properties": {
@@ -6003,7 +6021,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema25"
+            "$ref": "#/$defs/schema24"
           },
           {
             "properties": {
@@ -6051,13 +6069,13 @@
                   {
                     "allOf": [
                       {
+                        "$ref": "#/$defs/schema73"
+                      },
+                      {
                         "$ref": "#/$defs/schema75"
                       },
                       {
-                        "$ref": "#/$defs/schema77"
-                      },
-                      {
-                        "$ref": "#/$defs/schema83"
+                        "$ref": "#/$defs/schema81"
                       },
                       {
                         "not": {
@@ -6070,19 +6088,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema74"
+                        "$ref": "#/$defs/schema72"
                       },
                       {
-                        "$ref": "#/$defs/schema41"
+                        "$ref": "#/$defs/schema39"
                       },
                       {
-                        "$ref": "#/$defs/schema58"
+                        "$ref": "#/$defs/schema56"
                       },
                       {
-                        "$ref": "#/$defs/schema61"
+                        "$ref": "#/$defs/schema59"
                       },
                       {
-                        "$ref": "#/$defs/schema71"
+                        "$ref": "#/$defs/schema69"
                       }
                     ],
                     "default": "postgres-pod",
@@ -6105,7 +6123,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema36"
+            "$ref": "#/$defs/schema35"
           },
           {
             "properties": {
@@ -6159,7 +6177,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "$ref": "#/$defs/schema21"
@@ -6199,7 +6217,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema36"
+                "$ref": "#/$defs/schema35"
               },
               {
                 "properties": {
@@ -6223,7 +6241,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema46"
+            "$ref": "#/$defs/schema44"
           },
           {
             "$ref": "#/$defs/schema23"
@@ -6250,7 +6268,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema48"
+            "$ref": "#/$defs/schema46"
           },
           {
             "properties": {
@@ -6290,7 +6308,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema36"
+            "$ref": "#/$defs/schema35"
           },
           {
             "properties": {
@@ -6324,13 +6342,13 @@
                   {
                     "allOf": [
                       {
+                        "$ref": "#/$defs/schema73"
+                      },
+                      {
                         "$ref": "#/$defs/schema75"
                       },
                       {
-                        "$ref": "#/$defs/schema77"
-                      },
-                      {
-                        "$ref": "#/$defs/schema83"
+                        "$ref": "#/$defs/schema81"
                       },
                       {
                         "not": {
@@ -6343,19 +6361,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema74"
+                        "$ref": "#/$defs/schema72"
                       },
                       {
-                        "$ref": "#/$defs/schema41"
+                        "$ref": "#/$defs/schema39"
                       },
                       {
-                        "$ref": "#/$defs/schema58"
+                        "$ref": "#/$defs/schema56"
                       },
                       {
-                        "$ref": "#/$defs/schema61"
+                        "$ref": "#/$defs/schema59"
                       },
                       {
-                        "$ref": "#/$defs/schema71"
+                        "$ref": "#/$defs/schema69"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -6534,7 +6552,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema54"
+          "$ref": "#/$defs/schema52"
         },
         {
           "type": "null"
@@ -6601,7 +6619,7 @@
           ]
         },
         {
-          "$ref": "#/$defs/schema78"
+          "$ref": "#/$defs/schema76"
         },
         {
           "not": {
@@ -6645,13 +6663,13 @@
                   {
                     "allOf": [
                       {
+                        "$ref": "#/$defs/schema73"
+                      },
+                      {
                         "$ref": "#/$defs/schema75"
                       },
                       {
-                        "$ref": "#/$defs/schema77"
-                      },
-                      {
-                        "$ref": "#/$defs/schema83"
+                        "$ref": "#/$defs/schema81"
                       },
                       {
                         "not": {
@@ -6664,19 +6682,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema74"
+                        "$ref": "#/$defs/schema72"
                       },
                       {
-                        "$ref": "#/$defs/schema41"
+                        "$ref": "#/$defs/schema39"
                       },
                       {
-                        "$ref": "#/$defs/schema58"
+                        "$ref": "#/$defs/schema56"
                       },
                       {
-                        "$ref": "#/$defs/schema61"
+                        "$ref": "#/$defs/schema59"
                       },
                       {
-                        "$ref": "#/$defs/schema71"
+                        "$ref": "#/$defs/schema69"
                       }
                     ],
                     "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -6758,7 +6776,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       "optional": {
                         "description": "Specify whether the ConfigMap or its key must be defined",
@@ -6814,7 +6832,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/schema65"
+                        "$ref": "#/$defs/schema63"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -6839,7 +6857,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/schema28"
+                        "$ref": "#/$defs/schema27"
                       },
                       "optional": {
                         "description": "Specify whether the Secret or its key must be defined",
@@ -6899,13 +6917,13 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/$defs/schema73"
+                },
+                {
                   "$ref": "#/$defs/schema75"
                 },
                 {
-                  "$ref": "#/$defs/schema77"
-                },
-                {
-                  "$ref": "#/$defs/schema83"
+                  "$ref": "#/$defs/schema81"
                 },
                 {
                   "not": {
@@ -6918,19 +6936,19 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema74"
+                  "$ref": "#/$defs/schema72"
                 },
                 {
-                  "$ref": "#/$defs/schema41"
+                  "$ref": "#/$defs/schema39"
                 },
                 {
-                  "$ref": "#/$defs/schema58"
+                  "$ref": "#/$defs/schema56"
                 },
                 {
-                  "$ref": "#/$defs/schema61"
+                  "$ref": "#/$defs/schema59"
                 },
                 {
-                  "$ref": "#/$defs/schema71"
+                  "$ref": "#/$defs/schema69"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -6957,7 +6975,7 @@
             "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
             "properties": {
               "name": {
-                "$ref": "#/$defs/schema28"
+                "$ref": "#/$defs/schema27"
               }
             },
             "type": [
@@ -6998,7 +7016,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema54"
+          "$ref": "#/$defs/schema52"
         },
         {
           "additionalProperties": {
@@ -7020,7 +7038,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema54"
+          "$ref": "#/$defs/schema52"
         },
         {
           "additionalProperties": {
@@ -7050,7 +7068,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema54"
+          "$ref": "#/$defs/schema52"
         },
         {
           "additionalProperties": {
@@ -7084,7 +7102,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "properties": {
@@ -7125,7 +7143,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "properties": {
@@ -7156,7 +7174,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema73"
+                    "$ref": "#/$defs/schema71"
                   }
                 ]
               }
@@ -7200,13 +7218,13 @@
         {
           "allOf": [
             {
+              "$ref": "#/$defs/schema73"
+            },
+            {
               "$ref": "#/$defs/schema75"
             },
             {
-              "$ref": "#/$defs/schema77"
-            },
-            {
-              "$ref": "#/$defs/schema83"
+              "$ref": "#/$defs/schema81"
             },
             {
               "not": {
@@ -7219,19 +7237,19 @@
               }
             },
             {
-              "$ref": "#/$defs/schema74"
+              "$ref": "#/$defs/schema72"
             },
             {
-              "$ref": "#/$defs/schema41"
+              "$ref": "#/$defs/schema39"
             },
             {
-              "$ref": "#/$defs/schema58"
+              "$ref": "#/$defs/schema56"
             },
             {
-              "$ref": "#/$defs/schema61"
+              "$ref": "#/$defs/schema59"
             },
             {
-              "$ref": "#/$defs/schema71"
+              "$ref": "#/$defs/schema69"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -7311,7 +7329,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema73"
+                    "$ref": "#/$defs/schema71"
                   }
                 ]
               }
@@ -7345,7 +7363,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema73"
+                    "$ref": "#/$defs/schema71"
                   }
                 ]
               }
@@ -7397,7 +7415,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema65"
+                    "$ref": "#/$defs/schema63"
                   },
                   "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -7419,7 +7437,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema65"
+                    "$ref": "#/$defs/schema63"
                   },
                   "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -7677,7 +7695,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "properties": {
@@ -7734,13 +7752,13 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/$defs/schema73"
+                },
+                {
                   "$ref": "#/$defs/schema75"
                 },
                 {
-                  "$ref": "#/$defs/schema77"
-                },
-                {
-                  "$ref": "#/$defs/schema83"
+                  "$ref": "#/$defs/schema81"
                 },
                 {
                   "not": {
@@ -7753,19 +7771,19 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema74"
+                  "$ref": "#/$defs/schema72"
                 },
                 {
-                  "$ref": "#/$defs/schema41"
+                  "$ref": "#/$defs/schema39"
                 },
                 {
-                  "$ref": "#/$defs/schema58"
+                  "$ref": "#/$defs/schema56"
                 },
                 {
-                  "$ref": "#/$defs/schema61"
+                  "$ref": "#/$defs/schema59"
                 },
                 {
-                  "$ref": "#/$defs/schema71"
+                  "$ref": "#/$defs/schema69"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",

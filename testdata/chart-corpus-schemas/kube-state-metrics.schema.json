@@ -1,5 +1,67 @@
 {
   "$defs": {
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "helm-single-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^']|'')*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-single-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-single-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^']|'')*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
     "helm-truthy": {
       "anyOf": [
         {
@@ -79,7 +141,7 @@
                   "description": "ConfigMapEnvSource selects a ConfigMap to populate the environment variables with.\n\nThe contents of the target ConfigMap's Data field will represent the key-value pairs as environment variables.",
                   "properties": {
                     "name": {
-                      "$ref": "#/$defs/schema154"
+                      "$ref": "#/$defs/schema153"
                     },
                     "optional": {
                       "description": "Specify whether the ConfigMap must be defined",
@@ -106,7 +168,7 @@
                   "description": "SecretEnvSource selects a Secret to populate the environment variables with.\n\nThe contents of the target Secret's Data field will represent the key-value pairs as environment variables.",
                   "properties": {
                     "name": {
-                      "$ref": "#/$defs/schema154"
+                      "$ref": "#/$defs/schema153"
                     },
                     "optional": {
                       "description": "Specify whether the Secret must be defined",
@@ -176,7 +238,7 @@
               "description": "ContainerPort represents a network port in a single container.",
               "properties": {
                 "containerPort": {
-                  "$ref": "#/$defs/schema161"
+                  "$ref": "#/$defs/schema160"
                 },
                 "hostIP": {
                   "description": "What host IP to bind the external port to.",
@@ -1244,20 +1306,7 @@
         }
       ]
     },
-    "schema144": {
-      "anyOf": [
-        {
-          "not": {
-            "type": "string"
-          }
-        },
-        {
-          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-          "type": "string"
-        }
-      ]
-    },
-    "schema147": {
+    "schema146": {
       "not": {
         "properties": {
           "customResourceState": {
@@ -1276,7 +1325,7 @@
         "type": "object"
       }
     },
-    "schema148": {
+    "schema147": {
       "properties": {
         "networkPolicy": {
           "properties": {
@@ -1421,14 +1470,14 @@
         }
       }
     },
-    "schema154": {
+    "schema153": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
     },
-    "schema155": {
+    "schema154": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -1443,6 +1492,25 @@
         },
         "required": [
           "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema159": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "useClusterRole": {}
+            },
+            "required": [
+              "useClusterRole"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
         ],
         "type": "object"
       }
@@ -1504,43 +1572,24 @@
       "x-kubernetes-patch-strategy": "merge"
     },
     "schema160": {
-      "not": {
-        "properties": {
-          "rbac": {
-            "properties": {
-              "useClusterRole": {}
-            },
-            "required": [
-              "useClusterRole"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "rbac"
-        ],
-        "type": "object"
-      }
-    },
-    "schema161": {
       "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
       "format": "int32",
       "type": "integer"
     },
-    "schema164": {
+    "schema163": {
       "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
     },
-    "schema165": {
+    "schema164": {
       "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema166": {
+    "schema165": {
       "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
     },
-    "schema167": {
+    "schema166": {
       "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
@@ -1584,10 +1633,10 @@
         "null"
       ]
     },
-    "schema172": {
+    "schema171": {
       "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
     },
-    "schema176": {
+    "schema175": {
       "not": {
         "properties": {
           "rbac": {
@@ -1605,10 +1654,6 @@
         ],
         "type": "object"
       }
-    },
-    "schema179": {
-      "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-      "type": "string"
     },
     "schema18": {
       "additionalProperties": {
@@ -1734,6 +1779,18 @@
         }
       }
     },
+    "schema188": {
+      "description": "optional specify whether the ConfigMap or its keys must be defined",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "schema189": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
     "schema19": {
       "additionalProperties": false,
       "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
@@ -1773,22 +1830,10 @@
       ]
     },
     "schema190": {
-      "description": "optional specify whether the ConfigMap or its keys must be defined",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "schema191": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "schema192": {
       "description": "insecureSkipVerify defines how to disable target certificate validation.",
       "type": "boolean"
     },
-    "schema193": {
+    "schema191": {
       "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted."
     },
     "schema2": {
@@ -2061,15 +2106,15 @@
         "null"
       ]
     },
-    "schema202": {
+    "schema200": {
       "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted."
     },
-    "schema206": {
+    "schema204": {
       "description": "The port that will be exposed by this service.",
       "format": "int32",
       "type": "integer"
     },
-    "schema210": {
+    "schema208": {
       "description": "Added capabilities",
       "items": {
         "type": [
@@ -2082,11 +2127,11 @@
         "null"
       ]
     },
-    "schema212": {
+    "schema210": {
       "description": "serverName is used to verify the hostname for the targets.",
       "type": "string"
     },
-    "schema219": {
+    "schema217": {
       "additionalProperties": {},
       "properties": {
         "httpHeaders": {},
@@ -2158,7 +2203,7 @@
         }
       ]
     },
-    "schema222": {
+    "schema220": {
       "properties": {
         "useClusterRole": {}
       },
@@ -2167,22 +2212,22 @@
       ],
       "type": "object"
     },
-    "schema223": {
+    "schema221": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema226": {
+    "schema224": {
       "description": "enableHttp2 can be used to disable HTTP2.",
       "type": "boolean"
     },
-    "schema227": {
+    "schema225": {
       "not": {
         "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
       }
     },
-    "schema228": {
+    "schema226": {
       "not": {
         "properties": {
           "create": {}
@@ -2191,6 +2236,11 @@
           "create"
         ],
         "type": "object"
+      }
+    },
+    "schema229": {
+      "not": {
+        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
       }
     },
     "schema23": {
@@ -2255,12 +2305,7 @@
         }
       }
     },
-    "schema231": {
-      "not": {
-        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
-      }
-    },
-    "schema232": {
+    "schema230": {
       "properties": {
         "enabled": {}
       },
@@ -2269,7 +2314,7 @@
       ],
       "type": "object"
     },
-    "schema235": {
+    "schema233": {
       "oneOf": [
         {
           "type": [
@@ -2285,11 +2330,11 @@
         }
       ]
     },
-    "schema237": {
+    "schema235": {
       "pattern": "^(true|false|True|False|TRUE|FALSE)$",
       "type": "string"
     },
-    "schema238": {
+    "schema236": {
       "oneOf": [
         {
           "type": [
@@ -2329,27 +2374,27 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "schema242": {
+    "schema240": {
       "additionalProperties": {},
       "properties": {},
       "type": "object"
     },
-    "schema243": {
+    "schema241": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema244": {
+    "schema242": {
       "not": {
         "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
       }
     },
-    "schema248": {
+    "schema246": {
       "pattern": "^-?(0|[1-9][0-9]*)$",
       "type": "string"
     },
-    "schema249": {
+    "schema247": {
       "anyOf": [
         {
           "type": "null"
@@ -2358,6 +2403,16 @@
           "type": "string"
         }
       ]
+    },
+    "schema248": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "schema249": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
     },
     "schema25": {
       "allOf": [
@@ -2418,30 +2473,20 @@
     },
     "schema250": {
       "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "schema251": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "schema252": {
-      "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema255": {
+    "schema253": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema256": {
+    "schema254": {
       "not": {
         "pattern": "[\\r\\n]"
       }
     },
-    "schema258": {
+    "schema256": {
       "not": {
         "pattern": "[ \\t]#"
       }
@@ -4507,7 +4552,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema147"
+                    "$ref": "#/$defs/schema146"
                   },
                   {
                     "properties": {
@@ -4643,7 +4688,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/schema148"
+            "$ref": "#/$defs/schema147"
           }
         ]
       },
@@ -4653,7 +4698,7 @@
           "annotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema243"
+                "$ref": "#/$defs/schema241"
               },
               {
                 "not": {
@@ -4739,7 +4784,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema176"
+                    "$ref": "#/$defs/schema175"
                   },
                   {
                     "properties": {
@@ -4769,7 +4814,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema147"
+                    "$ref": "#/$defs/schema146"
                   },
                   {
                     "properties": {
@@ -4893,7 +4938,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema176"
+                    "$ref": "#/$defs/schema175"
                   },
                   {
                     "properties": {
@@ -4919,7 +4964,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema160"
+                    "$ref": "#/$defs/schema159"
                   },
                   {
                     "properties": {
@@ -4947,7 +4992,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema155"
+                "$ref": "#/$defs/schema154"
               },
               {
                 "properties": {
@@ -5019,7 +5064,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema148"
+                "$ref": "#/$defs/schema147"
               }
             ]
           },
@@ -5085,7 +5130,7 @@
           "customLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema243"
+                "$ref": "#/$defs/schema241"
               },
               {
                 "not": {
@@ -5106,7 +5151,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema147"
+                    "$ref": "#/$defs/schema146"
                   },
                   {
                     "properties": {
@@ -5319,7 +5364,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema147"
+                    "$ref": "#/$defs/schema146"
                   },
                   {
                     "properties": {
@@ -5524,7 +5569,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema148"
+                "$ref": "#/$defs/schema147"
               }
             ]
           },
@@ -5624,7 +5669,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema176"
+                    "$ref": "#/$defs/schema175"
                   },
                   {
                     "properties": {
@@ -5650,7 +5695,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema160"
+                    "$ref": "#/$defs/schema159"
                   },
                   {
                     "properties": {
@@ -5678,7 +5723,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema155"
+                "$ref": "#/$defs/schema154"
               },
               {
                 "properties": {
@@ -5760,7 +5805,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema155"
+                    "$ref": "#/$defs/schema154"
                   },
                   {
                     "properties": {
@@ -5986,17 +6031,7 @@
             "description": "Enabling kubeconfig will pass the --kubeconfig argument to the container",
             "properties": {
               "secret": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "pattern": "^([^']|'')*$",
-                    "type": "string"
-                  }
-                ],
+                "$ref": "#/$defs/helm-single-quoted-safe",
                 "description": "base64 encoded kube-config file"
               }
             }
@@ -6120,7 +6155,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema176"
+                    "$ref": "#/$defs/schema175"
                   },
                   {
                     "properties": {
@@ -6150,7 +6185,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema147"
+                    "$ref": "#/$defs/schema146"
                   },
                   {
                     "properties": {
@@ -6274,7 +6309,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema176"
+                    "$ref": "#/$defs/schema175"
                   },
                   {
                     "properties": {
@@ -6300,7 +6335,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema160"
+                    "$ref": "#/$defs/schema159"
                   },
                   {
                     "properties": {
@@ -6328,7 +6363,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema155"
+                "$ref": "#/$defs/schema154"
               },
               {
                 "properties": {
@@ -6412,7 +6447,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema148"
+                "$ref": "#/$defs/schema147"
               }
             ]
           },
@@ -6526,7 +6561,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema147"
+                    "$ref": "#/$defs/schema146"
                   },
                   {
                     "properties": {
@@ -6648,7 +6683,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema155"
+                "$ref": "#/$defs/schema154"
               },
               {
                 "properties": {
@@ -6701,7 +6736,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema176"
+                "$ref": "#/$defs/schema175"
               },
               {
                 "properties": {
@@ -6727,7 +6762,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema160"
+                "$ref": "#/$defs/schema159"
               },
               {
                 "properties": {
@@ -6760,34 +6795,34 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema251"
-                  },
-                  {
-                    "$ref": "#/$defs/schema252"
-                  },
-                  {
-                    "$ref": "#/$defs/schema255"
-                  },
-                  {
-                    "$ref": "#/$defs/schema258"
-                  },
-                  {
-                    "$ref": "#/$defs/schema256"
+                    "$ref": "#/$defs/schema249"
                   },
                   {
                     "$ref": "#/$defs/schema250"
                   },
                   {
-                    "$ref": "#/$defs/schema191"
+                    "$ref": "#/$defs/schema253"
                   },
                   {
-                    "$ref": "#/$defs/schema227"
+                    "$ref": "#/$defs/schema256"
                   },
                   {
-                    "$ref": "#/$defs/schema231"
+                    "$ref": "#/$defs/schema254"
                   },
                   {
-                    "$ref": "#/$defs/schema244"
+                    "$ref": "#/$defs/schema248"
+                  },
+                  {
+                    "$ref": "#/$defs/schema189"
+                  },
+                  {
+                    "$ref": "#/$defs/schema225"
+                  },
+                  {
+                    "$ref": "#/$defs/schema229"
+                  },
+                  {
+                    "$ref": "#/$defs/schema242"
                   }
                 ],
                 "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
@@ -6833,7 +6868,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema176"
+                "$ref": "#/$defs/schema175"
               },
               {
                 "properties": {
@@ -6905,7 +6940,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema148"
+                "$ref": "#/$defs/schema147"
               }
             ]
           },
@@ -7055,7 +7090,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema148"
+                "$ref": "#/$defs/schema147"
               }
             ]
           },
@@ -7100,7 +7135,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema148"
+                "$ref": "#/$defs/schema147"
               }
             ]
           }
@@ -7239,7 +7274,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema148"
+                "$ref": "#/$defs/schema147"
               }
             ]
           },
@@ -7284,7 +7319,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema148"
+                "$ref": "#/$defs/schema147"
               }
             ]
           }
@@ -8624,7 +8659,7 @@
                       "enableHttp2": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema226"
+                            "$ref": "#/$defs/schema224"
                           },
                           {
                             "not": {
@@ -8632,7 +8667,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema237"
+                            "$ref": "#/$defs/schema235"
                           }
                         ],
                         "description": "Whether to enable HTTP2 for servicemonitor"
@@ -10585,17 +10620,7 @@
         "additionalProperties": {},
         "properties": {
           "prometheusScrape": {
-            "anyOf": [
-              {
-                "not": {
-                  "type": "string"
-                }
-              },
-              {
-                "pattern": "^([^']|'')*$",
-                "type": "string"
-              }
-            ],
+            "$ref": "#/$defs/helm-single-quoted-safe",
             "description": "Default values for kube-state-metrics."
           }
         }
@@ -10769,7 +10794,7 @@
             "not": {
               "properties": {
                 "securityContext": {
-                  "$ref": "#/$defs/schema232"
+                  "$ref": "#/$defs/schema230"
                 }
               },
               "required": [
@@ -10842,7 +10867,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema176"
+                    "$ref": "#/$defs/schema175"
                   },
                   {
                     "properties": {
@@ -10872,7 +10897,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema147"
+                    "$ref": "#/$defs/schema146"
                   },
                   {
                     "properties": {
@@ -10996,7 +11021,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema176"
+                    "$ref": "#/$defs/schema175"
                   },
                   {
                     "properties": {
@@ -11022,7 +11047,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema160"
+                    "$ref": "#/$defs/schema159"
                   },
                   {
                     "properties": {
@@ -11050,7 +11075,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema155"
+                "$ref": "#/$defs/schema154"
               },
               {
                 "properties": {
@@ -11202,7 +11227,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/schema148"
+                "$ref": "#/$defs/schema147"
               }
             ]
           },
@@ -11268,7 +11293,7 @@
           "selectorOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema243"
+                "$ref": "#/$defs/schema241"
               },
               {
                 "not": {
@@ -11438,7 +11463,7 @@
                     "$ref": "#/$defs/schema53"
                   },
                   {
-                    "$ref": "#/$defs/schema248"
+                    "$ref": "#/$defs/schema246"
                   }
                 ]
               }
@@ -11532,7 +11557,7 @@
               "telemetryPort": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema161"
+                    "$ref": "#/$defs/schema160"
                   },
                   {
                     "not": {
@@ -11540,7 +11565,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema248"
+                    "$ref": "#/$defs/schema246"
                   }
                 ]
               }
@@ -11659,7 +11684,7 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema248"
+                            "$ref": "#/$defs/schema246"
                           },
                           {
                             "type": "integer"
@@ -11730,7 +11755,7 @@
             "additionalProperties": {},
             "properties": {
               "clusterIP": {
-                "$ref": "#/$defs/schema144"
+                "$ref": "#/$defs/helm-double-quoted-safe"
               }
             }
           }
@@ -11764,7 +11789,7 @@
             "additionalProperties": {},
             "properties": {
               "loadBalancerIP": {
-                "$ref": "#/$defs/schema144"
+                "$ref": "#/$defs/helm-double-quoted-safe"
               }
             }
           }
@@ -11855,7 +11880,7 @@
               "port": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema161"
+                    "$ref": "#/$defs/schema160"
                   },
                   {
                     "not": {
@@ -11863,7 +11888,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema248"
+                    "$ref": "#/$defs/schema246"
                   }
                 ]
               }
@@ -11879,16 +11904,7 @@
           "additionalProperties": {},
           "properties": {
             "type": {
-              "anyOf": [
-                {
-                  "not": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "$ref": "#/$defs/schema179"
-                }
-              ],
+              "$ref": "#/$defs/helm-double-quoted-safe",
               "description": "Default to clusterIP for backward compatibility"
             }
           }
@@ -11930,7 +11946,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema155"
+                "$ref": "#/$defs/schema154"
               },
               {
                 "properties": {
@@ -12046,7 +12062,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema176"
+                    "$ref": "#/$defs/schema175"
                   },
                   {
                     "properties": {
@@ -12076,7 +12092,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema176"
+                    "$ref": "#/$defs/schema175"
                   },
                   {
                     "properties": {
@@ -12102,7 +12118,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema160"
+                    "$ref": "#/$defs/schema159"
                   },
                   {
                     "properties": {
@@ -12140,34 +12156,34 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema251"
-                      },
-                      {
-                        "$ref": "#/$defs/schema252"
-                      },
-                      {
-                        "$ref": "#/$defs/schema255"
-                      },
-                      {
-                        "$ref": "#/$defs/schema258"
-                      },
-                      {
-                        "$ref": "#/$defs/schema256"
+                        "$ref": "#/$defs/schema249"
                       },
                       {
                         "$ref": "#/$defs/schema250"
                       },
                       {
-                        "$ref": "#/$defs/schema191"
+                        "$ref": "#/$defs/schema253"
                       },
                       {
-                        "$ref": "#/$defs/schema227"
+                        "$ref": "#/$defs/schema256"
                       },
                       {
-                        "$ref": "#/$defs/schema231"
+                        "$ref": "#/$defs/schema254"
                       },
                       {
-                        "$ref": "#/$defs/schema244"
+                        "$ref": "#/$defs/schema248"
+                      },
+                      {
+                        "$ref": "#/$defs/schema189"
+                      },
+                      {
+                        "$ref": "#/$defs/schema225"
+                      },
+                      {
+                        "$ref": "#/$defs/schema229"
+                      },
+                      {
+                        "$ref": "#/$defs/schema242"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -12607,34 +12623,34 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema251"
-                  },
-                  {
-                    "$ref": "#/$defs/schema252"
-                  },
-                  {
-                    "$ref": "#/$defs/schema255"
-                  },
-                  {
-                    "$ref": "#/$defs/schema258"
-                  },
-                  {
-                    "$ref": "#/$defs/schema256"
+                    "$ref": "#/$defs/schema249"
                   },
                   {
                     "$ref": "#/$defs/schema250"
                   },
                   {
-                    "$ref": "#/$defs/schema191"
+                    "$ref": "#/$defs/schema253"
                   },
                   {
-                    "$ref": "#/$defs/schema227"
+                    "$ref": "#/$defs/schema256"
                   },
                   {
-                    "$ref": "#/$defs/schema231"
+                    "$ref": "#/$defs/schema254"
                   },
                   {
-                    "$ref": "#/$defs/schema244"
+                    "$ref": "#/$defs/schema248"
+                  },
+                  {
+                    "$ref": "#/$defs/schema189"
+                  },
+                  {
+                    "$ref": "#/$defs/schema225"
+                  },
+                  {
+                    "$ref": "#/$defs/schema229"
+                  },
+                  {
+                    "$ref": "#/$defs/schema242"
                   }
                 ],
                 "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
@@ -12887,7 +12903,7 @@
                           ]
                         },
                         "readOnly": {
-                          "$ref": "#/$defs/schema167"
+                          "$ref": "#/$defs/schema166"
                         }
                       },
                       "required": [
@@ -12904,7 +12920,7 @@
                       "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                       "properties": {
                         "readOnly": {
-                          "$ref": "#/$defs/schema165"
+                          "$ref": "#/$defs/schema164"
                         },
                         "secretName": {
                           "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -13028,10 +13044,10 @@
                           "$ref": "#/$defs/schema17"
                         },
                         "name": {
-                          "$ref": "#/$defs/schema154"
+                          "$ref": "#/$defs/schema153"
                         },
                         "optional": {
-                          "$ref": "#/$defs/schema190"
+                          "$ref": "#/$defs/schema188"
                         }
                       },
                       "type": [
@@ -13126,7 +13142,7 @@
                           ]
                         },
                         "sizeLimit": {
-                          "$ref": "#/$defs/schema238"
+                          "$ref": "#/$defs/schema236"
                         }
                       },
                       "type": [
@@ -13936,7 +13952,7 @@
                           ]
                         },
                         "readOnly": {
-                          "$ref": "#/$defs/schema165"
+                          "$ref": "#/$defs/schema164"
                         },
                         "volumeID": {
                           "description": "volumeID uniquely identifies a Portworx volume",
@@ -14018,10 +14034,10 @@
                                     "$ref": "#/$defs/schema17"
                                   },
                                   "name": {
-                                    "$ref": "#/$defs/schema154"
+                                    "$ref": "#/$defs/schema153"
                                   },
                                   "optional": {
-                                    "$ref": "#/$defs/schema190"
+                                    "$ref": "#/$defs/schema188"
                                   }
                                 },
                                 "type": [
@@ -14064,7 +14080,7 @@
                                     ]
                                   },
                                   "name": {
-                                    "$ref": "#/$defs/schema154"
+                                    "$ref": "#/$defs/schema153"
                                   },
                                   "optional": {
                                     "description": "optional field specify whether the Secret or its key must be defined",
@@ -14267,14 +14283,14 @@
                           ]
                         },
                         "readOnly": {
-                          "$ref": "#/$defs/schema167"
+                          "$ref": "#/$defs/schema166"
                         },
                         "secretRef": {
                           "additionalProperties": false,
                           "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                           "properties": {
                             "name": {
-                              "$ref": "#/$defs/schema154"
+                              "$ref": "#/$defs/schema153"
                             }
                           },
                           "type": "object",
@@ -14373,7 +14389,7 @@
                           "$ref": "#/$defs/schema124"
                         },
                         "readOnly": {
-                          "$ref": "#/$defs/schema165"
+                          "$ref": "#/$defs/schema164"
                         },
                         "secretRef": {
                           "$ref": "#/$defs/schema83"
@@ -14490,7 +14506,7 @@
     "annotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema242"
+          "$ref": "#/$defs/schema240"
         },
         {
           "$ref": "#/$defs/schema79"
@@ -14527,7 +14543,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema237"
+          "$ref": "#/$defs/schema235"
         }
       ],
       "description": "If false then the user will opt out of automounting API credentials."
@@ -14578,14 +14594,14 @@
                   "description": "Adds and removes POSIX capabilities from running containers.",
                   "properties": {
                     "add": {
-                      "$ref": "#/$defs/schema210"
+                      "$ref": "#/$defs/schema208"
                     },
                     "drop": {
                       "anyOf": [
                         {
                           "description": "Removed capabilities",
                           "items": {
-                            "$ref": "#/$defs/schema249"
+                            "$ref": "#/$defs/schema247"
                           },
                           "type": "array"
                         },
@@ -14674,7 +14690,7 @@
     "customLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema242"
+          "$ref": "#/$defs/schema240"
         },
         {
           "$ref": "#/$defs/schema86"
@@ -14808,7 +14824,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema223"
+          "$ref": "#/$defs/schema221"
         },
         {
           "not": {
@@ -14826,34 +14842,34 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema251"
-            },
-            {
-              "$ref": "#/$defs/schema252"
-            },
-            {
-              "$ref": "#/$defs/schema255"
-            },
-            {
-              "$ref": "#/$defs/schema258"
-            },
-            {
-              "$ref": "#/$defs/schema256"
+              "$ref": "#/$defs/schema249"
             },
             {
               "$ref": "#/$defs/schema250"
             },
             {
-              "$ref": "#/$defs/schema191"
+              "$ref": "#/$defs/schema253"
             },
             {
-              "$ref": "#/$defs/schema227"
+              "$ref": "#/$defs/schema256"
             },
             {
-              "$ref": "#/$defs/schema231"
+              "$ref": "#/$defs/schema254"
             },
             {
-              "$ref": "#/$defs/schema244"
+              "$ref": "#/$defs/schema248"
+            },
+            {
+              "$ref": "#/$defs/schema189"
+            },
+            {
+              "$ref": "#/$defs/schema225"
+            },
+            {
+              "$ref": "#/$defs/schema229"
+            },
+            {
+              "$ref": "#/$defs/schema242"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -14956,7 +14972,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema237"
+          "$ref": "#/$defs/schema235"
         }
       ]
     },
@@ -15166,7 +15182,7 @@
               "proxyEndpointsPort": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema161"
+                    "$ref": "#/$defs/schema160"
                   },
                   {
                     "not": {
@@ -15174,7 +15190,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema248"
+                    "$ref": "#/$defs/schema246"
                   }
                 ],
                 "description": "Configure specific proxy endpoints port\nThis port is for healthz on readinessProbe kube-rbac-proxy-http container"
@@ -15315,7 +15331,7 @@
     "labels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema223"
+          "$ref": "#/$defs/schema221"
         },
         {
           "$ref": "#/$defs/schema86"
@@ -15408,7 +15424,7 @@
           "$ref": "#/$defs/schema80"
         },
         "httpGet": {
-          "$ref": "#/$defs/schema219"
+          "$ref": "#/$defs/schema217"
         },
         "initialDelaySeconds": {
           "$ref": "#/$defs/schema65"
@@ -15442,34 +15458,34 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema251"
-            },
-            {
-              "$ref": "#/$defs/schema252"
-            },
-            {
-              "$ref": "#/$defs/schema255"
-            },
-            {
-              "$ref": "#/$defs/schema258"
-            },
-            {
-              "$ref": "#/$defs/schema256"
+              "$ref": "#/$defs/schema249"
             },
             {
               "$ref": "#/$defs/schema250"
             },
             {
-              "$ref": "#/$defs/schema191"
+              "$ref": "#/$defs/schema253"
             },
             {
-              "$ref": "#/$defs/schema227"
+              "$ref": "#/$defs/schema256"
             },
             {
-              "$ref": "#/$defs/schema231"
+              "$ref": "#/$defs/schema254"
             },
             {
-              "$ref": "#/$defs/schema244"
+              "$ref": "#/$defs/schema248"
+            },
+            {
+              "$ref": "#/$defs/schema189"
+            },
+            {
+              "$ref": "#/$defs/schema225"
+            },
+            {
+              "$ref": "#/$defs/schema229"
+            },
+            {
+              "$ref": "#/$defs/schema242"
             }
           ],
           "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
@@ -15751,7 +15767,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema223"
+          "$ref": "#/$defs/schema221"
         },
         {
           "additionalProperties": {
@@ -15778,7 +15794,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema223"
+          "$ref": "#/$defs/schema221"
         },
         {
           "$ref": "#/$defs/schema79"
@@ -15801,10 +15817,10 @@
           "description": "PodDisruptionBudgetSpec is a description of a PodDisruptionBudget.",
           "properties": {
             "maxUnavailable": {
-              "$ref": "#/$defs/schema235"
+              "$ref": "#/$defs/schema233"
             },
             "minAvailable": {
-              "$ref": "#/$defs/schema235"
+              "$ref": "#/$defs/schema233"
             },
             "selector": {
               "$ref": "#/$defs/schema12"
@@ -15820,7 +15836,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema223"
+          "$ref": "#/$defs/schema221"
         },
         {
           "not": {
@@ -15836,7 +15852,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema223"
+          "$ref": "#/$defs/schema221"
         },
         {
           "$ref": "#/$defs/schema86"
@@ -15857,34 +15873,34 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema251"
-            },
-            {
-              "$ref": "#/$defs/schema252"
-            },
-            {
-              "$ref": "#/$defs/schema255"
-            },
-            {
-              "$ref": "#/$defs/schema258"
-            },
-            {
-              "$ref": "#/$defs/schema256"
+              "$ref": "#/$defs/schema249"
             },
             {
               "$ref": "#/$defs/schema250"
             },
             {
-              "$ref": "#/$defs/schema191"
+              "$ref": "#/$defs/schema253"
             },
             {
-              "$ref": "#/$defs/schema227"
+              "$ref": "#/$defs/schema256"
             },
             {
-              "$ref": "#/$defs/schema231"
+              "$ref": "#/$defs/schema254"
             },
             {
-              "$ref": "#/$defs/schema244"
+              "$ref": "#/$defs/schema248"
+            },
+            {
+              "$ref": "#/$defs/schema189"
+            },
+            {
+              "$ref": "#/$defs/schema225"
+            },
+            {
+              "$ref": "#/$defs/schema229"
+            },
+            {
+              "$ref": "#/$defs/schema242"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -15927,7 +15943,7 @@
                       "additionalLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema243"
+                            "$ref": "#/$defs/schema241"
                           },
                           {
                             "not": {
@@ -15966,7 +15982,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema243"
+                            "$ref": "#/$defs/schema241"
                           },
                           {
                             "not": {
@@ -16490,7 +16506,7 @@
                           "enableHttp2": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema226"
+                                "$ref": "#/$defs/schema224"
                               },
                               {
                                 "not": {
@@ -16498,7 +16514,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/schema237"
+                                "$ref": "#/$defs/schema235"
                               }
                             ],
                             "description": "Whether to enable HTTP2 for servicemonitor"
@@ -17203,34 +17219,34 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema251"
-                              },
-                              {
-                                "$ref": "#/$defs/schema252"
-                              },
-                              {
-                                "$ref": "#/$defs/schema255"
-                              },
-                              {
-                                "$ref": "#/$defs/schema258"
-                              },
-                              {
-                                "$ref": "#/$defs/schema256"
+                                "$ref": "#/$defs/schema249"
                               },
                               {
                                 "$ref": "#/$defs/schema250"
                               },
                               {
-                                "$ref": "#/$defs/schema191"
+                                "$ref": "#/$defs/schema253"
                               },
                               {
-                                "$ref": "#/$defs/schema227"
+                                "$ref": "#/$defs/schema256"
                               },
                               {
-                                "$ref": "#/$defs/schema231"
+                                "$ref": "#/$defs/schema254"
                               },
                               {
-                                "$ref": "#/$defs/schema244"
+                                "$ref": "#/$defs/schema248"
+                              },
+                              {
+                                "$ref": "#/$defs/schema189"
+                              },
+                              {
+                                "$ref": "#/$defs/schema225"
+                              },
+                              {
+                                "$ref": "#/$defs/schema229"
+                              },
+                              {
+                                "$ref": "#/$defs/schema242"
                               }
                             ],
                             "description": "jobLabel selects the label from the associated Kubernetes `Service`\nobject which will be used as the `job` label for all metrics.\n\nFor example if `jobLabel` is set to `foo` and the Kubernetes `Service`\nobject is labeled with `foo: bar`, then Prometheus adds the `job=\"bar\"`\nlabel to all ingested metrics.\n\nIf the value of this field is empty or if the label doesn't exist for\nthe given Service, the `job` label of the metrics defaults to the name\nof the associated Kubernetes `Service`.",
@@ -18160,7 +18176,7 @@
                       "additionalLabels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema243"
+                            "$ref": "#/$defs/schema241"
                           },
                           {
                             "not": {
@@ -18200,7 +18216,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/schema243"
+                            "$ref": "#/$defs/schema241"
                           },
                           {
                             "not": {
@@ -18283,34 +18299,34 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema251"
-                              },
-                              {
-                                "$ref": "#/$defs/schema252"
-                              },
-                              {
-                                "$ref": "#/$defs/schema255"
-                              },
-                              {
-                                "$ref": "#/$defs/schema258"
-                              },
-                              {
-                                "$ref": "#/$defs/schema256"
+                                "$ref": "#/$defs/schema249"
                               },
                               {
                                 "$ref": "#/$defs/schema250"
                               },
                               {
-                                "$ref": "#/$defs/schema191"
+                                "$ref": "#/$defs/schema253"
                               },
                               {
-                                "$ref": "#/$defs/schema227"
+                                "$ref": "#/$defs/schema256"
                               },
                               {
-                                "$ref": "#/$defs/schema231"
+                                "$ref": "#/$defs/schema254"
                               },
                               {
-                                "$ref": "#/$defs/schema244"
+                                "$ref": "#/$defs/schema248"
+                              },
+                              {
+                                "$ref": "#/$defs/schema189"
+                              },
+                              {
+                                "$ref": "#/$defs/schema225"
+                              },
+                              {
+                                "$ref": "#/$defs/schema229"
+                              },
+                              {
+                                "$ref": "#/$defs/schema242"
                               }
                             ],
                             "description": "jobName defines the value of the `job` label assigned to the scraped metrics by default.\n\nThe `job_name` field in the rendered scrape configuration is always controlled by the\noperator to prevent duplicate job names, which Prometheus does not allow. Instead the\n`job` label is set by means of relabeling configs.",
@@ -18365,7 +18381,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema248"
+                            "$ref": "#/$defs/schema246"
                           }
                         ],
                         "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
@@ -18411,7 +18427,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema248"
+                            "$ref": "#/$defs/schema246"
                           }
                         ],
                         "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
@@ -18457,7 +18473,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema248"
+                            "$ref": "#/$defs/schema246"
                           }
                         ],
                         "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
@@ -18633,7 +18649,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema248"
+                            "$ref": "#/$defs/schema246"
                           }
                         ],
                         "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted."
@@ -18671,34 +18687,34 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema251"
-                              },
-                              {
-                                "$ref": "#/$defs/schema252"
-                              },
-                              {
-                                "$ref": "#/$defs/schema255"
-                              },
-                              {
-                                "$ref": "#/$defs/schema258"
-                              },
-                              {
-                                "$ref": "#/$defs/schema256"
+                                "$ref": "#/$defs/schema249"
                               },
                               {
                                 "$ref": "#/$defs/schema250"
                               },
                               {
-                                "$ref": "#/$defs/schema191"
+                                "$ref": "#/$defs/schema253"
                               },
                               {
-                                "$ref": "#/$defs/schema227"
+                                "$ref": "#/$defs/schema256"
                               },
                               {
-                                "$ref": "#/$defs/schema231"
+                                "$ref": "#/$defs/schema254"
                               },
                               {
-                                "$ref": "#/$defs/schema244"
+                                "$ref": "#/$defs/schema248"
+                              },
+                              {
+                                "$ref": "#/$defs/schema189"
+                              },
+                              {
+                                "$ref": "#/$defs/schema225"
+                              },
+                              {
+                                "$ref": "#/$defs/schema229"
+                              },
+                              {
+                                "$ref": "#/$defs/schema242"
                               }
                             ],
                             "description": "scheme defines the protocol scheme used for requests.",
@@ -18750,34 +18766,34 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema251"
-                              },
-                              {
-                                "$ref": "#/$defs/schema252"
-                              },
-                              {
-                                "$ref": "#/$defs/schema255"
-                              },
-                              {
-                                "$ref": "#/$defs/schema258"
-                              },
-                              {
-                                "$ref": "#/$defs/schema256"
+                                "$ref": "#/$defs/schema249"
                               },
                               {
                                 "$ref": "#/$defs/schema250"
                               },
                               {
-                                "$ref": "#/$defs/schema191"
+                                "$ref": "#/$defs/schema253"
                               },
                               {
-                                "$ref": "#/$defs/schema227"
+                                "$ref": "#/$defs/schema256"
                               },
                               {
-                                "$ref": "#/$defs/schema231"
+                                "$ref": "#/$defs/schema254"
                               },
                               {
-                                "$ref": "#/$defs/schema244"
+                                "$ref": "#/$defs/schema248"
+                              },
+                              {
+                                "$ref": "#/$defs/schema189"
+                              },
+                              {
+                                "$ref": "#/$defs/schema225"
+                              },
+                              {
+                                "$ref": "#/$defs/schema229"
+                              },
+                              {
+                                "$ref": "#/$defs/schema242"
                               }
                             ],
                             "description": "scrapeInterval defines the interval between consecutive scrapes.",
@@ -18824,34 +18840,34 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema251"
-                              },
-                              {
-                                "$ref": "#/$defs/schema252"
-                              },
-                              {
-                                "$ref": "#/$defs/schema255"
-                              },
-                              {
-                                "$ref": "#/$defs/schema258"
-                              },
-                              {
-                                "$ref": "#/$defs/schema256"
+                                "$ref": "#/$defs/schema249"
                               },
                               {
                                 "$ref": "#/$defs/schema250"
                               },
                               {
-                                "$ref": "#/$defs/schema191"
+                                "$ref": "#/$defs/schema253"
                               },
                               {
-                                "$ref": "#/$defs/schema227"
+                                "$ref": "#/$defs/schema256"
                               },
                               {
-                                "$ref": "#/$defs/schema231"
+                                "$ref": "#/$defs/schema254"
                               },
                               {
-                                "$ref": "#/$defs/schema244"
+                                "$ref": "#/$defs/schema248"
+                              },
+                              {
+                                "$ref": "#/$defs/schema189"
+                              },
+                              {
+                                "$ref": "#/$defs/schema225"
+                              },
+                              {
+                                "$ref": "#/$defs/schema229"
+                              },
+                              {
+                                "$ref": "#/$defs/schema242"
                               }
                             ],
                             "description": "scrapeTimeout defines the number of seconds to wait until a scrape request times out.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
@@ -18952,7 +18968,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema248"
+                            "$ref": "#/$defs/schema246"
                           }
                         ],
                         "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted."
@@ -18998,7 +19014,7 @@
                                 "$ref": "#/$defs/schema13"
                               },
                               "insecureSkipVerify": {
-                                "$ref": "#/$defs/schema192"
+                                "$ref": "#/$defs/schema190"
                               },
                               "keySecret": {
                                 "$ref": "#/$defs/schema38"
@@ -19010,7 +19026,7 @@
                                 "$ref": "#/$defs/schema133"
                               },
                               "serverName": {
-                                "$ref": "#/$defs/schema212"
+                                "$ref": "#/$defs/schema210"
                               }
                             },
                             "type": "object"
@@ -19084,13 +19100,13 @@
             "interval": {},
             "jobLabel": {},
             "labelLimit": {
-              "$ref": "#/$defs/schema172"
+              "$ref": "#/$defs/schema171"
             },
             "labelNameLengthLimit": {
-              "$ref": "#/$defs/schema166"
+              "$ref": "#/$defs/schema165"
             },
             "labelValueLengthLimit": {
-              "$ref": "#/$defs/schema164"
+              "$ref": "#/$defs/schema163"
             },
             "metricRelabelings": {},
             "metrics": {
@@ -19129,14 +19145,14 @@
             "proxyUrl": {},
             "relabelings": {},
             "sampleLimit": {
-              "$ref": "#/$defs/schema193"
+              "$ref": "#/$defs/schema191"
             },
             "scheme": {},
             "scrapeTimeout": {},
             "selectorOverride": {},
             "targetLabels": {},
             "targetLimit": {
-              "$ref": "#/$defs/schema202"
+              "$ref": "#/$defs/schema200"
             },
             "tlsConfig": {}
           },
@@ -19169,19 +19185,19 @@
             },
             "jobName": {},
             "labelLimit": {
-              "$ref": "#/$defs/schema172"
+              "$ref": "#/$defs/schema171"
             },
             "labelNameLengthLimit": {
-              "$ref": "#/$defs/schema166"
+              "$ref": "#/$defs/schema165"
             },
             "labelValueLengthLimit": {
-              "$ref": "#/$defs/schema164"
+              "$ref": "#/$defs/schema163"
             },
             "metricRelabelings": {},
             "proxyUrl": {},
             "relabelings": {},
             "sampleLimit": {
-              "$ref": "#/$defs/schema193"
+              "$ref": "#/$defs/schema191"
             },
             "scheme": {},
             "scrapeInterval": {},
@@ -19190,7 +19206,7 @@
               "description": "StaticConfigLabels defines the labels to be used in the Prometheus static configuration for scraping."
             },
             "targetLimit": {
-              "$ref": "#/$defs/schema202"
+              "$ref": "#/$defs/schema200"
             },
             "tlsConfig": {}
           },
@@ -19211,7 +19227,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema228"
+                    "$ref": "#/$defs/schema226"
                   },
                   {
                     "properties": {
@@ -19230,7 +19246,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/schema222"
+                      "$ref": "#/$defs/schema220"
                     }
                   },
                   {
@@ -19256,34 +19272,34 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema251"
-                      },
-                      {
-                        "$ref": "#/$defs/schema252"
-                      },
-                      {
-                        "$ref": "#/$defs/schema255"
-                      },
-                      {
-                        "$ref": "#/$defs/schema258"
-                      },
-                      {
-                        "$ref": "#/$defs/schema256"
+                        "$ref": "#/$defs/schema249"
                       },
                       {
                         "$ref": "#/$defs/schema250"
                       },
                       {
-                        "$ref": "#/$defs/schema191"
+                        "$ref": "#/$defs/schema253"
                       },
                       {
-                        "$ref": "#/$defs/schema227"
+                        "$ref": "#/$defs/schema256"
                       },
                       {
-                        "$ref": "#/$defs/schema231"
+                        "$ref": "#/$defs/schema254"
                       },
                       {
-                        "$ref": "#/$defs/schema244"
+                        "$ref": "#/$defs/schema248"
+                      },
+                      {
+                        "$ref": "#/$defs/schema189"
+                      },
+                      {
+                        "$ref": "#/$defs/schema225"
+                      },
+                      {
+                        "$ref": "#/$defs/schema229"
+                      },
+                      {
+                        "$ref": "#/$defs/schema242"
                       }
                     ],
                     "description": "Name is the name of resource being referenced",
@@ -19423,7 +19439,7 @@
           "$ref": "#/$defs/schema80"
         },
         "httpGet": {
-          "$ref": "#/$defs/schema219"
+          "$ref": "#/$defs/schema217"
         },
         "initialDelaySeconds": {
           "$ref": "#/$defs/schema65"
@@ -19470,7 +19486,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema248"
+          "$ref": "#/$defs/schema246"
         }
       ]
     },
@@ -19480,7 +19496,7 @@
           "$ref": "#/$defs/schema11"
         },
         {
-          "$ref": "#/$defs/schema223"
+          "$ref": "#/$defs/schema221"
         },
         {
           "type": "null"
@@ -19501,7 +19517,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema248"
+          "$ref": "#/$defs/schema246"
         }
       ],
       "description": "Number of old history to retain to allow rollback\nDefault Kubernetes value is set to 10"
@@ -19514,7 +19530,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema232"
+                  "$ref": "#/$defs/schema230"
                 }
               },
               {
@@ -19684,7 +19700,7 @@
     "selectorOverride": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema242"
+          "$ref": "#/$defs/schema240"
         },
         {
           "$ref": "#/$defs/schema86"
@@ -19721,7 +19737,7 @@
               "telemetryPort": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema206"
+                    "$ref": "#/$defs/schema204"
                   },
                   {
                     "not": {
@@ -19729,7 +19745,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema248"
+                    "$ref": "#/$defs/schema246"
                   }
                 ]
               }
@@ -19792,7 +19808,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema248"
+                    "$ref": "#/$defs/schema246"
                   }
                 ]
               }
@@ -19865,34 +19881,34 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/schema251"
-                              },
-                              {
-                                "$ref": "#/$defs/schema252"
-                              },
-                              {
-                                "$ref": "#/$defs/schema255"
-                              },
-                              {
-                                "$ref": "#/$defs/schema258"
-                              },
-                              {
-                                "$ref": "#/$defs/schema256"
+                                "$ref": "#/$defs/schema249"
                               },
                               {
                                 "$ref": "#/$defs/schema250"
                               },
                               {
-                                "$ref": "#/$defs/schema191"
+                                "$ref": "#/$defs/schema253"
                               },
                               {
-                                "$ref": "#/$defs/schema227"
+                                "$ref": "#/$defs/schema256"
                               },
                               {
-                                "$ref": "#/$defs/schema231"
+                                "$ref": "#/$defs/schema254"
                               },
                               {
-                                "$ref": "#/$defs/schema244"
+                                "$ref": "#/$defs/schema248"
+                              },
+                              {
+                                "$ref": "#/$defs/schema189"
+                              },
+                              {
+                                "$ref": "#/$defs/schema225"
+                              },
+                              {
+                                "$ref": "#/$defs/schema229"
+                              },
+                              {
+                                "$ref": "#/$defs/schema242"
                               }
                             ],
                             "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
@@ -19970,7 +19986,7 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema223"
+              "$ref": "#/$defs/schema221"
             },
             {
               "$ref": "#/$defs/schema79"
@@ -20031,10 +20047,10 @@
         "port": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema206"
+              "$ref": "#/$defs/schema204"
             },
             {
-              "$ref": "#/$defs/schema248"
+              "$ref": "#/$defs/schema246"
             }
           ]
         },
@@ -20051,7 +20067,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema228"
+                "$ref": "#/$defs/schema226"
               },
               {
                 "properties": {
@@ -20092,7 +20108,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema228"
+                "$ref": "#/$defs/schema226"
               },
               {
                 "properties": {
@@ -20121,7 +20137,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema237"
+                    "$ref": "#/$defs/schema235"
                   }
                 ],
                 "description": "If false then the user will opt out of automounting API credentials."
@@ -20133,7 +20149,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema228"
+                "$ref": "#/$defs/schema226"
               },
               {
                 "properties": {
@@ -20156,34 +20172,34 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema251"
-                      },
-                      {
-                        "$ref": "#/$defs/schema252"
-                      },
-                      {
-                        "$ref": "#/$defs/schema255"
-                      },
-                      {
-                        "$ref": "#/$defs/schema258"
-                      },
-                      {
-                        "$ref": "#/$defs/schema256"
+                        "$ref": "#/$defs/schema249"
                       },
                       {
                         "$ref": "#/$defs/schema250"
                       },
                       {
-                        "$ref": "#/$defs/schema191"
+                        "$ref": "#/$defs/schema253"
                       },
                       {
-                        "$ref": "#/$defs/schema227"
+                        "$ref": "#/$defs/schema256"
                       },
                       {
-                        "$ref": "#/$defs/schema231"
+                        "$ref": "#/$defs/schema254"
                       },
                       {
-                        "$ref": "#/$defs/schema244"
+                        "$ref": "#/$defs/schema248"
+                      },
+                      {
+                        "$ref": "#/$defs/schema189"
+                      },
+                      {
+                        "$ref": "#/$defs/schema225"
+                      },
+                      {
+                        "$ref": "#/$defs/schema229"
+                      },
+                      {
+                        "$ref": "#/$defs/schema242"
                       }
                     ],
                     "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -20233,34 +20249,34 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema251"
-                },
-                {
-                  "$ref": "#/$defs/schema252"
-                },
-                {
-                  "$ref": "#/$defs/schema255"
-                },
-                {
-                  "$ref": "#/$defs/schema258"
-                },
-                {
-                  "$ref": "#/$defs/schema256"
+                  "$ref": "#/$defs/schema249"
                 },
                 {
                   "$ref": "#/$defs/schema250"
                 },
                 {
-                  "$ref": "#/$defs/schema191"
+                  "$ref": "#/$defs/schema253"
                 },
                 {
-                  "$ref": "#/$defs/schema227"
+                  "$ref": "#/$defs/schema256"
                 },
                 {
-                  "$ref": "#/$defs/schema231"
+                  "$ref": "#/$defs/schema254"
                 },
                 {
-                  "$ref": "#/$defs/schema244"
+                  "$ref": "#/$defs/schema248"
+                },
+                {
+                  "$ref": "#/$defs/schema189"
+                },
+                {
+                  "$ref": "#/$defs/schema225"
+                },
+                {
+                  "$ref": "#/$defs/schema229"
+                },
+                {
+                  "$ref": "#/$defs/schema242"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",

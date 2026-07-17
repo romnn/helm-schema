@@ -34,8 +34,10 @@ mod iterable_lanes;
 mod kind_partition_matrix;
 mod member_access_contracts;
 mod member_serialized_shapes;
+mod merge_shadowing;
 mod nullability_defaults;
 mod operand_kind_contracts;
+mod program_wrappers;
 mod provider_evidence;
 mod range_collections;
 mod range_contracts;
@@ -232,14 +234,24 @@ fn expected_range_key_string_schema(path: &str) -> Value {
 }
 
 fn schema_accepts_instance(schema: &Value, instance: &Value) -> bool {
-    let document = crate::condition_encoding::value_references_helm_truthy(schema).then(|| {
-        serde_json::json!({
-            "$defs": {
-                crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME:
-                    crate::condition_encoding::helm_truthy_definition_schema()
-            },
-            "allOf": [schema]
-        })
+    // Schema FRAGMENTS reference helm-truthy without carrying the document
+    // root that defines it; supply the definition then. A full document
+    // resolves its own `$defs`, and wrapping it would hide them from `#/…`
+    // pointers, so existing definitions are preserved and the wrap only
+    // fires when the referenced definition is genuinely absent.
+    let needs_truthy = crate::condition_encoding::value_references_helm_truthy(schema)
+        && schema
+            .get("$defs")
+            .and_then(|defs| defs.get(crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME))
+            .is_none();
+    let document = needs_truthy.then(|| {
+        let mut defs = schema
+            .get("$defs")
+            .cloned()
+            .unwrap_or_else(|| serde_json::json!({}));
+        defs[crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME] =
+            crate::condition_encoding::helm_truthy_definition_schema();
+        serde_json::json!({ "$defs": defs, "allOf": [schema] })
     });
     jsonschema::validator_for(document.as_ref().unwrap_or(schema))
         .expect("schema validator")

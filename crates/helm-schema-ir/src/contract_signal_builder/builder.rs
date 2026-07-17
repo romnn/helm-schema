@@ -325,6 +325,27 @@ fn record_contract_use(
         {
             continue;
         }
+        // A merged sink's `with` gate marks the row with every layer's
+        // truthiness, but a layer's keys reach the render exactly when the
+        // LAYER itself is truthy: a sibling layer's marker would file this
+        // layer's typing under the wrong path's truthiness (the velero
+        // securityContext guard inversion), so those markers are dropped
+        // before lowering.
+        let predicates: Vec<Predicate> = if let Some(merge) = &contract_use.merge_layers {
+            predicates
+                .into_iter()
+                .filter(|predicate| {
+                    !matches!(
+                        predicate,
+                        Predicate::Guard(Guard::Truthy { path } | Guard::With { path })
+                            if path != &contract_use.source_expr
+                                && merge.layers.contains(path)
+                    )
+                })
+                .collect()
+        } else {
+            predicates
+        };
         record_contract_use_conjunction(paths, contract_use, &predicates, range_modes);
     }
 }
@@ -365,6 +386,20 @@ fn record_contract_use_conjunction(
                 .then(|| lowerable_range_outer_guards(&contract_use.source_expr, predicates))
                 .flatten()
         });
+    // A merge layer's sink typing rides its OWN truthiness: whichever layer
+    // made the `with` gate truthy, this layer's keys render exactly when
+    // the layer itself is (its falsy states contribute nothing).
+    let merge_layered = contract_use
+        .merge_layers
+        .as_ref()
+        .filter(|merge| merge.layers.get(merge.position) == Some(&contract_use.source_expr));
+    let lowerable_guards = if merge_layered.is_some() {
+        Some(vec![ConditionalGuard::Truthy {
+            path: contract_use.source_expr.clone(),
+        }])
+    } else {
+        lowerable_guards
+    };
     if ranged_member_parent(&contract_use.source_expr).is_some()
         && predicates
             .iter()
@@ -507,13 +542,27 @@ fn record_contract_use_conjunction(
         if contract_use.has_string_contract && own_iteration_only {
             acc.type_hints.insert("string".to_string());
         }
+        let provider_use = (!type_dispatched || complement_dispatched)
+            .then(|| provider_schema_use(contract_use, self_range_guarded))
+            .flatten();
+        // A merge layer's provider typing is synthesized by the generator
+        // from the path-level use: the preferred layer becomes a whole-
+        // payload arm under its own truthiness, and a SHADOWED layer
+        // becomes per-key arms scoped to keys the earlier layers lack.
+        // Neither shape fits the branch/base lanes here.
+        let (branch_provider_use, merge_layer_provider_use) = if merge_layered.is_some() {
+            (None, provider_use)
+        } else {
+            (provider_use, None)
+        };
+        if let Some(layered) = merge_layer_provider_use {
+            acc.facts.record_provider_schema_use(layered);
+        }
         acc.record_source_use(
             facts,
             path_is_empty || has_matching_self_guard,
             lowerable_guards,
-            (!type_dispatched || complement_dispatched)
-                .then(|| provider_schema_use(contract_use, self_range_guarded))
-                .flatten(),
+            branch_provider_use,
             metadata_field_kind,
             predicates.iter().all(|predicate| {
                 predicate.value_paths().iter().all(|path| {
@@ -806,6 +855,15 @@ fn record_fail_conjunction(
                 pattern: pattern.clone(),
                 templated: *templated,
             },
+        );
+        return;
+    }
+    if let crate::eval_effect::CaptureKind::QuotedSerialization { path, style } = &capture.kind {
+        record_value_requirement_capture(
+            paths,
+            capture,
+            path,
+            FailValueRequirement::QuotedSerializationSafe { style: *style },
         );
         return;
     }
@@ -2275,6 +2333,7 @@ fn provider_schema_use(
         resource,
         template_supplied_member_keys: contract_use.template_supplied_member_keys.clone(),
         split_segment: contract_use.split_segment.clone(),
+        merge_layers: contract_use.merge_layers.clone(),
         is_self_range_collection: self_range_guarded
             && contract_use
                 .path

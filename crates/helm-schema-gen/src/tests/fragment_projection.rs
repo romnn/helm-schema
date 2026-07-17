@@ -1022,6 +1022,7 @@ fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
         is_self_range_collection: false,
         template_supplied_member_keys: Default::default(),
         split_segment: None,
+        merge_layers: None,
     };
 
     let schema = provider

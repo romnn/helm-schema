@@ -40,6 +40,7 @@ pub struct ContractIr {
     range_modes: crate::range_modes::RangeModes,
     /// Chart value subtrees supplying defaults to effective values subtrees.
     values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
+    values_program_wrappers: BTreeSet<helm_schema_core::ValuesProgramWrapper>,
     /// `fail` captures: no valid values document may satisfy one of these
     /// conjunctions.
     fail_conditions: Vec<crate::eval_effect::FailCapture>,
@@ -125,6 +126,8 @@ impl ContractIr {
         self.range_modes.merge(&other.range_modes);
         self.values_default_sources
             .append(&mut other.values_default_sources);
+        self.values_program_wrappers
+            .append(&mut other.values_program_wrappers);
         for condition in std::mem::take(&mut other.fail_conditions) {
             if !self.fail_conditions.contains(&condition) {
                 self.fail_conditions.push(condition);
@@ -241,6 +244,13 @@ impl ContractIr {
                 source_path: map(&source.source_path),
             })
             .collect();
+        self.values_program_wrappers = std::mem::take(&mut self.values_program_wrappers)
+            .into_iter()
+            .map(|wrapper| helm_schema_core::ValuesProgramWrapper {
+                scope_path: map(&wrapper.scope_path),
+                key: wrapper.key,
+            })
+            .collect();
         self.fail_conditions = std::mem::take(&mut self.fail_conditions)
             .into_iter()
             .map(|mut capture| {
@@ -250,6 +260,7 @@ impl ContractIr {
                     .map(|predicate| predicate.map_value_paths(&mut map))
                     .collect();
                 capture.ranged.map_value_paths(&mut map);
+                capture.kind.map_value_paths(&mut map);
                 capture
             })
             .collect();
@@ -382,6 +393,13 @@ impl ContractIr {
         self.values_default_sources.extend(sources);
     }
 
+    pub(crate) fn extend_values_program_wrappers(
+        &mut self,
+        wrappers: impl IntoIterator<Item = helm_schema_core::ValuesProgramWrapper>,
+    ) {
+        self.values_program_wrappers.extend(wrappers);
+    }
+
     pub(crate) fn extend_fail_conditions(
         &mut self,
         conditions: impl IntoIterator<Item = crate::eval_effect::FailCapture>,
@@ -409,6 +427,7 @@ impl ContractIr {
             string_contract_value_paths,
             range_modes,
             values_default_sources,
+            values_program_wrappers,
             mut fail_conditions,
             dependency_values_root_fragments,
         } = self;
@@ -440,6 +459,7 @@ impl ContractIr {
             string_contract_value_paths,
             range_modes,
             values_default_sources,
+            values_program_wrappers,
             fail_conditions,
             dependency_values_root_fragments,
         )

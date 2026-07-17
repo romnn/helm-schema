@@ -30,6 +30,11 @@ pub(super) fn identity_value_paths(value: &Option<AbstractValue>) -> BTreeSet<St
                     collect(choice, paths);
                 }
             }
+            AbstractValue::MergedLayers(layers) => {
+                for layer in layers {
+                    collect(layer, paths);
+                }
+            }
             AbstractValue::Top
             | AbstractValue::Unknown
             | AbstractValue::RangeKey(_)
@@ -85,6 +90,11 @@ pub(super) fn serialization_payload_paths(value: &Option<AbstractValue>) -> BTre
             }
             AbstractValue::Choice(choices) => {
                 for value in choices {
+                    collect(value, paths);
+                }
+            }
+            AbstractValue::MergedLayers(layers) => {
+                for value in layers {
                     collect(value, paths);
                 }
             }

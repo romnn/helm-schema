@@ -1,5 +1,36 @@
 {
   "$defs": {
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
     "helm-truthy": {
       "anyOf": [
         {
@@ -151,24 +182,6 @@
         }
       }
     },
-    "schema19": {
-      "properties": {
-        "password": {
-          "anyOf": [
-            {
-              "not": {
-                "type": "string"
-              }
-            },
-            {
-              "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-              "type": "string"
-            }
-          ]
-        }
-      },
-      "type": "object"
-    },
     "schema2": {
       "additionalProperties": {},
       "properties": {
@@ -193,24 +206,6 @@
       }
     },
     "schema20": {
-      "properties": {
-        "username": {
-          "anyOf": [
-            {
-              "not": {
-                "type": "string"
-              }
-            },
-            {
-              "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-              "type": "string"
-            }
-          ]
-        }
-      },
-      "type": "object"
-    },
-    "schema22": {
       "anyOf": [
         {
           "not": {
@@ -238,7 +233,7 @@
         }
       ]
     },
-    "schema23": {
+    "schema21": {
       "not": {
         "properties": {
           "cluster": {
@@ -265,7 +260,7 @@
         "type": "object"
       }
     },
-    "schema24": {
+    "schema22": {
       "not": {
         "properties": {
           "cluster": {
@@ -292,18 +287,24 @@
         "type": "object"
       }
     },
-    "schema29": {
-      "anyOf": [
-        {
-          "not": {
-            "type": "string"
+    "schema27": {
+      "not": {
+        "properties": {
+          "cluster": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
           }
         },
-        {
-          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-          "type": "string"
-        }
-      ]
+        "required": [
+          "cluster"
+        ],
+        "type": "object"
+      }
     },
     "schema3": {
       "additionalProperties": {},
@@ -331,25 +332,6 @@
     "schema30": {
       "not": {
         "properties": {
-          "cluster": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "cluster"
-        ],
-        "type": "object"
-      }
-    },
-    "schema33": {
-      "not": {
-        "properties": {
           "auth": {
             "properties": {
               "enabled": {}
@@ -366,16 +348,12 @@
         "type": "object"
       }
     },
-    "schema35": {
-      "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-      "type": "string"
-    },
-    "schema38": {
+    "schema34": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema40": {
+    "schema36": {
       "additionalProperties": {},
       "properties": {
         "password": {},
@@ -384,7 +362,7 @@
       },
       "type": "object"
     },
-    "schema42": {
+    "schema38": {
       "anyOf": [
         {
           "pattern": "^(true|false|True|False|TRUE|FALSE)$",
@@ -395,7 +373,7 @@
         }
       ]
     },
-    "schema44": {
+    "schema40": {
       "properties": {
         "antiAffinity": {
           "enum": [
@@ -408,13 +386,13 @@
       ],
       "type": "object"
     },
-    "schema46": {
+    "schema42": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema47": {
+    "schema43": {
       "not": {
         "properties": {
           "enabled": {}
@@ -425,7 +403,7 @@
         "type": "object"
       }
     },
-    "schema48": {
+    "schema44": {
       "not": {
         "properties": {
           "create": {}
@@ -436,9 +414,14 @@
         "type": "object"
       }
     },
-    "schema49": {
+    "schema45": {
       "not": {
         "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+      }
+    },
+    "schema46": {
+      "not": {
+        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
       }
     },
     "schema5": {
@@ -496,22 +479,36 @@
       ],
       "type": "string"
     },
-    "schema50": {
-      "not": {
-        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
-      }
-    },
-    "schema55": {
+    "schema51": {
       "pattern": "^(true|false|True|False|TRUE|FALSE)$",
       "type": "string"
     },
-    "schema57": {
+    "schema53": {
       "type": "object",
       "x-kubernetes-preserve-unknown-fields": true
     },
-    "schema58": {
+    "schema54": {
       "not": {
         "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+      }
+    },
+    "schema56": {
+      "pattern": "^-?(0|[1-9][0-9]*)$",
+      "type": "string"
+    },
+    "schema57": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "schema58": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "schema59": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
       }
     },
     "schema6": {
@@ -537,26 +534,7 @@
         }
       }
     },
-    "schema60": {
-      "pattern": "^-?(0|[1-9][0-9]*)$",
-      "type": "string"
-    },
-    "schema61": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
     "schema62": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "schema63": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "schema66": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -587,7 +565,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema22"
               },
               {
                 "properties": {
@@ -621,7 +599,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema23"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -655,7 +633,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -720,7 +698,7 @@
                 "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
                 "properties": {
                   "password": {
-                    "$ref": "#/$defs/schema29"
+                    "$ref": "#/$defs/helm-double-quoted-safe"
                   }
                 }
               }
@@ -735,7 +713,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema22"
               },
               {
                 "properties": {
@@ -769,7 +747,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema23"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "properties": {
@@ -803,7 +781,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -868,16 +846,7 @@
                 "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
                 "properties": {
                   "username": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "type": "string"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/schema35"
-                      }
-                    ],
+                    "$ref": "#/$defs/helm-double-quoted-safe",
                     "description": "This is where you enter a username/password for 1 user"
                   }
                 }
@@ -893,7 +862,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema22"
               },
               {
                 "properties": {
@@ -954,7 +923,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -993,13 +962,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/schema40"
+                          "$ref": "#/$defs/schema36"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/schema40"
+                          "$ref": "#/$defs/schema36"
                         },
                         "type": "object"
                       },
@@ -1022,7 +991,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema22"
               },
               {
                 "properties": {
@@ -1083,7 +1052,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -1122,13 +1091,29 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/schema19"
+                          "properties": {
+                            "password": {
+                              "$ref": "#/$defs/helm-double-quoted-safe"
+                            }
+                          },
+                          "required": [
+                            "password"
+                          ],
+                          "type": "object"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/schema19"
+                          "properties": {
+                            "password": {
+                              "$ref": "#/$defs/helm-double-quoted-safe"
+                            }
+                          },
+                          "required": [
+                            "password"
+                          ],
+                          "type": "object"
                         },
                         "type": "object"
                       },
@@ -1151,7 +1136,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema22"
               },
               {
                 "properties": {
@@ -1212,7 +1197,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -1251,13 +1236,29 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/schema20"
+                          "properties": {
+                            "username": {
+                              "$ref": "#/$defs/helm-double-quoted-safe"
+                            }
+                          },
+                          "required": [
+                            "username"
+                          ],
+                          "type": "object"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/schema20"
+                          "properties": {
+                            "username": {
+                              "$ref": "#/$defs/helm-double-quoted-safe"
+                            }
+                          },
+                          "required": [
+                            "username"
+                          ],
+                          "type": "object"
                         },
                         "type": "object"
                       },
@@ -1280,7 +1281,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema22"
               },
               {
                 "properties": {
@@ -1341,7 +1342,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -1395,7 +1396,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema22"
               },
               {
                 "properties": {
@@ -1456,7 +1457,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -1510,7 +1511,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema22"
               },
               {
                 "properties": {
@@ -1571,7 +1572,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -1654,7 +1655,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -1688,7 +1689,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -1718,7 +1719,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -1752,7 +1753,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "properties": {
@@ -1786,7 +1787,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -1816,7 +1817,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -1850,7 +1851,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema23"
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "properties": {
@@ -1884,7 +1885,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -1943,7 +1944,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -2004,7 +2005,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -2034,7 +2035,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema22"
                   },
                   {
                     "properties": {
@@ -2068,7 +2069,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -2096,7 +2097,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -2175,7 +2176,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -2203,7 +2204,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -2255,7 +2256,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -2312,7 +2313,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -2432,7 +2433,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -2460,7 +2461,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -2517,7 +2518,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -2633,7 +2634,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -2690,7 +2691,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -2800,7 +2801,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema22"
               },
               {
                 "properties": {
@@ -2834,7 +2835,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -2898,13 +2899,13 @@
                   {
                     "allOf": [
                       {
+                        "$ref": "#/$defs/schema58"
+                      },
+                      {
+                        "$ref": "#/$defs/schema59"
+                      },
+                      {
                         "$ref": "#/$defs/schema62"
-                      },
-                      {
-                        "$ref": "#/$defs/schema63"
-                      },
-                      {
-                        "$ref": "#/$defs/schema66"
                       },
                       {
                         "not": {
@@ -2917,19 +2918,19 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema61"
+                        "$ref": "#/$defs/schema57"
                       },
                       {
-                        "$ref": "#/$defs/schema38"
+                        "$ref": "#/$defs/schema34"
                       },
                       {
-                        "$ref": "#/$defs/schema49"
+                        "$ref": "#/$defs/schema45"
                       },
                       {
-                        "$ref": "#/$defs/schema50"
+                        "$ref": "#/$defs/schema46"
                       },
                       {
-                        "$ref": "#/$defs/schema58"
+                        "$ref": "#/$defs/schema54"
                       }
                     ],
                     "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
@@ -2958,7 +2959,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -3024,7 +3025,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema30"
+                "$ref": "#/$defs/schema27"
               },
               {
                 "properties": {
@@ -3052,7 +3053,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3132,7 +3133,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3160,7 +3161,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema30"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3217,7 +3218,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema30"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3311,7 +3312,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3339,7 +3340,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema30"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3427,7 +3428,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema24"
+                        "$ref": "#/$defs/schema22"
                       },
                       {
                         "properties": {
@@ -3461,7 +3462,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema30"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3491,7 +3492,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema24"
+                        "$ref": "#/$defs/schema22"
                       },
                       {
                         "properties": {
@@ -3525,7 +3526,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema23"
+                        "$ref": "#/$defs/schema21"
                       },
                       {
                         "properties": {
@@ -3559,7 +3560,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema30"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3589,7 +3590,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema24"
+                        "$ref": "#/$defs/schema22"
                       },
                       {
                         "properties": {
@@ -3623,7 +3624,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema23"
+                        "$ref": "#/$defs/schema21"
                       },
                       {
                         "properties": {
@@ -3657,7 +3658,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema30"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3716,7 +3717,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema24"
+                        "$ref": "#/$defs/schema22"
                       },
                       {
                         "properties": {
@@ -3777,7 +3778,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema30"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3807,7 +3808,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema24"
+                        "$ref": "#/$defs/schema22"
                       },
                       {
                         "properties": {
@@ -3841,7 +3842,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema30"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3869,7 +3870,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -3928,7 +3929,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema30"
+                        "$ref": "#/$defs/schema27"
                       },
                       {
                         "properties": {
@@ -3956,7 +3957,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema30"
+                    "$ref": "#/$defs/schema27"
                   },
                   {
                     "properties": {
@@ -4012,7 +4013,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema44"
+            "$ref": "#/$defs/schema40"
           },
           {
             "allOf": [
@@ -4046,7 +4047,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/schema44"
+                  "$ref": "#/$defs/schema40"
                 }
               }
             ]
@@ -4057,7 +4058,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/schema29"
+            "$ref": "#/$defs/helm-double-quoted-safe"
           }
         }
       }
@@ -4092,7 +4093,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema22"
+        "$ref": "#/$defs/schema20"
       },
       "then": {
         "additionalProperties": {},
@@ -4105,7 +4106,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema22"
+        "$ref": "#/$defs/schema20"
       },
       "then": {
         "additionalProperties": {},
@@ -4132,7 +4133,7 @@
         "additionalProperties": {},
         "properties": {
           "schedulerName": {
-            "$ref": "#/$defs/schema29"
+            "$ref": "#/$defs/helm-double-quoted-safe"
           }
         }
       }
@@ -4185,7 +4186,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -4211,7 +4212,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema57"
+                    "$ref": "#/$defs/schema53"
                   }
                 ],
                 "description": "Optional custom annotations to add to Pods in the cluster"
@@ -4225,7 +4226,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema33"
+                    "$ref": "#/$defs/schema30"
                   },
                   {
                     "properties": {
@@ -4251,7 +4252,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema48"
+                    "$ref": "#/$defs/schema44"
                   },
                   {
                     "properties": {
@@ -4278,7 +4279,7 @@
                   "enableServiceAccounts": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema55"
+                        "$ref": "#/$defs/schema51"
                       },
                       {
                         "type": "boolean"
@@ -4297,7 +4298,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema33"
+                    "$ref": "#/$defs/schema30"
                   },
                   {
                     "properties": {
@@ -4342,7 +4343,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema48"
+                    "$ref": "#/$defs/schema44"
                   },
                   {
                     "properties": {
@@ -4380,7 +4381,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -4403,7 +4404,7 @@
                 "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/schema42"
+                    "$ref": "#/$defs/schema38"
                   }
                 }
               }
@@ -4414,7 +4415,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -4448,7 +4449,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -4482,7 +4483,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -4512,7 +4513,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema57"
+                        "$ref": "#/$defs/schema53"
                       }
                     ],
                     "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
@@ -4526,7 +4527,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -4560,7 +4561,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -4583,7 +4584,7 @@
                 "description": "Prometheus Metrics Exporter",
                 "properties": {
                   "enabled": {
-                    "$ref": "#/$defs/schema42"
+                    "$ref": "#/$defs/schema38"
                   }
                 }
               }
@@ -4594,7 +4595,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -4628,7 +4629,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -4664,7 +4665,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema48"
+                    "$ref": "#/$defs/schema44"
                   },
                   {
                     "properties": {
@@ -4752,7 +4753,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -4786,7 +4787,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -4814,7 +4815,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -4840,7 +4841,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema57"
+                    "$ref": "#/$defs/schema53"
                   }
                 ],
                 "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi"
@@ -4852,7 +4853,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -4873,7 +4874,7 @@
               "size": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema60"
+                    "$ref": "#/$defs/schema56"
                   },
                   {
                     "type": "integer"
@@ -4890,7 +4891,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema48"
+                    "$ref": "#/$defs/schema44"
                   },
                   {
                     "properties": {
@@ -4946,7 +4947,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema48"
+                    "$ref": "#/$defs/schema44"
                   },
                   {
                     "properties": {
@@ -5000,7 +5001,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema48"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -5021,13 +5022,13 @@
               "version": {
                 "allOf": [
                   {
+                    "$ref": "#/$defs/schema58"
+                  },
+                  {
+                    "$ref": "#/$defs/schema59"
+                  },
+                  {
                     "$ref": "#/$defs/schema62"
-                  },
-                  {
-                    "$ref": "#/$defs/schema63"
-                  },
-                  {
-                    "$ref": "#/$defs/schema66"
                   },
                   {
                     "not": {
@@ -5040,19 +5041,19 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema61"
+                    "$ref": "#/$defs/schema57"
                   },
                   {
-                    "$ref": "#/$defs/schema38"
+                    "$ref": "#/$defs/schema34"
                   },
                   {
-                    "$ref": "#/$defs/schema49"
+                    "$ref": "#/$defs/schema45"
                   },
                   {
-                    "$ref": "#/$defs/schema50"
+                    "$ref": "#/$defs/schema46"
                   },
                   {
-                    "$ref": "#/$defs/schema58"
+                    "$ref": "#/$defs/schema54"
                   }
                 ],
                 "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags",
@@ -5241,13 +5242,13 @@
             {
               "allOf": [
                 {
+                  "$ref": "#/$defs/schema58"
+                },
+                {
+                  "$ref": "#/$defs/schema59"
+                },
+                {
                   "$ref": "#/$defs/schema62"
-                },
-                {
-                  "$ref": "#/$defs/schema63"
-                },
-                {
-                  "$ref": "#/$defs/schema66"
                 },
                 {
                   "not": {
@@ -5260,19 +5261,19 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema61"
+                  "$ref": "#/$defs/schema57"
                 },
                 {
-                  "$ref": "#/$defs/schema38"
+                  "$ref": "#/$defs/schema34"
                 },
                 {
-                  "$ref": "#/$defs/schema49"
+                  "$ref": "#/$defs/schema45"
                 },
                 {
-                  "$ref": "#/$defs/schema50"
+                  "$ref": "#/$defs/schema46"
                 },
                 {
-                  "$ref": "#/$defs/schema58"
+                  "$ref": "#/$defs/schema54"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -5322,7 +5323,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -5345,7 +5346,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -5368,7 +5369,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -5391,7 +5392,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -5414,7 +5415,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -5497,7 +5498,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema46"
+          "$ref": "#/$defs/schema42"
         },
         {
           "additionalProperties": {
@@ -5528,7 +5529,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema46"
+          "$ref": "#/$defs/schema42"
         },
         {
           "additionalProperties": {
@@ -5576,7 +5577,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -5599,7 +5600,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -5622,7 +5623,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -5645,7 +5646,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -5668,7 +5669,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -5722,7 +5723,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema60"
+          "$ref": "#/$defs/schema56"
         }
       ],
       "description": "Set default Replica Count for the Operator"
@@ -5811,7 +5812,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema46"
+          "$ref": "#/$defs/schema42"
         },
         {
           "type": "null"
@@ -5829,7 +5830,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -5860,7 +5861,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema60"
+                    "$ref": "#/$defs/schema56"
                   }
                 ]
               }
@@ -5871,7 +5872,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema47"
+                "$ref": "#/$defs/schema43"
               },
               {
                 "properties": {
@@ -5902,7 +5903,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema60"
+                    "$ref": "#/$defs/schema56"
                   }
                 ]
               }
@@ -5996,13 +5997,13 @@
         {
           "allOf": [
             {
+              "$ref": "#/$defs/schema58"
+            },
+            {
+              "$ref": "#/$defs/schema59"
+            },
+            {
               "$ref": "#/$defs/schema62"
-            },
-            {
-              "$ref": "#/$defs/schema63"
-            },
-            {
-              "$ref": "#/$defs/schema66"
             },
             {
               "not": {
@@ -6015,19 +6016,19 @@
               }
             },
             {
-              "$ref": "#/$defs/schema61"
+              "$ref": "#/$defs/schema57"
             },
             {
-              "$ref": "#/$defs/schema38"
+              "$ref": "#/$defs/schema34"
             },
             {
-              "$ref": "#/$defs/schema49"
+              "$ref": "#/$defs/schema45"
             },
             {
-              "$ref": "#/$defs/schema50"
+              "$ref": "#/$defs/schema46"
             },
             {
-              "$ref": "#/$defs/schema58"
+              "$ref": "#/$defs/schema54"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",

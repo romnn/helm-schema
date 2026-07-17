@@ -112,7 +112,7 @@ fn token_initial_splice_survives_sibling_default_arm_split() {
 /// A splice inside MANUAL double quotes (`image: "{{ … }}/…"`) corrupts the
 /// quoted token when the raw string is not valid double-quoted YAML content
 /// (zalando's manually quoted image scalar). Valid escape sequences such as
-/// `\"` and `\\` render, and other input kinds format safely inside the
+/// `\"` and `\\` render, and non-string scalars format safely inside the
 /// quotes.
 #[test]
 fn double_quoted_splice_excludes_invalid_quoted_content() {
@@ -424,6 +424,102 @@ fn same_line_yaml_serialized_value_rejects_structured_members() {
             schema_accepts_instance(&schema, &instance) == want,
             "structured members break the same-line serialized slot: \
              instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A COLLECTION value at a double-quoted splice renders through Go's fmt
+/// (`map[k:v]` / `[a b]`) with every nested string and mapping key embedded
+/// raw, so the quoted token survives exactly when those are valid
+/// double-quoted content (zalando's map-valued registry inside manual
+/// quotes). Non-string scalars format as plain digits/words and stay safe
+/// at any depth.
+#[test]
+fn double_quoted_splice_composites_require_safe_nested_strings() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          image: "{{ .Values.image.registry }}/ui:v1"
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("image:\n  registry: ghcr.io\n"));
+    for (instance, want) in [
+        // A nested unescaped quote embeds raw and breaks the token.
+        (
+            serde_json::json!({ "image": { "registry": { "x": "a\"b" } } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "image": { "registry": ["a\"b"] } }),
+            false,
+        ),
+        // Mapping keys embed raw too.
+        (
+            serde_json::json!({ "image": { "registry": { "a\"b": "v" } } }),
+            false,
+        ),
+        // Depth does not launder the string.
+        (
+            serde_json::json!({ "image": { "registry": { "x": { "y": "a\"b" } } } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "image": { "registry": { "x": ["a\"b"] } } }),
+            false,
+        ),
+        // Safe nested content renders a parseable (if odd) quoted scalar.
+        (
+            serde_json::json!({ "image": { "registry": { "x": "ok" } } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "image": { "registry": ["ok", 7, true] } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "image": { "registry": { "x": { "y": 7 } } } }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "composite quoted splices constrain nested strings: \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}
+
+/// The single-quoted flavor of the composite contract: a nested apostrophe
+/// that is not doubled breaks the manually quoted token (datadog's
+/// `toJson`-shaped values inside single quotes carry nested apostrophes the
+/// same way).
+#[test]
+fn single_quoted_splice_composites_require_safe_nested_strings() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: main
+              args:
+                - '--log-level {{ .Values.defaultLevel }}'
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("defaultLevel: info\n"));
+    for (instance, want) in [
+        (serde_json::json!({ "defaultLevel": { "x": "a'b" } }), false),
+        (serde_json::json!({ "defaultLevel": ["a'b"] }), false),
+        // A doubled apostrophe is the single-quote escape and renders.
+        (serde_json::json!({ "defaultLevel": { "x": "a''b" } }), true),
+        (serde_json::json!({ "defaultLevel": [7, true] }), true),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "composite single-quoted splices constrain nested strings: \
+             instance={instance}; want={want}; schema={schema}"
         );
     }
 }

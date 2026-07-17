@@ -93,6 +93,7 @@ fn raw_condition_path(value: &AbstractValue) -> Option<String> {
         | AbstractValue::Dict(_)
         | AbstractValue::List(_)
         | AbstractValue::Overlay { .. }
+        | AbstractValue::MergedLayers(_)
         | AbstractValue::SplitList { .. }
         | AbstractValue::SplitSegment { .. }
         | AbstractValue::Widened(_) => None,

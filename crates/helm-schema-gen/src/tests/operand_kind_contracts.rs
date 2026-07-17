@@ -1962,3 +1962,76 @@ fn regex_match_over_type_of_dispatches_numeric_kinds() {
         );
     }
 }
+
+/// A `semverCompare` outer guard on a direct values path lowers to an exact
+/// version-range pattern arm, so a `tpl` string contract inside the guarded
+/// branch binds exactly when the comparison holds instead of abstaining
+/// wholesale (airflow's webserver Deployment guards
+/// `tpl .Values.config.webserver.base_url` behind
+/// `semverCompare "<3.0.0" .Values.airflowVersion`).
+#[test]
+fn semver_guarded_string_contract_binds_conditionally() {
+    let src = indoc! {r#"
+        {{- if and .Values.webserver.enabled (semverCompare "<3.0.0" .Values.airflowVersion) }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          probe: {{ tpl .Values.baseUrl . }}
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some(indoc! {r#"
+            webserver:
+              enabled: true
+            airflowVersion: "3.2.2"
+            baseUrl: "http://placeholder"
+        "#}),
+    );
+
+    for (instance, want) in [
+        // Live version branch: the tpl subject must be a string.
+        (
+            serde_json::json!({ "airflowVersion": "2.11.0", "baseUrl": { "a": "b" } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "airflowVersion": "v2.9", "baseUrl": { "a": "b" } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "airflowVersion": "2.11.0", "baseUrl": "http://live" }),
+            true,
+        ),
+        // Dead version branch (explicit and via the chart default): the
+        // contract must not leak out of its guard.
+        (
+            serde_json::json!({ "airflowVersion": "3.2.2", "baseUrl": { "a": "b" } }),
+            true,
+        ),
+        (serde_json::json!({ "baseUrl": { "a": "b" } }), true),
+        // A prerelease version matches no bare comparator, so the guarded
+        // branch is dead there too.
+        (
+            serde_json::json!({ "airflowVersion": "2.5.0-rc1", "baseUrl": { "a": "b" } }),
+            true,
+        ),
+        // The faithful sibling conjunct still gates the arm.
+        (
+            serde_json::json!({
+                "airflowVersion": "2.11.0",
+                "webserver": { "enabled": false },
+                "baseUrl": { "a": "b" }
+            }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "the semver comparator arm scopes the tpl string contract: \
+             instance={instance}; want={want}; schema={schema}"
+        );
+    }
+}

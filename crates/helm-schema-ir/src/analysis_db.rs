@@ -151,6 +151,87 @@ impl IrAnalysisDb {
         facts
     }
 
+    /// Sentinel keys of a chart-authored values-program wrapper engine
+    /// rooted at `entry`: within the define family (the entry plus its
+    /// transitive includes, bounded), a sentinel is a literal key that the
+    /// family both TESTS with `hasKey` and READS with `get` into a value
+    /// that feeds `tpl` — the structural shape of an engine that replaces
+    /// singleton `{KEY: PROGRAM}` maps with rendered program results
+    /// (nats' `tplYaml`/`tplYamlItr`). Empty when the family is not such
+    /// an engine.
+    pub(crate) fn program_wrapper_sentinels(&self, entry: &str) -> BTreeSet<String> {
+        const MAX_FAMILY: usize = 16;
+        let mut visited: BTreeSet<String> = BTreeSet::new();
+        let mut queue = vec![entry.to_string()];
+        let mut has_key_literals: BTreeSet<String> = BTreeSet::new();
+        let mut tpl_fed_literals: BTreeSet<String> = BTreeSet::new();
+        while let Some(name) = queue.pop() {
+            if visited.len() >= MAX_FAMILY || !visited.insert(name.clone()) {
+                continue;
+            }
+            let Some(body) = self.define_bodies.get(&name) else {
+                continue;
+            };
+            // Per body: `get`-bound variables feeding a later `tpl` call.
+            let mut get_bound: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+            let mut tpl_variables: BTreeSet<String> = BTreeSet::new();
+            for expr in helm_schema_ast::parse_action_expressions(&body.source) {
+                expr.walk(|inner| match inner {
+                    TemplateExpr::Call { function, args } => match function.as_str() {
+                        "hasKey" => {
+                            if let Some(key) = literal_string_argument(args.get(1)) {
+                                has_key_literals.insert(key);
+                            }
+                        }
+                        "tpl" => match args.first().map(TemplateExpr::deparen) {
+                            Some(TemplateExpr::Variable(variable)) => {
+                                tpl_variables.insert(variable.clone());
+                            }
+                            Some(TemplateExpr::Call {
+                                function: inner_function,
+                                args: inner_args,
+                            }) if inner_function == "get" => {
+                                if let Some(key) = literal_string_argument(inner_args.get(1)) {
+                                    tpl_fed_literals.insert(key);
+                                }
+                            }
+                            _ => {}
+                        },
+                        "include" | "template" => {
+                            if let Some(name) = literal_string_argument(args.first()) {
+                                queue.push(name);
+                            }
+                        }
+                        _ => {}
+                    },
+                    TemplateExpr::VariableDefinition { name, value }
+                    | TemplateExpr::Assignment { name, value } => {
+                        if let TemplateExpr::Call { function, args } = value.deparen()
+                            && function == "get"
+                            && let Some(key) = literal_string_argument(args.get(1))
+                        {
+                            // Definitions spell the `$`, uses do not.
+                            get_bound
+                                .entry(name.trim_start_matches('$').to_string())
+                                .or_default()
+                                .insert(key);
+                        }
+                    }
+                    _ => {}
+                });
+            }
+            for variable in &tpl_variables {
+                if let Some(keys) = get_bound.get(variable) {
+                    tpl_fed_literals.extend(keys.iter().cloned());
+                }
+            }
+        }
+        has_key_literals
+            .intersection(&tpl_fed_literals)
+            .cloned()
+            .collect()
+    }
+
     pub(crate) fn parsed_helper_body(&self, name: &str) -> Option<ParsedHelperBody<'_>> {
         let body = self.define_bodies.get(name)?;
         Some(ParsedHelperBody {
@@ -372,6 +453,13 @@ impl BoundHelperCallCacheKey {
             dot: resolution.dot.clone(),
             seen,
         }
+    }
+}
+
+fn literal_string_argument(argument: Option<&TemplateExpr>) -> Option<String> {
+    match argument.map(TemplateExpr::deparen) {
+        Some(TemplateExpr::Literal(helm_schema_ast::Literal::String(text))) => Some(text.clone()),
+        _ => None,
     }
 }
 

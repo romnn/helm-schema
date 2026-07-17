@@ -5,6 +5,7 @@ mod literal_schema_type;
 mod printf_eval;
 mod range_structure;
 mod resource_span;
+mod semver_constraint;
 mod template_action;
 mod tree_sitter_utils;
 mod values_comments;
@@ -27,6 +28,7 @@ pub use range_structure::{
     range_has_destructured_variable_definition, range_header_from_source, range_variable_name_expr,
 };
 pub use resource_span::ResourceSpan;
+pub use semver_constraint::semver_constraint_match_pattern;
 pub use template_action::contains_template_action;
 pub use tree_sitter_utils::{
     children_with_field, parse_expr_text, parse_go_template, parse_helm_template,

@@ -120,6 +120,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
         is_self_range_collection: false,
         template_supplied_member_keys: Default::default(),
         split_segment: None,
+        merge_layers: None,
     };
 
     let schema = chain

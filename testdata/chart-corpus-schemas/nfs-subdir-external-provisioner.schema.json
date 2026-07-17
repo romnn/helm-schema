@@ -1,5 +1,36 @@
 {
   "$defs": {
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
     "helm-truthy": {
       "anyOf": [
         {
@@ -802,19 +833,6 @@
       "type": "object"
     },
     "schema37": {
-      "anyOf": [
-        {
-          "not": {
-            "type": "string"
-          }
-        },
-        {
-          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-          "type": "string"
-        }
-      ]
-    },
-    "schema38": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -833,7 +851,7 @@
         "type": "object"
       }
     },
-    "schema40": {
+    "schema39": {
       "not": {
         "properties": {
           "storageClass": {
@@ -852,7 +870,7 @@
         "type": "object"
       }
     },
-    "schema45": {
+    "schema44": {
       "not": {
         "properties": {
           "rbac": {
@@ -871,11 +889,7 @@
         "type": "object"
       }
     },
-    "schema46": {
-      "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-      "type": "string"
-    },
-    "schema49": {
+    "schema47": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
@@ -944,18 +958,18 @@
         }
       ]
     },
-    "schema56": {
+    "schema54": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema58": {
+    "schema56": {
       "not": {
         "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
       }
     },
-    "schema59": {
+    "schema57": {
       "not": {
         "properties": {
           "create": {}
@@ -964,6 +978,11 @@
           "create"
         ],
         "type": "object"
+      }
+    },
+    "schema58": {
+      "not": {
+        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
       }
     },
     "schema6": {
@@ -1004,27 +1023,22 @@
         "null"
       ]
     },
-    "schema60": {
-      "not": {
-        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
-      }
-    },
-    "schema64": {
+    "schema62": {
       "not": {
         "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
       }
     },
-    "schema67": {
+    "schema65": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema68": {
+    "schema66": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema69": {
+    "schema67": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
@@ -1155,12 +1169,12 @@
         ]
       }
     },
-    "schema72": {
+    "schema70": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema73": {
+    "schema71": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -1274,7 +1288,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema45"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -1300,7 +1314,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema38"
+                "$ref": "#/$defs/schema37"
               },
               {
                 "properties": {
@@ -1402,7 +1416,7 @@
           "additionalProperties": {},
           "properties": {
             "repository": {
-              "$ref": "#/$defs/schema37"
+              "$ref": "#/$defs/helm-double-quoted-safe"
             }
           }
         }
@@ -1415,7 +1429,7 @@
           "additionalProperties": {},
           "properties": {
             "tag": {
-              "$ref": "#/$defs/schema37"
+              "$ref": "#/$defs/helm-double-quoted-safe"
             }
           }
         }
@@ -1465,7 +1479,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema45"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -1491,7 +1505,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema38"
+                "$ref": "#/$defs/schema37"
               },
               {
                 "properties": {
@@ -1517,7 +1531,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema40"
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -1671,7 +1685,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema45"
+                "$ref": "#/$defs/schema44"
               },
               {
                 "properties": {
@@ -1697,7 +1711,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema38"
+                "$ref": "#/$defs/schema37"
               },
               {
                 "properties": {
@@ -1723,7 +1737,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema40"
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -1822,7 +1836,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema40"
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -1865,7 +1879,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema40"
+            "$ref": "#/$defs/schema39"
           },
           {
             "properties": {
@@ -2297,7 +2311,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema45"
+            "$ref": "#/$defs/schema44"
           },
           {
             "properties": {
@@ -2331,13 +2345,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema68"
+                        "$ref": "#/$defs/schema66"
                       },
                       {
-                        "$ref": "#/$defs/schema69"
+                        "$ref": "#/$defs/schema67"
                       },
                       {
-                        "$ref": "#/$defs/schema72"
+                        "$ref": "#/$defs/schema70"
                       },
                       {
                         "not": {
@@ -2345,22 +2359,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema73"
+                        "$ref": "#/$defs/schema71"
                       },
                       {
-                        "$ref": "#/$defs/schema67"
+                        "$ref": "#/$defs/schema65"
                       },
                       {
-                        "$ref": "#/$defs/schema49"
+                        "$ref": "#/$defs/schema47"
+                      },
+                      {
+                        "$ref": "#/$defs/schema56"
                       },
                       {
                         "$ref": "#/$defs/schema58"
                       },
                       {
-                        "$ref": "#/$defs/schema60"
-                      },
-                      {
-                        "$ref": "#/$defs/schema64"
+                        "$ref": "#/$defs/schema62"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -2426,7 +2440,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema40"
+            "$ref": "#/$defs/schema39"
           },
           {
             "properties": {
@@ -2457,16 +2471,7 @@
             "description": "For creating the StorageClass automatically:",
             "properties": {
               "archiveOnDelete": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema46"
-                  }
-                ],
+                "$ref": "#/$defs/helm-double-quoted-safe",
                 "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC."
               }
             }
@@ -2480,7 +2485,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema40"
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -2532,16 +2537,7 @@
             "description": "For creating the StorageClass automatically:",
             "properties": {
               "onDelete": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema46"
-                  }
-                ],
+                "$ref": "#/$defs/helm-double-quoted-safe",
                 "description": "If it exists and has 'delete' value, delete the directory. If it exists and has 'retain' value, save the directory.\nOverrides archiveOnDelete.\nIgnored if value not set."
               }
             }
@@ -2555,7 +2551,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema40"
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -2607,16 +2603,7 @@
             "description": "For creating the StorageClass automatically:",
             "properties": {
               "pathPattern": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema46"
-                  }
-                ],
+                "$ref": "#/$defs/helm-double-quoted-safe",
                 "description": "Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.\nIgnored if value not set."
               }
             }
@@ -2781,7 +2768,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema56"
+          "$ref": "#/$defs/schema54"
         },
         {
           "not": {
@@ -2808,13 +2795,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema68"
+                  "$ref": "#/$defs/schema66"
                 },
                 {
-                  "$ref": "#/$defs/schema69"
+                  "$ref": "#/$defs/schema67"
                 },
                 {
-                  "$ref": "#/$defs/schema72"
+                  "$ref": "#/$defs/schema70"
                 },
                 {
                   "not": {
@@ -2822,22 +2809,22 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema73"
+                  "$ref": "#/$defs/schema71"
                 },
                 {
-                  "$ref": "#/$defs/schema67"
+                  "$ref": "#/$defs/schema65"
                 },
                 {
-                  "$ref": "#/$defs/schema49"
+                  "$ref": "#/$defs/schema47"
+                },
+                {
+                  "$ref": "#/$defs/schema56"
                 },
                 {
                   "$ref": "#/$defs/schema58"
                 },
                 {
-                  "$ref": "#/$defs/schema60"
-                },
-                {
-                  "$ref": "#/$defs/schema64"
+                  "$ref": "#/$defs/schema62"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -2984,13 +2971,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema68"
+                        "$ref": "#/$defs/schema66"
                       },
                       {
-                        "$ref": "#/$defs/schema69"
+                        "$ref": "#/$defs/schema67"
                       },
                       {
-                        "$ref": "#/$defs/schema72"
+                        "$ref": "#/$defs/schema70"
                       },
                       {
                         "not": {
@@ -2998,22 +2985,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema73"
+                        "$ref": "#/$defs/schema71"
                       },
                       {
-                        "$ref": "#/$defs/schema67"
+                        "$ref": "#/$defs/schema65"
                       },
                       {
-                        "$ref": "#/$defs/schema49"
+                        "$ref": "#/$defs/schema47"
+                      },
+                      {
+                        "$ref": "#/$defs/schema56"
                       },
                       {
                         "$ref": "#/$defs/schema58"
                       },
                       {
-                        "$ref": "#/$defs/schema60"
-                      },
-                      {
-                        "$ref": "#/$defs/schema64"
+                        "$ref": "#/$defs/schema62"
                       }
                     ],
                     "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
@@ -3047,13 +3034,13 @@
               "server": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema68"
+                    "$ref": "#/$defs/schema66"
                   },
                   {
-                    "$ref": "#/$defs/schema69"
+                    "$ref": "#/$defs/schema67"
                   },
                   {
-                    "$ref": "#/$defs/schema72"
+                    "$ref": "#/$defs/schema70"
                   },
                   {
                     "not": {
@@ -3061,22 +3048,22 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema73"
+                    "$ref": "#/$defs/schema71"
                   },
                   {
-                    "$ref": "#/$defs/schema67"
+                    "$ref": "#/$defs/schema65"
                   },
                   {
-                    "$ref": "#/$defs/schema49"
+                    "$ref": "#/$defs/schema47"
+                  },
+                  {
+                    "$ref": "#/$defs/schema56"
                   },
                   {
                     "$ref": "#/$defs/schema58"
                   },
                   {
-                    "$ref": "#/$defs/schema60"
-                  },
-                  {
-                    "$ref": "#/$defs/schema64"
+                    "$ref": "#/$defs/schema62"
                   }
                 ],
                 "description": "server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
@@ -3174,7 +3161,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema56"
+          "$ref": "#/$defs/schema54"
         },
         {
           "additionalProperties": {
@@ -3200,7 +3187,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema56"
+          "$ref": "#/$defs/schema54"
         },
         {
           "$ref": "#/$defs/schema24"
@@ -3385,7 +3372,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema56"
+          "$ref": "#/$defs/schema54"
         },
         {
           "type": "null"
@@ -3534,7 +3521,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema56"
+          "$ref": "#/$defs/schema54"
         },
         {
           "not": {
@@ -3653,7 +3640,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema56"
+          "$ref": "#/$defs/schema54"
         },
         {
           "type": "null"
@@ -3667,7 +3654,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "properties": {
@@ -3708,7 +3695,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "properties": {
@@ -3768,13 +3755,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema68"
+                  "$ref": "#/$defs/schema66"
                 },
                 {
-                  "$ref": "#/$defs/schema69"
+                  "$ref": "#/$defs/schema67"
                 },
                 {
-                  "$ref": "#/$defs/schema72"
+                  "$ref": "#/$defs/schema70"
                 },
                 {
                   "not": {
@@ -3782,22 +3769,22 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema73"
+                  "$ref": "#/$defs/schema71"
                 },
                 {
-                  "$ref": "#/$defs/schema67"
+                  "$ref": "#/$defs/schema65"
                 },
                 {
-                  "$ref": "#/$defs/schema49"
+                  "$ref": "#/$defs/schema47"
+                },
+                {
+                  "$ref": "#/$defs/schema56"
                 },
                 {
                   "$ref": "#/$defs/schema58"
                 },
                 {
-                  "$ref": "#/$defs/schema60"
-                },
-                {
-                  "$ref": "#/$defs/schema64"
+                  "$ref": "#/$defs/schema62"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -3828,7 +3815,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "properties": {
@@ -3870,7 +3857,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "properties": {
@@ -3911,7 +3898,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "properties": {
@@ -3947,7 +3934,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "properties": {
@@ -3987,7 +3974,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "properties": {
@@ -4010,13 +3997,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema68"
+                        "$ref": "#/$defs/schema66"
                       },
                       {
-                        "$ref": "#/$defs/schema69"
+                        "$ref": "#/$defs/schema67"
                       },
                       {
-                        "$ref": "#/$defs/schema72"
+                        "$ref": "#/$defs/schema70"
                       },
                       {
                         "not": {
@@ -4024,22 +4011,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema73"
+                        "$ref": "#/$defs/schema71"
                       },
                       {
-                        "$ref": "#/$defs/schema67"
+                        "$ref": "#/$defs/schema65"
                       },
                       {
-                        "$ref": "#/$defs/schema49"
+                        "$ref": "#/$defs/schema47"
+                      },
+                      {
+                        "$ref": "#/$defs/schema56"
                       },
                       {
                         "$ref": "#/$defs/schema58"
                       },
                       {
-                        "$ref": "#/$defs/schema60"
-                      },
-                      {
-                        "$ref": "#/$defs/schema64"
+                        "$ref": "#/$defs/schema62"
                       }
                     ],
                     "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
@@ -4059,7 +4046,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema59"
+                "$ref": "#/$defs/schema57"
               },
               {
                 "properties": {
@@ -4082,13 +4069,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema68"
+                        "$ref": "#/$defs/schema66"
                       },
                       {
-                        "$ref": "#/$defs/schema69"
+                        "$ref": "#/$defs/schema67"
                       },
                       {
-                        "$ref": "#/$defs/schema72"
+                        "$ref": "#/$defs/schema70"
                       },
                       {
                         "not": {
@@ -4096,22 +4083,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema73"
+                        "$ref": "#/$defs/schema71"
                       },
                       {
-                        "$ref": "#/$defs/schema67"
+                        "$ref": "#/$defs/schema65"
                       },
                       {
-                        "$ref": "#/$defs/schema49"
+                        "$ref": "#/$defs/schema47"
+                      },
+                      {
+                        "$ref": "#/$defs/schema56"
                       },
                       {
                         "$ref": "#/$defs/schema58"
                       },
                       {
-                        "$ref": "#/$defs/schema60"
-                      },
-                      {
-                        "$ref": "#/$defs/schema64"
+                        "$ref": "#/$defs/schema62"
                       }
                     ],
                     "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
@@ -4182,13 +4169,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema68"
+              "$ref": "#/$defs/schema66"
             },
             {
-              "$ref": "#/$defs/schema69"
+              "$ref": "#/$defs/schema67"
             },
             {
-              "$ref": "#/$defs/schema72"
+              "$ref": "#/$defs/schema70"
             },
             {
               "not": {
@@ -4196,22 +4183,22 @@
               }
             },
             {
-              "$ref": "#/$defs/schema73"
+              "$ref": "#/$defs/schema71"
             },
             {
-              "$ref": "#/$defs/schema67"
+              "$ref": "#/$defs/schema65"
             },
             {
-              "$ref": "#/$defs/schema49"
+              "$ref": "#/$defs/schema47"
+            },
+            {
+              "$ref": "#/$defs/schema56"
             },
             {
               "$ref": "#/$defs/schema58"
             },
             {
-              "$ref": "#/$defs/schema60"
-            },
-            {
-              "$ref": "#/$defs/schema64"
+              "$ref": "#/$defs/schema62"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",

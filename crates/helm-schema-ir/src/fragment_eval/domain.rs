@@ -321,6 +321,8 @@ pub struct SpliceMeta {
     /// and raw-identity consumers (quoted-token claims, parser preimages)
     /// must not read the splice as the raw value.
     pub split_segment: Option<helm_schema_core::SplitSegmentUse>,
+    /// Set when the splice renders one layer of an ordered `merge`.
+    pub merge_layers: Option<helm_schema_core::MergeLayersUse>,
     /// Helper-body source sites this splice was derived through.
     pub provenance: Vec<ContractProvenance>,
     /// The render site the splice materializes at.

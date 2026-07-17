@@ -183,7 +183,8 @@ spec:
 }
 
 #[test]
-fn signoz_zookeeper_printf_does_not_type_its_format_operand() -> color_eyre::eyre::Result<()> {
+fn signoz_zookeeper_name_override_string_contract_stays_branch_scoped()
+-> color_eyre::eyre::Result<()> {
     let chart_dir = test_util::workspace_testdata()
         .join("charts")
         .join("signoz-signoz");
@@ -199,21 +200,46 @@ fn signoz_zookeeper_printf_does_not_type_its_format_operand() -> color_eyre::eyr
     )?;
     let path = "clickhouse.zookeeper.nameOverride";
 
-    // `%s` formatting reports a mismatch in its derived output instead of
-    // rejecting the input value. The following `trunc` consumes that text,
-    // so it must not become a string contract on the raw format operand.
+    // The zookeeper naming helpers consume the raw operand of
+    // `default .Chart.Name .Values.nameOverride`: `common.names.fullname`
+    // runs `contains $name .Release.Name` (Sprig `contains` aborts on
+    // non-strings — helm rejects an integer nameOverride with "wrong type
+    // for value; expected string") and `common.names.name` pipes it into
+    // `trunc`. The string implications must exist, and every one must ride
+    // the operand's own truthiness: a falsy nameOverride selects the chart
+    // name and renders, so the falsy set stays open. (Kind-payload
+    // captures crossing the subchart boundary once lost their path prefix,
+    // which hid these implications from this parent-scoped path entirely.)
+    let schema_signals = contract_schema_signals!(collection);
+    let evidence = schema_signals
+        .evidence_for(path)
+        .unwrap_or_else(|| panic!("missing evidence for {path}"));
+    let string_implications: Vec<_> =
+        evidence
+            .fail_implications
+            .iter()
+            .filter(|implication| {
+                implication.requirements.contains(
+                    &helm_schema_core::FailValueRequirement::SchemaType("string".to_string()),
+                )
+            })
+            .collect();
     assert!(
-        contract_schema_signals!(collection)
-            .evidence_for(path)
-            .is_some_and(
-                |evidence| !evidence.fail_implications.iter().any(|implication| {
-                    implication.requirements.contains(
-                        &helm_schema_core::FailValueRequirement::SchemaType("string".to_string()),
-                    )
-                })
-            ),
-        "printf's format operand must stay untyped for {path}; evidence={:?}",
-        contract_schema_signals!(collection).evidence_for(path),
+        !string_implications.is_empty(),
+        "the contains/trunc consumers type {path} as string; evidence={evidence:?}"
+    );
+    assert!(
+        string_implications.iter().all(|implication| {
+            implication.outer_guards.iter().any(|guard| {
+                matches!(
+                    guard,
+                    helm_schema_core::ConditionalGuard::Truthy { path: guard_path }
+                        if guard_path == path
+                )
+            })
+        }),
+        "every string implication rides the operand's own truthiness; \
+         implications={string_implications:?}"
     );
 
     Ok(())

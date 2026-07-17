@@ -5,8 +5,10 @@ mod merge;
 mod overlay_lowering;
 mod path_resolver;
 mod path_schema;
+mod program_wrapper;
 mod provider_definitions;
 mod provider_schema;
+mod quoted_serialization;
 pub mod required_inference;
 mod required_source_backprojection;
 mod resolve_policy;
@@ -235,8 +237,30 @@ fn build_root_schema(
             helm_truthy_definition_schema(),
         );
     }
+    for style in [
+        helm_schema_core::QuotedScalarStyle::Double,
+        helm_schema_core::QuotedScalarStyle::Single,
+    ] {
+        if quoted_serialization::value_references(&root_schema, style)
+            || provider_definitions
+                .values()
+                .any(|definition| quoted_serialization::value_references(definition, style))
+        {
+            provider_definitions.insert(
+                quoted_serialization::definition_name(style).to_string(),
+                quoted_serialization::definition_schema(style),
+            );
+        }
+    }
     drop(truthy_span);
     insert_definitions_into_root(&mut root_schema, provider_definitions);
+    {
+        let _span = tracing::info_span!("apply_program_wrappers").entered();
+        program_wrapper::apply_program_wrapper_alternatives(
+            &mut root_schema,
+            contract_schema_signals.values_program_wrappers(),
+        );
+    }
     {
         let _span = tracing::info_span!("apply_values_descriptions").entered();
         schema_tree::apply_values_descriptions(&mut root_schema, values_descriptions);

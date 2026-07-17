@@ -1,4 +1,4 @@
-use crate::{ResourceRef, SplitSegmentUse, ValueKind, YamlPath};
+use crate::{MergeLayersUse, ResourceRef, SplitSegmentUse, ValueKind, YamlPath};
 
 /// Contract fact that needs a Kubernetes resource schema lookup.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -14,4 +14,8 @@ pub struct ProviderSchemaUse {
     /// Set when the rendered text is one separator-delimited segment of the
     /// source string; the slot schema constrains that segment only.
     pub split_segment: Option<SplitSegmentUse>,
+    /// Set when the value renders as one layer of an ordered `merge`: a
+    /// shadowed layer's members reach the slot only where every earlier
+    /// layer lacks them.
+    pub merge_layers: Option<MergeLayersUse>,
 }

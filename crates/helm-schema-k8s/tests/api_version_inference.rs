@@ -36,6 +36,7 @@ fn use_with_kind(kind: &str) -> ProviderSchemaUse {
         is_self_range_collection: false,
         template_supplied_member_keys: Default::default(),
         split_segment: None,
+        merge_layers: None,
     }
 }
 
@@ -522,6 +523,7 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() {
         is_self_range_collection: false,
         template_supplied_member_keys: Default::default(),
         split_segment: None,
+        merge_layers: None,
     };
     let _ = chain.schema_fragment_for_use(&use_);
 
@@ -559,6 +561,7 @@ fn inference_for_crd_kind_still_emits_diagnostic() {
         is_self_range_collection: false,
         template_supplied_member_keys: Default::default(),
         split_segment: None,
+        merge_layers: None,
     };
     let _ = chain.schema_fragment_for_use(&use_);
 

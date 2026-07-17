@@ -104,6 +104,7 @@ impl LowerScope<'_> {
                     .map(|meta| meta.lexical_escapes.clone())
                     .unwrap_or_default(),
                 split_segment: None,
+                merge_layers: None,
                 provenance: helper_meta
                     .map(|meta| meta.provenance.clone())
                     .unwrap_or_default(),
@@ -253,6 +254,33 @@ pub(crate) fn lower_value(
                         suppressed: false,
                     }),
                 ));
+            }
+            out
+        }
+        AbstractValue::MergedLayers(layers) => {
+            // Each layer lowers to its own splice arms; a layer's splices
+            // carry the full precedence order so sink projection can scope
+            // a shadowed layer's member contracts to keys the earlier
+            // layers do not supply (velero's destination-first
+            // `merge podSecurityContext securityContext`).
+            let identities: Option<Vec<String>> =
+                layers.iter().map(AbstractValue::unique_path).collect();
+            let mut out = Guarded::empty();
+            for (position, layer) in layers.iter().enumerate() {
+                let mut lowered = lower_value(layer, kind, scope);
+                if let Some(layer_paths) = &identities {
+                    for (_, fragment) in &mut lowered.arms {
+                        if let AbstractFragment::Splice(splice) = fragment
+                            && splice.values_path == layer_paths[position]
+                        {
+                            splice.meta.merge_layers = Some(helm_schema_core::MergeLayersUse {
+                                layers: layer_paths.clone(),
+                                position,
+                            });
+                        }
+                    }
+                }
+                out.extend(lowered);
             }
             out
         }
@@ -433,7 +461,12 @@ pub(crate) fn lower_value_scalar_arms(
             Predicate::True,
             vec![StringPart::Taint(TaintPart::new(paths.clone()))],
         )],
-        AbstractValue::Dict(_) | AbstractValue::List(_) | AbstractValue::Overlay { .. } => {
+        AbstractValue::Dict(_)
+        | AbstractValue::List(_)
+        | AbstractValue::Overlay { .. }
+        // Scalar text renders the merged CONTAINER's formatting, not any
+        // layer's raw value, so no layer claims a raw-content contract.
+        | AbstractValue::MergedLayers(_) => {
             let taint = json_serialized_taint(value, scope)
                 .unwrap_or_else(|| TaintPart::new(value.fragment_rendered_paths()));
             vec![(Predicate::True, vec![StringPart::Taint(taint)])]

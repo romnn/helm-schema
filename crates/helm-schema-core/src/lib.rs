@@ -21,9 +21,9 @@ pub use contract_signals::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay, ContractFailImplication,
     ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractRequirementTarget,
     ContractSchemaSignals, ContractValuePathFacts, FailValueRequirement, MetadataFieldKind,
-    ValuesDefaultSource,
+    QuotedScalarStyle, ValuesDefaultSource, ValuesProgramWrapper,
 };
-pub use contract_use::{ContractUse, SplitSegmentUse};
+pub use contract_use::{ContractUse, MergeLayersUse, SplitSegmentUse};
 pub use guard::{Guard, GuardValue};
 pub use guard_dnf::GuardDnf;
 pub use output_path::{

@@ -174,6 +174,18 @@ pub struct ContractPathSchemaEvidence {
     pub fail_implications: Vec<ContractFailImplication>,
 }
 
+/// A chart-authored values-program wrapper convention: within `scope_path`
+/// (empty for the whole values tree), any node may be a singleton
+/// `{key: PROGRAM}` map that the chart's engine replaces with the
+/// `tpl`-rendered, YAML-reparsed program result before consumers read it.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ValuesProgramWrapper {
+    /// Values subtree the engine rewrites; empty means the whole tree.
+    pub scope_path: String,
+    /// The wrapper's sentinel member key (`$tplYaml`).
+    pub key: String,
+}
+
 /// A chart-wide default subtree merged into an effective `.Values` subtree.
 ///
 /// The target remains user-overridable; the source supplies only keys absent
@@ -232,6 +244,29 @@ pub enum ContractRequirementTarget {
     Keys,
 }
 
+/// The quoting style of a manually quoted YAML scalar hosting a raw splice.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum QuotedScalarStyle {
+    /// `"…"` — every `\` must begin a YAML escape and every `"` be escaped.
+    Double,
+    /// `'…'` — `''` is the only escape, so every apostrophe must be doubled.
+    Single,
+}
+
+impl QuotedScalarStyle {
+    /// Valid CONTENT of a scalar quoted in this style; raw text outside the
+    /// grammar corrupts the manually quoted token.
+    #[must_use]
+    pub fn safe_content_pattern(self) -> &'static str {
+        match self {
+            Self::Double => {
+                r#"^([^"\\]|\\["\\/0abtnvfre N_LP]|\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8})*$"#
+            }
+            Self::Single => r"^([^']|'')*$",
+        }
+    }
+}
+
 /// One requirement a `fail` branch imposes on an affected value.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum FailValueRequirement {
@@ -269,6 +304,13 @@ pub enum FailValueRequirement {
         segments: usize,
         allow_non_string: bool,
     },
+    /// The value renders inside a manually quoted YAML scalar: every string
+    /// it contributes to the token — the value itself, or any nested string
+    /// or mapping key when Go's fmt serializes a collection
+    /// (`map[k:v]` / `[a b]`) with its strings embedded raw — must be valid
+    /// content for the quoting style. Non-string scalars format as plain
+    /// digits/words and are always safe.
+    QuotedSerializationSafe { style: QuotedScalarStyle },
 }
 
 impl ContractPathSchemaEvidence {
@@ -294,6 +336,7 @@ pub struct ContractSchemaSignals {
     pruned_parent_value_paths: BTreeSet<String>,
     direct_ranged_value_paths: BTreeSet<String>,
     values_default_sources: BTreeSet<ValuesDefaultSource>,
+    values_program_wrappers: BTreeSet<ValuesProgramWrapper>,
     /// Terminating validator formulas spanning several paths: rendering
     /// aborts whenever ALL guards of one clause hold, so no valid values
     /// document may satisfy them (`fail`/`required` under fully lowerable
@@ -330,6 +373,7 @@ impl ContractSchemaSignals {
             pruned_parent_value_paths,
             direct_ranged_value_paths,
             values_default_sources: BTreeSet::new(),
+            values_program_wrappers: BTreeSet::new(),
             terminal_clauses,
         }
     }
@@ -348,6 +392,22 @@ impl ContractSchemaSignals {
     #[must_use]
     pub fn values_default_sources(&self) -> &BTreeSet<ValuesDefaultSource> {
         &self.values_default_sources
+    }
+
+    /// Attaches chart-authored program-wrapper conventions.
+    #[must_use]
+    pub fn with_values_program_wrappers(
+        mut self,
+        wrappers: impl IntoIterator<Item = ValuesProgramWrapper>,
+    ) -> Self {
+        self.values_program_wrappers.extend(wrappers);
+        self
+    }
+
+    /// Program-wrapper conventions the chart's engine applies to its values.
+    #[must_use]
+    pub fn values_program_wrappers(&self) -> &BTreeSet<ValuesProgramWrapper> {
+        &self.values_program_wrappers
     }
 
     /// Paths the chart ranges DIRECTLY: their runtime iterable domain is

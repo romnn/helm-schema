@@ -606,6 +606,34 @@ fn velero_range_values_and_merge_operands_keep_their_domains() -> color_eyre::ey
     )
 }
 
+/// Destination-first `merge podSecurityContext securityContext` gives the
+/// preferred object's keys precedence, so a legacy member types exactly
+/// where the preferred object lacks it.
+#[test]
+fn velero_merge_shadowing_scopes_legacy_security_context() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "velero",
+        vec![
+            SemanticCase::rejected(
+                "active legacy runAsUser reaches the rendered pod context",
+                "/securityContext/runAsUser",
+                json!({ "securityContext": { "runAsUser": { "bad": true } } }),
+            ),
+            SemanticCase::accepted(
+                "shadowed legacy runAsUser never renders",
+                json!({
+                    "podSecurityContext": { "runAsUser": 1000 },
+                    "securityContext": { "runAsUser": { "bad": true } }
+                }),
+            ),
+            SemanticCase::accepted(
+                "integer legacy runAsUser renders valid",
+                json!({ "securityContext": { "runAsUser": 1000 } }),
+            ),
+        ],
+    )
+}
+
 #[test]
 fn surveyor_range_members_and_intermediate_secrets_are_structural() -> color_eyre::eyre::Result<()>
 {
@@ -879,8 +907,7 @@ fn cloudnative_pg_merge_rejects_falsy_wrong_kinds_when_live() -> color_eyre::eyr
 }
 
 #[test]
-fn airflow_webserver_contract_abstains_at_unlowerable_version_guard() -> color_eyre::eyre::Result<()>
-{
+fn airflow_webserver_contract_binds_under_version_guard() -> color_eyre::eyre::Result<()> {
     assert_chart_cases(
         "airflow",
         vec![
@@ -896,6 +923,14 @@ fn airflow_webserver_contract_abstains_at_unlowerable_version_guard() -> color_e
                 json!({
                     "airflowVersion": "2.11.0",
                     "config": { "webserver": { "base_url": "https://airflow.example.com" } }
+                }),
+            ),
+            SemanticCase::rejected(
+                "map base_url with Airflow 2 webserver branch live",
+                "/config/webserver/base_url",
+                json!({
+                    "airflowVersion": "2.11.0",
+                    "config": { "webserver": { "base_url": { "host": "airflow" } } }
                 }),
             ),
         ],

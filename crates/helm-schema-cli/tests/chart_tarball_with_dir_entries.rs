@@ -175,28 +175,38 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> color_eyre::e
     // declares its own `global`. Without the mirror, `helm lint
     // --strict` rejects the merged values against an otherwise-correct
     // inferred schema.
+    let safe_quoted_content = r#"^([^"\\]|\\["\\/0abtnvfre N_LP]|\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8})*$"#;
     let expected = serde_json::json!({
+        // the self-recursive accepted-value definition the quoted splice
+        // references: every string the value contributes to the token —
+        // itself, or any nested string or mapping key of a
+        // Go-fmt-serialized collection — must be valid double-quoted
+        // YAML content; other scalars format safely.
+        "$defs": {
+            "helm-double-quoted-safe": {
+                "anyOf": [
+                    { "type": ["boolean", "integer", "null", "number"] },
+                    { "pattern": safe_quoted_content, "type": "string" },
+                    { "items": { "$ref": "#/$defs/helm-double-quoted-safe" }, "type": "array" },
+                    {
+                        "additionalProperties": { "$ref": "#/$defs/helm-double-quoted-safe" },
+                        "propertyNames": { "pattern": safe_quoted_content },
+                        "type": "object"
+                    }
+                ]
+            }
+        },
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         // the subchart's manually quoted `enabled: "{{ … }}"` splice
-        // breaks on strings that are not valid double-quoted YAML content
-        // (an unescaped `"`, a dangling `\`); valid escape sequences and
-        // non-strings format safely inside the quotes.
+        // breaks on content that corrupts the double-quoted token.
         "allOf": [{
             "additionalProperties": {},
             "properties": {
                 "subchart": {
                     "additionalProperties": {},
                     "properties": {
-                        "enabled": {
-                            "anyOf": [
-                                { "not": { "type": "string" } },
-                                {
-                                    "pattern": r#"^([^"\\]|\\["\\/0abtnvfre N_LP]|\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8})*$"#,
-                                    "type": "string"
-                                }
-                            ]
-                        }
+                        "enabled": { "$ref": "#/$defs/helm-double-quoted-safe" }
                     }
                 }
             }

@@ -32,16 +32,6 @@ pub(super) struct HoleEval {
     pub(super) effects: Effects,
 }
 
-/// Valid CONTENT of a double-quoted YAML scalar: every `\` begins a YAML
-/// escape sequence and every `"` is escaped. Raw strings outside this
-/// grammar corrupt a manually quoted token.
-const DOUBLE_QUOTED_SAFE_CONTENT_PATTERN: &str =
-    r#"^([^"\\]|\\["\\/0abtnvfre N_LP]|\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8})*$"#;
-
-/// Valid CONTENT of a single-quoted YAML scalar: `''` is the only escape,
-/// so every apostrophe must be doubled.
-const SINGLE_QUOTED_SAFE_CONTENT_PATTERN: &str = r"^([^']|'')*$";
-
 /// Whether an expression invokes `fail` anywhere: evaluating it terminates
 /// template rendering unconditionally.
 pub(super) fn expr_contains_fail_call(expr: &TemplateExpr) -> bool {
@@ -463,6 +453,8 @@ impl Interpreter<'_> {
         self.apply_root_set_mutations(&summary.root_set_mutations, &summary.root_set_predicates);
         self.values_default_sources_observed
             .extend(summary.values_default_sources.iter().cloned());
+        self.values_root_helper_includes_observed
+            .extend(summary.values_root_helper_includes.iter().cloned());
         let mut chart_defaults = summary.chart_defaults.clone();
         self.locals.append_chart_value_defaults(&mut chart_defaults);
         Some(splice_summary(summary, &self.current_site))
@@ -612,7 +604,11 @@ impl Interpreter<'_> {
     ///   valid escapes and render (zalando's manually quoted image scalar);
     /// - a raw splice inside MANUAL single quotes breaks on strings whose
     ///   every `'` is not doubled (`''` is the only escape in single-quoted
-    ///   YAML).
+    ///   YAML);
+    /// - in both quoted contexts a COLLECTION value renders through Go's
+    ///   fmt (`map[k:v]` / `[a b]`) with its nested strings and mapping
+    ///   keys embedded raw, so those must satisfy the same content grammar
+    ///   (zalando's map-valued registry inside manual quotes).
     ///
     /// The quote context comes from a scanner over the PRECEDING literal
     /// text (a state machine over `"`/`'`/escapes), so flow-style content
@@ -748,26 +744,21 @@ impl Interpreter<'_> {
                 kind: crate::eval_effect::CaptureKind::Fail,
             });
         }
-        for (paths, safe_pattern) in [
-            (agreed.double_quoted, DOUBLE_QUOTED_SAFE_CONTENT_PATTERN),
-            (agreed.single_quoted, SINGLE_QUOTED_SAFE_CONTENT_PATTERN),
+        for (paths, style) in [
+            (
+                agreed.double_quoted,
+                helm_schema_core::QuotedScalarStyle::Double,
+            ),
+            (
+                agreed.single_quoted,
+                helm_schema_core::QuotedScalarStyle::Single,
+            ),
         ] {
             for path in paths {
                 captures.push(crate::eval_effect::FailCapture {
-                    conjunction: vec![
-                        Predicate::from(crate::Guard::TypeIs {
-                            path: path.clone(),
-                            schema_type: "string".to_string(),
-                        }),
-                        Predicate::from(crate::Guard::MatchesPattern {
-                            path,
-                            pattern: safe_pattern.to_string(),
-                            templated: false,
-                        })
-                        .negated(),
-                    ],
+                    conjunction: Vec::new(),
                     ranged: crate::range_modes::RangeModes::default(),
-                    kind: crate::eval_effect::CaptureKind::Fail,
+                    kind: crate::eval_effect::CaptureKind::QuotedSerialization { path, style },
                 });
             }
         }

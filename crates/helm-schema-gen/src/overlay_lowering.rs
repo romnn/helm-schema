@@ -327,7 +327,138 @@ pub(crate) fn collect_conditional_schemas(
         }
     }
 
+    append_merge_shadow_arms(&mut conditionals, contract_schema_signals, provider);
     conditionals
+}
+
+/// Per-key arms for SHADOWED merge layers: with destination-first
+/// `merge preferred legacy`, a legacy member reaches the provider slot only
+/// where every earlier layer lacks that key, so each provider property `k`
+/// gets an arm `if no earlier layer has k, then legacy.k matches the
+/// provider's member schema` (velero's deprecated `securityContext` beside
+/// `podSecurityContext`). The arms are finite — enumerated from the
+/// resolved provider payload's own properties — and the earlier layers'
+/// whole-payload typing rides its ordinary self-truthy branch.
+fn append_merge_shadow_arms(
+    conditionals: &mut Vec<ConditionalResolvedSchema>,
+    contract_schema_signals: &ContractSchemaSignals,
+    provider: &dyn ResourceSchemaOracle,
+) {
+    for (value_path, evidence) in contract_schema_signals.schema_evidence_by_value_path() {
+        for provider_use in &evidence.provider_schema_uses {
+            let Some(merge) = provider_use.merge_layers.as_ref() else {
+                continue;
+            };
+            let Some(fragment) = provider.schema_fragment_for_use(provider_use) else {
+                continue;
+            };
+            let payload = fragment.schema();
+            let definitions = ["$defs", "definitions"]
+                .iter()
+                .find_map(|key| payload.get(*key).and_then(Value::as_object));
+            let target_segments = split_value_path(value_path);
+            if merge.position == 0 {
+                // The preferred layer's keys always win, so its payload
+                // typing holds exactly when the layer itself is truthy.
+                let Some(Value::Object(mut whole)) = payload
+                    .as_object()
+                    .map(|object| Value::Object(object.clone()))
+                    .and_then(|value| dereferenced_payload_subschema(&value, definitions, 8))
+                else {
+                    continue;
+                };
+                whole.remove("$defs");
+                whole.remove("definitions");
+                conditionals.push(ConditionalResolvedSchema {
+                    target_value_path: value_path.clone(),
+                    relative_target_segments: target_segments.clone(),
+                    ancestor_segments: Vec::new(),
+                    guards: vec![ConditionalGuard::Truthy {
+                        path: value_path.clone(),
+                    }],
+                    target_schema: Value::Object(whole),
+                    provider_schema_candidate: None,
+                    preserve_base_schema: true,
+                    fold_unconditional_object_host_into_base: false,
+                    arm_only: true,
+                });
+                continue;
+            }
+            let Some(properties) = payload.get("properties").and_then(Value::as_object) else {
+                continue;
+            };
+            for (member, member_schema) in properties {
+                let Some(member_schema) =
+                    dereferenced_payload_subschema(member_schema, definitions, 8)
+                else {
+                    continue;
+                };
+                let guards: Vec<ConditionalGuard> = merge
+                    .shadowed_by()
+                    .iter()
+                    .map(|earlier| {
+                        ConditionalGuard::Not(Box::new(ConditionalGuard::HasKey {
+                            path: earlier.clone(),
+                            key: member.clone(),
+                        }))
+                    })
+                    .collect();
+                let target_schema = serde_json::json!({
+                    "properties": { member: member_schema }
+                });
+                conditionals.push(ConditionalResolvedSchema {
+                    target_value_path: value_path.clone(),
+                    relative_target_segments: target_segments.clone(),
+                    ancestor_segments: Vec::new(),
+                    guards,
+                    target_schema,
+                    provider_schema_candidate: None,
+                    preserve_base_schema: true,
+                    fold_unconditional_object_host_into_base: false,
+                    arm_only: true,
+                });
+            }
+        }
+    }
+}
+
+/// Replace payload-internal `$ref`s with their payload-level definitions so
+/// a property subschema stays self-contained when copied into an arm.
+/// Cyclic or unresolved references abstain via the depth bound.
+fn dereferenced_payload_subschema(
+    schema: &Value,
+    definitions: Option<&serde_json::Map<String, Value>>,
+    depth: u8,
+) -> Option<Value> {
+    if depth == 0 {
+        return None;
+    }
+    match schema {
+        Value::Object(object) => {
+            if let Some(reference) = object.get("$ref").and_then(Value::as_str) {
+                let name = reference
+                    .strip_prefix("#/$defs/")
+                    .or_else(|| reference.strip_prefix("#/definitions/"))?;
+                let definition = definitions?.get(name)?;
+                return dereferenced_payload_subschema(definition, definitions, depth - 1);
+            }
+            let mut out = serde_json::Map::new();
+            for (key, value) in object {
+                out.insert(
+                    key.clone(),
+                    dereferenced_payload_subschema(value, definitions, depth)?,
+                );
+            }
+            Some(Value::Object(out))
+        }
+        Value::Array(items) => Some(Value::Array(
+            items
+                .iter()
+                .map(|item| dereferenced_payload_subschema(item, definitions, depth))
+                .collect::<Option<_>>()?,
+        )),
+        other => Some(other.clone()),
+    }
 }
 
 fn kind_partitioned_overlays(overlay: &ConditionalPathOverlay) -> Vec<ConditionalPathOverlay> {
@@ -534,6 +665,8 @@ fn fail_requirement_runtime_types(
                     FailValueRequirement::SplitSegmentsAtLeast {
                         allow_non_string, ..
                     } => *runtime_type == "string" || *allow_non_string,
+                    // Constrains rendered content, not the value's kind.
+                    FailValueRequirement::QuotedSerializationSafe { .. } => true,
                 });
             }
             types

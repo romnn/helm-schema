@@ -79,6 +79,19 @@ impl SymbolicIrContext {
     ) -> ContractIr {
         let document =
             crate::fragment_eval::eval_document(src, source_path, &self.inner.analysis_db);
-        crate::fragment_eval::contract_ir_from_document(&document)
+        let mut contract = crate::fragment_eval::contract_ir_from_document(&document);
+        for name in &document.values_root_helper_includes {
+            contract.extend_values_program_wrappers(
+                self.inner
+                    .analysis_db
+                    .program_wrapper_sentinels(name)
+                    .into_iter()
+                    .map(|key| helm_schema_core::ValuesProgramWrapper {
+                        scope_path: String::new(),
+                        key,
+                    }),
+            );
+        }
+        contract
     }
 }

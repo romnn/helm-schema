@@ -100,6 +100,8 @@ pub struct EvaluatedDocument {
     pub(crate) range_modes: crate::range_modes::RangeModes,
     /// Chart value subtrees supplying defaults to the effective values tree.
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
+    /// Helper names through which the values root was replaced.
+    pub(crate) values_root_helper_includes: BTreeSet<String>,
     /// `fail` captures (see [`FailCapture`]): no valid values document may
     /// satisfy one of these conjunctions.
     pub(crate) fail_conditions: Vec<FailCapture>,
@@ -150,6 +152,7 @@ pub(crate) fn eval_document(
         string_contract_paths: interpreter.string_contract_paths,
         range_modes: interpreter.range_modes,
         values_default_sources: interpreter.values_default_sources_observed,
+        values_root_helper_includes: interpreter.values_root_helper_includes_observed,
         fail_conditions: interpreter.fail_conditions,
     }
 }
@@ -529,6 +532,7 @@ pub(super) struct Interpreter<'a> {
     pub(super) root_set_mutations_observed: BTreeMap<String, AbstractValue>,
     pub(super) root_set_predicates_observed: BTreeMap<String, Predicate>,
     pub(super) values_default_sources_observed: BTreeSet<crate::ValuesDefaultSource>,
+    pub(super) values_root_helper_includes_observed: BTreeSet<String>,
     pub(super) active_predicates: Vec<Predicate>,
     pub(super) reads: Vec<ValueRead>,
     /// Dedup shadow of `reads` (order lives in the vec).
@@ -629,6 +633,7 @@ impl<'a> Interpreter<'a> {
             root_set_mutations_observed: BTreeMap::new(),
             root_set_predicates_observed: BTreeMap::new(),
             values_default_sources_observed: BTreeSet::new(),
+            values_root_helper_includes_observed: BTreeSet::new(),
             active_predicates: Vec::new(),
             reads: Vec::new(),
             reads_seen: HashSet::new(),

@@ -1,5 +1,36 @@
 {
   "$defs": {
+    "helm-single-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^']|'')*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-single-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-single-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^']|'')*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
     "helm-truthy": {
       "anyOf": [
         {
@@ -2578,52 +2609,6 @@
     },
     {
       "if": {
-        "not": {
-          "properties": {
-            "service": {
-              "properties": {
-                "disableBaseClientPort": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              "required": [
-                "disableBaseClientPort"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "containerPorts": {
-            "additionalProperties": {},
-            "properties": {
-              "client": {
-                "anyOf": [
-                  {
-                    "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  {
-                    "pattern": "^-?(0|[1-9][0-9]*)$",
-                    "type": "string"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -2836,14 +2821,50 @@
             "additionalProperties": {},
             "properties": {
               "client": {
+                "$ref": "#/$defs/helm-single-quoted-safe"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "service": {
+              "properties": {
+                "disableBaseClientPort": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "disableBaseClientPort"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "containerPorts": {
+            "additionalProperties": {},
+            "properties": {
+              "client": {
                 "anyOf": [
                   {
-                    "not": {
-                      "type": "string"
-                    }
+                    "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
+                    "format": "int32",
+                    "type": "integer"
                   },
                   {
-                    "pattern": "^([^']|'')*$",
+                    "pattern": "^-?(0|[1-9][0-9]*)$",
                     "type": "string"
                   }
                 ]
@@ -2893,58 +2914,6 @@
     },
     {
       "if": {
-        "properties": {
-          "tls": {
-            "properties": {
-              "client": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "client"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "tls"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "containerPorts": {
-            "additionalProperties": {},
-            "properties": {
-              "tls": {
-                "anyOf": [
-                  {
-                    "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
-                    "format": "int32",
-                    "type": "integer"
-                  },
-                  {
-                    "pattern": "^-?(0|[1-9][0-9]*)$",
-                    "type": "string"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -3153,14 +3122,56 @@
             "additionalProperties": {},
             "properties": {
               "tls": {
+                "$ref": "#/$defs/helm-single-quoted-safe"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "tls": {
+            "properties": {
+              "client": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "client"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "tls"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "containerPorts": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
                 "anyOf": [
                   {
-                    "not": {
-                      "type": "string"
-                    }
+                    "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
+                    "format": "int32",
+                    "type": "integer"
                   },
                   {
-                    "pattern": "^([^']|'')*$",
+                    "pattern": "^-?(0|[1-9][0-9]*)$",
                     "type": "string"
                   }
                 ]
@@ -7559,17 +7570,7 @@
             "additionalProperties": {},
             "properties": {
               "probeCommandTimeout": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "pattern": "^([^']|'')*$",
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/helm-single-quoted-safe"
               }
             }
           }
@@ -14314,17 +14315,7 @@
             "additionalProperties": {},
             "properties": {
               "probeCommandTimeout": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "pattern": "^([^']|'')*$",
-                    "type": "string"
-                  }
-                ]
+                "$ref": "#/$defs/helm-single-quoted-safe"
               }
             }
           }
@@ -15355,17 +15346,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "client_cert_pem_path": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "type": "string"
-                        }
-                      },
-                      {
-                        "pattern": "^([^']|'')*$",
-                        "type": "string"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-single-quoted-safe"
                   }
                 }
               }
@@ -15641,17 +15622,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "client_key_pem_path": {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "type": "string"
-                        }
-                      },
-                      {
-                        "pattern": "^([^']|'')*$",
-                        "type": "string"
-                      }
-                    ]
+                    "$ref": "#/$defs/helm-single-quoted-safe"
                   }
                 }
               }

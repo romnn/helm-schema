@@ -1,5 +1,67 @@
 {
   "$defs": {
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "helm-single-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^']|'')*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-single-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-single-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^']|'')*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
     "helm-truthy": {
       "anyOf": [
         {
@@ -332,7 +394,7 @@
                     "$ref": "#/$defs/schema150"
                   },
                   "optional": {
-                    "$ref": "#/$defs/schema186"
+                    "$ref": "#/$defs/schema185"
                   }
                 },
                 "type": [
@@ -427,7 +489,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema234"
+                    "$ref": "#/$defs/schema233"
                   }
                 },
                 "type": [
@@ -1322,7 +1384,7 @@
                               "$ref": "#/$defs/schema150"
                             },
                             "optional": {
-                              "$ref": "#/$defs/schema186"
+                              "$ref": "#/$defs/schema185"
                             }
                           },
                           "type": [
@@ -2812,10 +2874,6 @@
         }
       }
     },
-    "schema174": {
-      "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-      "type": "string"
-    },
     "schema18": {
       "additionalProperties": false,
       "description": "ResourceRequirements describes the compute resource requirements.",
@@ -2897,14 +2955,14 @@
       },
       "type": "object"
     },
-    "schema186": {
+    "schema185": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "schema188": {
+    "schema187": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
@@ -2975,13 +3033,18 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "schema197": {
+    "schema196": {
       "description": "The key of the secret to select from.  Must be a valid secret key.",
       "type": "string"
     },
-    "schema199": {
+    "schema198": {
       "description": "Protocol for port. Must be UDP, TCP, or SCTP. Defaults to \"TCP\".",
       "type": "null"
+    },
+    "schema199": {
+      "description": "The port that will be exposed by this service.",
+      "format": "int32",
+      "type": "integer"
     },
     "schema2": {
       "additionalProperties": false,
@@ -3232,12 +3295,7 @@
       "x-kubernetes-patch-merge-key": "mountPath",
       "x-kubernetes-patch-strategy": "merge"
     },
-    "schema200": {
-      "description": "The port that will be exposed by this service.",
-      "format": "int32",
-      "type": "integer"
-    },
-    "schema204": {
+    "schema203": {
       "anyOf": [
         {
           "pattern": "^-?(0|[1-9][0-9]*)$",
@@ -3307,7 +3365,7 @@
       "x-kubernetes-patch-merge-key": "mountPath",
       "x-kubernetes-patch-strategy": "merge"
     },
-    "schema211": {
+    "schema210": {
       "not": {
         "properties": {
           "serviceMonitor": {}
@@ -3318,11 +3376,11 @@
         "type": "object"
       }
     },
-    "schema213": {
+    "schema212": {
       "description": "Specify whether the Secret or its key must be defined",
       "type": "boolean"
     },
-    "schema217": {
+    "schema216": {
       "not": {
         "properties": {
           "autoscaling": {}
@@ -3333,7 +3391,7 @@
         "type": "object"
       }
     },
-    "schema219": {
+    "schema218": {
       "additionalProperties": {},
       "properties": {
         "rule": {
@@ -3379,12 +3437,12 @@
         "null"
       ]
     },
-    "schema225": {
+    "schema224": {
       "not": {
         "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
       }
     },
-    "schema226": {
+    "schema225": {
       "not": {
         "properties": {
           "create": {}
@@ -3395,12 +3453,12 @@
         "type": "object"
       }
     },
-    "schema228": {
+    "schema227": {
       "not": {
         "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
       }
     },
-    "schema231": {
+    "schema230": {
       "oneOf": [
         {
           "type": [
@@ -3416,11 +3474,11 @@
         }
       ]
     },
-    "schema233": {
+    "schema232": {
       "pattern": "^(true|false|True|False|TRUE|FALSE)$",
       "type": "string"
     },
-    "schema234": {
+    "schema233": {
       "oneOf": [
         {
           "type": [
@@ -3436,11 +3494,16 @@
         }
       ]
     },
-    "schema239": {
+    "schema238": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
+    },
+    "schema239": {
+      "not": {
+        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+      }
     },
     "schema24": {
       "additionalProperties": false,
@@ -3480,40 +3543,35 @@
         "null"
       ]
     },
-    "schema240": {
-      "not": {
-        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-      }
-    },
-    "schema244": {
+    "schema243": {
       "pattern": "^-?(0|[1-9][0-9]*)$",
       "type": "string"
     },
-    "schema246": {
+    "schema245": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema247": {
+    "schema246": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema248": {
+    "schema247": {
       "additionalProperties": {},
       "type": "object"
     },
-    "schema249": {
+    "schema248": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema252": {
+    "schema251": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema253": {
+    "schema252": {
       "not": {
         "pattern": "[\\r\\n]"
       }
@@ -6388,7 +6446,7 @@
                 "type": "null"
               },
               {
-                "$ref": "#/$defs/schema233"
+                "$ref": "#/$defs/schema232"
               }
             ],
             "description": "Automatically mount API credentials for a particular Pod"
@@ -6717,145 +6775,6 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema163"
-              },
-              {
-                "properties": {
-                  "daemonset": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "daemonset"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "properties": {
-              "deployment": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "deployment"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
-            "additionalProperties": {},
-            "description": "Section for crafting Promtails config file. The only directly relevant value is `config.file`\nwhich is a templated string that references the other values and snippets below this key.",
-            "properties": {
-              "serverPort": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema155"
-                  },
-                  {
-                    "$ref": "#/$defs/schema244"
-                  }
-                ],
-                "description": "The port of the Promtail server\nMust be reference in `config.file` to configure `server.http_listen_port`\nSee default config in `values.yaml`"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "properties": {
-              "service": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "serviceMonitor": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "serviceMonitor"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "config": {
-            "additionalProperties": {},
-            "description": "Section for crafting Promtails config file. The only directly relevant value is `config.file`\nwhich is a templated string that references the other values and snippets below this key.",
-            "properties": {
-              "serverPort": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema200"
-                  },
-                  {
-                    "$ref": "#/$defs/schema244"
-                  }
-                ],
-                "description": "The port of the Promtail server\nMust be reference in `config.file` to configure `server.http_listen_port`\nSee default config in `values.yaml`"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
             "allOf": [
               {
                 "anyOf": [
@@ -6972,15 +6891,144 @@
             "description": "Section for crafting Promtails config file. The only directly relevant value is `config.file`\nwhich is a templated string that references the other values and snippets below this key.",
             "properties": {
               "serverPort": {
+                "$ref": "#/$defs/helm-single-quoted-safe",
+                "description": "The port of the Promtail server\nMust be reference in `config.file` to configure `server.http_listen_port`\nSee default config in `values.yaml`"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema163"
+              },
+              {
+                "properties": {
+                  "daemonset": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "daemonset"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "deployment": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "deployment"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "additionalProperties": {},
+            "description": "Section for crafting Promtails config file. The only directly relevant value is `config.file`\nwhich is a templated string that references the other values and snippets below this key.",
+            "properties": {
+              "serverPort": {
                 "anyOf": [
                   {
-                    "not": {
-                      "type": "string"
-                    }
+                    "$ref": "#/$defs/schema155"
                   },
                   {
-                    "pattern": "^([^']|'')*$",
-                    "type": "string"
+                    "$ref": "#/$defs/schema243"
+                  }
+                ],
+                "description": "The port of the Promtail server\nMust be reference in `config.file` to configure `server.http_listen_port`\nSee default config in `values.yaml`"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "service": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "serviceMonitor": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceMonitor"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "config": {
+            "additionalProperties": {},
+            "description": "Section for crafting Promtails config file. The only directly relevant value is `config.file`\nwhich is a templated string that references the other values and snippets below this key.",
+            "properties": {
+              "serverPort": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema199"
+                  },
+                  {
+                    "$ref": "#/$defs/schema243"
                   }
                 ],
                 "description": "The port of the Promtail server\nMust be reference in `config.file` to configure `server.http_listen_port`\nSee default config in `values.yaml`"
@@ -9645,7 +9693,7 @@
                       "$ref": "#/$defs/schema59"
                     },
                     {
-                      "$ref": "#/$defs/schema199"
+                      "$ref": "#/$defs/schema198"
                     },
                     {
                       "not": {
@@ -9666,7 +9714,7 @@
                       "$ref": "#/$defs/schema59"
                     },
                     {
-                      "$ref": "#/$defs/schema199"
+                      "$ref": "#/$defs/schema198"
                     },
                     {
                       "not": {
@@ -9833,7 +9881,7 @@
           "extraPorts": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema248"
+                "$ref": "#/$defs/schema247"
               },
               {
                 "type": "array"
@@ -10516,7 +10564,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema211"
+                    "$ref": "#/$defs/schema210"
                   },
                   {
                     "properties": {
@@ -10969,7 +11017,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema211"
+                    "$ref": "#/$defs/schema210"
                   },
                   {
                     "properties": {
@@ -11491,7 +11539,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/schema233"
+                "$ref": "#/$defs/schema232"
               }
             ],
             "description": "Controls whether the pod has the `hostNetwork` flag set."
@@ -11628,16 +11676,7 @@
             "additionalProperties": {},
             "properties": {
               "repository": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema174"
-                  }
-                ],
+                "$ref": "#/$defs/helm-double-quoted-safe",
                 "description": "Docker image repository"
               }
             }
@@ -11702,16 +11741,7 @@
             "additionalProperties": {},
             "properties": {
               "tag": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema174"
-                  }
-                ],
+                "$ref": "#/$defs/helm-double-quoted-safe",
                 "description": "Overrides the image tag whose default is the chart's appVersion"
               }
             }
@@ -12167,7 +12197,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema211"
+                    "$ref": "#/$defs/schema210"
                   },
                   {
                     "properties": {
@@ -13031,7 +13061,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema211"
+                    "$ref": "#/$defs/schema210"
                   },
                   {
                     "properties": {
@@ -13452,7 +13482,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema211"
+                    "$ref": "#/$defs/schema210"
                   },
                   {
                     "properties": {
@@ -13803,13 +13833,13 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema247"
+                    "$ref": "#/$defs/schema246"
                   },
                   {
-                    "$ref": "#/$defs/schema249"
+                    "$ref": "#/$defs/schema248"
                   },
                   {
-                    "$ref": "#/$defs/schema252"
+                    "$ref": "#/$defs/schema251"
                   },
                   {
                     "not": {
@@ -13817,22 +13847,22 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema253"
+                    "$ref": "#/$defs/schema252"
                   },
                   {
-                    "$ref": "#/$defs/schema246"
+                    "$ref": "#/$defs/schema245"
                   },
                   {
-                    "$ref": "#/$defs/schema188"
+                    "$ref": "#/$defs/schema187"
                   },
                   {
-                    "$ref": "#/$defs/schema225"
+                    "$ref": "#/$defs/schema224"
                   },
                   {
-                    "$ref": "#/$defs/schema228"
+                    "$ref": "#/$defs/schema227"
                   },
                   {
-                    "$ref": "#/$defs/schema240"
+                    "$ref": "#/$defs/schema239"
                   }
                 ],
                 "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
@@ -13888,13 +13918,13 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema247"
+                    "$ref": "#/$defs/schema246"
                   },
                   {
-                    "$ref": "#/$defs/schema249"
+                    "$ref": "#/$defs/schema248"
                   },
                   {
-                    "$ref": "#/$defs/schema252"
+                    "$ref": "#/$defs/schema251"
                   },
                   {
                     "not": {
@@ -13902,22 +13932,22 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema253"
+                    "$ref": "#/$defs/schema252"
                   },
                   {
-                    "$ref": "#/$defs/schema246"
+                    "$ref": "#/$defs/schema245"
                   },
                   {
-                    "$ref": "#/$defs/schema188"
+                    "$ref": "#/$defs/schema187"
                   },
                   {
-                    "$ref": "#/$defs/schema225"
+                    "$ref": "#/$defs/schema224"
                   },
                   {
-                    "$ref": "#/$defs/schema228"
+                    "$ref": "#/$defs/schema227"
                   },
                   {
-                    "$ref": "#/$defs/schema240"
+                    "$ref": "#/$defs/schema239"
                   }
                 ],
                 "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
@@ -14803,13 +14833,13 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema247"
+                    "$ref": "#/$defs/schema246"
                   },
                   {
-                    "$ref": "#/$defs/schema249"
+                    "$ref": "#/$defs/schema248"
                   },
                   {
-                    "$ref": "#/$defs/schema252"
+                    "$ref": "#/$defs/schema251"
                   },
                   {
                     "not": {
@@ -14817,22 +14847,22 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema253"
+                    "$ref": "#/$defs/schema252"
                   },
                   {
-                    "$ref": "#/$defs/schema246"
+                    "$ref": "#/$defs/schema245"
                   },
                   {
-                    "$ref": "#/$defs/schema188"
+                    "$ref": "#/$defs/schema187"
                   },
                   {
-                    "$ref": "#/$defs/schema225"
+                    "$ref": "#/$defs/schema224"
                   },
                   {
-                    "$ref": "#/$defs/schema228"
+                    "$ref": "#/$defs/schema227"
                   },
                   {
-                    "$ref": "#/$defs/schema240"
+                    "$ref": "#/$defs/schema239"
                   }
                 ],
                 "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -15038,7 +15068,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/schema244"
+                "$ref": "#/$defs/schema243"
               }
             ]
           }
@@ -15093,7 +15123,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/schema244"
+                "$ref": "#/$defs/schema243"
               }
             ]
           }
@@ -15492,13 +15522,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema247"
+                        "$ref": "#/$defs/schema246"
                       },
                       {
-                        "$ref": "#/$defs/schema249"
+                        "$ref": "#/$defs/schema248"
                       },
                       {
-                        "$ref": "#/$defs/schema252"
+                        "$ref": "#/$defs/schema251"
                       },
                       {
                         "not": {
@@ -15506,22 +15536,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema253"
+                        "$ref": "#/$defs/schema252"
                       },
                       {
-                        "$ref": "#/$defs/schema246"
+                        "$ref": "#/$defs/schema245"
                       },
                       {
-                        "$ref": "#/$defs/schema188"
+                        "$ref": "#/$defs/schema187"
                       },
                       {
-                        "$ref": "#/$defs/schema225"
+                        "$ref": "#/$defs/schema224"
                       },
                       {
-                        "$ref": "#/$defs/schema228"
+                        "$ref": "#/$defs/schema227"
                       },
                       {
-                        "$ref": "#/$defs/schema240"
+                        "$ref": "#/$defs/schema239"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -15601,13 +15631,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema247"
+                        "$ref": "#/$defs/schema246"
                       },
                       {
-                        "$ref": "#/$defs/schema249"
+                        "$ref": "#/$defs/schema248"
                       },
                       {
-                        "$ref": "#/$defs/schema252"
+                        "$ref": "#/$defs/schema251"
                       },
                       {
                         "not": {
@@ -15615,22 +15645,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema253"
+                        "$ref": "#/$defs/schema252"
                       },
                       {
-                        "$ref": "#/$defs/schema246"
+                        "$ref": "#/$defs/schema245"
                       },
                       {
-                        "$ref": "#/$defs/schema188"
+                        "$ref": "#/$defs/schema187"
                       },
                       {
-                        "$ref": "#/$defs/schema225"
+                        "$ref": "#/$defs/schema224"
                       },
                       {
-                        "$ref": "#/$defs/schema228"
+                        "$ref": "#/$defs/schema227"
                       },
                       {
-                        "$ref": "#/$defs/schema240"
+                        "$ref": "#/$defs/schema239"
                       }
                     ],
                     "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -16111,14 +16141,7 @@
                     "description": "limits:\ncpu: 200m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi",
                     "properties": {
                       "serverPort": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema155"
-                          },
-                          {
-                            "$ref": "#/$defs/schema244"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-single-quoted-safe",
                         "description": "The port of the config-reloader server"
                       }
                     }
@@ -16258,13 +16281,10 @@
                       "serverPort": {
                         "anyOf": [
                           {
-                            "not": {
-                              "type": "string"
-                            }
+                            "$ref": "#/$defs/schema155"
                           },
                           {
-                            "pattern": "^([^']|'')*$",
-                            "type": "string"
+                            "$ref": "#/$defs/schema243"
                           }
                         ],
                         "description": "The port of the config-reloader server"
@@ -17585,16 +17605,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "registry": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema174"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "The Docker registry for sidecar config-reloader"
                       }
                     }
@@ -17731,16 +17742,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "repository": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema174"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Docker image repository for sidecar config-reloader"
                       }
                     }
@@ -17877,16 +17879,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "tag": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "type": "string"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/schema174"
-                          }
-                        ],
+                        "$ref": "#/$defs/helm-double-quoted-safe",
                         "description": "Docker image tag for sidecar config-reloader"
                       }
                     }
@@ -18471,7 +18464,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema211"
+                "$ref": "#/$defs/schema210"
               },
               {
                 "properties": {
@@ -18724,7 +18717,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema211"
+                    "$ref": "#/$defs/schema210"
                   },
                   {
                     "properties": {
@@ -18772,7 +18765,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema211"
+                    "$ref": "#/$defs/schema210"
                   },
                   {
                     "properties": {
@@ -18870,7 +18863,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema211"
+                    "$ref": "#/$defs/schema210"
                   },
                   {
                     "properties": {
@@ -19227,7 +19220,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema211"
+                    "$ref": "#/$defs/schema210"
                   },
                   {
                     "properties": {
@@ -19275,7 +19268,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema211"
+                    "$ref": "#/$defs/schema210"
                   },
                   {
                     "properties": {
@@ -19520,7 +19513,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema211"
+                    "$ref": "#/$defs/schema210"
                   },
                   {
                     "properties": {
@@ -19568,7 +19561,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema211"
+                    "$ref": "#/$defs/schema210"
                   },
                   {
                     "properties": {
@@ -19807,10 +19800,10 @@
                 "description": "Spec to control the desired behavior of daemon set rolling update.",
                 "properties": {
                   "maxSurge": {
-                    "$ref": "#/$defs/schema231"
+                    "$ref": "#/$defs/schema230"
                   },
                   "maxUnavailable": {
-                    "$ref": "#/$defs/schema231"
+                    "$ref": "#/$defs/schema230"
                   }
                 },
                 "type": [
@@ -19960,7 +19953,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "cri": {
-                    "$ref": "#/$defs/schema248"
+                    "$ref": "#/$defs/schema247"
                   }
                 },
                 "type": "object"
@@ -20084,7 +20077,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema217"
+                    "$ref": "#/$defs/schema216"
                   },
                   {
                     "properties": {
@@ -20158,7 +20151,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema217"
+                    "$ref": "#/$defs/schema216"
                   },
                   {
                     "properties": {
@@ -20232,7 +20225,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema217"
+                    "$ref": "#/$defs/schema216"
                   },
                   {
                     "properties": {
@@ -20332,7 +20325,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema244"
+                    "$ref": "#/$defs/schema243"
                   }
                 ]
               }
@@ -20365,10 +20358,10 @@
                         "description": "Spec to control the desired behavior of rolling update.",
                         "properties": {
                           "maxSurge": {
-                            "$ref": "#/$defs/schema231"
+                            "$ref": "#/$defs/schema230"
                           },
                           "maxUnavailable": {
-                            "$ref": "#/$defs/schema231"
+                            "$ref": "#/$defs/schema230"
                           }
                         },
                         "type": [
@@ -20479,7 +20472,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema248"
+          "$ref": "#/$defs/schema247"
         }
       ],
       "description": "Extra K8s manifests to deploy\n- apiVersion: \"kubernetes-client.io/v1\"\nkind: ExternalSecret\nmetadata:\nname: promtail-secrets\nspec:\nbackendType: gcpSecretsManager\ndata:\n- key: promtail-oauth2-creds\nname: client_secret"
@@ -20508,10 +20501,10 @@
                 "containerPort": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema200"
+                      "$ref": "#/$defs/schema199"
                     },
                     {
-                      "$ref": "#/$defs/schema244"
+                      "$ref": "#/$defs/schema243"
                     }
                   ]
                 }
@@ -20534,13 +20527,13 @@
                         {
                           "allOf": [
                             {
-                              "$ref": "#/$defs/schema247"
+                              "$ref": "#/$defs/schema246"
                             },
                             {
-                              "$ref": "#/$defs/schema249"
+                              "$ref": "#/$defs/schema248"
                             },
                             {
-                              "$ref": "#/$defs/schema252"
+                              "$ref": "#/$defs/schema251"
                             },
                             {
                               "not": {
@@ -20548,22 +20541,22 @@
                               }
                             },
                             {
-                              "$ref": "#/$defs/schema253"
+                              "$ref": "#/$defs/schema252"
                             },
                             {
-                              "$ref": "#/$defs/schema246"
+                              "$ref": "#/$defs/schema245"
                             },
                             {
-                              "$ref": "#/$defs/schema188"
+                              "$ref": "#/$defs/schema187"
                             },
                             {
-                              "$ref": "#/$defs/schema225"
+                              "$ref": "#/$defs/schema224"
                             },
                             {
-                              "$ref": "#/$defs/schema228"
+                              "$ref": "#/$defs/schema227"
                             },
                             {
-                              "$ref": "#/$defs/schema240"
+                              "$ref": "#/$defs/schema239"
                             }
                           ],
                           "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
@@ -20627,13 +20620,13 @@
                         {
                           "allOf": [
                             {
-                              "$ref": "#/$defs/schema247"
+                              "$ref": "#/$defs/schema246"
                             },
                             {
-                              "$ref": "#/$defs/schema249"
+                              "$ref": "#/$defs/schema248"
                             },
                             {
-                              "$ref": "#/$defs/schema252"
+                              "$ref": "#/$defs/schema251"
                             },
                             {
                               "not": {
@@ -20641,22 +20634,22 @@
                               }
                             },
                             {
-                              "$ref": "#/$defs/schema253"
+                              "$ref": "#/$defs/schema252"
                             },
                             {
-                              "$ref": "#/$defs/schema246"
+                              "$ref": "#/$defs/schema245"
                             },
                             {
-                              "$ref": "#/$defs/schema188"
+                              "$ref": "#/$defs/schema187"
                             },
                             {
-                              "$ref": "#/$defs/schema225"
+                              "$ref": "#/$defs/schema224"
                             },
                             {
-                              "$ref": "#/$defs/schema228"
+                              "$ref": "#/$defs/schema227"
                             },
                             {
-                              "$ref": "#/$defs/schema240"
+                              "$ref": "#/$defs/schema239"
                             }
                           ],
                           "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
@@ -20688,13 +20681,13 @@
                         {
                           "allOf": [
                             {
-                              "$ref": "#/$defs/schema247"
+                              "$ref": "#/$defs/schema246"
                             },
                             {
-                              "$ref": "#/$defs/schema249"
+                              "$ref": "#/$defs/schema248"
                             },
                             {
-                              "$ref": "#/$defs/schema252"
+                              "$ref": "#/$defs/schema251"
                             },
                             {
                               "not": {
@@ -20702,22 +20695,22 @@
                               }
                             },
                             {
-                              "$ref": "#/$defs/schema253"
+                              "$ref": "#/$defs/schema252"
                             },
                             {
-                              "$ref": "#/$defs/schema246"
+                              "$ref": "#/$defs/schema245"
                             },
                             {
-                              "$ref": "#/$defs/schema188"
+                              "$ref": "#/$defs/schema187"
                             },
                             {
-                              "$ref": "#/$defs/schema225"
+                              "$ref": "#/$defs/schema224"
                             },
                             {
-                              "$ref": "#/$defs/schema228"
+                              "$ref": "#/$defs/schema227"
                             },
                             {
-                              "$ref": "#/$defs/schema240"
+                              "$ref": "#/$defs/schema239"
                             }
                           ],
                           "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
@@ -20781,13 +20774,13 @@
                         {
                           "allOf": [
                             {
-                              "$ref": "#/$defs/schema247"
+                              "$ref": "#/$defs/schema246"
                             },
                             {
-                              "$ref": "#/$defs/schema249"
+                              "$ref": "#/$defs/schema248"
                             },
                             {
-                              "$ref": "#/$defs/schema252"
+                              "$ref": "#/$defs/schema251"
                             },
                             {
                               "not": {
@@ -20795,22 +20788,22 @@
                               }
                             },
                             {
-                              "$ref": "#/$defs/schema253"
+                              "$ref": "#/$defs/schema252"
                             },
                             {
-                              "$ref": "#/$defs/schema246"
+                              "$ref": "#/$defs/schema245"
                             },
                             {
-                              "$ref": "#/$defs/schema188"
+                              "$ref": "#/$defs/schema187"
                             },
                             {
-                              "$ref": "#/$defs/schema225"
+                              "$ref": "#/$defs/schema224"
                             },
                             {
-                              "$ref": "#/$defs/schema228"
+                              "$ref": "#/$defs/schema227"
                             },
                             {
-                              "$ref": "#/$defs/schema240"
+                              "$ref": "#/$defs/schema239"
                             }
                           ],
                           "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -20926,7 +20919,7 @@
                         "$ref": "#/$defs/schema64"
                       },
                       {
-                        "$ref": "#/$defs/schema204"
+                        "$ref": "#/$defs/schema203"
                       }
                     ]
                   }
@@ -21004,7 +20997,7 @@
                       "type": "object"
                     },
                     {
-                      "$ref": "#/$defs/schema248"
+                      "$ref": "#/$defs/schema247"
                     },
                     {
                       "not": {
@@ -21042,7 +21035,7 @@
           "type": "boolean"
         },
         "fsGroup": {
-          "$ref": "#/$defs/schema219"
+          "$ref": "#/$defs/schema218"
         },
         "hostIPC": {
           "type": "boolean"
@@ -21066,13 +21059,13 @@
           "type": "array"
         },
         "runAsUser": {
-          "$ref": "#/$defs/schema219"
+          "$ref": "#/$defs/schema218"
         },
         "seLinux": {
-          "$ref": "#/$defs/schema219"
+          "$ref": "#/$defs/schema218"
         },
         "supplementalGroups": {
-          "$ref": "#/$defs/schema219"
+          "$ref": "#/$defs/schema218"
         },
         "volumes": {
           "items": {
@@ -21168,7 +21161,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema226"
+                "$ref": "#/$defs/schema225"
               },
               {
                 "properties": {
@@ -21209,7 +21202,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema226"
+                "$ref": "#/$defs/schema225"
               },
               {
                 "properties": {
@@ -21238,7 +21231,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema233"
+                    "$ref": "#/$defs/schema232"
                   }
                 ],
                 "description": "Automatically mount a ServiceAccount's API credentials"
@@ -21250,7 +21243,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema226"
+                "$ref": "#/$defs/schema225"
               },
               {
                 "properties": {
@@ -21295,7 +21288,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema226"
+                "$ref": "#/$defs/schema225"
               },
               {
                 "properties": {
@@ -21318,13 +21311,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema247"
+                        "$ref": "#/$defs/schema246"
                       },
                       {
-                        "$ref": "#/$defs/schema249"
+                        "$ref": "#/$defs/schema248"
                       },
                       {
-                        "$ref": "#/$defs/schema252"
+                        "$ref": "#/$defs/schema251"
                       },
                       {
                         "not": {
@@ -21332,22 +21325,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema253"
+                        "$ref": "#/$defs/schema252"
                       },
                       {
-                        "$ref": "#/$defs/schema246"
+                        "$ref": "#/$defs/schema245"
                       },
                       {
-                        "$ref": "#/$defs/schema188"
+                        "$ref": "#/$defs/schema187"
                       },
                       {
-                        "$ref": "#/$defs/schema225"
+                        "$ref": "#/$defs/schema224"
                       },
                       {
-                        "$ref": "#/$defs/schema228"
+                        "$ref": "#/$defs/schema227"
                       },
                       {
-                        "$ref": "#/$defs/schema240"
+                        "$ref": "#/$defs/schema239"
                       }
                     ],
                     "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
@@ -21432,7 +21425,7 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema239"
+                    "$ref": "#/$defs/schema238"
                   },
                   {
                     "not": {
@@ -21479,13 +21472,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema247"
+                        "$ref": "#/$defs/schema246"
                       },
                       {
-                        "$ref": "#/$defs/schema249"
+                        "$ref": "#/$defs/schema248"
                       },
                       {
-                        "$ref": "#/$defs/schema252"
+                        "$ref": "#/$defs/schema251"
                       },
                       {
                         "not": {
@@ -21493,22 +21486,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema253"
+                        "$ref": "#/$defs/schema252"
                       },
                       {
-                        "$ref": "#/$defs/schema246"
+                        "$ref": "#/$defs/schema245"
                       },
                       {
-                        "$ref": "#/$defs/schema188"
+                        "$ref": "#/$defs/schema187"
                       },
                       {
-                        "$ref": "#/$defs/schema225"
+                        "$ref": "#/$defs/schema224"
                       },
                       {
-                        "$ref": "#/$defs/schema228"
+                        "$ref": "#/$defs/schema227"
                       },
                       {
-                        "$ref": "#/$defs/schema240"
+                        "$ref": "#/$defs/schema239"
                       }
                     ],
                     "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
@@ -21558,7 +21551,7 @@
               "labels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema239"
+                    "$ref": "#/$defs/schema238"
                   },
                   {
                     "not": {
@@ -21770,7 +21763,7 @@
                   "additionalLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema239"
+                        "$ref": "#/$defs/schema238"
                       },
                       {
                         "not": {
@@ -21983,13 +21976,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema247"
+                        "$ref": "#/$defs/schema246"
                       },
                       {
-                        "$ref": "#/$defs/schema249"
+                        "$ref": "#/$defs/schema248"
                       },
                       {
-                        "$ref": "#/$defs/schema252"
+                        "$ref": "#/$defs/schema251"
                       },
                       {
                         "not": {
@@ -21997,22 +21990,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema253"
+                        "$ref": "#/$defs/schema252"
                       },
                       {
-                        "$ref": "#/$defs/schema246"
+                        "$ref": "#/$defs/schema245"
                       },
                       {
-                        "$ref": "#/$defs/schema188"
+                        "$ref": "#/$defs/schema187"
                       },
                       {
-                        "$ref": "#/$defs/schema225"
+                        "$ref": "#/$defs/schema224"
                       },
                       {
-                        "$ref": "#/$defs/schema228"
+                        "$ref": "#/$defs/schema227"
                       },
                       {
-                        "$ref": "#/$defs/schema240"
+                        "$ref": "#/$defs/schema239"
                       }
                     ],
                     "description": "scheme defines the HTTP scheme to use when scraping the metrics.",
@@ -22069,13 +22062,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema247"
+                        "$ref": "#/$defs/schema246"
                       },
                       {
-                        "$ref": "#/$defs/schema249"
+                        "$ref": "#/$defs/schema248"
                       },
                       {
-                        "$ref": "#/$defs/schema252"
+                        "$ref": "#/$defs/schema251"
                       },
                       {
                         "not": {
@@ -22083,22 +22076,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema253"
+                        "$ref": "#/$defs/schema252"
                       },
                       {
-                        "$ref": "#/$defs/schema246"
+                        "$ref": "#/$defs/schema245"
                       },
                       {
-                        "$ref": "#/$defs/schema188"
+                        "$ref": "#/$defs/schema187"
                       },
                       {
-                        "$ref": "#/$defs/schema225"
+                        "$ref": "#/$defs/schema224"
                       },
                       {
-                        "$ref": "#/$defs/schema228"
+                        "$ref": "#/$defs/schema227"
                       },
                       {
-                        "$ref": "#/$defs/schema240"
+                        "$ref": "#/$defs/schema239"
                       }
                     ],
                     "description": "scrapeTimeout defines the timeout after which Prometheus considers the scrape to be failed.\n\nIf empty, Prometheus uses the global scrape timeout unless it is less\nthan the target's scrape interval value in which the latter is used.\nThe value cannot be greater than the scrape interval otherwise the operator will reject the resource.",
@@ -22247,13 +22240,13 @@
                         "description": "keySecret defines the Secret containing the client key file for the targets.",
                         "properties": {
                           "key": {
-                            "$ref": "#/$defs/schema197"
+                            "$ref": "#/$defs/schema196"
                           },
                           "name": {
                             "$ref": "#/$defs/schema106"
                           },
                           "optional": {
-                            "$ref": "#/$defs/schema213"
+                            "$ref": "#/$defs/schema212"
                           }
                         },
                         "required": [

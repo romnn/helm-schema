@@ -30,6 +30,7 @@ impl FinalizedContract {
         string_contract_value_paths: BTreeSet<String>,
         range_modes: crate::range_modes::RangeModes,
         values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
+        values_program_wrappers: BTreeSet<helm_schema_core::ValuesProgramWrapper>,
         fail_conditions: Vec<crate::eval_effect::FailCapture>,
         dependency_values_root_fragments: BTreeSet<String>,
     ) -> Self {
@@ -45,7 +46,8 @@ impl FinalizedContract {
             &fail_conditions,
             &dependency_values_root_fragments,
         )
-        .with_values_default_sources(values_default_sources);
+        .with_values_default_sources(values_default_sources)
+        .with_values_program_wrappers(values_program_wrappers);
 
         Self {
             uses: normalized_uses,

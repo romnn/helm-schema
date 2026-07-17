@@ -12,6 +12,26 @@ pub struct SplitSegmentUse {
     pub last: bool,
 }
 
+/// The value is one layer of an ordered Sprig `merge`: a key of an earlier
+/// layer shadows the same key of every later layer at the rendered sink, so
+/// a later layer's member reaches the sink only where every earlier layer
+/// lacks that member.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
+pub struct MergeLayersUse {
+    /// Every layer's values path, highest precedence first.
+    pub layers: Vec<String>,
+    /// This use's own index within `layers`.
+    pub position: usize,
+}
+
+impl MergeLayersUse {
+    /// The higher-precedence layer paths whose keys shadow this layer's.
+    #[must_use]
+    pub fn shadowed_by(&self) -> &[String] {
+        &self.layers[..self.position.min(self.layers.len())]
+    }
+}
+
 /// A contract claim for one observed values path.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
 pub struct ContractUse {
@@ -37,6 +57,9 @@ pub struct ContractUse {
     /// source string rather than the raw value.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub split_segment: Option<SplitSegmentUse>,
+    /// Set when the value renders as one layer of an ordered `merge`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub merge_layers: Option<MergeLayersUse>,
 }
 
 impl<'de> Deserialize<'de> for ContractUse {
@@ -59,6 +82,8 @@ impl<'de> Deserialize<'de> for ContractUse {
             template_supplied_member_keys: std::collections::BTreeSet<String>,
             #[serde(default)]
             split_segment: Option<SplitSegmentUse>,
+            #[serde(default)]
+            merge_layers: Option<MergeLayersUse>,
         }
 
         let wire = WireContractUse::deserialize(deserializer)?;
@@ -72,6 +97,7 @@ impl<'de> Deserialize<'de> for ContractUse {
             has_string_contract: wire.has_string_contract,
             template_supplied_member_keys: wire.template_supplied_member_keys,
             split_segment: wire.split_segment,
+            merge_layers: wire.merge_layers,
         })
     }
 }
@@ -124,6 +150,7 @@ impl ContractUse {
             has_string_contract: false,
             template_supplied_member_keys: std::collections::BTreeSet::new(),
             split_segment: None,
+            merge_layers: None,
         }
     }
 

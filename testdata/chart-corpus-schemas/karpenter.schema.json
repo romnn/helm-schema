@@ -1,5 +1,36 @@
 {
   "$defs": {
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        }
+      ]
+    },
     "helm-truthy": {
       "anyOf": [
         {
@@ -317,10 +348,6 @@
       ]
     },
     "schema111": {
-      "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-      "type": "string"
-    },
-    "schema112": {
       "anyOf": [
         {
           "type": "array"
@@ -337,7 +364,7 @@
       ],
       "description": "Additional sidecarContainer config"
     },
-    "schema118": {
+    "schema117": {
       "additionalProperties": {
         "additionalProperties": {},
         "properties": {
@@ -346,6 +373,13 @@
         "type": "object"
       },
       "type": "object"
+    },
+    "schema119": {
+      "description": "optional specify whether the ConfigMap or its keys must be defined",
+      "type": [
+        "boolean",
+        "null"
+      ]
     },
     "schema12": {
       "allOf": [
@@ -404,46 +438,39 @@
       "type": "string"
     },
     "schema120": {
-      "description": "optional specify whether the ConfigMap or its keys must be defined",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "schema121": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema124": {
+    "schema123": {
       "description": "Level is SELinux level label that applies to the container.",
       "type": [
         "string",
         "null"
       ]
     },
-    "schema125": {
+    "schema124": {
       "description": "Role is a SELinux role label that applies to the container.",
       "type": [
         "string",
         "null"
       ]
     },
-    "schema126": {
+    "schema125": {
       "description": "Type is a SELinux type label that applies to the container.",
       "type": [
         "string",
         "null"
       ]
     },
-    "schema127": {
+    "schema126": {
       "description": "User is a SELinux user label that applies to the container.",
       "type": [
         "string",
         "null"
       ]
     },
-    "schema128": {
+    "schema127": {
       "items": {
         "additionalProperties": {},
         "properties": {
@@ -483,13 +510,13 @@
         "null"
       ]
     },
-    "schema142": {
+    "schema141": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema143": {
+    "schema142": {
       "not": {
         "properties": {
           "affinity": {}
@@ -500,17 +527,17 @@
         "type": "object"
       }
     },
-    "schema147": {
+    "schema146": {
       "not": {
         "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
       }
     },
-    "schema149": {
+    "schema148": {
       "not": {
         "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
       }
     },
-    "schema150": {
+    "schema149": {
       "oneOf": [
         {
           "type": [
@@ -526,7 +553,7 @@
         }
       ]
     },
-    "schema152": {
+    "schema151": {
       "properties": {
         "create": {}
       },
@@ -535,7 +562,7 @@
       ],
       "type": "object"
     },
-    "schema153": {
+    "schema152": {
       "oneOf": [
         {
           "type": [
@@ -551,26 +578,26 @@
         }
       ]
     },
-    "schema157": {
+    "schema156": {
       "not": {
         "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
       }
     },
-    "schema160": {
+    "schema159": {
       "pattern": "^-?(0|[1-9][0-9]*)$",
       "type": "string"
     },
-    "schema162": {
+    "schema161": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "schema163": {
+    "schema162": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema164": {
+    "schema163": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
@@ -2024,7 +2051,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema143"
+                "$ref": "#/$defs/schema142"
               },
               {
                 "properties": {
@@ -2075,7 +2102,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema143"
+                "$ref": "#/$defs/schema142"
               },
               {
                 "properties": {
@@ -2126,7 +2153,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema143"
+                "$ref": "#/$defs/schema142"
               },
               {
                 "properties": {
@@ -2226,7 +2253,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema143"
+                "$ref": "#/$defs/schema142"
               },
               {
                 "properties": {
@@ -2281,7 +2308,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema143"
+                "$ref": "#/$defs/schema142"
               },
               {
                 "properties": {
@@ -2332,7 +2359,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema143"
+                "$ref": "#/$defs/schema142"
               },
               {
                 "properties": {
@@ -2383,7 +2410,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema143"
+                "$ref": "#/$defs/schema142"
               },
               {
                 "properties": {
@@ -2452,7 +2479,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema143"
+                "$ref": "#/$defs/schema142"
               },
               {
                 "properties": {
@@ -2505,7 +2532,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema143"
+            "$ref": "#/$defs/schema142"
           },
           {
             "properties": {
@@ -2552,7 +2579,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema143"
+                    "$ref": "#/$defs/schema142"
                   },
                   {
                     "properties": {
@@ -2584,7 +2611,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema143"
+                    "$ref": "#/$defs/schema142"
                   },
                   {
                     "properties": {
@@ -2638,16 +2665,7 @@
               "additionalProperties": {},
               "properties": {
                 "port": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "$ref": "#/$defs/schema111"
-                    }
-                  ],
+                  "$ref": "#/$defs/helm-double-quoted-safe",
                   "description": "The container port to use for http health probe."
                 }
               }
@@ -2667,16 +2685,7 @@
               "additionalProperties": {},
               "properties": {
                 "port": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "$ref": "#/$defs/schema111"
-                    }
-                  ],
+                  "$ref": "#/$defs/helm-double-quoted-safe",
                   "description": "The container port to use for metrics."
                 }
               }
@@ -2762,7 +2771,7 @@
           "description": "- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token",
           "properties": {
             "sidecarContainer": {
-              "$ref": "#/$defs/schema112"
+              "$ref": "#/$defs/schema111"
             }
           }
         }
@@ -2886,16 +2895,7 @@
         "additionalProperties": {},
         "properties": {
           "logLevel": {
-            "anyOf": [
-              {
-                "not": {
-                  "type": "string"
-                }
-              },
-              {
-                "$ref": "#/$defs/schema111"
-              }
-            ],
+            "$ref": "#/$defs/helm-double-quoted-safe",
             "description": "Global log level, defaults to 'info'"
           }
         }
@@ -3210,16 +3210,7 @@
               "description": "Feature Gate configuration values. Feature Gates will follow the same graduation process and requirements as feature gates\nin Kubernetes. More information here https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates-for-alpha-or-beta-features.",
               "properties": {
                 "nodeOverlay": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "$ref": "#/$defs/schema111"
-                    }
-                  ],
+                  "$ref": "#/$defs/helm-double-quoted-safe",
                   "description": "nodeOverlay is ALPHA and is disabled by default.\nSetting this will allow the use of node overlay to impact scheduling decisions"
                 }
               }
@@ -3240,16 +3231,7 @@
               "description": "Feature Gate configuration values. Feature Gates will follow the same graduation process and requirements as feature gates\nin Kubernetes. More information here https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates-for-alpha-or-beta-features.",
               "properties": {
                 "nodeRepair": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "$ref": "#/$defs/schema111"
-                    }
-                  ],
+                  "$ref": "#/$defs/helm-double-quoted-safe",
                   "description": "nodeRepair is ALPHA and is disabled by default.\nSetting this to true will enable node repair."
                 }
               }
@@ -3270,16 +3252,7 @@
               "description": "Feature Gate configuration values. Feature Gates will follow the same graduation process and requirements as feature gates\nin Kubernetes. More information here https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates-for-alpha-or-beta-features.",
               "properties": {
                 "reservedCapacity": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "$ref": "#/$defs/schema111"
-                    }
-                  ],
+                  "$ref": "#/$defs/helm-double-quoted-safe",
                   "description": "reservedCapacity is BETA and is enabled by default.\nSetting this will enable native on-demand capacity reservation support."
                 }
               }
@@ -3300,16 +3273,7 @@
               "description": "Feature Gate configuration values. Feature Gates will follow the same graduation process and requirements as feature gates\nin Kubernetes. More information here https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates-for-alpha-or-beta-features.",
               "properties": {
                 "spotToSpotConsolidation": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "$ref": "#/$defs/schema111"
-                    }
-                  ],
+                  "$ref": "#/$defs/helm-double-quoted-safe",
                   "description": "spotToSpotConsolidation is ALPHA and is disabled by default.\nSetting this to true will enable spot replacement consolidation for both single and multi-node consolidation."
                 }
               }
@@ -3330,16 +3294,7 @@
               "description": "Feature Gate configuration values. Feature Gates will follow the same graduation process and requirements as feature gates\nin Kubernetes. More information here https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/#feature-gates-for-alpha-or-beta-features.",
               "properties": {
                 "staticCapacity": {
-                  "anyOf": [
-                    {
-                      "not": {
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "$ref": "#/$defs/schema111"
-                    }
-                  ],
+                  "$ref": "#/$defs/helm-double-quoted-safe",
                   "description": "staticCapacity is ALPHA and is disabled by default.\nSetting this to true will enable static capacity provisioning."
                 }
               }
@@ -3399,16 +3354,7 @@
             "description": "Global Settings to configure Karpenter",
             "properties": {
               "minValuesPolicy": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema111"
-                  }
-                ],
+                "$ref": "#/$defs/helm-double-quoted-safe",
                 "description": "How the Karpenter scheduler treats min values. Options include 'Strict' (fails scheduling when min values can't be met) and 'BestEffort' (relaxes min values when they can't be met)."
               }
             }
@@ -3467,16 +3413,7 @@
             "description": "Global Settings to configure Karpenter",
             "properties": {
               "preferencePolicy": {
-                "anyOf": [
-                  {
-                    "not": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema111"
-                  }
-                ],
+                "$ref": "#/$defs/helm-double-quoted-safe",
                 "description": "How the Karpenter scheduler should treat preferences. Preferences include preferredDuringSchedulingIgnoreDuringExecution\nnode and pod affinities/anti-affinities and ScheduleAnyways topologySpreadConstraints. Can be one of 'Ignore' and 'Respect'"
               }
             }
@@ -3526,10 +3463,10 @@
           "topologySpreadConstraints": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema128"
+                "$ref": "#/$defs/schema127"
               },
               {
-                "$ref": "#/$defs/schema118"
+                "$ref": "#/$defs/schema117"
               },
               {
                 "maximum": 0,
@@ -3869,7 +3806,7 @@
             "additionalProperties": {},
             "properties": {
               "sidecarContainer": {
-                "$ref": "#/$defs/schema112"
+                "$ref": "#/$defs/schema111"
               }
             }
           }
@@ -3900,16 +3837,16 @@
                             "description": "SELinuxOptions are the labels to be applied to the container",
                             "properties": {
                               "level": {
-                                "$ref": "#/$defs/schema124"
+                                "$ref": "#/$defs/schema123"
                               },
                               "role": {
-                                "$ref": "#/$defs/schema125"
+                                "$ref": "#/$defs/schema124"
                               },
                               "type": {
-                                "$ref": "#/$defs/schema126"
+                                "$ref": "#/$defs/schema125"
                               },
                               "user": {
-                                "$ref": "#/$defs/schema127"
+                                "$ref": "#/$defs/schema126"
                               }
                             },
                             "type": "object"
@@ -4088,7 +4025,7 @@
                   "$ref": "#/$defs/schema99"
                 },
                 {
-                  "$ref": "#/$defs/schema160"
+                  "$ref": "#/$defs/schema159"
                 }
               ],
               "description": "The container port to use for http health probe."
@@ -4121,7 +4058,7 @@
                   "type": "integer"
                 },
                 {
-                  "$ref": "#/$defs/schema160"
+                  "$ref": "#/$defs/schema159"
                 }
               ],
               "description": "The container port to use for metrics."
@@ -4148,7 +4085,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/schema142"
+              "$ref": "#/$defs/schema141"
             },
             {
               "not": {
@@ -4271,7 +4208,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema142"
+          "$ref": "#/$defs/schema141"
         },
         {
           "not": {
@@ -4289,10 +4226,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema163"
+              "$ref": "#/$defs/schema162"
             },
             {
-              "$ref": "#/$defs/schema164"
+              "$ref": "#/$defs/schema163"
             },
             {
               "not": {
@@ -4310,19 +4247,19 @@
               }
             },
             {
-              "$ref": "#/$defs/schema162"
+              "$ref": "#/$defs/schema161"
             },
             {
-              "$ref": "#/$defs/schema121"
+              "$ref": "#/$defs/schema120"
             },
             {
-              "$ref": "#/$defs/schema147"
+              "$ref": "#/$defs/schema146"
             },
             {
-              "$ref": "#/$defs/schema149"
+              "$ref": "#/$defs/schema148"
             },
             {
-              "$ref": "#/$defs/schema157"
+              "$ref": "#/$defs/schema156"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -4565,7 +4502,7 @@
                     "$ref": "#/$defs/schema94"
                   },
                   "optional": {
-                    "$ref": "#/$defs/schema120"
+                    "$ref": "#/$defs/schema119"
                   }
                 },
                 "type": [
@@ -4660,7 +4597,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/schema153"
+                    "$ref": "#/$defs/schema152"
                   }
                 },
                 "type": [
@@ -5555,7 +5492,7 @@
                               "$ref": "#/$defs/schema94"
                             },
                             "optional": {
-                              "$ref": "#/$defs/schema120"
+                              "$ref": "#/$defs/schema119"
                             }
                           },
                           "type": [
@@ -6010,10 +5947,10 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema163"
+              "$ref": "#/$defs/schema162"
             },
             {
-              "$ref": "#/$defs/schema164"
+              "$ref": "#/$defs/schema163"
             },
             {
               "not": {
@@ -6031,19 +5968,19 @@
               }
             },
             {
-              "$ref": "#/$defs/schema162"
+              "$ref": "#/$defs/schema161"
             },
             {
-              "$ref": "#/$defs/schema121"
+              "$ref": "#/$defs/schema120"
             },
             {
-              "$ref": "#/$defs/schema147"
+              "$ref": "#/$defs/schema146"
             },
             {
-              "$ref": "#/$defs/schema149"
+              "$ref": "#/$defs/schema148"
             },
             {
-              "$ref": "#/$defs/schema157"
+              "$ref": "#/$defs/schema156"
             }
           ],
           "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -6081,7 +6018,7 @@
     "initContainers": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema142"
+          "$ref": "#/$defs/schema141"
         },
         {
           "description": "List of initialization containers belonging to the pod. Init containers are executed in order prior to containers being started. If any init container fails, the pod is considered to have failed and is handled according to its restartPolicy. The name for an init container or normal container must be unique among all containers. Init containers may not have Lifecycle actions, Readiness probes, Liveness probes, or Startup probes. The resourceRequirements of an init container are taken into account during scheduling by finding the highest request/limit for each resource type, and then using the max of of that value or the sum of the normal containers. Limits are applied to init containers in a similar fashion. Init containers cannot currently be added or removed. Cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/",
@@ -6591,7 +6528,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema142"
+          "$ref": "#/$defs/schema141"
         },
         {
           "$ref": "#/$defs/schema40"
@@ -6625,7 +6562,7 @@
             {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema160"
+                  "$ref": "#/$defs/schema159"
                 },
                 {
                   "type": "integer"
@@ -6653,7 +6590,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema142"
+          "$ref": "#/$defs/schema141"
         },
         {
           "$ref": "#/$defs/schema47"
@@ -6827,7 +6764,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema160"
+          "$ref": "#/$defs/schema159"
         }
       ],
       "description": "Number of replicas."
@@ -6845,7 +6782,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema160"
+          "$ref": "#/$defs/schema159"
         }
       ],
       "description": "The number of old ReplicaSets to retain to allow rollback."
@@ -6870,7 +6807,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema152"
+                  "$ref": "#/$defs/schema151"
                 }
               },
               {
@@ -7076,12 +7013,12 @@
                   "description": "Spec to control the desired behavior of rolling update.",
                   "properties": {
                     "maxSurge": {
-                      "$ref": "#/$defs/schema150"
+                      "$ref": "#/$defs/schema149"
                     },
                     "maxUnavailable": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/schema150"
+                          "$ref": "#/$defs/schema149"
                         },
                         {
                           "type": "integer"
@@ -7135,7 +7072,7 @@
           }
         },
         {
-          "$ref": "#/$defs/schema160"
+          "$ref": "#/$defs/schema159"
         },
         {
           "type": "null"

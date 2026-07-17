@@ -374,6 +374,7 @@ fn splice_row(
     row.has_string_contract = splice.meta.string_contract;
     row.template_supplied_member_keys = member_sibling_keys.clone();
     row.split_segment = splice.meta.split_segment.clone();
+    row.merge_layers = splice.meta.merge_layers.clone();
     row
 }
 

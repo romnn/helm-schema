@@ -30,10 +30,11 @@ struct ProviderSchemaLookupKey {
     path: YamlPath,
     kind: ValueKind,
     is_self_range_collection: bool,
-    /// Both fields change the restricted schema a use resolves to, so an
+    /// These fields change the restricted schema a use resolves to, so an
     /// under-keyed cache hit would leak one use's preimage into another.
     template_supplied_member_keys: std::collections::BTreeSet<String>,
     split_segment: Option<helm_schema_core::SplitSegmentUse>,
+    merge_layers: Option<helm_schema_core::MergeLayersUse>,
 }
 
 pub(crate) struct PathSchemaResolver<'a> {
@@ -175,6 +176,12 @@ fn provider_schemas_for_path_evidence(
     let mut provider_schemas = Vec::new();
 
     for provider_use in &evidence.provider_schema_uses {
+        // Merge-layer uses resolve through synthesized arms instead: the
+        // preferred layer as a whole-payload arm under its own truthiness,
+        // a shadowed layer as per-key arms scoped to unshadowed keys.
+        if provider_use.merge_layers.is_some() {
+            continue;
+        }
         let lookup_key = ProviderSchemaLookupKey {
             resource: provider_use.resource.clone(),
             path: provider_use.path.clone(),
@@ -182,6 +189,7 @@ fn provider_schemas_for_path_evidence(
             is_self_range_collection: provider_use.is_self_range_collection,
             template_supplied_member_keys: provider_use.template_supplied_member_keys.clone(),
             split_segment: provider_use.split_segment.clone(),
+            merge_layers: provider_use.merge_layers.clone(),
         };
         let schema = match provider_schema_cache.entry(lookup_key) {
             std::collections::hash_map::Entry::Occupied(entry) => entry.get().clone(),
@@ -493,7 +501,7 @@ fn required_object_path_schema(path: &[String], leaf: Value) -> Value {
 /// quantifier are literal in RE2 but invalid in strict ECMA parsers, so
 /// they get escaped. Constructs with no ECMA spelling (inline flags,
 /// `\A`/`\z` anchors, POSIX classes) abstain.
-fn ecma_compatible_pattern(pattern: &str) -> Option<String> {
+pub(crate) fn ecma_compatible_pattern(pattern: &str) -> Option<String> {
     if pattern.contains("(?i") && !pattern.contains("(?i:")
         || pattern.contains("(?m")
         || pattern.contains("(?s")
@@ -595,6 +603,8 @@ fn requirements_allow_runtime_kind(
         FailValueRequirement::SplitSegmentsAtLeast {
             allow_non_string, ..
         } => schema_type == "string" || *allow_non_string,
+        // The requirement constrains rendered CONTENT, not the value's kind.
+        FailValueRequirement::QuotedSerializationSafe { .. } => true,
     })
 }
 
@@ -690,6 +700,9 @@ fn fail_value_requirement_schema(
                 } else {
                     parts.push(string);
                 }
+            }
+            FailValueRequirement::QuotedSerializationSafe { style } => {
+                parts.push(crate::quoted_serialization::reference_schema(*style));
             }
         }
     }

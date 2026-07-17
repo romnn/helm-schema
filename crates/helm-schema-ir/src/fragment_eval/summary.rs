@@ -80,6 +80,8 @@ pub(crate) struct FragmentSummary {
     pub(crate) root_set_predicates: BTreeMap<String, Predicate>,
     /// Chart value subtrees supplying defaults to a replaced effective values tree.
     pub(crate) values_default_sources: BTreeSet<crate::ValuesDefaultSource>,
+    /// Helper names through which the values root was replaced.
+    pub(crate) values_root_helper_includes: BTreeSet<String>,
     /// The value projection (see module docs), computed once.
     pub(crate) value: Option<AbstractValue>,
     /// Rendered splice/taint rows flattened from the tree: per-path branch
@@ -159,6 +161,7 @@ pub(crate) fn eval_bound_helper_fragment(
         root_set_mutations: interpreter.root_set_mutations_observed,
         root_set_predicates: interpreter.root_set_predicates_observed,
         values_default_sources: interpreter.values_default_sources_observed,
+        values_root_helper_includes: interpreter.values_root_helper_includes_observed,
     };
     // Render-suppressed splices (block-scalar bodies) influence the text
     // without rendering a sink-typed value; value-position consumers see
@@ -381,6 +384,12 @@ fn project_structured_taint_value(
             choices
                 .iter()
                 .map(|choice| project_structured_taint_value(choice, outer_meta))
+                .collect(),
+        ),
+        AbstractValue::MergedLayers(layers) => AbstractValue::MergedLayers(
+            layers
+                .iter()
+                .map(|layer| project_structured_taint_value(layer, outer_meta))
                 .collect(),
         ),
         AbstractValue::Top

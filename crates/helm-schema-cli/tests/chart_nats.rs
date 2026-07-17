@@ -70,3 +70,46 @@ extraResources:
 
     Ok(())
 }
+
+/// The `$tplYaml` engine substitutes singleton wrapper maps at ANY values
+/// node before consumers read the tree, so a typed node accepts a wrapper
+/// program beside its ordinary domain. The program must be a string
+/// (`tpl` errors on other kinds) and the wrapper exactly one sentinel
+/// member — a wider map passes through as a plain object and fails the
+/// node's ordinary domain.
+#[test]
+fn nats_program_wrappers_inhabit_typed_leaves() -> color_eyre::eyre::Result<()> {
+    let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
+    let validator = jsonschema::validator_for(&schema).expect("schema validator");
+    for (overrides, want) in [
+        (
+            serde_json::json!({
+                "podTemplate": { "topologySpreadConstraints": { "$tplYaml": "{}" } }
+            }),
+            true,
+        ),
+        (
+            serde_json::json!({
+                "podTemplate": { "topologySpreadConstraints": { "$tplYaml": true } }
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "podTemplate": { "topologySpreadConstraints": { "$tplYaml": "{}", "x": 1 } }
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({ "podTemplate": { "topologySpreadConstraints": 7 } }),
+            false,
+        ),
+    ] {
+        let instance = chart_instances::with_override("nats", overrides.clone())?;
+        assert!(
+            validator.is_valid(&instance) == want,
+            "program wrappers inhabit typed leaves: overrides={overrides}; want={want}"
+        );
+    }
+    Ok(())
+}

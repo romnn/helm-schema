@@ -587,13 +587,49 @@ pub(super) fn eval_omit(
 }
 
 pub(super) fn eval_merge(
+    function: &str,
     args: &[TemplateExpr],
     piped: EvalResult,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let mut effects = piped.effects;
-    let mut values = piped.value.into_iter().collect::<Vec<_>>();
+    let piped_values = piped.value.into_iter().collect::<Vec<_>>();
+    let operand_count = args.len() + piped_values.len();
+    let mut values = Vec::new();
     merge_arg_values(args, env, resolver, &mut values, &mut effects);
+    // A Go pipeline passes the piped subject as the LAST argument.
+    values.extend(piped_values);
+    if let Some(layers) = merge_layer_order(function, operand_count, &values) {
+        return EvalResult::with_effects(Some(AbstractValue::MergedLayers(layers)), effects);
+    }
     EvalResult::with_effects(AbstractValue::merge_all(values), effects)
+}
+
+/// The merge operands as ordered layers, highest precedence first, when
+/// every operand carries a distinct values-backed identity. Sprig's `merge`
+/// keeps the FIRST occurrence of a key across its arguments while
+/// `mergeOverwrite` keeps the LAST; any operand without a single identity
+/// (a literal dict, a multi-path fallback) abstains to the unordered fold.
+fn merge_layer_order(
+    function: &str,
+    operand_count: usize,
+    values: &[AbstractValue],
+) -> Option<Vec<AbstractValue>> {
+    if values.len() < 2 || values.len() != operand_count {
+        return None;
+    }
+    let identities = values
+        .iter()
+        .map(|value| value.unique_path().filter(|path| !path.is_empty()))
+        .collect::<Option<Vec<_>>>()?;
+    let distinct: BTreeSet<&String> = identities.iter().collect();
+    if distinct.len() != identities.len() {
+        return None;
+    }
+    let mut layers = values.to_vec();
+    if function.contains("Overwrite") {
+        layers.reverse();
+    }
+    Some(layers)
 }

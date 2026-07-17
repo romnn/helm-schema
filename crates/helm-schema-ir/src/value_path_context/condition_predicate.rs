@@ -185,7 +185,7 @@ impl ValuePathContext<'_> {
             return Predicate::approximate_with_sound_subset(
                 marker,
                 self.resolved_values_paths_from_expr(expr),
-                self.int_cast_comparison_sound_subset(expr),
+                self.comparison_sound_subset(expr),
             );
         }
         let parts: Vec<Predicate> = args
@@ -198,7 +198,7 @@ impl ValuePathContext<'_> {
                     Predicate::approximate_with_sound_subset(
                         format!("{marker}:{index}"),
                         self.resolved_values_paths_from_expr(arg),
-                        self.int_cast_comparison_sound_subset(arg),
+                        self.comparison_sound_subset(arg),
                     )
                 }
             })
@@ -996,6 +996,53 @@ impl ValuePathContext<'_> {
         }
     }
 
+    /// Sound positive strengthenings of otherwise-undecodable comparison
+    /// conditions, tried in order of exactness.
+    fn comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
+        let subset = self.semver_comparison_sound_subset(expr);
+        if !subset.is_empty() {
+            return subset;
+        }
+        self.int_cast_comparison_sound_subset(expr)
+    }
+
+    /// `semverCompare "<constraint>" .Values.path` with a literal bounded
+    /// comparator and a direct values-backed version selector admits an
+    /// EXACT strengthening: the comparator lowers to a pattern matching
+    /// precisely the version strings that satisfy it, so a fail-arm keyed
+    /// on the pattern fires exactly where the guard held (airflow
+    /// `semverCompare "<3.0.0" .Values.airflowVersion`). Only direct
+    /// selectors qualify — a transformed operand no longer carries the
+    /// path's own text, and a fallback chain selects other sources.
+    fn semver_comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
+        let TemplateExpr::Call { function, args } = expr.deparen() else {
+            return Vec::new();
+        };
+        if function != "semverCompare" || args.len() != 2 {
+            return Vec::new();
+        }
+        let TemplateExpr::Literal(Literal::String(constraint)) = args[0].deparen() else {
+            return Vec::new();
+        };
+        if !matches!(
+            args[1].deparen(),
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        ) {
+            return Vec::new();
+        }
+        let Some(path) = self.single_resolved_values_path_expr(&args[1]) else {
+            return Vec::new();
+        };
+        let Some(pattern) = helm_schema_ast::semver_constraint_match_pattern(constraint) else {
+            return Vec::new();
+        };
+        vec![Guard::MatchesPattern {
+            path,
+            pattern,
+            templated: false,
+        }]
+    }
+
     /// `gt (int64 x) N` / `gt (int x) N` (and the flipped `lt N (…)`) with
     /// an integer literal bound and one values-backed subject admits a
     /// bounded sound strengthening: a RAW JSON integer above the bound
@@ -1436,6 +1483,19 @@ fn value_has_key(value: &AbstractValue, key: &str) -> Option<Predicate> {
             match resolved.as_slice() {
                 [predicate] => Some(predicate.clone()),
                 _ => None,
+            }
+        }
+        // The merged map contains the key exactly when some layer does.
+        AbstractValue::MergedLayers(layers) => {
+            let mut resolved = layers
+                .iter()
+                .map(|layer| value_has_key(layer, key))
+                .collect::<Option<Vec<_>>>()?;
+            resolved.sort();
+            resolved.dedup();
+            match resolved.as_slice() {
+                [predicate] => Some(predicate.clone()),
+                _ => Some(predicate_any(resolved)),
             }
         }
         AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => Some(

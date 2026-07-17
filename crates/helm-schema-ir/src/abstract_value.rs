@@ -24,6 +24,12 @@ pub(crate) enum AbstractValue {
         fallback: Box<AbstractValue>,
     },
     Choice(BTreeSet<AbstractValue>),
+    /// Ordered Sprig `merge` of values-backed layers, highest precedence
+    /// first: an earlier layer's key shadows the same key of every later
+    /// layer. Influence-wise it behaves like [`Self::Choice`] over the
+    /// layers; the ordering survives so sink projection can scope a later
+    /// layer's member contracts to keys the earlier layers do not supply.
+    MergedLayers(Vec<AbstractValue>),
     /// List produced by splitting derived text. The source paths are
     /// influences rather than list identities; literal indexing uses the
     /// separator to recover a bounded source-cardinality precondition.
@@ -91,6 +97,11 @@ impl AbstractValue {
                     value.collect_range_key_paths(out);
                 }
             }
+            Self::MergedLayers(layers) => {
+                for value in layers {
+                    value.collect_range_key_paths(out);
+                }
+            }
             Self::Top
             | Self::Unknown
             | Self::ValuesPath(_)
@@ -138,6 +149,11 @@ impl AbstractValue {
                 }),
             Self::Choice(choices) => {
                 for value in choices {
+                    value.collect_paths(out, descend_structures, suppress_values_root);
+                }
+            }
+            Self::MergedLayers(layers) => {
+                for value in layers {
                     value.collect_paths(out, descend_structures, suppress_values_root);
                 }
             }
@@ -258,6 +274,11 @@ impl AbstractValue {
                     value.collect_output_meta(out);
                 }
             }
+            Self::MergedLayers(layers) => {
+                for value in layers {
+                    value.collect_output_meta(out);
+                }
+            }
             Self::Top
             | Self::Unknown
             | Self::ValuesPath(_)
@@ -334,6 +355,14 @@ impl AbstractValue {
                     .filter_map(Self::fragment_range_item)
                     .collect(),
             ),
+            // Ranging the merged map visits members of every layer, so the
+            // item domain is the union regardless of per-key precedence.
+            Self::MergedLayers(layers) => Self::choice(
+                layers
+                    .iter()
+                    .filter_map(Self::fragment_range_item)
+                    .collect(),
+            ),
             Self::Top
             | Self::Unknown
             | Self::RangeKey(_)
@@ -382,6 +411,18 @@ impl AbstractValue {
                 truthiness
                     .all(|candidate| candidate == Some(first))
                     .then_some(first)
+            }
+            // The merged map is nonempty exactly when some layer is.
+            Self::MergedLayers(layers) => {
+                let truthiness: Vec<Option<bool>> =
+                    layers.iter().map(Self::static_truthiness).collect();
+                if truthiness.contains(&Some(true)) {
+                    Some(true)
+                } else if truthiness.iter().all(|candidate| *candidate == Some(false)) {
+                    Some(false)
+                } else {
+                    None
+                }
             }
             Self::Top
             | Self::Unknown
@@ -455,6 +496,9 @@ impl AbstractValue {
             Self::Choice(choices) => {
                 Self::Choice(choices.into_iter().map(Self::mark_json_decoded).collect())
             }
+            Self::MergedLayers(layers) => {
+                Self::MergedLayers(layers.into_iter().map(Self::mark_json_decoded).collect())
+            }
             Self::Widened(paths) => {
                 Self::choice(paths.into_iter().map(Self::JsonDecodedPath).collect())
                     .unwrap_or(Self::Unknown)
@@ -520,6 +564,12 @@ impl AbstractValue {
                     .filter_map(Self::values_root_structure)
                     .collect(),
             ),
+            Self::MergedLayers(layers) => Self::choice(
+                layers
+                    .iter()
+                    .filter_map(Self::values_root_structure)
+                    .collect(),
+            ),
             Self::Top
             | Self::Unknown
             | Self::ValuesPath(_)
@@ -572,6 +622,9 @@ impl AbstractValue {
             Self::Choice(choices) => {
                 !choices.is_empty() && choices.iter().all(Self::is_definitely_json_serialized)
             }
+            Self::MergedLayers(layers) => {
+                !layers.is_empty() && layers.iter().all(Self::is_definitely_json_serialized)
+            }
             Self::Top
             | Self::Unknown
             | Self::ValuesPath(_)
@@ -608,6 +661,16 @@ impl AbstractValue {
             0 => None,
             1 => flat.into_iter().next(),
             _ => Some(Self::Choice(flat)),
+        }
+    }
+
+    /// Normalizing [`Self::MergedLayers`] constructor: no layers is
+    /// nothing, a single layer is that layer itself.
+    pub(crate) fn merged_layers(layers: Vec<Self>) -> Option<Self> {
+        match layers.len() {
+            0 => None,
+            1 => layers.into_iter().next(),
+            _ => Some(Self::MergedLayers(layers)),
         }
     }
 
@@ -666,6 +729,17 @@ impl AbstractValue {
             Self::Choice(choices) => {
                 let mut out = Vec::new();
                 for value in choices {
+                    if let Some(bound) = value.apply_to_path(rest) {
+                        out.push(bound);
+                    }
+                }
+                Self::choice(out)
+            }
+            // Which layer supplies the member depends on runtime keys, so
+            // the selected value is the union of per-layer selections.
+            Self::MergedLayers(layers) => {
+                let mut out = Vec::new();
+                for value in layers {
                     if let Some(bound) = value.apply_to_path(rest) {
                         out.push(bound);
                     }
@@ -879,6 +953,12 @@ impl AbstractValue {
                     .filter_map(|choice| choice.remove_fragment_paths(remove))
                     .collect(),
             ),
+            Self::MergedLayers(layers) => Self::merged_layers(
+                layers
+                    .into_iter()
+                    .filter_map(|layer| layer.remove_fragment_paths(remove))
+                    .collect(),
+            ),
         }
     }
 
@@ -918,6 +998,7 @@ impl AbstractValue {
             | Self::StringSet(_)
             | Self::DerivedBoolean(_)
             | Self::Choice(_)
+            | Self::MergedLayers(_)
             | Self::SplitList { .. }
             | Self::SplitSegment { .. }
             | Self::Widened(_) => None,

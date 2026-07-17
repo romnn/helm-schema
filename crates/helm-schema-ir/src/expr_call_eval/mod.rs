@@ -58,7 +58,11 @@ pub(crate) fn eval_call_with_helper_calls(
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     match function {
-        "include" | "template" => eval_helper_call(args, env, resolver),
+        "include" | "template" => {
+            let mut result = eval_helper_call(args, env, resolver);
+            record_values_root_helper_include(function, args, &mut result.effects);
+            result
+        }
         "set" if args.len() == 3 => eval_set_call(args, env, resolver),
         "default" if args.len() == 2 => {
             let primary = eval_expr_with_helper_calls(&args[1], env, resolver);
@@ -124,7 +128,7 @@ pub(crate) fn eval_call_with_helper_calls(
             result
         }
         function if is_merge_function(function) => {
-            let mut result = eval_merge(args, EvalResult::none(), env, resolver);
+            let mut result = eval_merge(function, args, EvalResult::none(), env, resolver);
             record_strict_kind_operands(args, "object", env, resolver, &mut result.effects);
             result
         }
@@ -349,6 +353,44 @@ pub(crate) fn eval_call_with_helper_calls(
     }
 }
 
+/// Record an `include NAME` invocation whose argument carries the VALUES
+/// ROOT: the callee may be a chart-authored program-wrapper engine
+/// rewriting the whole values tree (`include "tplYaml" (dict "doc"
+/// .Values …)`), which the symbolic context decides by inspecting the
+/// callee's body.
+fn record_values_root_helper_include(
+    _function: &str,
+    args: &[TemplateExpr],
+    effects: &mut Effects,
+) {
+    let Some(TemplateExpr::Literal(helm_schema_ast::Literal::String(name))) =
+        args.first().map(TemplateExpr::deparen)
+    else {
+        return;
+    };
+    let mut passes_values_root = false;
+    for arg in args.iter().skip(1) {
+        arg.walk(|inner| match inner {
+            TemplateExpr::Field(path) if path.as_slice() == ["Values"] => {
+                passes_values_root = true;
+            }
+            TemplateExpr::Selector { operand, path }
+                if path.as_slice() == ["Values"]
+                    && matches!(
+                        operand.as_ref().deparen(),
+                        TemplateExpr::Variable(variable) if variable.is_empty()
+                    ) =>
+            {
+                passes_values_root = true;
+            }
+            _ => {}
+        });
+    }
+    if passes_values_root {
+        effects.values_root_helper_includes.insert(name.clone());
+    }
+}
+
 pub(crate) fn eval_pipeline_with_helper_calls(
     stages: &[TemplateExpr],
     env: &EvalEnv,
@@ -374,7 +416,7 @@ pub(crate) fn eval_pipeline_with_helper_calls(
             "default" => eval_default(current, args, env, resolver),
             function if is_merge_function(function) => {
                 let piped_operand = current.clone();
-                let mut result = eval_merge(args, current, env, resolver);
+                let mut result = eval_merge(function, args, current, env, resolver);
                 record_strict_kind_result(&piped_operand, "object", &mut result.effects);
                 record_strict_kind_operands(args, "object", env, resolver, &mut result.effects);
                 result
