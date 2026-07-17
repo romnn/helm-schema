@@ -610,7 +610,7 @@ fn with_predicates_preserve_header_projection_semantics() {
     );
 }
 
-/// F33: `Files.Get (printf "files/profile-%s.yaml" X)` truthiness decodes
+/// `Files.Get (printf "files/profile-%s.yaml" X)` truthiness decodes
 /// to the FINITE disjunction over the chart's matching indexed files —
 /// never an opaque truthy fallback (istiod profile selection shape).
 #[test]

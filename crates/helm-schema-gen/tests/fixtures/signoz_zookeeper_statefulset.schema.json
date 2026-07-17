@@ -2624,6 +2624,237 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "livenessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "livenessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "livenessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "livenessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customLivenessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customLivenessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "disableBaseClientPort": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "disableBaseClientPort"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "readinessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "readinessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "readinessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "readinessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customReadinessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customReadinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "service": {
+                      "properties": {
+                        "disableBaseClientPort": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "disableBaseClientPort"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "service"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "containerPorts": {
+            "additionalProperties": {},
+            "properties": {
+              "client": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "pattern": "^([^']|'')*$",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "not": {
           "properties": {
             "service": {
@@ -2703,6 +2934,233 @@
                   },
                   {
                     "pattern": "^-?(0|[1-9][0-9]*)$",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "livenessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "livenessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "livenessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "livenessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "disableBaseClientPort": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "disableBaseClientPort"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customLivenessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customLivenessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "readinessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "readinessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "readinessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "readinessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "disableBaseClientPort": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "disableBaseClientPort"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customReadinessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customReadinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "containerPorts": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "pattern": "^([^']|'')*$",
                     "type": "string"
                   }
                 ]
@@ -3966,6 +4424,11 @@
                   },
                   {
                     "not": {
+                      "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                    }
+                  },
+                  {
+                    "not": {
                       "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
                     }
                   }
@@ -4269,6 +4732,11 @@
                       },
                       {
                         "not": {
+                          "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                        }
+                      },
+                      {
+                        "not": {
                           "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
                         }
                       }
@@ -4365,6 +4833,9 @@
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
+              },
+              {
+                "type": "null"
               },
               {
                 "type": "string"
@@ -5037,92 +5508,6 @@
     },
     {
       "if": {
-        "properties": {
-          "serviceAccount": {
-            "properties": {
-              "create": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "serviceAccount"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[-?:]([ \\t]|$)"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-                    }
-                  }
-                ],
-                "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-                "type": "string"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -5245,6 +5630,25 @@
             ]
           },
           {
+            "properties": {
+              "serviceAccount": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "serviceAccount"
+            ],
+            "type": "object"
+          },
+          {
             "allOf": [
               {
                 "properties": {
@@ -5957,6 +6361,9 @@
                 }
               },
               {
+                "type": "null"
+              },
+              {
                 "type": "string"
               }
             ]
@@ -6056,7 +6463,7 @@
             "additionalProperties": {},
             "properties": {
               "kubeVersion": {
-                "pattern": "^v?([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
+                "pattern": "^v?([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
                 "type": "string"
               }
             }
@@ -6897,7 +7304,7 @@
         "additionalProperties": {},
         "properties": {
           "kubeVersion": {
-            "pattern": "^v?([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
+            "pattern": "^v?([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
             "type": "string"
           }
         }
@@ -7060,6 +7467,111 @@
         "properties": {
           "livenessProbe": {
             "$ref": "#/$defs/providerSchema1"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "livenessProbe": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "livenessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "livenessProbe": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "livenessProbe"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "customLivenessProbe": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "customLivenessProbe"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "diagnosticMode": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "diagnosticMode"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "livenessProbe": {
+            "additionalProperties": {},
+            "properties": {
+              "probeCommandTimeout": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "pattern": "^([^']|'')*$",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
           }
         }
       }
@@ -8055,6 +8567,11 @@
                   },
                   {
                     "not": {
+                      "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                    }
+                  },
+                  {
+                    "not": {
                       "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
                     }
                   }
@@ -8251,6 +8768,11 @@
                       {
                         "not": {
                           "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
                         }
                       },
                       {
@@ -13750,6 +14272,111 @@
             ]
           },
           {
+            "not": {
+              "properties": {
+                "customReadinessProbe": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "customReadinessProbe"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "diagnosticMode": {
+                  "properties": {
+                    "enabled": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "diagnosticMode"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "readinessProbe": {
+            "additionalProperties": {},
+            "properties": {
+              "probeCommandTimeout": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "pattern": "^([^']|'')*$",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "readinessProbe": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "readinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "readinessProbe": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "readinessProbe"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
             "properties": {
               "readinessProbe": {
                 "type": "string"
@@ -14457,6 +15084,578 @@
                 "type": "null"
               }
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "livenessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "livenessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "livenessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "livenessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "disableBaseClientPort": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "disableBaseClientPort"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "client": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customLivenessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customLivenessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "readinessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "readinessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "readinessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "readinessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "disableBaseClientPort": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "disableBaseClientPort"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "client": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customReadinessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customReadinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "properties": {
+                  "client_cert_pem_path": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "pattern": "^([^']|'')*$",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "livenessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "livenessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "livenessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "livenessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "disableBaseClientPort": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "disableBaseClientPort"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "client": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customLivenessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customLivenessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "properties": {
+                        "readinessProbe": {
+                          "properties": {
+                            "enabled": {}
+                          },
+                          "required": [
+                            "enabled"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "readinessProbe"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "readinessProbe": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "readinessProbe"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "properties": {
+                  "service": {
+                    "properties": {
+                      "disableBaseClientPort": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "disableBaseClientPort"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "service"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "properties": {
+                      "client": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "customReadinessProbe": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "customReadinessProbe"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "additionalProperties": {},
+                "properties": {
+                  "client_key_pem_path": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "type": "string"
+                        }
+                      },
+                      {
+                        "pattern": "^([^']|'')*$",
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -17881,6 +19080,9 @@
                         }
                       },
                       {
+                        "type": "null"
+                      },
+                      {
                         "type": "string"
                       }
                     ]
@@ -17894,55 +19096,9 @@
             "enabled": {
               "anyOf": [
                 {
-                  "allOf": [
-                    {
-                      "not": {
-                        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "^[-?:]([ \\t]|$)"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": ":[ \\t]|:$"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "[ \\t]#"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "[\\r\\n]"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "^(|~|null|Null|NULL)$"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-                      }
-                    }
-                  ],
-                  "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-                  "type": "string"
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 },
                 {
                   "type": "boolean"
@@ -17980,6 +19136,9 @@
                         }
                       },
                       {
+                        "type": "null"
+                      },
+                      {
                         "type": "string"
                       }
                     ]
@@ -17992,55 +19151,9 @@
             "enabled": {
               "anyOf": [
                 {
-                  "allOf": [
-                    {
-                      "not": {
-                        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "^[-?:]([ \\t]|$)"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": ":[ \\t]|:$"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "[ \\t]#"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "[\\r\\n]"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "^(|~|null|Null|NULL)$"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-                      }
-                    },
-                    {
-                      "not": {
-                        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-                      }
-                    }
-                  ],
-                  "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-                  "type": "string"
+                  "not": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
                 },
                 {
                   "type": "boolean"
@@ -18309,6 +19422,11 @@
             {
               "not": {
                 "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
               }
             },
             {
@@ -20428,63 +21546,9 @@
     },
     "fourlwCommandsWhitelist": {},
     "fullnameOverride": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-              }
-            }
-          ],
-          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-          "type": "string"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        }
+      "type": [
+        "string",
+        "null"
       ]
     },
     "global": {
@@ -20585,69 +21649,7 @@
     "image": {
       "additionalProperties": {},
       "properties": {
-        "debug": {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "not": {
-                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[-?:]([ \\t]|$)"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": ":[ \\t]|:$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-                  }
-                }
-              ],
-              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-              "type": "string"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            {
-              "type": "boolean"
-            }
-          ]
-        },
+        "debug": {},
         "digest": {},
         "pullPolicy": {},
         "pullSecrets": {
@@ -20717,9 +21719,7 @@
     },
     "initLimit": {},
     "jvmFlags": {},
-    "kubeVersion": {
-      "type": "string"
-    },
+    "kubeVersion": {},
     "lifecycleHooks": {
       "allOf": [
         {
@@ -20994,62 +21994,7 @@
       ]
     },
     "listenOnAllIPs": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-              }
-            }
-          ],
-          "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-          "type": "string"
-        },
-        {
-          "type": "boolean"
-        }
-      ]
+      "type": "boolean"
     },
     "livenessProbe": {
       "additionalProperties": {}
@@ -21156,6 +22101,11 @@
             },
             {
               "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+              }
+            },
+            {
+              "not": {
                 "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
               }
             }
@@ -21211,6 +22161,11 @@
             {
               "not": {
                 "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
               }
             },
             {
@@ -21691,6 +22646,9 @@
                         }
                       },
                       {
+                        "type": "null"
+                      },
+                      {
                         "type": "string"
                       }
                     ]
@@ -21736,6 +22694,9 @@
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
+                  },
+                  {
+                    "type": "null"
                   },
                   {
                     "type": "string"
@@ -22454,6 +23415,11 @@
         },
         {
           "not": {
+            "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+          }
+        },
+        {
+          "not": {
             "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
           }
         }
@@ -22722,6 +23688,11 @@
             },
             {
               "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+              }
+            },
+            {
+              "not": {
                 "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
               }
             }
@@ -22875,6 +23846,11 @@
             },
             {
               "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+              }
+            },
+            {
+              "not": {
                 "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
               }
             }
@@ -22978,6 +23954,11 @@
                 {
                   "not": {
                     "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
                   }
                 },
                 {
@@ -23208,6 +24189,9 @@
                         }
                       },
                       {
+                        "type": "null"
+                      },
+                      {
                         "type": "string"
                       }
                     ]
@@ -23333,6 +24317,9 @@
                         "not": {
                           "$ref": "#/$defs/helm-truthy"
                         }
+                      },
+                      {
+                        "type": "null"
                       },
                       {
                         "type": "string"
@@ -23417,6 +24404,9 @@
                         }
                       },
                       {
+                        "type": "null"
+                      },
+                      {
                         "type": "string"
                       }
                     ]
@@ -23542,6 +24532,9 @@
                         "not": {
                           "$ref": "#/$defs/helm-truthy"
                         }
+                      },
+                      {
+                        "type": "null"
                       },
                       {
                         "type": "string"

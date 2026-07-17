@@ -17,6 +17,12 @@ pub struct ContractUse {
     /// values, but only where THIS row's condition holds.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub has_string_contract: bool,
+    /// Literal member keys the TEMPLATE writes beside this fragment splice
+    /// in the same mapping (`- name: tmp` next to `toYaml .Values.tmpVolume`):
+    /// the rendered object already has them, so a provider slot's object
+    /// requiredness must not re-demand them from the user value.
+    #[serde(default, skip_serializing_if = "std::collections::BTreeSet::is_empty")]
+    pub template_supplied_member_keys: std::collections::BTreeSet<String>,
 }
 
 impl<'de> Deserialize<'de> for ContractUse {
@@ -35,6 +41,8 @@ impl<'de> Deserialize<'de> for ContractUse {
             provenance: Vec<ContractProvenance>,
             #[serde(default)]
             has_string_contract: bool,
+            #[serde(default)]
+            template_supplied_member_keys: std::collections::BTreeSet<String>,
         }
 
         let wire = WireContractUse::deserialize(deserializer)?;
@@ -46,6 +54,7 @@ impl<'de> Deserialize<'de> for ContractUse {
             resource: wire.resource,
             provenance: wire.provenance,
             has_string_contract: wire.has_string_contract,
+            template_supplied_member_keys: wire.template_supplied_member_keys,
         })
     }
 }
@@ -96,6 +105,7 @@ impl ContractUse {
             resource,
             provenance: provenance.into_iter().collect(),
             has_string_contract: false,
+            template_supplied_member_keys: std::collections::BTreeSet::new(),
         }
     }
 

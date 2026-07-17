@@ -11,6 +11,11 @@ use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
+/// The escape-aware double-quoted-content grammar a manually quoted
+/// splice enforces on raw string inputs.
+const SAFE_QUOTED_CONTENT: &str =
+    r#"^([^"\\]|\\["\\/0abtnvfre N_LP]|\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}|\\U[0-9A-Fa-f]{8})*$"#;
+
 fn generate_values_schema_for_chart(
     opts: &GenerateOptions,
 ) -> helm_schema::EngineResult<serde_json::Value> {
@@ -73,23 +78,22 @@ data:
         want: json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
-            // F76: the manually quoted splice (`enabled: "{{ … }}"`) breaks
-            // on strings containing `"` or `\`, so those are excluded.
+            // the manually quoted splice (`enabled: "{{ … }}"`) breaks on
+            // strings that are not valid double-quoted YAML content (an
+            // unescaped `"`, a dangling `\`); valid escapes and
+            // non-strings format safely inside the quotes.
             "allOf": [{
-                "if": {
-                    "properties": {
-                        "enabled": { "pattern": "[\"\\\\]", "type": "string" }
-                    },
-                    "required": ["enabled"],
-                    "type": "object"
-                },
-                "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                        "enabled": {
-                            "description": "Whether the config map is enabled",
-                            "not": { "type": "string" }
-                        }
+                "additionalProperties": {},
+                "properties": {
+                    "enabled": {
+                        "anyOf": [
+                            { "not": { "type": "string" } },
+                            {
+                                "pattern": SAFE_QUOTED_CONTENT,
+                                "type": "string"
+                            }
+                        ],
+                        "description": "Whether the config map is enabled"
                     }
                 }
             }],
@@ -478,37 +482,33 @@ data:
             },
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
-            // F76: the manually quoted `mode: "{{ … }}"` splice breaks on
-            // strings containing `"` or `\`, scoped to its create-guarded
-            // render.
+            // the manually quoted `mode: "{{ … }}"` splice breaks on
+            // strings that are not valid double-quoted YAML content,
+            // scoped to its create-guarded render.
             "allOf": [{
                 "if": {
-                    "allOf": [
-                        {
+                    "properties": {
+                        "serviceAccount": {
                             "properties": {
-                                "serviceAccount": {
-                                    "properties": {
-                                        "create": { "$ref": "#/$defs/helm-truthy" }
-                                    },
-                                    "required": ["create"],
-                                    "type": "object"
-                                }
+                                "create": { "$ref": "#/$defs/helm-truthy" }
                             },
-                            "required": ["serviceAccount"],
-                            "type": "object"
-                        },
-                        {
-                            "properties": {
-                                "mode": { "pattern": "[\"\\\\]", "type": "string" }
-                            },
-                            "required": ["mode"],
+                            "required": ["create"],
                             "type": "object"
                         }
-                    ]
+                    },
+                    "required": ["serviceAccount"],
+                    "type": "object"
                 },
                 "then": {
                     "additionalProperties": {},
-                    "properties": { "mode": { "not": { "type": "string" } } }
+                    "properties": {
+                        "mode": {
+                            "anyOf": [
+                                { "not": { "type": "string" } },
+                                { "pattern": SAFE_QUOTED_CONTENT, "type": "string" }
+                            ]
+                        }
+                    }
                 }
             }],
             "properties": {
@@ -989,19 +989,17 @@ data:
         want: &json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
-            // F76: the manually quoted `mode: "{{ … }}"` splice breaks on
-            // strings containing `"` or `\`, so those are excluded.
+            // the manually quoted `mode: "{{ … }}"` splice breaks on
+            // strings that are not valid double-quoted YAML content.
             "allOf": [{
-                "if": {
-                    "properties": {
-                        "mode": { "pattern": "[\"\\\\]", "type": "string" }
-                    },
-                    "required": ["mode"],
-                    "type": "object"
-                },
-                "then": {
-                    "additionalProperties": {},
-                    "properties": { "mode": { "not": { "type": "string" } } }
+                "additionalProperties": {},
+                "properties": {
+                    "mode": {
+                        "anyOf": [
+                            { "not": { "type": "string" } },
+                            { "pattern": SAFE_QUOTED_CONTENT, "type": "string" }
+                        ]
+                    }
                 }
             }],
             "properties": {

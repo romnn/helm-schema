@@ -9,7 +9,7 @@ use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use helm_schema_ast::type_is_schema_type;
 
-use super::strict_operands::record_strict_kind_result;
+use super::strict_operands::{record_comparable_kind_result, record_strict_kind_result};
 use super::value_facts::identity_value_paths;
 
 /// `ternary A B COND`: the first two arguments are the branch values, while
@@ -23,17 +23,29 @@ pub(super) fn eval_ternary(
     let mut effects = Effects::default();
     let has_piped_condition = piped_condition.is_some();
     let mut condition_path = None;
+    let mut condition_identity = BTreeSet::new();
     if let Some((condition, _is_direct_values_path)) = piped_condition {
         // Derived Boolean values carry no raw identity, so this records a
         // contract only for direct selectors and aliases of direct selectors.
         record_strict_kind_result(&condition, "boolean", &mut effects);
         condition_path = condition.value.as_ref().and_then(raw_condition_path);
+        condition_identity = identity_value_paths(&condition.value);
         effects.merge(condition.effects);
     } else if let Some(condition_arg) = args.get(2) {
         let condition = eval_expr_with_helper_calls(condition_arg, env, resolver);
         record_strict_kind_result(&condition, "boolean", &mut effects);
         condition_path = condition.value.as_ref().and_then(raw_condition_path);
+        condition_identity = identity_value_paths(&condition.value);
         effects.merge(condition.effects);
+    }
+    // The condition only SELECTS an arm — its value never renders into the
+    // output slot, so its identity must not become a placed row there (a
+    // Service port-name slot would stamp its provider string schema onto a
+    // raw Boolean flag, as in harbor's `ternary "https-web" "http-web"
+    // .Values.internalTLS.enabled`). The strict-kind capture above keeps
+    // the Boolean operand contract.
+    for path in &condition_identity {
+        effects.output_paths.remove(path);
     }
     let mut values = Vec::new();
     for (index, arg) in args.iter().enumerate() {
@@ -175,7 +187,7 @@ pub(super) fn eval_comparison_operands(
         // distinguish a Go integer from an integral floating-point value, so
         // the `number` case stays conservatively broad rather than rejecting
         // a valid float such as `1.0`.
-        record_strict_kind_result(operand, literal_kind, &mut comparison_effects);
+        record_comparable_kind_result(operand, literal_kind, &mut comparison_effects);
     }
     merge_operand_results(operands, comparison_effects)
 }

@@ -385,6 +385,7 @@ impl Interpreter<'_> {
                 let scope = LowerScope {
                     defaulted_paths: &defaulted,
                     encoded_paths: &hole.effects.encoded_paths,
+                    derived_text_paths: &hole.effects.derived_text_paths,
                     yaml_serialized_paths: &hole.effects.yaml_serialized_paths,
                     shape_erased_paths: &hole.effects.shape_erased_paths,
                     string_contract_paths: row_string_contract_paths,

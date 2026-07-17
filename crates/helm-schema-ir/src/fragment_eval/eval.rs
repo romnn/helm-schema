@@ -86,7 +86,7 @@ pub struct EvaluatedDocument {
     pub(crate) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Fallback hints observed under branch predicates: fallback-grade
     /// intent that may type conditional overlays, but never a branch whose
-    /// renders all totally format (F76).
+    /// renders all totally format.
     pub(crate) guarded_fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Paths consumed through total stringifications (`quote`, `toString`,
     /// `join`, `printf`) anywhere in the source: the chart tolerates any
@@ -548,7 +548,7 @@ pub(super) struct Interpreter<'a> {
     /// Input-type hints from literal `default`/`coalesce` fallbacks: they
     /// type only the truthy arm of the path, never its Helm-falsy states.
     pub(super) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
-    /// Fallback hints observed under branch predicates (F76).
+    /// Fallback hints observed under branch predicates.
     pub(super) guarded_fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Paths consumed only through total stringifications (`quote`,
     /// `toString`, `join`, `printf`): the chart tolerates any input type at
@@ -1013,7 +1013,26 @@ impl<'a> Interpreter<'a> {
                             path: splice.values_path.clone(),
                         });
                     }
-                    self.push_read(&splice.values_path, &extra);
+                    // A key position formats every SCALAR (a numeric label
+                    // key renders `7:` and YAML-to-JSON stringifies it), so
+                    // the read carries the partial-scalar kind: a declared
+                    // string default widens to the scalar union instead of
+                    // pinning the raw input as a string.
+                    let (resource, provenance) = match &self.current_site {
+                        Some(site) => (
+                            site.resource.clone(),
+                            site.provenance.iter().cloned().collect(),
+                        ),
+                        None => (None, Vec::new()),
+                    };
+                    self.push_read_row(
+                        &splice.values_path,
+                        crate::ValueKind::PartialScalar,
+                        &extra,
+                        resource,
+                        provenance,
+                        false,
+                    );
                 }
                 StringPart::Taint(taint) => {
                     for path in &taint.paths {

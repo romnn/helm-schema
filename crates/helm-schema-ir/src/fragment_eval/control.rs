@@ -1162,7 +1162,7 @@ impl Interpreter<'_> {
     /// An `if` arm that REASSIGNED a local away from its entry `.Values`
     /// identity replaces the raw value on that arm, so the arms that kept
     /// the identity supply it only where the reassigning arm's condition is
-    /// false (datadog's `latest` → `1.20.0` version sentinel, F74). Each
+    /// false (datadog's `latest` → `1.20.0` version sentinel). Each
     /// kept value gets that exclusion as branch meta before the join:
     /// downstream strict operand captures fire only where the raw value
     /// actually reaches the consumer. The exclusion is carried as an

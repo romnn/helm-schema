@@ -590,6 +590,9 @@ impl ValuePathContext<'_> {
             return None;
         };
         let pattern = literal_string(pattern)?;
+        if let Some(predicate) = self.type_descriptor_regex_predicate(pattern, subject) {
+            return Some(predicate);
+        }
         let path = match self.with_body_fragment_value_expr(subject)? {
             AbstractValue::ValuesPath(path) if !path.is_empty() => path,
             _ => return None,
@@ -989,7 +992,7 @@ impl ValuePathContext<'_> {
     /// bounded sound strengthening: a RAW JSON integer above the bound
     /// always satisfies the coercing comparison, so a fail-arm keyed on the
     /// strengthened guard keeps firing there instead of abstaining
-    /// wholesale (F86: redis `gt (int64 .Values.master.count) 0`).
+    /// wholesale (redis `gt (int64 .Values.master.count) 0`).
     fn int_cast_comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             return Vec::new();
@@ -1059,7 +1062,7 @@ impl ValuePathContext<'_> {
             return Some(predicate);
         }
         // `eq $key "name"` over a destructured range key selects exactly the
-        // member with that key (F53: prometheus's serverFiles dispatch).
+        // member with that key (prometheus's serverFiles dispatch).
         if let Some(predicate) = self.range_key_equals_predicate(left, right, negated) {
             return Some(predicate);
         }
@@ -1112,7 +1115,7 @@ impl ValuePathContext<'_> {
                 .or_else(|| self.template_output_meta.get(name.trim_start_matches('$')));
             // A binding qualified by lexical escape tokens is not the raw
             // value for every input (a replace/split chain rewrote some
-            // strings, F74): an equality on it cannot lower to a raw-path
+            // strings): an equality on it cannot lower to a raw-path
             // guard.
             if meta.is_some_and(|meta| {
                 meta.values()
@@ -1152,6 +1155,131 @@ impl ValuePathContext<'_> {
         (!predicates.is_empty()).then(|| Predicate::all(predicates))
     }
 
+    /// The values paths (with any binding-time meta) a `typeOf`/`kindOf`
+    /// descriptor expression describes: a direct call over a selector or
+    /// bound local, or a local bound to such a call
+    /// (`$tp := typeOf .Values.x`).
+    fn type_descriptor_sources(
+        &self,
+        expr: &TemplateExpr,
+    ) -> Option<std::collections::BTreeMap<String, crate::helper_meta::HelperOutputMeta>> {
+        match expr.deparen() {
+            TemplateExpr::Call { function, args }
+                if matches!(function.as_str(), "typeOf" | "kindOf") && args.len() == 1 =>
+            {
+                // Selectors and bound locals (a range's value variable,
+                // a `$x := .Values.y` binding) both describe a single
+                // resolvable path.
+                let subject = args[0].deparen();
+                let subject = matches!(
+                    subject,
+                    TemplateExpr::Field(_)
+                        | TemplateExpr::Selector { .. }
+                        | TemplateExpr::Variable(_)
+                )
+                .then_some(subject)?;
+                let paths = self.paths_for_expr(subject);
+                if paths.is_empty() {
+                    return None;
+                }
+                let local_meta = match subject {
+                    TemplateExpr::Variable(name) => {
+                        self.template_output_meta.get(name.trim_start_matches('$'))
+                    }
+                    _ => None,
+                };
+                Some(
+                    paths
+                        .into_iter()
+                        .map(|path| {
+                            let meta = local_meta
+                                .and_then(|meta| meta.get(&path))
+                                .cloned()
+                                .unwrap_or_default();
+                            (path, meta)
+                        })
+                        .collect(),
+                )
+            }
+            TemplateExpr::Variable(name) => self
+                .typeof_bindings
+                .get(name.trim_start_matches('$'))
+                .cloned(),
+            _ => None,
+        }
+    }
+
+    /// `regexMatch pat (typeOf x)` tests the FINITE set of type spellings a
+    /// chart value can print, so the pattern lowers to the type alternatives
+    /// whose every spelling matches (sealed-secrets' `regexMatch "64$"
+    /// (typeOf .Values.pdb.minAvailable)` emits the field only for numeric
+    /// kinds). A kind with mixed spelling verdicts is provenance-dependent
+    /// (file-decoded `float64` vs `--set` `int64`), so it abstains rather
+    /// than guessing either way.
+    fn type_descriptor_regex_predicate(
+        &self,
+        pattern: &str,
+        subject: &TemplateExpr,
+    ) -> Option<Predicate> {
+        let sources = self.type_descriptor_sources(subject)?;
+        let regex = regex::Regex::new(pattern).ok()?;
+        let mut matched_types = Vec::new();
+        for schema_type in ["array", "boolean", "integer", "number", "object", "string"] {
+            let spellings = helm_schema_ast::go_type_descriptor_spellings(schema_type);
+            let matches = spellings
+                .iter()
+                .filter(|spelling| regex.is_match(spelling))
+                .count();
+            if matches == spellings.len() {
+                matched_types.push(schema_type);
+            } else if matches != 0 {
+                return None;
+            }
+        }
+        // `typeOf nil` prints `<nil>` and `kindOf nil` prints `invalid`.
+        let null_spellings = ["<nil>", "invalid"];
+        let null_matches = null_spellings
+            .iter()
+            .filter(|spelling| regex.is_match(spelling))
+            .count();
+        if null_matches != 0 && null_matches != null_spellings.len() {
+            return None;
+        }
+        if matched_types.is_empty() && null_matches == 0 {
+            return None;
+        }
+        let mut alternatives = Vec::new();
+        for (path, meta) in sources {
+            let mut kind_alternatives: Vec<Predicate> = matched_types
+                .iter()
+                .map(|schema_type| {
+                    Predicate::from(Guard::TypeIs {
+                        path: path.clone(),
+                        schema_type: (*schema_type).to_string(),
+                    })
+                })
+                .collect();
+            if null_matches != 0 {
+                kind_alternatives.push(invalid_kind_predicate(path.clone()));
+            }
+            let type_predicate = predicate_any(kind_alternatives);
+            if meta.predicates.is_empty() {
+                alternatives.push(type_predicate);
+            } else {
+                alternatives.extend(meta.predicates.into_iter().map(|branch| {
+                    let mut conjunction = branch.into_iter().collect::<Vec<_>>();
+                    conjunction.push(type_predicate.clone());
+                    Predicate::all(conjunction)
+                }));
+            }
+        }
+        match alternatives.as_slice() {
+            [] => None,
+            [predicate] => Some(predicate.clone()),
+            _ => Some(Predicate::Or(alternatives)),
+        }
+    }
+
     /// A `typeOf`/`kindOf` comparison against a string literal, either
     /// directly (`eq (typeOf .Values.x) "string"`) or through a bound local
     /// (`$tp := typeOf .Values.x` then `eq $tp "string"`). Lowers to a
@@ -1162,54 +1290,6 @@ impl ValuePathContext<'_> {
         right: &TemplateExpr,
         negated: bool,
     ) -> Option<Predicate> {
-        let described_sources = |expr: &TemplateExpr| -> Option<
-            std::collections::BTreeMap<String, crate::helper_meta::HelperOutputMeta>,
-        > {
-            match expr.deparen() {
-                TemplateExpr::Call { function, args }
-                    if matches!(function.as_str(), "typeOf" | "kindOf") && args.len() == 1 =>
-                {
-                    // Selectors and bound locals (a range's value variable,
-                    // a `$x := .Values.y` binding) both describe a single
-                    // resolvable path.
-                    let subject = args[0].deparen();
-                    let subject = matches!(
-                        subject,
-                        TemplateExpr::Field(_)
-                            | TemplateExpr::Selector { .. }
-                            | TemplateExpr::Variable(_)
-                    )
-                    .then_some(subject)?;
-                    let paths = self.paths_for_expr(subject);
-                    if paths.is_empty() {
-                        return None;
-                    }
-                    let local_meta = match subject {
-                        TemplateExpr::Variable(name) => {
-                            self.template_output_meta.get(name.trim_start_matches('$'))
-                        }
-                        _ => None,
-                    };
-                    Some(
-                        paths
-                            .into_iter()
-                            .map(|path| {
-                                let meta = local_meta
-                                    .and_then(|meta| meta.get(&path))
-                                    .cloned()
-                                    .unwrap_or_default();
-                                (path, meta)
-                            })
-                            .collect(),
-                    )
-                }
-                TemplateExpr::Variable(name) => self
-                    .typeof_bindings
-                    .get(name.trim_start_matches('$'))
-                    .cloned(),
-                _ => None,
-            }
-        };
         fn type_literal(expr: &TemplateExpr) -> Option<&str> {
             match expr.deparen() {
                 TemplateExpr::Literal(Literal::String(name) | Literal::RawString(name)) => {
@@ -1218,7 +1298,10 @@ impl ValuePathContext<'_> {
                 _ => None,
             }
         }
-        let (sources, type_name) = match (described_sources(left), described_sources(right)) {
+        let (sources, type_name) = match (
+            self.type_descriptor_sources(left),
+            self.type_descriptor_sources(right),
+        ) {
             (Some(sources), None) => (sources, type_literal(right)?),
             (None, Some(sources)) => (sources, type_literal(left)?),
             _ => return None,

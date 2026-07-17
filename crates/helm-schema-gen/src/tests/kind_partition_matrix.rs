@@ -6,7 +6,7 @@ fn strict_provider() -> Chain {
     )])
 }
 
-/// F85 (bitnami-redis master): a values-selected `kind:` crossed with a
+/// bitnami-redis master: a values-selected `kind:` crossed with a
 /// helper-resolved apiVersion partitions the strategy slot per kind. The
 /// Deployment arm places `spec.strategy` (no `rollingUpdate.partition`),
 /// every other arm places `spec.updateStrategy` (no `maxSurge`), and the
@@ -74,7 +74,7 @@ fn values_selected_kind_partitions_strategy_provider_projection() {
     }
 }
 
-/// F49 (nfs-subdir-external-provisioner): `maxUnavailable` flows through
+/// nfs-subdir-external-provisioner: `maxUnavailable` flows through
 /// `default 1` into a PodDisruptionBudget's int-or-string slot, so the
 /// declared integer default documents intent without narrowing away the
 /// provider-accepted percentage string.

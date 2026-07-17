@@ -19,7 +19,7 @@ fn self_guarded_fragment_object_keeps_exact_empty_object_placeholder() {
     let ir = parse_ir(src);
     let schema = schema_for_values_yaml(&ir, Some(values_yaml));
 
-    // A `with`-guarded `toYaml` fragment is TOTAL (F56): the declared-empty
+    // A `with`-guarded `toYaml` fragment is TOTAL: the declared-empty
     // off-state and every user-supplied shape stay valid.
     for instance in [
         serde_json::json!({ "dataSource": {} }),

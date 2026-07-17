@@ -29,20 +29,16 @@ pub(crate) fn contract_ir_from_document(document: &EvaluatedDocument) -> Contrac
         &YamlPath(Vec::new()),
         &mut conditions,
         &mut contract,
+        &std::collections::BTreeSet::new(),
     );
     for read in &document.reads {
         if read.condition.is_never() {
             continue;
         }
-        let kind = if read.kind == ValueKind::PartialScalar {
-            ValueKind::Scalar
-        } else {
-            read.kind
-        };
         let row = ContractUse::with_condition_and_provenances(
             read.values_path.clone(),
             YamlPath(Vec::new()),
-            kind,
+            read.kind,
             read.condition.clone(),
             read.resource.clone(),
             read.provenance.iter().cloned(),
@@ -90,8 +86,24 @@ fn walk_guarded(
     path: &YamlPath,
     conditions: &mut Vec<Predicate>,
     contract: &mut ContractIr,
+    member_sibling_keys: &std::collections::BTreeSet<String>,
 ) {
     let open_mapping_entry = find_open_mapping_entry(guarded);
+    // Sibling MAPPING arms of the same guarded position contribute literal
+    // keys to the object a member-level splice completes (`- name: tmp`
+    // above a `toYaml .Values.tmpVolume | nindent` action): the splice's
+    // provider slot must know them so its object requiredness does not
+    // re-demand template-supplied members. Conditional siblings widen the
+    // set, which can only relax requiredness, never reject.
+    let mut sibling_keys = member_sibling_keys.clone();
+    for (_, node) in &guarded.arms {
+        if let AbstractFragment::Mapping(mapping) = node {
+            sibling_keys.extend(mapping.entries.iter().filter_map(|entry| match &entry.key {
+                EntryKey::Literal(key) if !key.is_empty() => Some(key.clone()),
+                _ => None,
+            }));
+        }
+    }
     for (condition, node) in &guarded.arms {
         let pushed = !condition.is_trivial();
         if pushed {
@@ -103,7 +115,7 @@ fn walk_guarded(
         {
             effective_path.0.push(key.to_string());
         }
-        walk_node(node, &effective_path, conditions, contract);
+        walk_node(node, &effective_path, conditions, contract, &sibling_keys);
         if pushed {
             conditions.pop();
         }
@@ -205,18 +217,33 @@ fn walk_node(
     path: &YamlPath,
     conditions: &mut Vec<Predicate>,
     contract: &mut ContractIr,
+    member_sibling_keys: &std::collections::BTreeSet<String>,
 ) {
+    let no_siblings = std::collections::BTreeSet::new();
     match node {
         AbstractFragment::Mapping(mapping) => {
+            // Literal keys the template itself writes into this mapping: a
+            // member-contributing fragment splice's provider slot already
+            // holds them, so its object requiredness must not re-demand
+            // them from the user value (metrics-server's `- name: tmp`
+            // beside `toYaml .Values.tmpVolume`).
+            let literal_keys: std::collections::BTreeSet<String> = mapping
+                .entries
+                .iter()
+                .filter_map(|entry| match &entry.key {
+                    EntryKey::Literal(key) if !key.is_empty() => Some(key.clone()),
+                    _ => None,
+                })
+                .collect();
             for entry in &mapping.entries {
                 match &entry.key {
                     EntryKey::Literal(key) if !key.is_empty() => {
                         let mut child = path.clone();
                         child.0.push(key.clone());
-                        walk_guarded(&entry.value, &child, conditions, contract);
+                        walk_guarded(&entry.value, &child, conditions, contract, &no_siblings);
                     }
                     EntryKey::Literal(_) => {
-                        walk_guarded(&entry.value, path, conditions, contract);
+                        walk_guarded(&entry.value, path, conditions, contract, &literal_keys);
                     }
                     EntryKey::Dynamic(_) => {
                         // Templated keys: the key's reads were recorded at
@@ -226,7 +253,7 @@ fn walk_node(
                         // additionalProperties schema without guessing the
                         // rendered key.
                         let child = dynamic_mapping_value_path(path);
-                        walk_guarded(&entry.value, &child, conditions, contract);
+                        walk_guarded(&entry.value, &child, conditions, contract, &no_siblings);
                     }
                 }
             }
@@ -234,7 +261,7 @@ fn walk_node(
         AbstractFragment::Sequence(sequence) => {
             let item_path = sequence_item_path(path);
             for item in &sequence.items {
-                walk_guarded(item, &item_path, conditions, contract);
+                walk_guarded(item, &item_path, conditions, contract, &no_siblings);
             }
         }
         AbstractFragment::Scalar(scalar) => {
@@ -248,7 +275,7 @@ fn walk_node(
             project_parts(scalar, &effective_path, conditions, contract);
         }
         AbstractFragment::Splice(splice) => {
-            let row = splice_row(splice, path, conditions);
+            let row = splice_row(splice, path, conditions, member_sibling_keys);
             if !row.condition.is_never() {
                 contract.push(row);
             }
@@ -281,7 +308,7 @@ fn project_parts(
         match part {
             StringPart::Text(_) => {}
             StringPart::Splice(splice) => {
-                let row = splice_row(splice, path, conditions);
+                let row = splice_row(splice, path, conditions, &std::collections::BTreeSet::new());
                 if !row.condition.is_never() {
                     contract.push(row);
                 }
@@ -305,7 +332,12 @@ fn project_parts(
     }
 }
 
-fn splice_row(splice: &Splice, path: &YamlPath, conditions: &[Predicate]) -> ContractUse {
+fn splice_row(
+    splice: &Splice,
+    path: &YamlPath,
+    conditions: &[Predicate],
+    member_sibling_keys: &std::collections::BTreeSet<String>,
+) -> ContractUse {
     let mut condition = GuardDnf::from_conjunction(conditions.iter().cloned());
     if splice.meta.defaulted {
         let default_guard = Guard::Default {
@@ -340,6 +372,7 @@ fn splice_row(splice: &Splice, path: &YamlPath, conditions: &[Predicate]) -> Con
         &splice.meta.provenance,
     );
     row.has_string_contract = splice.meta.string_contract;
+    row.template_supplied_member_keys = member_sibling_keys.clone();
     row
 }
 

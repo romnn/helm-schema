@@ -33,9 +33,10 @@ use comparisons::{eval_comparison, eval_pipeline_comparison, eval_ternary, eval_
 use root_mutation::eval_set_call;
 use serialization::{
     eval_cat, eval_from_json, eval_from_json_pipeline, eval_from_yaml, eval_from_yaml_pipeline,
-    eval_join, eval_join_pipeline, eval_print, eval_printf, eval_repeat, eval_replace,
-    eval_replace_pipeline, eval_to_json, eval_to_json_result, eval_to_yaml, eval_to_yaml_result,
-    eval_tpl, record_printf_argument_effects, record_total_conversion_effects,
+    eval_join, eval_join_pipeline, eval_print, eval_printf, eval_regex_replace, eval_repeat,
+    eval_replace, eval_replace_pipeline, eval_to_json, eval_to_json_result, eval_to_yaml,
+    eval_to_yaml_result, eval_tpl, eval_trim_affix, eval_trim_affix_pipeline,
+    record_printf_argument_effects, record_total_conversion_effects,
 };
 use strict_operands::{
     pipeline_string_operand_facts, record_collection_item_kind_result,
@@ -191,7 +192,7 @@ pub(crate) fn eval_call_with_helper_calls(
                 );
             }
             // Constant-fold `add1` over a statically known integer so an
-            // unrolled-iteration ordinal stays exact (F99 last-element
+            // unrolled-iteration ordinal stays exact (last-element
             // arithmetic).
             if function == "add1"
                 && let [arg] = args
@@ -256,6 +257,17 @@ pub(crate) fn eval_call_with_helper_calls(
         "print" => eval_print(args, env, resolver),
         "printf" => eval_printf(args, env, resolver),
         "replace" if args.len() == 3 => eval_replace(args, env, resolver),
+        "trimPrefix" | "trimSuffix" if args.len() == 2 => {
+            eval_trim_affix(function, args, env, resolver)
+        }
+        "regexReplaceAll"
+        | "mustRegexReplaceAll"
+        | "regexReplaceAllLiteral"
+        | "mustRegexReplaceAllLiteral"
+            if args.len() == 3 =>
+        {
+            eval_regex_replace(function, args, env, resolver)
+        }
         "repeat" if args.len() == 2 => {
             let mut result = eval_repeat(args, env, resolver);
             let (string_paths, raw_range_key_paths) =
@@ -425,6 +437,9 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 resolver,
             ),
             "replace" if args.len() == 2 => eval_replace_pipeline(current, args, env, resolver),
+            "trimPrefix" | "trimSuffix" if args.len() == 1 => {
+                eval_trim_affix_pipeline(function, current, args, env, resolver)
+            }
             function if is_string_transform_function(function) => {
                 let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
                     function,

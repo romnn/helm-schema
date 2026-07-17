@@ -607,7 +607,7 @@ impl HelperOutputEvaluator {
                     // The helper's text lands in a YAML scalar position of
                     // the consuming document, so a body literal written as
                     // `"policy/v1"` (quotes included) denotes the unquoted
-                    // scalar once the composed manifest is parsed (F83).
+                    // scalar once the composed manifest is parsed.
                     let trimmed = unquote_yaml_scalar(text.trim());
                     if !trimmed.is_empty() {
                         parts.literals.push(trimmed.to_string());
@@ -798,7 +798,7 @@ fn dedup_preserve_order(items: Vec<String>) -> Vec<String> {
 /// `COND | ternary "on" "off"` (and `ternary "on" "off" COND`) selects one
 /// of two literal scalars exactly like an `if COND`/`else` pair, so a
 /// decodable capability condition yields guard-qualified branch literals
-/// instead of an unresolvable two-way choice (F83: signoz's HPA apiVersion
+/// instead of an unresolvable two-way choice (signoz's HPA apiVersion
 /// pipeline). An undecodable condition abstains — the identity stays
 /// unresolved rather than fabricating an unguarded candidate pair.
 fn capability_ternary_body(exprs: &[TemplateExpr]) -> Option<HelperBranchBody> {

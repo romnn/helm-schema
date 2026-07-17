@@ -42,20 +42,15 @@ fn merge_override(base: &mut Value, override_value: Value) {
     }
 }
 
+/// Delete null-valued map keys along MAP chains only. Helm's coalescing
+/// treats lists atomically — a list value replaces wholesale and its
+/// members (including nulls and null-valued keys inside them) reach the
+/// template verbatim — so recursion must stop at arrays.
 fn drop_nulls(value: &mut Value) {
-    match value {
-        Value::Array(items) => {
-            items.retain(|item| !item.is_null());
-            for item in items {
-                drop_nulls(item);
-            }
+    if let Value::Object(entries) = value {
+        entries.retain(|_, value| !value.is_null());
+        for value in entries.values_mut() {
+            drop_nulls(value);
         }
-        Value::Object(entries) => {
-            entries.retain(|_, value| !value.is_null());
-            for value in entries.values_mut() {
-                drop_nulls(value);
-            }
-        }
-        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {}
     }
 }

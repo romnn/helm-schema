@@ -27,6 +27,22 @@ pub fn go_type_schema_type(type_name: &str) -> Option<&'static str> {
     })
 }
 
+/// The Go type spellings `typeOf`/`kindOf` can print for a chart value of
+/// one JSON Schema kind. Integer values list both numeric spellings because
+/// provenance decides the dynamic type: file-loaded values decode through
+/// JSON as `float64`, while `--set` values parse as `int64`.
+pub fn go_type_descriptor_spellings(schema_type: &str) -> &'static [&'static str] {
+    match schema_type {
+        "boolean" => &["bool"],
+        "integer" => &["float64", "int64"],
+        "number" => &["float64"],
+        "string" => &["string"],
+        "array" => &["[]interface {}", "slice"],
+        "object" => &["map[string]interface {}", "map"],
+        _ => &[],
+    }
+}
+
 pub fn is_string_transform_function(function: &str) -> bool {
     matches!(
         function,
@@ -51,6 +67,7 @@ pub fn is_string_transform_function(function: &str) -> bool {
             | "mustRegexReplaceAll"
             | "regexReplaceAllLiteral"
             | "mustRegexReplaceAllLiteral"
+            | "htpasswd"
     )
 }
 
@@ -87,7 +104,10 @@ pub fn string_operand_indices(function: &str, argument_count: usize) -> Vec<usiz
         | "semverCompare"
         | "urlParse"
         | "splitList"
-        | "split" => (0..argument_count).collect(),
+        | "split"
+        // Both the user and the password are bcrypt inputs; a non-string
+        // aborts rendering with `expected string`.
+        | "htpasswd" => (0..argument_count).collect(),
         // The duration is the first argument; the second is a time value.
         "mustDateModify" if argument_count >= 2 => vec![0],
         // The string subject is final; `trunc`'s preceding width and
@@ -114,12 +134,15 @@ pub fn strict_parser_operand_pattern(
 ) -> Option<(usize, &'static str)> {
     match function {
         "semverCompare" if argument_count == 2 => {
-            // Masterminds semver's coercing parser uses this loose lexical grammar
-            // before numeric and prerelease validation. Keeping that upstream
-            // grammar as a superset avoids inventing a narrower SemVer dialect.
+            // Masterminds semver's coercing parser keeps the CORE segments
+            // loose (leading zeros parse through `ParseUint`), but its
+            // prerelease validation rejects a NUMERIC identifier with a
+            // leading zero (`3.1.0-01` aborts while `3.1.0-rc.1` renders),
+            // so the prerelease alternatives spell that rule out. Build
+            // metadata stays unvalidated.
             Some((
                 argument_count - 1,
-                r"^v?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$",
+                r"^v?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$",
             ))
         }
         "mustDateModify" if argument_count == 2 => Some((

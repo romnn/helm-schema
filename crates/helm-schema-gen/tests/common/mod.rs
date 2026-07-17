@@ -91,8 +91,15 @@ pub struct SchemaBehaviorCase<'a> {
 /// so they use the chain layer plus apiVersion inference instead of the older
 /// single-provider shortcut.
 pub fn production_k8s_chain(version: &str) -> Chain {
+    // Provider availability is a deterministic test INPUT: the vendored
+    // bundle pins which upstream schemas the corpus can see. The ambient
+    // user cache with downloads enabled made fixture content depend on
+    // cache warmth, the exact failure mode the bundle exists to remove.
     let k8s_provider = KubernetesJsonSchemaProvider::new(version.to_string())
-        .with_allow_download(true)
+        .with_cache_dir(
+            test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        )
+        .with_allow_download(false)
         .with_api_version_guess(true);
     Chain::new(vec![Box::new(k8s_provider)]).with_inference_enabled(true)
 }
@@ -103,9 +110,14 @@ pub fn production_k8s_chain(version: &str) -> Chain {
 /// as the CLI while leaving lower-layer provider-specific tests free to pin a
 /// single provider when that is the actual subject under test.
 pub fn production_crd_k8s_chain(version: &str) -> Chain {
-    let crds = CrdsCatalogSchemaProvider::new().with_allow_download(true);
+    let crds = CrdsCatalogSchemaProvider::new()
+        .with_cache_dir(test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"))
+        .with_allow_download(false);
     let k8s_provider = KubernetesJsonSchemaProvider::new(version.to_string())
-        .with_allow_download(true)
+        .with_cache_dir(
+            test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        )
+        .with_allow_download(false)
         .with_api_version_guess(true);
     Chain::new(vec![Box::new(crds), Box::new(k8s_provider)]).with_inference_enabled(true)
 }

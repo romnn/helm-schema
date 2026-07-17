@@ -18,7 +18,7 @@ pub(crate) struct Effects {
     /// selection call itself never consumes the raw value — every Helm-empty
     /// input takes the fallback and renders — so these type only the TRUTHY
     /// arm of the path and must never close the base against the Helm-falsy
-    /// set (F42).
+    /// set.
     pub(crate) fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Types observed by a predicate expression. These become input
     /// alternatives only when an expression such as `ternary` consumes the
@@ -140,6 +140,9 @@ pub(crate) enum CaptureKind {
     /// A scalar path must have the named JSON Schema type whenever the
     /// capture's execution predicates hold.
     ValueType { path: String, schema_type: String },
+    /// A comparison operand must have the named JSON Schema type when
+    /// PRESENT and non-null; `eq`/`ne` compare `nil` against anything.
+    ComparableKind { path: String, schema_type: String },
     /// A string path must match the pattern whenever the capture's execution
     /// predicates hold.
     ValuePattern {

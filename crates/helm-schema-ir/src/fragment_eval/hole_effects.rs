@@ -409,7 +409,7 @@ impl Interpreter<'_> {
                 &mut self.fallback_type_hints
             } else {
                 // Branch-scoped fallback hints keep their fallback identity
-                // (F76): overlay lowering must know they are intent, not a
+                //: overlay lowering must know they are intent, not a
                 // consumer contract.
                 &mut self.guarded_fallback_type_hints
             };
@@ -572,9 +572,9 @@ fn runtime_requirement_paths(
         }
         CaptureKind::IndexAccess { path, .. } => [path.clone()].into_iter().collect(),
         CaptureKind::SplitIndexAccess { paths, .. } => paths.clone(),
-        CaptureKind::ValueType { path, .. } | CaptureKind::ValuePattern { path, .. } => {
-            [path.clone()].into_iter().collect()
-        }
+        CaptureKind::ValueType { path, .. }
+        | CaptureKind::ComparableKind { path, .. }
+        | CaptureKind::ValuePattern { path, .. } => [path.clone()].into_iter().collect(),
         CaptureKind::Fail | CaptureKind::MemberAccess { .. } => capture
             .conjunction
             .last()

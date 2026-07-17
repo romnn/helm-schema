@@ -24,6 +24,106 @@
           "type": "object"
         }
       ]
+    },
+    "schema1": {
+      "oneOf": [
+        {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                  }
+                }
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "pattern": "^-?(0|[1-9][0-9]*)$",
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      ]
+    },
+    "schema11": {
+      "not": {
+        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+      }
+    },
+    "schema4": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "schema7": {
+      "not": {
+        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+      }
+    },
+    "schema8": {
+      "not": {
+        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -79,32 +179,117 @@
   ],
   "properties": {
     "ingress": {
-      "anyOf": [
+      "additionalProperties": {},
+      "allOf": [
         {
-          "additionalProperties": {},
-          "properties": {
-            "className": {},
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
                     "$ref": "#/$defs/helm-truthy"
                   }
                 },
-                {
-                  "type": "boolean"
-                }
-              ]
-            }
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            ]
           },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "className": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "not": {
+                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[-?:]([ \\t]|$)"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": ":[ \\t]|:$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^(|~|null|Null|NULL)$"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema4"
+                      },
+                      {
+                        "$ref": "#/$defs/schema7"
+                      },
+                      {
+                        "$ref": "#/$defs/schema8"
+                      },
+                      {
+                        "$ref": "#/$defs/schema11"
+                      }
+                    ],
+                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                    "type": "string"
+                  },
+                  {
+                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                    "type": "null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
           }
         }
-      ]
+      ],
+      "properties": {
+        "className": {},
+        "enabled": {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        }
+      }
     },
     "podDisruptionBudget": {
       "additionalProperties": {},
@@ -124,8 +309,38 @@
           "then": {
             "additionalProperties": {},
             "properties": {
+              "maxUnavailable": {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/schema1"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
               "minAvailable": {
-                "type": "integer"
+                "$ref": "#/$defs/schema1"
               }
             }
           }

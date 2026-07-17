@@ -455,6 +455,7 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
+        template_supplied_member_keys: Default::default(),
     }]);
     contract.push_pathless_dependency_fragment("webhook");
 
@@ -493,6 +494,7 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
         )),
         provenance: Vec::new(),
         has_string_contract: false,
+        template_supplied_member_keys: Default::default(),
     }];
     let contract = with_type_hints(
         ContractIr::from_contract_uses(uses),
@@ -814,6 +816,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             )),
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         },
         ContractUse {
             source_expr: "serviceMonitor.metricRelabelings".to_string(),
@@ -832,6 +835,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             )),
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         },
     ];
 
@@ -892,6 +896,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             resource: Some(resource.clone()),
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         },
         ContractUse {
             source_expr: "second".to_string(),
@@ -901,6 +906,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             resource: Some(resource),
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         },
     ];
     let schema_signals = schema_signals_for(uses);
@@ -947,6 +953,7 @@ fn values_yaml_comments_override_provider_descriptions() {
         )),
         provenance: Vec::new(),
         has_string_contract: false,
+        template_supplied_member_keys: Default::default(),
     }];
     let descriptions = BTreeMap::from([("name".to_string(), "chart description".to_string())]);
     let schema_signals = schema_signals_for(uses);
@@ -1111,7 +1118,7 @@ fn included_encoded_secret_data_preserves_nullable_source_without_byte_format() 
     );
 }
 
-/// F56/F62: `tpl (toYaml .Values.X) .` re-renders the serialized fragment,
+/// `tpl (toYaml .Values.X) .` re-renders the serialized fragment,
 /// so the provider slot projects back to the input exactly like a bare
 /// `toYaml` splice (airflow's scheduler command and extraContainers).
 #[test]
@@ -1148,6 +1155,185 @@ fn tpl_serialized_fragment_projects_the_provider_slot() {
             schema_accepts_instance(&schema, &instance) == want,
             "the tpl-serialized command keeps the PodSpec string-array slot: \
              instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Helm's YAML resolver reads hex, explicit octal, binary, and legacy
+/// leading-zero spellings as integers, so a bare token in any of those
+/// forms reparses away from the string a provider slot requires (velero's
+/// unquoted BackupStorageLocation provider).
+#[test]
+fn plain_string_slot_excludes_non_decimal_integer_spellings() {
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            spec:
+              containers:
+                - name: {{ .Values.containerName }}
+                  image: img
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("containerName: app\n"));
+
+    for (instance, want) in [
+        (serde_json::json!({ "containerName": "0x10" }), false),
+        (serde_json::json!({ "containerName": "0o17" }), false),
+        (serde_json::json!({ "containerName": "0123" }), false),
+        (serde_json::json!({ "containerName": "0b101" }), false),
+        (serde_json::json!({ "containerName": "app" }), true),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "non-decimal integer spellings reparse away from the string slot: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A serialized fragment spliced beside a literal sibling (`- name: tmp`
+/// above `toYaml .Values.tmpVolume | nindent`) completes an object the
+/// template already gives that key: the provider slot's `required` must
+/// not re-demand it from the user value (metrics-server's Volume slot),
+/// while the slot's member typing still applies.
+#[test]
+fn template_supplied_sibling_keys_relax_provider_requiredness() {
+    #[derive(Debug)]
+    struct VolumeProvider;
+
+    impl ResourceSchemaOracle for VolumeProvider {
+        fn schema_fragment_for_use(
+            &self,
+            use_: &ProviderSchemaUse,
+        ) -> Option<ProviderSchemaFragment> {
+            (use_.value_path == "tmpVolume").then(|| {
+                ProviderSchemaFragment::new(serde_json::json!({
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["name"],
+                    "properties": {
+                        "name": { "type": "string" },
+                        "emptyDir": { "type": "object", "additionalProperties": false },
+                        "hostPath": {
+                            "type": "object",
+                            "properties": { "path": { "type": "string" } },
+                            "additionalProperties": false
+                        }
+                    }
+                }))
+            })
+        }
+    }
+
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            spec:
+              volumes:
+                - name: tmp
+                  {{- toYaml .Values.tmpVolume | nindent 10 }}
+    "#};
+    let ir = parse_ir(src);
+    let schema_signals = ir.into_schema_signals();
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &VolumeProvider)
+            .with_values_yaml(Some("tmpVolume:\n  emptyDir: {}\n")),
+    );
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "tmpVolume": { "emptyDir": {} } }),
+            true,
+            "the template supplies name itself",
+        ),
+        (
+            serde_json::json!({ "tmpVolume": { "hostPath": { "path": "/tmp" } } }),
+            true,
+            "other volume variants stay open",
+        ),
+        (
+            serde_json::json!({ "tmpVolume": { "emptyDir": 7 } }),
+            false,
+            "the slot's member typing still applies",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A `tpl`-rendered splice gives the provider slot its OUTPUT, never the
+/// raw program text, so the slot's string grammar must not back-project
+/// onto the raw value (loki's `secretName: {{ tpl
+/// .Values.loki.configObjectName . }}` with the templated default
+/// `"{{ include \"loki.name\" . }}"`); `tpl`'s own string-input contract
+/// still types the path.
+#[test]
+fn tpl_rendered_slots_keep_the_raw_program_open() {
+    #[derive(Debug)]
+    struct SecretNameProvider;
+
+    impl ResourceSchemaOracle for SecretNameProvider {
+        fn schema_fragment_for_use(
+            &self,
+            use_: &ProviderSchemaUse,
+        ) -> Option<ProviderSchemaFragment> {
+            (use_.value_path == "objectName").then(|| {
+                ProviderSchemaFragment::new(serde_json::json!({
+                    "type": "string",
+                    "pattern": "^[a-z0-9.-]+$"
+                }))
+            })
+        }
+    }
+
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          volumes:
+            - name: config
+              secret:
+                secretName: {{ tpl .Values.objectName . }}
+    "#};
+    let ir = parse_ir(src);
+    let schema_signals = ir.into_schema_signals();
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&schema_signals, &SecretNameProvider)
+            .with_values_yaml(Some("objectName: \"{{ include \\\"repro.name\\\" . }}\"\n")),
+    );
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "objectName": "{{ include \"repro.name\" . }}" }),
+            true,
+            "a raw template program renders through tpl",
+        ),
+        (
+            serde_json::json!({ "objectName": "plain-name" }),
+            true,
+            "plain names render",
+        ),
+        (
+            serde_json::json!({ "objectName": { "a": 1 } }),
+            false,
+            "tpl requires a string program",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; schema={schema}"
         );
     }
 }

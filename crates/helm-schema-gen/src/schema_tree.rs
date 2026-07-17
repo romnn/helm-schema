@@ -196,7 +196,7 @@ fn append_conditional_at_parts(
     // conditional lands inside the node's `additionalProperties` member
     // slot, mirroring `insert_map_member_row` — a literal `"*"` property
     // would constrain nothing a chart can render, silently dropping the
-    // guarded member contract (F59/F93: velero `schedules.*` rows).
+    // guarded member contract (velero `schedules.*` rows).
     if path_segments[0] == "*" {
         if node.is_empty_slot() {
             *node = SchemaNode::untyped_member_host();

@@ -2,7 +2,7 @@ use test_util::prelude::sim_assert_eq;
 
 use super::*;
 
-/// F69: a collection and its member contract retain the complete outer guard.
+/// a collection and its member contract retain the complete outer guard.
 /// Dead branches accept unrelated shapes; live branches constrain every
 /// iterable lane after broad fragment/default alternatives are assembled.
 #[test]
@@ -101,7 +101,7 @@ fn guarded_range_member_string_contract_stays_branch_scoped() {
     }
 }
 
-/// F68: a string consumer on a two-variable range key distinguishes maps from
+/// a string consumer on a two-variable range key distinguishes maps from
 /// arrays. Empty arrays remain valid because no integer index reaches the
 /// consumer.
 #[test]
@@ -361,11 +361,12 @@ fn guarded_ranged_member_access_constrains_collection_lanes() {
     let guard = helm_truthy_guard("enabled");
     // The member-host implication already contains the complete iterable
     // domain, so a second broad range-domain conditional would be redundant.
-    // Retaining the `tls` descendant in each collection lane documents the
-    // structural member read without requiring that optional key.
+    // The `tls` descendant renders as a mapping KEY, which formats every
+    // scalar (numeric keys stringify through YAML-to-JSON) while composite
+    // values stay out of the key lane.
     let member = serde_json::json!({
         "additionalProperties": {},
-        "properties": { "tls": {} },
+        "properties": { "tls": { "type": ["boolean", "integer", "number", "string"] } },
         "type": "object",
     });
     let all_of = vec![serde_json::json!({

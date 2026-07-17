@@ -2,16 +2,12 @@ use color_eyre::eyre::{Report, WrapErr};
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
 
+/// Delete null-valued map keys along MAP chains only. Helm's coalescing
+/// treats lists atomically — a list value replaces wholesale and its
+/// members (including nulls and null-valued keys inside them) reach the
+/// template verbatim — so recursion must stop at arrays.
 fn drop_nulls(v: &Value) -> Value {
     match v {
-        Value::Null => Value::Null,
-        Value::Bool(_) | Value::Number(_) | Value::String(_) => v.clone(),
-        Value::Array(arr) => Value::Array(
-            arr.iter()
-                .filter(|x| !x.is_null())
-                .map(drop_nulls)
-                .collect(),
-        ),
         Value::Object(map) => {
             let mut out = serde_json::Map::new();
             for (k, v) in map {
@@ -21,6 +17,9 @@ fn drop_nulls(v: &Value) -> Value {
                 out.insert(k.clone(), drop_nulls(v));
             }
             Value::Object(out)
+        }
+        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) | Value::Array(_) => {
+            v.clone()
         }
     }
 }

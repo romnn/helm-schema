@@ -65,6 +65,7 @@ pub(crate) const MAX_SCALAR_ARM_FANOUT: usize = 64;
 pub(crate) struct LowerScope<'a> {
     pub(crate) defaulted_paths: &'a BTreeSet<String>,
     pub(crate) encoded_paths: &'a BTreeSet<String>,
+    pub(crate) derived_text_paths: &'a BTreeSet<String>,
     pub(crate) yaml_serialized_paths: &'a BTreeSet<String>,
     pub(crate) shape_erased_paths: &'a BTreeSet<String>,
     pub(crate) string_contract_paths: &'a BTreeSet<String>,
@@ -278,10 +279,15 @@ pub(crate) fn lower_value(
                 }
             }
             if !taint.is_empty() {
-                let kind = if taint
-                    .iter()
-                    .all(|path| path_is_encoded(path, scope.shape_erased_paths))
-                {
+                // Shape-erased AND derived-text paths render only
+                // TRANSFORMED text into this slot (an unknown transform
+                // like `include … | sha256sum` hashes the render), so the
+                // slot's provider schema constrains nothing about the raw
+                // value; the Serialized kind carries that abstention.
+                let kind = if taint.iter().all(|path| {
+                    path_is_encoded(path, scope.shape_erased_paths)
+                        || path_is_encoded(path, scope.derived_text_paths)
+                }) {
                     ValueKind::Serialized
                 } else {
                     kind

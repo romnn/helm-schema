@@ -26,6 +26,560 @@
       ]
     },
     "schema1": {
+      "additionalProperties": false,
+      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
+      "properties": {
+        "podAffinityTerm": {
+          "additionalProperties": false,
+          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+          "properties": {
+            "labelSelector": {
+              "additionalProperties": false,
+              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+              "properties": {
+                "matchExpressions": {
+                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                    "properties": {
+                      "key": {
+                        "description": "key is the label key that the selector applies to.",
+                        "type": "string"
+                      },
+                      "operator": {
+                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                        "type": "string"
+                      },
+                      "values": {
+                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                        "items": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "operator"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "matchLabels": {
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ],
+              "x-kubernetes-map-type": "atomic"
+            },
+            "matchLabelKeys": {
+              "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ],
+              "x-kubernetes-list-type": "atomic"
+            },
+            "mismatchLabelKeys": {
+              "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ],
+              "x-kubernetes-list-type": "atomic"
+            },
+            "namespaceSelector": {
+              "additionalProperties": false,
+              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+              "properties": {
+                "matchExpressions": {
+                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                    "properties": {
+                      "key": {
+                        "description": "key is the label key that the selector applies to.",
+                        "type": "string"
+                      },
+                      "operator": {
+                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                        "type": "string"
+                      },
+                      "values": {
+                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                        "items": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "operator"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "matchLabels": {
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ],
+              "x-kubernetes-map-type": "atomic"
+            },
+            "namespaces": {
+              "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "topologyKey": {
+              "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "topologyKey"
+          ],
+          "type": "object"
+        },
+        "weight": {
+          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "weight",
+        "podAffinityTerm"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "schema10": {
+      "description": "A list of node selector requirements by node's fields.",
+      "items": {
+        "additionalProperties": false,
+        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+        "properties": {
+          "key": {
+            "description": "The label key that the selector applies to.",
+            "type": "string"
+          },
+          "operator": {
+            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+            "type": "string"
+          },
+          "values": {
+            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "operator"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "schema11": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "additionalProperties": false,
+        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+        "properties": {
+          "key": {
+            "description": "The label key that the selector applies to.",
+            "type": "string"
+          },
+          "operator": {
+            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+            "type": "string"
+          },
+          "values": {
+            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "operator"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "schema19": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "schema2": {
+      "additionalProperties": false,
+      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+      "properties": {
+        "labelSelector": {
+          "additionalProperties": false,
+          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+          "properties": {
+            "matchExpressions": {
+              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+              "items": {
+                "additionalProperties": false,
+                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                "properties": {
+                  "key": {
+                    "description": "key is the label key that the selector applies to.",
+                    "type": "string"
+                  },
+                  "operator": {
+                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                    "type": "string"
+                  },
+                  "values": {
+                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                    "items": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "key",
+                  "operator"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "matchLabels": {
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ],
+          "x-kubernetes-map-type": "atomic"
+        },
+        "matchLabelKeys": {
+          "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ],
+          "x-kubernetes-list-type": "atomic"
+        },
+        "mismatchLabelKeys": {
+          "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ],
+          "x-kubernetes-list-type": "atomic"
+        },
+        "namespaceSelector": {
+          "additionalProperties": false,
+          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+          "properties": {
+            "matchExpressions": {
+              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+              "items": {
+                "additionalProperties": false,
+                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                "properties": {
+                  "key": {
+                    "description": "key is the label key that the selector applies to.",
+                    "type": "string"
+                  },
+                  "operator": {
+                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                    "type": "string"
+                  },
+                  "values": {
+                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                    "items": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "key",
+                  "operator"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "matchLabels": {
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ],
+          "x-kubernetes-map-type": "atomic"
+        },
+        "namespaces": {
+          "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "topologyKey": {
+          "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "topologyKey"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "schema20": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+      "properties": {},
+      "type": "object"
+    },
+    "schema22": {
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "null"
+    },
+    "schema26": {
       "additionalProperties": {
         "additionalProperties": {},
         "properties": {
@@ -70,22 +624,18 @@
         }
       }
     },
-    "schema11": {
-      "properties": {
-        "create": {}
+    "schema28": {
+      "description": "hosts is a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.",
+      "items": {
+        "type": [
+          "string",
+          "null"
+        ]
       },
-      "required": [
-        "create"
-      ],
-      "type": "object"
+      "type": "array",
+      "x-kubernetes-list-type": "atomic"
     },
-    "schema12": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "schema2": {
+    "schema31": {
       "additionalProperties": {
         "additionalProperties": {},
         "properties": {
@@ -129,7 +679,20 @@
         }
       }
     },
-    "schema3": {
+    "schema32": {
+      "anyOf": [
+        {
+          "not": {
+            "type": "string"
+          }
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        }
+      ]
+    },
+    "schema33": {
       "additionalProperties": {},
       "properties": {
         "hosts": {
@@ -148,7 +711,168 @@
       },
       "type": "object"
     },
+    "schema34": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "schema35": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
     "schema4": {
+      "additionalProperties": {},
+      "properties": {
+        "paths": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[-?:]([ \\t]|$)"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^(|~|null|Null|NULL)$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                    }
+                  }
+                ],
+                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+                "type": "string"
+              },
+              {
+                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+                "type": "null"
+              }
+            ]
+          },
+          "items": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {
+                    "not": {
+                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[-?:]([ \\t]|$)"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": ":[ \\t]|:$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "[\\r\\n]"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^(|~|null|Null|NULL)$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                    }
+                  }
+                ],
+                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+                "type": "string"
+              },
+              {
+                "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "schema40": {
       "not": {
         "properties": {
           "rbac": {
@@ -167,30 +891,145 @@
         "type": "object"
       }
     },
-    "schema8": {
-      "additionalProperties": {},
-      "properties": {
-        "paths": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "items": {
-            "type": "string"
-          }
-        }
+    "schema45": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema9": {
+    "schema49": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema51": {
+      "not": {
+        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+      }
+    },
+    "schema52": {
+      "not": {
+        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+      }
+    },
+    "schema54": {
+      "properties": {
+        "create": {}
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "schema55": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "schema57": {
+      "not": {
+        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+      }
+    },
+    "schema59": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "schema60": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "schema61": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "schema64": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "schema7": {
       "additionalProperties": {},
       "properties": {
-        "cpu": {
-          "type": "string"
-        },
-        "memory": {
-          "type": "string"
+        "secretName": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                  }
+                }
+              ],
+              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
+              "type": "string"
+            },
+            {
+              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
+              "type": "null"
+            }
+          ]
         }
-      },
-      "type": "object"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -242,7 +1081,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema4"
+                "$ref": "#/$defs/schema40"
               },
               {
                 "properties": {
@@ -268,17 +1107,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "$ref": "#/$defs/schema11"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema35"
               },
               {
                 "properties": {
@@ -312,6 +1141,9 @@
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
+              },
+              {
+                "type": "null"
               },
               {
                 "type": "string"
@@ -350,114 +1182,42 @@
       }
     },
     {
-      "if": {
-        "properties": {
-          "image": {
-            "properties": {
-              "registry": {
-                "pattern": "[\"\\\\]",
-                "type": "string"
-              }
-            },
-            "required": [
-              "registry"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "image"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "description": "configure ui image",
-            "properties": {
-              "registry": {
-                "not": {
-                  "type": "string"
-                }
-              }
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "description": "configure ui image",
+          "properties": {
+            "registry": {
+              "$ref": "#/$defs/schema32"
             }
           }
         }
       }
     },
     {
-      "if": {
-        "properties": {
-          "image": {
-            "properties": {
-              "repository": {
-                "pattern": "[\"\\\\]",
-                "type": "string"
-              }
-            },
-            "required": [
-              "repository"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "image"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "description": "configure ui image",
-            "properties": {
-              "repository": {
-                "not": {
-                  "type": "string"
-                }
-              }
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "description": "configure ui image",
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/schema32"
             }
           }
         }
       }
     },
     {
-      "if": {
-        "properties": {
-          "image": {
-            "properties": {
-              "tag": {
-                "pattern": "[\"\\\\]",
-                "type": "string"
-              }
-            },
-            "required": [
-              "tag"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "image"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "description": "configure ui image",
-            "properties": {
-              "tag": {
-                "not": {
-                  "type": "string"
-                }
-              }
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "description": "configure ui image",
+          "properties": {
+            "tag": {
+              "$ref": "#/$defs/schema32"
             }
           }
         }
@@ -491,7 +1251,7 @@
             "description": "configure UI ingress. If needed: \"enabled: true\"",
             "properties": {
               "hosts": {
-                "$ref": "#/$defs/schema2"
+                "$ref": "#/$defs/schema31"
               }
             }
           }
@@ -619,7 +1379,7 @@
             "description": "configure UI ingress. If needed: \"enabled: true\"",
             "properties": {
               "tls": {
-                "$ref": "#/$defs/schema1"
+                "$ref": "#/$defs/schema26"
               }
             }
           }
@@ -680,13 +1440,13 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/schema3"
+                      "$ref": "#/$defs/schema33"
                     },
                     "type": "array"
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/schema3"
+                      "$ref": "#/$defs/schema33"
                     },
                     "type": "object"
                   },
@@ -702,6 +1462,111 @@
               }
             }
           }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "ingress": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "ingress"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema40"
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema35"
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema19"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/schema32"
         }
       }
     },
@@ -758,7 +1623,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema4"
+            "$ref": "#/$defs/schema40"
           },
           {
             "properties": {
@@ -790,12 +1655,52 @@
               "name": {
                 "anyOf": [
                   {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema60"
+                      },
+                      {
+                        "$ref": "#/$defs/schema61"
+                      },
+                      {
+                        "$ref": "#/$defs/schema64"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema59"
+                      },
+                      {
+                        "$ref": "#/$defs/schema45"
+                      },
+                      {
+                        "$ref": "#/$defs/schema51"
+                      },
+                      {
+                        "$ref": "#/$defs/schema52"
+                      },
+                      {
+                        "$ref": "#/$defs/schema57"
+                      }
+                    ],
+                    "description": "Name of the object being referenced.",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/schema22"
+                  },
+                  {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -808,6 +1713,166 @@
   ],
   "properties": {
     "affinity": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "description": "Affinity is a group of affinity scheduling rules.",
+          "properties": {
+            "nodeAffinity": {
+              "additionalProperties": false,
+              "description": "Node affinity is a group of node affinity scheduling rules.",
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "An empty preferred scheduling term matches all objects with implicit weight 0 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).",
+                    "properties": {
+                      "preference": {
+                        "additionalProperties": false,
+                        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
+                        "properties": {
+                          "matchExpressions": {
+                            "$ref": "#/$defs/schema11"
+                          },
+                          "matchFields": {
+                            "$ref": "#/$defs/schema10"
+                          }
+                        },
+                        "type": "object",
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "weight": {
+                        "description": "Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.",
+                        "format": "int32",
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "weight",
+                      "preference"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "additionalProperties": false,
+                  "description": "A node selector represents the union of the results of one or more label queries over a set of nodes; that is, it represents the OR of the selectors represented by the node selector terms.",
+                  "properties": {
+                    "nodeSelectorTerms": {
+                      "description": "Required. A list of node selector terms. The terms are ORed.",
+                      "items": {
+                        "additionalProperties": false,
+                        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
+                        "properties": {
+                          "matchExpressions": {
+                            "$ref": "#/$defs/schema11"
+                          },
+                          "matchFields": {
+                            "$ref": "#/$defs/schema10"
+                          }
+                        },
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "nodeSelectorTerms"
+                  ],
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "x-kubernetes-map-type": "atomic"
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "podAffinity": {
+              "additionalProperties": false,
+              "description": "Pod affinity is a group of inter pod affinity scheduling rules.",
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
+                  "items": {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
+                  "items": {
+                    "$ref": "#/$defs/schema2"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "podAntiAffinity": {
+              "additionalProperties": false,
+              "description": "Pod anti affinity is a group of inter pod anti affinity scheduling rules.",
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
+                  "items": {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
+                  "items": {
+                    "$ref": "#/$defs/schema2"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/schema49"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "description": "Affinity for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
     },
     "envs": {
@@ -815,8 +1880,53 @@
       "description": "configure UI ENVs",
       "properties": {
         "appUrl": {
-          "description": "IMPORTANT: While operator chart and UI chart are independent, this is the interface between\nUI and operator API. Insert the service name of the operator API here!",
-          "type": "string"
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/schema60"
+                },
+                {
+                  "$ref": "#/$defs/schema61"
+                },
+                {
+                  "$ref": "#/$defs/schema64"
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/schema59"
+                },
+                {
+                  "$ref": "#/$defs/schema45"
+                },
+                {
+                  "$ref": "#/$defs/schema51"
+                },
+                {
+                  "$ref": "#/$defs/schema52"
+                },
+                {
+                  "$ref": "#/$defs/schema57"
+                }
+              ],
+              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+              "type": "string"
+            },
+            {
+              "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+              "type": "null"
+            }
+          ],
+          "description": "IMPORTANT: While operator chart and UI chart are independent, this is the interface between\nUI and operator API. Insert the service name of the operator API here!"
         },
         "operatorApiUrl": {},
         "operatorClusterNameLabel": {},
@@ -834,8 +1944,153 @@
     "extraEnvs": {
       "anyOf": [
         {
-          "items": {},
-          "type": "array"
+          "description": "List of environment variables to set in the container. Cannot be updated.",
+          "items": {
+            "additionalProperties": false,
+            "description": "EnvVar represents an environment variable present in a Container.",
+            "properties": {
+              "name": {
+                "description": "Name of the environment variable. Must be a C_IDENTIFIER.",
+                "type": "string"
+              },
+              "value": {
+                "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "valueFrom": {
+                "additionalProperties": false,
+                "description": "EnvVarSource represents a source for the value of an EnvVar.",
+                "properties": {
+                  "configMapKeyRef": {
+                    "additionalProperties": false,
+                    "description": "Selects a key from a ConfigMap.",
+                    "properties": {
+                      "key": {
+                        "description": "The key to select.",
+                        "type": "string"
+                      },
+                      "name": {
+                        "$ref": "#/$defs/schema34"
+                      },
+                      "optional": {
+                        "description": "Specify whether the ConfigMap or its key must be defined",
+                        "type": [
+                          "boolean",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "x-kubernetes-map-type": "atomic"
+                  },
+                  "fieldRef": {
+                    "additionalProperties": false,
+                    "description": "ObjectFieldSelector selects an APIVersioned field of an object.",
+                    "properties": {
+                      "apiVersion": {
+                        "description": "Version of the schema the FieldPath is written in terms of, defaults to \"v1\".",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "fieldPath": {
+                        "description": "Path of the field to select in the specified API version.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "fieldPath"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "x-kubernetes-map-type": "atomic"
+                  },
+                  "resourceFieldRef": {
+                    "additionalProperties": false,
+                    "description": "ResourceFieldSelector represents container resources (cpu, memory) and their output format",
+                    "properties": {
+                      "containerName": {
+                        "description": "Container name: required for volumes, optional for env vars",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "divisor": {
+                        "$ref": "#/$defs/schema55"
+                      },
+                      "resource": {
+                        "description": "Required: resource to select",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "resource"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "x-kubernetes-map-type": "atomic"
+                  },
+                  "secretKeyRef": {
+                    "additionalProperties": false,
+                    "description": "SecretKeySelector selects a key of a Secret.",
+                    "properties": {
+                      "key": {
+                        "description": "The key of the secret to select from.  Must be a valid secret key.",
+                        "type": "string"
+                      },
+                      "name": {
+                        "$ref": "#/$defs/schema34"
+                      },
+                      "optional": {
+                        "description": "Specify whether the Secret or its key must be defined",
+                        "type": [
+                          "boolean",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "x-kubernetes-map-type": "atomic"
+                  }
+                },
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": "array",
+          "x-kubernetes-patch-merge-key": "name",
+          "x-kubernetes-patch-strategy": "merge"
         },
         {
           "not": {
@@ -849,15 +2104,9 @@
       "description": "configure extra UI ENVs\nExtra ENVs are writen in kubenertes format and added \"as is\" to the pod's env variables\nhttps://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/\nhttps://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#environment-variables\nUI specific env variables can be found here: https://github.com/zalando/postgres-operator/blob/master/ui/operator_ui/main.py"
     },
     "fullnameOverride": {
-      "anyOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        },
-        {
-          "type": "string"
-        }
+      "type": [
+        "string",
+        "null"
       ]
     },
     "image": {
@@ -865,7 +2114,52 @@
       "description": "configure ui image",
       "properties": {
         "pullPolicy": {
-          "type": "string"
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/schema60"
+                },
+                {
+                  "$ref": "#/$defs/schema61"
+                },
+                {
+                  "$ref": "#/$defs/schema64"
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/schema59"
+                },
+                {
+                  "$ref": "#/$defs/schema45"
+                },
+                {
+                  "$ref": "#/$defs/schema51"
+                },
+                {
+                  "$ref": "#/$defs/schema52"
+                },
+                {
+                  "$ref": "#/$defs/schema57"
+                }
+              ],
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "string"
+            },
+            {
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "null"
+            }
+          ]
         },
         "registry": {},
         "repository": {},
@@ -873,7 +2167,38 @@
       },
       "type": "object"
     },
-    "imagePullSecrets": {},
+    "imagePullSecrets": {
+      "anyOf": [
+        {
+          "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
+          "items": {
+            "additionalProperties": false,
+            "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/schema34"
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ],
+            "x-kubernetes-map-type": "atomic"
+          },
+          "type": "array",
+          "x-kubernetes-patch-merge-key": "name",
+          "x-kubernetes-patch-strategy": "merge"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "ingress": {
       "additionalProperties": {},
       "allOf": [
@@ -895,12 +2220,15 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema12"
+                    "$ref": "#/$defs/schema20"
                   },
                   {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
+                  },
+                  {
+                    "type": "null"
                   }
                 ]
               }
@@ -924,10 +2252,10 @@
             "properties": {
               "hosts": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/schema8"
+                  "$ref": "#/$defs/schema4"
                 },
                 "items": {
-                  "$ref": "#/$defs/schema8"
+                  "$ref": "#/$defs/schema4"
                 }
               }
             }
@@ -949,7 +2277,7 @@
             "additionalProperties": {},
             "properties": {
               "hosts": {
-                "$ref": "#/$defs/schema2"
+                "$ref": "#/$defs/schema31"
               }
             }
           }
@@ -998,15 +2326,126 @@
               "ingressClassName": {
                 "anyOf": [
                   {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema60"
+                      },
+                      {
+                        "$ref": "#/$defs/schema61"
+                      },
+                      {
+                        "$ref": "#/$defs/schema64"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema59"
+                      },
+                      {
+                        "$ref": "#/$defs/schema45"
+                      },
+                      {
+                        "$ref": "#/$defs/schema51"
+                      },
+                      {
+                        "$ref": "#/$defs/schema52"
+                      },
+                      {
+                        "$ref": "#/$defs/schema57"
+                      }
+                    ],
+                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                    "type": "string"
+                  },
+                  {
+                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                    "type": "null"
+                  },
+                  {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "kubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\""
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "additionalProperties": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "hosts": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/schema28"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
+                "items": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "hosts": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/schema28"
+                        },
+                        {
+                          "not": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
               }
             }
           }
@@ -1027,7 +2466,49 @@
             "additionalProperties": {},
             "properties": {
               "tls": {
-                "$ref": "#/$defs/schema1"
+                "$ref": "#/$defs/schema26"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "tls": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "tls"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "additionalProperties": {
+                  "$ref": "#/$defs/schema7"
+                },
+                "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
+                "items": {
+                  "$ref": "#/$defs/schema7"
+                }
               }
             }
           }
@@ -1096,25 +2577,58 @@
       },
       "type": "object"
     },
-    "nameOverride": {},
-    "nodeSelector": {
-      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
-    },
-    "podAnnotations": {
+    "nameOverride": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/schema12"
+          "$ref": "#/$defs/schema19"
         },
         {
           "not": {
             "$ref": "#/$defs/helm-truthy"
           }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nodeSelector": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/schema49"
+        },
+        {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
+    },
+    "podAnnotations": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/schema49"
+        },
+        {
+          "$ref": "#/$defs/schema20"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Extra pod annotations"
@@ -1122,12 +2636,53 @@
     "priorityClassName": {
       "anyOf": [
         {
+          "allOf": [
+            {
+              "$ref": "#/$defs/schema60"
+            },
+            {
+              "$ref": "#/$defs/schema61"
+            },
+            {
+              "$ref": "#/$defs/schema64"
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "$ref": "#/$defs/schema59"
+            },
+            {
+              "$ref": "#/$defs/schema45"
+            },
+            {
+              "$ref": "#/$defs/schema51"
+            },
+            {
+              "$ref": "#/$defs/schema52"
+            },
+            {
+              "$ref": "#/$defs/schema57"
+            }
+          ],
+          "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
+          "type": "string"
+        },
+        {
+          "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
+          "type": "null"
+        },
+        {
           "not": {
             "$ref": "#/$defs/helm-truthy"
           }
-        },
-        {
-          "type": "string"
         }
       ],
       "description": "priority class for operator-ui pod"
@@ -1152,50 +2707,238 @@
       "type": "object"
     },
     "replicaCount": {
-      "type": "integer"
+      "anyOf": [
+        {
+          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+          "format": "int32",
+          "type": "null"
+        },
+        {
+          "pattern": "^-?(0|[1-9][0-9]*)$",
+          "type": "string"
+        }
+      ]
     },
     "resources": {
-      "additionalProperties": {},
-      "description": "configure UI pod resources",
-      "properties": {
-        "limits": {
-          "$ref": "#/$defs/schema9"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "description": "ResourceRequirements describes the compute resource requirements.",
+          "properties": {
+            "claims": {
+              "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+              "items": {
+                "additionalProperties": false,
+                "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+                "properties": {
+                  "name": {
+                    "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ],
+              "x-kubernetes-list-map-keys": [
+                "name"
+              ],
+              "x-kubernetes-list-type": "map"
+            },
+            "limits": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "$ref": "#/$defs/schema55"
+                  },
+                  "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                  "properties": {
+                    "cpu": {
+                      "type": "string"
+                    },
+                    "memory": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "requests": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "$ref": "#/$defs/schema55"
+                  },
+                  "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                  "properties": {
+                    "cpu": {
+                      "type": "string"
+                    },
+                    "memory": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "type": "object"
         },
-        "requests": {
-          "$ref": "#/$defs/schema9"
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ],
+      "description": "configure UI pod resources"
     },
     "service": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "NodePort"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "nodePort": {
+                "anyOf": [
+                  {
+                    "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
+                    "format": "int32",
+                    "type": "null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  {
+                    "pattern": "^-?(0|[1-9][0-9]*)$",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
       "description": "configure UI service",
       "properties": {
         "annotations": {
           "anyOf": [
             {
-              "additionalProperties": false,
-              "maxProperties": 0,
-              "properties": {},
-              "type": "object"
+              "$ref": "#/$defs/schema49"
             },
             {
-              "$ref": "#/$defs/schema12"
+              "$ref": "#/$defs/schema20"
             },
             {
               "not": {
                 "$ref": "#/$defs/helm-truthy"
               }
+            },
+            {
+              "type": "null"
             }
           ],
           "description": "If the type of the service is NodePort a port can be specified using the nodePort field\nIf the nodePort field is not specified, or if it has no value, then a random port is used\nnodePort: 32521"
         },
         "nodePort": {},
         "port": {
-          "type": "string"
+          "anyOf": [
+            {
+              "description": "The port that will be exposed by this service.",
+              "format": "int32",
+              "type": "integer"
+            },
+            {
+              "pattern": "^-?(0|[1-9][0-9]*)$",
+              "type": "string"
+            }
+          ]
         },
         "type": {
           "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/schema60"
+                },
+                {
+                  "$ref": "#/$defs/schema61"
+                },
+                {
+                  "$ref": "#/$defs/schema64"
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/schema59"
+                },
+                {
+                  "$ref": "#/$defs/schema45"
+                },
+                {
+                  "$ref": "#/$defs/schema51"
+                },
+                {
+                  "$ref": "#/$defs/schema52"
+                },
+                {
+                  "$ref": "#/$defs/schema57"
+                }
+              ],
+              "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+              "type": "string"
+            },
+            {
+              "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+              "type": "null"
+            },
             {
               "enum": [
                 "NodePort"
@@ -1217,7 +2960,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema11"
+                  "$ref": "#/$defs/schema54"
                 }
               },
               {
@@ -1239,12 +2982,52 @@
               "name": {
                 "anyOf": [
                   {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema60"
+                      },
+                      {
+                        "$ref": "#/$defs/schema61"
+                      },
+                      {
+                        "$ref": "#/$defs/schema64"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema59"
+                      },
+                      {
+                        "$ref": "#/$defs/schema45"
+                      },
+                      {
+                        "$ref": "#/$defs/schema51"
+                      },
+                      {
+                        "$ref": "#/$defs/schema52"
+                      },
+                      {
+                        "$ref": "#/$defs/schema57"
+                      }
+                    ],
+                    "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/schema22"
+                  },
+                  {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -1268,6 +3051,60 @@
           "description": "Specifies whether a ServiceAccount should be created"
         },
         "name": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/schema60"
+                },
+                {
+                  "$ref": "#/$defs/schema61"
+                },
+                {
+                  "$ref": "#/$defs/schema64"
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/schema59"
+                },
+                {
+                  "$ref": "#/$defs/schema45"
+                },
+                {
+                  "$ref": "#/$defs/schema51"
+                },
+                {
+                  "$ref": "#/$defs/schema52"
+                },
+                {
+                  "$ref": "#/$defs/schema57"
+                }
+              ],
+              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+              "type": "string"
+            },
+            {
+              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+              "type": "null"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
           "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
         }
       },
@@ -1276,7 +3113,53 @@
     "tolerations": {
       "anyOf": [
         {
-          "items": {},
+          "description": "If specified, the pod's tolerations.",
+          "items": {
+            "additionalProperties": false,
+            "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
+            "properties": {
+              "effect": {
+                "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "key": {
+                "description": "Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "operator": {
+                "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "tolerationSeconds": {
+                "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
+                "format": "int64",
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "value": {
+                "description": "Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "type": "array"
         },
         {

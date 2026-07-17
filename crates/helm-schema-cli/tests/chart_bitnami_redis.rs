@@ -16,10 +16,14 @@ fn bitnami_redis_values_descriptions_apply() -> color_eyre::eyre::Result<()> {
         "/properties/auth/properties/enabled/description",
         "Enable password authentication",
     );
+    // `image` flows wholesale through the vendored `common` library's
+    // tplvalues rendering, so its members stay an open map and carry no
+    // per-member description node; `architecture` pins a plain scalar
+    // comment instead.
     assert_schema_description(
         &schema,
-        "/properties/image/properties/registry/description",
-        "[default: REGISTRY_NAME] Redis(R) image registry",
+        "/properties/architecture/description",
+        "Redis(R) architecture. Allowed values: `standalone` or `replication`",
     );
     assert_schema_description(
         &schema,
@@ -35,9 +39,29 @@ fn bitnami_redis_values_descriptions_apply() -> color_eyre::eyre::Result<()> {
     Ok(())
 }
 
+/// Resolve a JSON pointer while following local `$defs` refs: output
+/// interning may move any subtree into a root-level definition.
+fn pointer_through_refs<'schema>(
+    root: &'schema serde_json::Value,
+    pointer: &str,
+) -> Option<&'schema serde_json::Value> {
+    let mut node = root;
+    for segment in pointer.split('/').filter(|segment| !segment.is_empty()) {
+        while let Some(name) = node
+            .get("$ref")
+            .and_then(serde_json::Value::as_str)
+            .and_then(|reference| reference.strip_prefix("#/$defs/"))
+        {
+            node = root.get("$defs")?.get(name)?;
+        }
+        node = node.get(segment)?;
+    }
+    Some(node)
+}
+
 fn assert_schema_description(schema: &serde_json::Value, pointer: &str, expected: &str) {
     sim_assert_eq!(
-        have: schema.pointer(pointer).and_then(serde_json::Value::as_str),
+        have: pointer_through_refs(schema, pointer).and_then(serde_json::Value::as_str),
         want: Some(expected),
         "schema description mismatch at {pointer}"
     );

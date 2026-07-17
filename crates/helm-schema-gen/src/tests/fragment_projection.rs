@@ -1020,6 +1020,7 @@ fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
         kind: helm_schema_ir::ValueKind::Fragment,
         resource: ResourceRef::concrete("apps/v1".to_string(), "Deployment".to_string()),
         is_self_range_collection: false,
+        template_supplied_member_keys: Default::default(),
     };
 
     let schema = provider
@@ -1039,4 +1040,33 @@ fn provider_schema_for_container_resources_path_keeps_open_quantity_maps() {
             .is_some(),
         "provider should expose limits as an open quantity map, got {schema}"
     );
+}
+
+/// A scalar spliced as a mapping KEY formats every scalar kind — a numeric
+/// label key renders `7:` and YAML-to-JSON stringifies it — so the declared
+/// string default widens to the scalar union while composite inputs stay
+/// out of the key lane (external-secrets' `grafanaDashboard.sidecarLabel`).
+#[test]
+fn mapping_key_splice_accepts_every_scalar_kind() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+          labels:
+            {{ .Values.sidecarLabel }}: "1"
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("sidecarLabel: grafana_dashboard\n"));
+    for (instance, want) in [
+        (serde_json::json!({ "sidecarLabel": 7 }), true),
+        (serde_json::json!({ "sidecarLabel": true }), true),
+        (serde_json::json!({ "sidecarLabel": "ok" }), true),
+        (serde_json::json!({ "sidecarLabel": { "bad": 1 } }), false),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "key positions format scalars and exclude composites: \
+             instance={instance}; schema={schema}"
+        );
+    }
 }

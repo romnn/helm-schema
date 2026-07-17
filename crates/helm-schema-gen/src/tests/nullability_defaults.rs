@@ -113,7 +113,7 @@ fn step1_with_or_per_path_guards_enable_null_preservation() {
 
 /// A `with`-guarded object fragment accepts explicit `null` even when the
 /// declared default is non-null: helm null-deletion removes the key and the
-/// falsy `with` skips the body (the F50 declared-null tolerance).
+/// falsy `with` skips the body (declared-null tolerance).
 #[test]
 fn step1_with_fragment_non_null_default_accepts_explicit_null() {
     let src = indoc! {r"

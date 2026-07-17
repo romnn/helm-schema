@@ -253,7 +253,7 @@ fn record_strict_parser_result(
 ) {
     for path in parser_operand_identity_paths(operand, total_string_preimage) {
         // Escape tokens recorded on the operand's metas exempt raw strings
-        // a replace/split-prefix chain transformed before parsing (F74).
+        // a replace/split-prefix chain transformed before parsing.
         let escapes: BTreeSet<String> = parser_output_metas(&operand.value, &path)
             .iter()
             .flat_map(|meta| meta.lexical_escapes.iter().cloned())
@@ -287,7 +287,7 @@ fn parser_operand_selection_conjunctions(operand: &EvalResult, path: &str) -> Ve
                     conjunction.push(Predicate::truthy_path(path.to_string()));
                 }
                 // A sibling branch reassigned this binding away from the
-                // raw path (F74): the parser observes the raw value only
+                // raw path: the parser observes the raw value only
                 // where those reassignments did not run.
                 conjunction.extend(meta.capture_exclusions.iter().cloned());
                 conjunction.sort();
@@ -440,6 +440,31 @@ pub(super) fn record_strict_kind_result(
     for path in strict_operand_identity_paths(operand) {
         for conjunction in strict_operand_selection_conjunctions(operand, &path) {
             push_value_type_capture(conjunction, path.clone(), schema_type.to_string(), effects);
+        }
+    }
+}
+
+/// Records a comparison operand's kind: Go's `eq`/`ne` compare `nil`
+/// against anything, so a missing or null operand renders while a present
+/// value of a different basic kind aborts.
+pub(super) fn record_comparable_kind_result(
+    operand: &EvalResult,
+    schema_type: &str,
+    effects: &mut Effects,
+) {
+    for path in strict_operand_identity_paths(operand) {
+        for conjunction in strict_operand_selection_conjunctions(operand, &path) {
+            let capture = crate::eval_effect::FailCapture {
+                conjunction,
+                ranged: crate::range_modes::RangeModes::default(),
+                kind: crate::eval_effect::CaptureKind::ComparableKind {
+                    path: path.clone(),
+                    schema_type: schema_type.to_string(),
+                },
+            };
+            if !effects.helper_fails.contains(&capture) {
+                effects.helper_fails.push(capture);
+            }
         }
     }
 }

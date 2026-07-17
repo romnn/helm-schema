@@ -39,14 +39,14 @@ pub(crate) struct HelperOutputMeta {
     pub(crate) suppress_predicate_paths: BTreeSet<String>,
     /// Conditions under which this path's RAW value is the consumed operand:
     /// a sibling `if` arm reassigned the binding away (datadog's `latest` →
-    /// `1.20.0` sentinel, F74), so strict-operand captures conjoin these
+    /// `1.20.0` sentinel), so strict-operand captures conjoin these
     /// before rejecting raw inputs. Only the capture lanes read them —
     /// guard decoding and row lowering see the joined value choice itself.
     pub(crate) capture_exclusions: BTreeSet<Predicate>,
     /// Literal tokens whose PRESENCE in the raw string diverts it from this
     /// value: the value equals the raw string exactly when the raw contains
     /// none of them (traefik's `replace "latest-" ""` sentinel stripping and
-    /// `(split "@" …)._0` digest trimming, F74). Lexical captures must
+    /// `(split "@" …)._0` digest trimming). Lexical captures must
     /// exempt raw strings containing any token instead of projecting the
     /// final language onto them.
     pub(crate) lexical_escapes: BTreeSet<String>,
@@ -166,7 +166,7 @@ pub(crate) fn insert_type_hint(
 
 /// Weakens a lexical capture pattern by escape tokens: a raw string
 /// containing any token diverged from the observed value before the check
-/// ran (F74), so the capture accepts it unconditionally. JSON Schema
+/// ran, so the capture accepts it unconditionally. JSON Schema
 /// `pattern` is an unanchored search, so a bare escaped token alternative
 /// matches any string containing it.
 pub(crate) fn pattern_with_lexical_escapes(pattern: &str, escapes: &BTreeSet<String>) -> String {

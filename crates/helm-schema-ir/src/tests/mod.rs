@@ -633,3 +633,67 @@ fn nonempty_choice_list_range_preserves_computed_mutation() {
         "the guaranteed path iteration sets pathKey before its later read: {ir:#?}"
     );
 }
+
+/// A file-backed include piped into a hashing transform renders the file as
+/// TEXT for the hash: every path the file splices influences the annotation
+/// but never lands there raw, so the caller-side row must carry the
+/// Serialized kind (a Scalar row would stamp the annotation slot's provider
+/// string schema onto trivy-operator's whole ConfigMap surface).
+#[test]
+fn checksum_include_rows_stay_serialized_at_the_annotation_slot() {
+    let mut idx = DefineIndex::new();
+    idx.add_file_source(
+        "templates/configmaps/config.yaml",
+        r#"kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: config
+  labels: {{- include "repro.labels" . | nindent 4 }}
+data:
+  NAMES: {{ .Values.scanSecrets | toJson | quote }}
+"#,
+    );
+    idx.add_file_source(
+        "<inline:0>",
+        r#"{{- define "repro.labels" -}}
+app: repro
+{{- end -}}"#,
+    );
+    let src = r#"apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test
+spec:
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmaps/config.yaml") . | sha256sum }}
+"#;
+    let ir = SymbolicIrContext::new(&idx)
+        .generate_contract_ir(src)
+        .finalize();
+
+    let annotation_kinds: Vec<ValueKind> = ir
+        .uses()
+        .iter()
+        .filter(|contract_use| {
+            contract_use.source_expr == "scanSecrets"
+                && contract_use
+                    .path
+                    .0
+                    .last()
+                    .is_some_and(|segment| segment == "checksum/config")
+        })
+        .map(|contract_use| contract_use.kind)
+        .collect();
+    assert!(
+        annotation_kinds
+            .iter()
+            .all(|kind| *kind == ValueKind::Serialized),
+        "hashed file renders constrain nothing at the annotation slot: {annotation_kinds:?}"
+    );
+    assert!(
+        !annotation_kinds.is_empty(),
+        "the checksum include must still attribute its file's paths"
+    );
+}

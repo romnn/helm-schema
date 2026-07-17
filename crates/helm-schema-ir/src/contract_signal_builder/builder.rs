@@ -57,12 +57,19 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
         acc.referenced = true;
         acc.facts.facts.used_as_serialized = true;
     }
+    // These paths' RAW values are consumed as Go strings before any
+    // selection runs (a `tpl` program input piped through `default` still
+    // parses first), so the contract types the path even when every placed
+    // row is conditioned by the selection chain (oauth2-proxy's
+    // `tpl .Values.image.registry $ | default … | default "quay.io"`).
     for value_path in string_contract_value_paths {
         if value_path.trim().is_empty() {
             continue;
         }
         let acc = path_accumulator(&mut paths, value_path);
+        acc.referenced = true;
         acc.facts.facts.has_string_contract = true;
+        acc.type_hints.insert("string".to_string());
     }
     for (value_path, schema_types) in type_hints {
         let schema_types = schema_types
@@ -91,7 +98,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
         }
     }
     // Fallback hints type only the truthy arm of their path: the base
-    // lowering keeps the Helm-falsy set open beside them (F42).
+    // lowering keeps the Helm-falsy set open beside them.
     for (value_path, schema_types) in fallback_type_hints {
         let schema_types = schema_types
             .iter()
@@ -106,7 +113,7 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
     }
     // Branch-scoped fallback hints stay fallback-grade: they may type a
     // conditional overlay, but never one whose renders all totally format
-    // (F76).
+    //.
     for (value_path, schema_types) in guarded_fallback_type_hints {
         let schema_types = schema_types
             .iter()
@@ -139,7 +146,7 @@ struct ContractPathAccumulator {
     /// Hints from literal `default`/`coalesce` fallbacks: they type only
     /// the truthy arm, so base lowering keeps Helm-falsy inputs open.
     fallback_type_hints: BTreeSet<String>,
-    /// Branch-scoped fallback hints (F76): fallback-grade overlay typing
+    /// Branch-scoped fallback hints: fallback-grade overlay typing
     /// that a totally-formatting branch must not bind.
     guarded_fallback_type_hints: BTreeSet<String>,
     conditional_overlay_branches: BTreeMap<Vec<ConditionalGuard>, PathSchemaFactsAccumulator>,
@@ -332,8 +339,7 @@ fn record_contract_use_conjunction(
     // are unknown, so its NARROWING evidence (sink typing, provider uses,
     // nullability) must abstain — but the conjunction's widen-only evidence
     // survives: a positive self-type dispatch arm under an undecodable
-    // liveness header still proves the chart handles that type (F54:
-    // cluster-autoscaler's `kindIs "string"` expanderPriorities arm under
+    // liveness header still proves the chart handles that type (// cluster-autoscaler's `kindIs "string"` expanderPriorities arm under
     // an `include`-bearing condition).
     let has_approximate = predicates.iter().any(Predicate::contains_approximation);
     if ranged_member_parent(&contract_use.source_expr).is_some_and(|parent| {
@@ -423,18 +429,16 @@ fn record_contract_use_conjunction(
                 contract_use.kind,
                 ValueKind::Fragment | ValueKind::YamlSerialized
             ),
-            used_as_serialized: matches!(
-                contract_use.kind,
-                ValueKind::PartialScalar | ValueKind::Serialized
-            ) || type_dispatched,
+            used_as_serialized: matches!(contract_use.kind, ValueKind::Serialized)
+                || (contract_use.kind == ValueKind::PartialScalar && !path_is_empty)
+                || type_dispatched,
             used_as_yaml_serialized: contract_use.kind == ValueKind::YamlSerialized,
             has_string_contract: contract_use.has_string_contract && !type_dispatched,
             used_as_pathless_fragment: matches!(
                 contract_use.kind,
                 ValueKind::Fragment | ValueKind::YamlSerialized
             ) && path_is_empty,
-            is_partial_scalar_value_path: contract_use.kind == ValueKind::PartialScalar
-                && !path_is_empty,
+            is_partial_scalar_value_path: contract_use.kind == ValueKind::PartialScalar,
             is_nullable: !path_is_empty
                 || self_range_guarded
                 || matches!(
@@ -553,7 +557,7 @@ fn record_contract_use_conjunction(
                 // HOW the chart iterates the path (two-variable, JSON-decoded)
                 // is a property of the range site itself, not of the guards
                 // around it: a conditional `range $k, $v` still proves the
-                // member keys are user data wherever it runs (F30).
+                // member keys are user data wherever it runs.
                 has_destructured_range_use: direct && range_modes.mode(&path).destructured,
                 has_json_decoded_range_use: direct && range_modes.mode(&path).json_decoded,
                 is_nullable: true,
@@ -750,6 +754,15 @@ fn record_fail_conjunction(
             capture,
             path,
             FailValueRequirement::SchemaType(schema_type.clone()),
+        );
+        return;
+    }
+    if let crate::eval_effect::CaptureKind::ComparableKind { path, schema_type } = &capture.kind {
+        record_value_requirement_capture(
+            paths,
+            capture,
+            path,
+            FailValueRequirement::ComparableKind(schema_type.clone()),
         );
         return;
     }
@@ -1127,7 +1140,7 @@ fn record_value_requirement_capture(
         return;
     }
     // `A.*.field` names one field of EVERY ranged member of `A`: the
-    // requirement lowers per member at that relative path (F53: prometheus's
+    // requirement lowers per member at that relative path (prometheus's
     // `tpl $remoteWrite.url` over `server.remoteWrite.*.url`). Deeper or
     // repeated wildcards abstain below as before.
     let member_field_split = path.split_once(".*.").filter(|(collection, suffix)| {
@@ -1938,7 +1951,8 @@ impl ContractPathAccumulator {
         // whose renders ALL totally format (an embedded partial-scalar
         // splice like `--log-level={{ x | default "info" }}`) proves the
         // chart tolerates any input kind there, so those hints must not
-        // close it (F76, flux2). Contract-grade hints keep typing it.
+        // close it (flux2's `--log-level=` arguments). Contract-grade hints
+        // keep typing it.
         let contract_type_hints: BTreeSet<String> = type_hints
             .iter()
             .chain(guarded_type_hints.iter())
@@ -1996,7 +2010,7 @@ impl ContractPathAccumulator {
                 // "info" }}`) proves the chart tolerates any input kind
                 // there, so branch-scoped hint-grade typing — a literal
                 // fallback's documented intent routed through the guarded
-                // channel — must not close it (F76, flux2). Path-level
+                // channel — must not close it (flux2). Path-level
                 // hints keep typing the branch: they carry real consumer
                 // contracts (flux2's own `substr` tag check) that hold
                 // wherever the path renders.
@@ -2072,7 +2086,7 @@ fn lowerable_conditional_guard_set(
 ) -> Option<Vec<ConditionalGuard>> {
     // A key-equality conjunct subsumes its companion iteration conjunct:
     // the has-key lowering already implies the range reaches that member
-    // (F53: prometheus's serverFiles dispatch around the remoteWrite rows).
+    // (prometheus's serverFiles dispatch around the remoteWrite rows).
     let key_equals_ranges: BTreeSet<&str> = predicates
         .iter()
         .filter_map(|predicate| match predicate {
@@ -2113,6 +2127,13 @@ fn provider_schema_use(
             ValueKind::PartialScalar | ValueKind::Serialized
         )
         || contract_use.path.0.is_empty()
+        // A string-consuming transform produced this rendered text, so the
+        // slot observes the TRANSFORM's output, never the raw spelling: a
+        // provider preimage on the raw value would reject programs and
+        // pre-transform spellings that render fine (loki's
+        // `tpl .Values.loki.configObjectName .` at a secretName slot). The
+        // transform's own string-input contract still types the path.
+        || (contract_use.has_string_contract && contract_use.kind == ValueKind::Scalar)
     {
         return None;
     }
@@ -2123,6 +2144,7 @@ fn provider_schema_use(
         path: contract_use.path.clone(),
         kind: contract_use.kind,
         resource,
+        template_supplied_member_keys: contract_use.template_supplied_member_keys.clone(),
         is_self_range_collection: self_range_guarded
             && contract_use
                 .path
@@ -2329,8 +2351,7 @@ fn guard_to_conditional_guard(
             bound: *bound,
         }),
         // The POSITIVE key-equality selects exactly one member, so at the
-        // document level it holds iff the collection HAS that key (F53:
-        // prometheus's `eq $key "prometheus.yml"` serverFiles arm). The
+        // document level it holds iff the collection HAS that key (// prometheus's `eq $key "prometheus.yml"` serverFiles arm). The
         // negated form runs for every OTHER member and must not lower —
         // `predicate_to_guard`'s Not arm rejects it.
         Guard::RangeKeyEquals {

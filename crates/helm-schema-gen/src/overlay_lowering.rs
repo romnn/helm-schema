@@ -132,7 +132,7 @@ pub(crate) fn collect_conditional_schemas(
                 // emitted base can end up wider than the resolved schema
                 // this check reads (an open-map merge drops `type: object`),
                 // and the guards may fire in states the base leaves open
-                // (F63: external-secrets' header read of
+                // (external-secrets' header read of
                 // `.Values.webhook.podDisruptionBudget.enabled`).
                 if base_enforces_requirement && !widened && implication.outer_guards.is_empty() {
                     continue;
@@ -188,11 +188,18 @@ pub(crate) fn collect_conditional_schemas(
             // alternatives bypass the requirement — and union lanes can
             // appear at ANY ancestor, so only the root is bypass-proof.
             let ancestor_segments: Vec<String> = Vec::new();
+            // An arm guarded by the target's OWN truthiness never fires
+            // on Helm-falsy inputs: those render through the complement
+            // branch (harbor's `default .Capabilities.KubeVersion.Version
+            // .Values.…kubeVersionOverride` reaching `semverCompare`), and
+            // the falsy set spans every runtime type, so a typed base
+            // would reject documents the chart renders.
             let preserve_base_schema = implication.outer_guards.is_empty()
-                || resolved_schema_admits_fail_requirement_domain(
-                    &resolved_target.schema,
-                    implication,
-                );
+                || (!implication_has_self_truthy_guard(implication, target_value_path)
+                    && resolved_schema_admits_fail_requirement_domain(
+                        &resolved_target.schema,
+                        implication,
+                    ));
             conditionals.push(ConditionalResolvedSchema {
                 target_value_path: target_value_path.clone(),
                 relative_target_segments: target_segments[ancestor_segments.len()..].to_vec(),
@@ -430,6 +437,19 @@ fn member_implication_covers_range_domain(
     })
 }
 
+fn implication_has_self_truthy_guard(
+    implication: &helm_schema_core::ContractFailImplication,
+    target_value_path: &str,
+) -> bool {
+    implication.outer_guards.iter().any(|guard| {
+        matches!(
+            guard,
+            ConditionalGuard::Truthy { path } | ConditionalGuard::With { path }
+                if path == target_value_path
+        )
+    })
+}
+
 fn resolved_schema_admits_fail_requirement_domain(
     resolved_schema: &Value,
     implication: &helm_schema_core::ContractFailImplication,
@@ -475,7 +495,8 @@ fn fail_requirement_runtime_types(
             let mut types = all_types();
             for requirement in &implication.requirements {
                 types.retain(|runtime_type| match requirement {
-                    FailValueRequirement::SchemaType(required) => {
+                    FailValueRequirement::SchemaType(required)
+                    | FailValueRequirement::ComparableKind(required) => {
                         *runtime_type == "null"
                             || *runtime_type == required
                             || required == "number" && *runtime_type == "integer"

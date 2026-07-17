@@ -162,7 +162,7 @@ pub struct ContractPathSchemaEvidence {
     /// Hints from literal `default`/`coalesce` fallbacks. The selection call
     /// never consumes the raw value — every Helm-empty input takes the
     /// fallback — so these type only the truthy arm and base lowering must
-    /// keep the whole Helm-falsy set open beside them (F42).
+    /// keep the whole Helm-falsy set open beside them.
     pub fallback_type_hints: BTreeSet<String>,
     pub provider_schema_uses: Vec<ProviderSchemaUse>,
     pub requiredness: ContractRequirednessEvidence,
@@ -237,6 +237,11 @@ pub enum ContractRequirementTarget {
 pub enum FailValueRequirement {
     /// The value must be of this JSON Schema type.
     SchemaType(String),
+    /// The value must be of this JSON Schema type IF present and non-null:
+    /// Go's `eq`/`ne` compare `nil` against anything, so a missing or null
+    /// comparison operand renders while a present value of a different
+    /// basic kind aborts.
+    ComparableKind(String),
     /// The value must NOT be of this JSON Schema type.
     NotSchemaType(String),
     /// The value must be an object containing this member.

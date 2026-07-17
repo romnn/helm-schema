@@ -370,7 +370,20 @@ pub(crate) fn fail_requirement_schema<'a>(
                 target_path,
                 allow_integer,
             } => {
-                let member = required_object_path_schema(target_path, requirement);
+                // Nil-tolerant requirements (comparison operands) hold only
+                // when the leaf is present, so the wrapper must not demand
+                // the field itself.
+                let tolerant_leaf = implication.requirements.iter().all(|requirement| {
+                    matches!(
+                        requirement,
+                        helm_schema_core::FailValueRequirement::ComparableKind(_)
+                    )
+                });
+                let member = if tolerant_leaf {
+                    optional_leaf_object_path_schema(target_path, requirement)
+                } else {
+                    required_object_path_schema(target_path, requirement)
+                };
                 let mut arms = vec![
                     serde_json::json!({ "type": "array", "items": member }),
                     serde_json::json!({
@@ -432,6 +445,22 @@ pub(crate) fn fail_requirement_schema<'a>(
         }
     }
     merge_schema_list(parts)
+}
+
+/// Like [`required_object_path_schema`], but the LEAF member stays
+/// optional: nil-tolerant requirements (comparison operands) constrain the
+/// field only when it is present. Intermediate segments stay required
+/// because field access through an absent parent aborts rendering with a
+/// nil-pointer error before the tolerant leaf comparison runs.
+fn optional_leaf_object_path_schema(path: &[String], leaf: Value) -> Value {
+    let Some((last, parents)) = path.split_last() else {
+        return leaf;
+    };
+    let leaf_host = serde_json::json!({
+        "type": "object",
+        "properties": { (last.clone()): leaf },
+    });
+    required_object_path_schema(parents, leaf_host)
 }
 
 fn required_object_path_schema(path: &[String], leaf: Value) -> Value {
@@ -534,6 +563,9 @@ fn requirements_allow_runtime_kind(
 
     requirements.iter().all(|requirement| match requirement {
         FailValueRequirement::SchemaType(required) => required == schema_type,
+        FailValueRequirement::ComparableKind(required) => {
+            required == schema_type || schema_type == "null"
+        }
         FailValueRequirement::NotSchemaType(rejected) => rejected != schema_type,
         FailValueRequirement::MatchesPattern { .. } => schema_type == "string",
         FailValueRequirement::Iterable { allow_integer } => {
@@ -569,6 +601,12 @@ fn fail_value_requirement_schema(
                         "anyOf": [type_schema, { "type": "null" }]
                     }));
                 }
+            }
+            // Nil compares, so a null member is as valid as an absent one.
+            FailValueRequirement::ComparableKind(schema_type) => {
+                parts.push(serde_json::json!({
+                    "anyOf": [type_schema(schema_type), { "type": "null" }]
+                }));
             }
             FailValueRequirement::NotSchemaType(schema_type) => {
                 parts.push(serde_json::json!({ "not": type_schema(schema_type) }));

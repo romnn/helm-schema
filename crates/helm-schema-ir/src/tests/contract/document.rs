@@ -36,6 +36,7 @@ fn contract_document_serializes_stable_guard_shape() {
         )),
         provenance: Vec::new(),
         has_string_contract: false,
+        template_supplied_member_keys: Default::default(),
     };
     let earlier_use = ContractUse {
         source_expr: "alpha.enabled".to_string(),
@@ -45,6 +46,7 @@ fn contract_document_serializes_stable_guard_shape() {
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
+        template_supplied_member_keys: Default::default(),
     };
     let document = ContractDocument::from_contract_uses(vec![value_use, earlier_use]);
 

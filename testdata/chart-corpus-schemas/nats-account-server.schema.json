@@ -26,6 +26,163 @@
       ]
     },
     "schema1": {
+      "additionalProperties": {},
+      "properties": {
+        "configMap": {
+          "additionalProperties": {},
+          "properties": {
+            "name": {
+              "anyOf": [
+                {
+                  "allOf": [
+                    {
+                      "not": {
+                        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                      }
+                    },
+                    {
+                      "not": {
+                        "pattern": "^[-?:]([ \\t]|$)"
+                      }
+                    },
+                    {
+                      "not": {
+                        "pattern": ":[ \\t]|:$"
+                      }
+                    },
+                    {
+                      "not": {
+                        "pattern": "[ \\t]#"
+                      }
+                    },
+                    {
+                      "not": {
+                        "pattern": "[\\r\\n]"
+                      }
+                    },
+                    {
+                      "not": {
+                        "pattern": "^(|~|null|Null|NULL)$"
+                      }
+                    },
+                    {
+                      "not": {
+                        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                      }
+                    },
+                    {
+                      "not": {
+                        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                      }
+                    },
+                    {
+                      "not": {
+                        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                      }
+                    },
+                    {
+                      "not": {
+                        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                      }
+                    }
+                  ],
+                  "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                  "type": "string"
+                },
+                {
+                  "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "schema10": {
+      "additionalProperties": {},
+      "properties": {
+        "configMap": {
+          "additionalProperties": {},
+          "properties": {
+            "key": {},
+            "name": {}
+          }
+        }
+      }
+    },
+    "schema11": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "schema13": {
+      "additionalProperties": {},
+      "properties": {
+        "configMap": {
+          "anyOf": [
+            {
+              "type": "object"
+            }
+          ]
+        }
+      }
+    },
+    "schema14": {
+      "properties": {
+        "type": {
+          "enum": [
+            "file"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "schema15": {
+      "not": {
+        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+      }
+    },
+    "schema16": {
+      "not": {
+        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+      }
+    },
+    "schema19": {
+      "properties": {
+        "type": {}
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "schema20": {
+      "additionalProperties": {},
+      "properties": {
+        "key": {},
+        "name": {}
+      }
+    },
+    "schema21": {
+      "not": {
+        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+      }
+    },
+    "schema23": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "schema24": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "schema5": {
       "anyOf": [
         {
           "not": {
@@ -68,59 +225,6 @@
           "type": "object"
         }
       ]
-    },
-    "schema5": {
-      "additionalProperties": {},
-      "properties": {
-        "configMap": {
-          "additionalProperties": {},
-          "properties": {
-            "key": {},
-            "name": {}
-          }
-        }
-      }
-    },
-    "schema6": {
-      "additionalProperties": {},
-      "properties": {
-        "configMap": {
-          "anyOf": [
-            {
-              "type": "object"
-            }
-          ]
-        }
-      }
-    },
-    "schema7": {
-      "properties": {
-        "type": {
-          "enum": [
-            "file"
-          ]
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "schema8": {
-      "properties": {
-        "type": {}
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "schema9": {
-      "additionalProperties": {},
-      "properties": {
-        "key": {},
-        "name": {}
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -326,7 +430,7 @@
             "additionalProperties": {},
             "properties": {
               "operatorjwt": {
-                "$ref": "#/$defs/schema6"
+                "$ref": "#/$defs/schema13"
               }
             }
           }
@@ -525,7 +629,7 @@
             "additionalProperties": {},
             "properties": {
               "systemaccountjwt": {
-                "$ref": "#/$defs/schema6"
+                "$ref": "#/$defs/schema13"
               }
             }
           }
@@ -818,7 +922,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema1"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
@@ -860,7 +964,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema1"
+        "$ref": "#/$defs/schema5"
       },
       "then": {
         "additionalProperties": {},
@@ -878,23 +982,288 @@
       "description": "Copyright 2020 The NATS Authors\nLicensed under the Apache License, Version 2.0 (the \"License\");\nyou may not use this file except in compliance with the License.\nYou may obtain a copy of the License at\nhttp://www.apache.org/licenses/LICENSE-2.0\nUnless required by applicable law or agreed to in writing, software\ndistributed under the License is distributed on an \"AS IS\" BASIS,\nWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\nSee the License for the specific language governing permissions and\nlimitations under the License.",
       "properties": {
         "image": {
-          "type": "string"
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/schema24"
+                },
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/schema23"
+                },
+                {
+                  "$ref": "#/$defs/schema11"
+                },
+                {
+                  "$ref": "#/$defs/schema15"
+                },
+                {
+                  "$ref": "#/$defs/schema16"
+                },
+                {
+                  "$ref": "#/$defs/schema21"
+                }
+              ],
+              "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+              "type": "string"
+            },
+            {
+              "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+              "type": "null"
+            }
+          ]
         },
         "pullPolicy": {
-          "type": "string"
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/schema24"
+                },
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/schema23"
+                },
+                {
+                  "$ref": "#/$defs/schema11"
+                },
+                {
+                  "$ref": "#/$defs/schema15"
+                },
+                {
+                  "$ref": "#/$defs/schema16"
+                },
+                {
+                  "$ref": "#/$defs/schema21"
+                }
+              ],
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "string"
+            },
+            {
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "null"
+            }
+          ]
         },
-        "resources": {}
+        "resources": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "description": "ResourceRequirements describes the compute resource requirements.",
+              "properties": {
+                "claims": {
+                  "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+                    "properties": {
+                      "name": {
+                        "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "x-kubernetes-list-map-keys": [
+                    "name"
+                  ],
+                  "x-kubernetes-list-type": "map"
+                },
+                "limits": {
+                  "additionalProperties": {
+                    "oneOf": [
+                      {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    ]
+                  },
+                  "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "requests": {
+                  "additionalProperties": {
+                    "oneOf": [
+                      {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      }
+                    ]
+                  },
+                  "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "maxProperties": 0,
+              "properties": {},
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
       },
       "type": "object"
     },
     "nats": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "$ref": "#/$defs/helm-truthy"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "credentials": {
+                "additionalProperties": {},
+                "properties": {
+                  "secret": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "name": {
+                        "anyOf": [
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/schema24"
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[-?:]([ \\t]|$)"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": ":[ \\t]|:$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[ \\t]#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              {
+                                "$ref": "#/$defs/schema23"
+                              },
+                              {
+                                "$ref": "#/$defs/schema11"
+                              },
+                              {
+                                "$ref": "#/$defs/schema15"
+                              },
+                              {
+                                "$ref": "#/$defs/schema16"
+                              },
+                              {
+                                "$ref": "#/$defs/schema21"
+                              }
+                            ],
+                            "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+                            "type": "string"
+                          },
+                          {
+                            "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
       "properties": {
         "credentials": {
           "additionalProperties": {},
           "properties": {
             "secret": {
-              "$ref": "#/$defs/schema9"
+              "$ref": "#/$defs/schema20"
             }
           }
         },
@@ -903,12 +1272,70 @@
     },
     "operator": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/helm-truthy"
+              },
+              {
+                "properties": {
+                  "operatorjwt": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "operatorjwt"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "operatorjwt": {
+                "$ref": "#/$defs/schema1"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/helm-truthy"
+              },
+              {
+                "properties": {
+                  "systemaccountjwt": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "systemaccountjwt"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "systemaccountjwt": {
+                "$ref": "#/$defs/schema1"
+              }
+            }
+          }
+        }
+      ],
       "properties": {
         "operatorjwt": {
-          "$ref": "#/$defs/schema5"
+          "$ref": "#/$defs/schema10"
         },
         "systemaccountjwt": {
-          "$ref": "#/$defs/schema5"
+          "$ref": "#/$defs/schema10"
         }
       }
     },
@@ -920,11 +1347,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema8"
+                  "$ref": "#/$defs/schema19"
                 }
               },
               {
-                "$ref": "#/$defs/schema7"
+                "$ref": "#/$defs/schema14"
               }
             ]
           },
@@ -935,7 +1362,72 @@
                 "additionalProperties": {},
                 "properties": {
                   "storageSize": {
-                    "type": "string"
+                    "oneOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "allOf": [
+                              {
+                                "$ref": "#/$defs/schema24"
+                              },
+                              {
+                                "not": {
+                                  "pattern": "^[-?:]([ \\t]|$)"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": ":[ \\t]|:$"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[ \\t]#"
+                                }
+                              },
+                              {
+                                "not": {
+                                  "pattern": "[\\r\\n]"
+                                }
+                              },
+                              {
+                                "$ref": "#/$defs/schema23"
+                              },
+                              {
+                                "$ref": "#/$defs/schema11"
+                              },
+                              {
+                                "$ref": "#/$defs/schema15"
+                              },
+                              {
+                                "$ref": "#/$defs/schema16"
+                              },
+                              {
+                                "$ref": "#/$defs/schema21"
+                              }
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    ]
                   }
                 }
               }

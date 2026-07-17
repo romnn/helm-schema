@@ -68,10 +68,13 @@ fn mapping_key_template_does_not_project_scalar_onto_parent_map_value_schema() {
         .pointer("/properties/account/properties/name")
         .expect("account.name present");
 
+    // A key position formats every scalar (a numeric key renders and
+    // YAML-to-JSON stringifies it), so the declared string default widens
+    // to the scalar union rather than pinning the raw input as a string.
     sim_assert_eq!(
-        have: name.get("type").and_then(Value::as_str),
-        want: Some("string"),
-        "mapping-key interpolation should keep account.name string-valued, got {name}"
+        have: name.get("type"),
+        want: Some(&serde_json::json!(["boolean", "integer", "number", "string"])),
+        "mapping-key interpolation accepts the scalar union, got {name}"
     );
     assert!(
         name.get("anyOf").is_none(),
@@ -286,6 +289,7 @@ fn parent_values_seed_does_not_override_exact_defaulted_child_path() {
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
+        template_supplied_member_keys: Default::default(),
     }]);
     contract.push_pathless_scalar("signoz-otel-gateway");
     contract.add_type_hint("signoz-otel-gateway.serviceAccount.name", "string");
@@ -347,6 +351,7 @@ fn guarded_fragment_parent_seed_stays_open_after_guard_child_insert() {
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
+        template_supplied_member_keys: Default::default(),
     }]);
     contract.push_pathless_scalar("clickhouse");
     let schema = generate_values_schema(
@@ -391,6 +396,7 @@ fn referenced_empty_string_child_survives_parent_pruning() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         },
         ContractUse {
             source_expr: "signoz.smtpVars.existingSecret.name".to_string(),
@@ -407,6 +413,7 @@ fn referenced_empty_string_child_survives_parent_pruning() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         },
     ]);
     contract.push_pathless_scalar("signoz");
@@ -476,6 +483,7 @@ fn guarded_array_fragment_parent_seed_stays_array_shaped() {
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
+        template_supplied_member_keys: Default::default(),
     }]);
     contract.push_pathless_scalar("alertmanager");
     contract.add_type_hint("alertmanager.enabled", "boolean");
@@ -515,6 +523,7 @@ fn guarded_null_object_fragment_parent_seed_preserves_null_default() {
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
+        template_supplied_member_keys: Default::default(),
     }]);
     contract.push_pathless_scalar("clickhouse");
     contract.add_type_hint("clickhouse.enabled", "boolean");
@@ -604,6 +613,7 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
                 resource: None,
                 provenance: Vec::new(),
                 has_string_contract: false,
+                template_supplied_member_keys: Default::default(),
             },
             ContractUse {
                 source_expr: "serviceAccount.name".to_string(),
@@ -620,6 +630,7 @@ fn self_default_guarded_branch_lowers_without_losing_else_branch_precision() {
                 resource: None,
                 provenance: Vec::new(),
                 has_string_contract: false,
+                template_supplied_member_keys: Default::default(),
             },
         ]),
         &[("serviceAccount.name", "string")],

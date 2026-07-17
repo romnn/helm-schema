@@ -15,6 +15,7 @@ fn exclusive_boolean_guarded_path_lowers_to_if_then_overlay() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         }]),
         &[("feature.host", "string")],
     );
@@ -151,6 +152,7 @@ fn default_true_boolean_guard_lowers_absence_as_active_branch() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         }]),
         &[("feature.host", "string")],
     );
@@ -199,6 +201,7 @@ fn negated_boolean_guard_lowers_to_not_condition() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         }]),
         &[("feature.host", "string")],
     );
@@ -235,6 +238,7 @@ fn not_equal_guard_lowers_to_value_decidable_condition() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         }]),
         &[("feature.host", "string")],
     );
@@ -310,6 +314,7 @@ fn equal_false_guard_lowers_to_exact_default_aware_condition() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         }]),
         &[("feature.host", "string")],
     );
@@ -376,6 +381,7 @@ fn equal_nil_guard_treats_absent_path_as_matching_nil() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         }]),
         &[("feature.host", "string")],
     );
@@ -423,6 +429,7 @@ fn or_boolean_guards_lower_to_any_of_condition() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         }]),
         &[("feature.host", "string")],
     );
@@ -480,6 +487,7 @@ fn structural_any_of_guards_preserve_conjunctive_branches() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         }]),
         &[("feature.enabled", "boolean"), ("feature.host", "string")],
     );
@@ -542,6 +550,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         },
         ContractUse {
             source_expr: "feature.value".to_string(),
@@ -554,6 +563,7 @@ fn multiple_guarded_variants_lower_branch_specific_target_schemas() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         },
     ]);
 
@@ -616,6 +626,7 @@ fn inactive_scalar_branch_preserves_scalar_values_default_domain() {
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
+        template_supplied_member_keys: Default::default(),
     }]);
 
     let schema = generate_values_schema(
@@ -674,6 +685,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         },
         ContractUse {
             source_expr: "feature.value".to_string(),
@@ -686,6 +698,7 @@ fn guarded_branch_keeps_unconditional_base_schema_when_both_exist() {
             resource: None,
             provenance: Vec::new(),
             has_string_contract: false,
+            template_supplied_member_keys: Default::default(),
         },
     ]);
 
@@ -753,6 +766,7 @@ fn non_boolean_truthy_guard_lowers_to_typed_condition_overlay() {
         resource: None,
         provenance: Vec::new(),
         has_string_contract: false,
+        template_supplied_member_keys: Default::default(),
     }]);
 
     let schema = generate_values_schema(

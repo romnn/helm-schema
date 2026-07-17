@@ -37,7 +37,7 @@ pub(super) fn eval_default(
     // own channel: `default` itself never consumes the raw value — every
     // Helm-empty input selects the fallback and renders — so the fallback's
     // kind types only the truthy arm and must not close the base against
-    // Helm-empty inputs (F42).
+    // Helm-empty inputs.
     if let Some(schema_type) = fallback_args
         .first()
         .map(TemplateExpr::deparen)
@@ -415,7 +415,7 @@ pub(super) fn eval_nonempty_split(
     let separator = value_strings(&separator.value);
     let value = single_string(separator).and_then(|separator| {
         // A raw-identity subject keeps its path through `._0` qualified by
-        // the separator as a lexical escape (F74) before the legacy map
+        // the separator as a lexical escape before the legacy map
         // degrade.
         subject
             .value

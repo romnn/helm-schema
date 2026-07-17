@@ -77,60 +77,15 @@
           "fullnameOverride": {
             "anyOf": [
               {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[-?:]([ \\t]|$)"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-                    }
-                  }
-                ],
-                "description": "Name of the object being referenced.",
-                "type": "string"
-              },
-              {
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
               }
             ]
           }
@@ -299,6 +254,11 @@
                   {
                     "not": {
                       "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                    }
+                  },
+                  {
+                    "not": {
+                      "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
                     }
                   },
                   {
@@ -484,6 +444,11 @@
                       {
                         "not": {
                           "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
                         }
                       },
                       {

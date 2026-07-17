@@ -1,6 +1,6 @@
 use super::*;
 
-/// F36: an `else` arm that EXECUTES a member access closes the unmatched
+/// an `else` arm that EXECUTES a member access closes the unmatched
 /// scalar domain — `typeIs "string"` dispatch with a structural complement
 /// must reject values neither arm renders (external-dns provider shape).
 #[test]
@@ -36,7 +36,7 @@ fn executing_else_member_access_closes_unmatched_scalar_domain() {
     );
 }
 
-/// F37: a type-dispatch complement nested under outer enable guards must
+/// a type-dispatch complement nested under outer enable guards must
 /// scope its object requirement to the complement arm — the string arm
 /// stays valid when the outer guards are ACTIVE (cilium SPIRE image shape).
 #[test]
@@ -84,7 +84,7 @@ fn nested_type_dispatch_keeps_string_arm_under_active_outer_guards() {
     );
 }
 
-/// F41: `with` rebinds dot, and a `typeOf .` dispatch inside the body must
+/// `with` rebinds dot, and a `typeOf .` dispatch inside the body must
 /// bind to the originating value path — the executing `else` places dot
 /// structurally, closing the unmatched scalar domain (minio
 /// extraContainers shape).
@@ -124,7 +124,7 @@ fn with_rebound_dot_type_dispatch_binds_source_path() {
     );
 }
 
-/// F47: an UNDECLARED selector-style object observed through member reads
+/// an UNDECLARED selector-style object observed through member reads
 /// must stay open — reads prove keys exist, they do not bound the member
 /// set (nats-account-server `credentials.secret` shape, where `name` and
 /// `key` are read from different templates).
@@ -154,7 +154,7 @@ fn partially_observed_selector_object_stays_open() {
     );
 }
 
-/// F46: a declared mapping the chart SERIALIZES (whole map or per-section)
+/// a declared mapping the chart SERIALIZES (whole map or per-section)
 /// is passthrough config — the declared default documents keys, it does not
 /// bound them (grafana.ini / airflow config shape).
 #[test]
@@ -190,7 +190,7 @@ fn serialized_declared_mapping_sections_stay_open() {
     );
 }
 
-/// F46 (guarded-read sibling): the serialized fact must survive a truthy
+/// guarded-read sibling: the serialized fact must survive a truthy
 /// member read at the same path — the exact coredns `service.clusterIPs`
 /// verification shape from the plan, applied to a declared mapping.
 #[test]
@@ -226,7 +226,7 @@ fn guard_read_beside_serialized_render_keeps_mapping_open() {
     );
 }
 
-/// F48: an undeclared, truthy-guarded, `toYaml`-serialized leaf renders
+/// an undeclared, truthy-guarded, `toYaml`-serialized leaf renders
 /// LISTS as well as maps — it must not be pinned to `object` (coredns
 /// `service.clusterIPs` / nats-operator `tolerations` shape).
 #[test]
@@ -288,7 +288,7 @@ fn flag_splice_accepts_any_scalar_beyond_declared_string() {
     }
 }
 
-/// F49: a declared BOOLEAN spliced into a flag slot accepts the string
+/// a declared BOOLEAN spliced into a flag slot accepts the string
 /// form too (nack `readOnly` shape, `--read-only=true` renders either way).
 #[test]
 fn declared_boolean_flag_splice_accepts_string_form() {
@@ -317,7 +317,7 @@ fn declared_boolean_flag_splice_accepts_string_form() {
     }
 }
 
-/// F49: a declared boolean rendered inside a QUOTED string value accepts
+/// a declared boolean rendered inside a QUOTED string value accepts
 /// the string form (nfs-subdir-external-provisioner `archiveOnDelete`
 /// shape: `archiveOnDelete: "{{ .Values.storageClass.archiveOnDelete }}"`).
 #[test]
@@ -347,7 +347,7 @@ fn quoted_string_slot_widen_declared_boolean_to_scalars() {
     }
 }
 
-/// F48: a declared-`{}` self-guarded fragment splices whatever the user
+/// a declared-`{}` self-guarded fragment splices whatever the user
 /// supplies — `toYaml` renders sequences as readily as maps, so the
 /// empty-map placeholder union needs the array arm (nats-kafka
 /// `additionalVolumes` shape).
@@ -379,7 +379,7 @@ fn declared_empty_map_guarded_fragment_admits_arrays() {
     }
 }
 
-/// F50: a value consumed only through `tpl` (here via a `with`-bound dot
+/// a value consumed only through `tpl` (here via a `with`-bound dot
 /// inside an included helper) is a template STRING — the schema must keep
 /// the string form valid (airflow `extraEnv` shape, declared `~`).
 #[test]
@@ -419,7 +419,7 @@ fn with_dot_tpl_keeps_string_form_valid() {
     );
 }
 
-/// F50: a values-declared OBJECT that only renders under its own truthy
+/// a values-declared OBJECT that only renders under its own truthy
 /// guard accepts explicit `null` — helm null-deletion removes the key and
 /// the falsy guard skips the branch (datadog `datadog.securityContext`
 /// shape, declared `{runAsUser: 0}`).
@@ -454,7 +454,7 @@ fn self_guarded_declared_object_accepts_explicit_null() {
     }
 }
 
-/// F34 (trivy half): literal-key `dig` evaluates structurally — sprig
+/// trivy half: literal-key `dig` evaluates structurally — sprig
 /// type-asserts every step, so the subject carries a truthy⇒object
 /// contract while the dug leaf may be any type.
 #[test]
@@ -486,7 +486,7 @@ fn literal_key_dig_binds_intermediate_object_contract() {
     );
 }
 
-/// F35: an `if (include …)` condition hole absorbs the called helper's
+/// an `if (include …)` condition hole absorbs the called helper's
 /// `kindIs` type-dispatch facts — the dispatched alternatives survive
 /// beside the declared default shape (grafana hpa apiVersion shape).
 #[test]

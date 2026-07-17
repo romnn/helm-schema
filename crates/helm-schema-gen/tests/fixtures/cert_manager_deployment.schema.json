@@ -664,20 +664,9 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "properties": {
-              "config": {
-                "$ref": "#/$defs/helm-truthy"
-              }
-            },
-            "required": [
-              "config"
-            ],
-            "type": "object"
-          },
-          {
-            "anyOf": [
+            "allOf": [
               {
                 "properties": {
                   "config": {
@@ -690,126 +679,74 @@
                 "type": "object"
               },
               {
-                "properties": {
-                  "volumes": {
-                    "$ref": "#/$defs/helm-truthy"
+                "anyOf": [
+                  {
+                    "properties": {
+                      "config": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "config"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "volumes": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "volumes"
+                    ],
+                    "type": "object"
                   }
-                },
-                "required": [
-                  "volumes"
-                ],
-                "type": "object"
+                ]
               }
             ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
+          },
+          {
             "anyOf": [
               {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[-?:]([ \\t]|$)"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-                    }
-                  }
-                ],
-                "description": "Name of the referent. This field is effectively required, but due to backwards compatibility is allowed to be empty. Instances of this type with an empty value here are almost certainly wrong. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-                "type": "string"
-              },
-              {
                 "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "serviceAccount": {
                   "properties": {
-                    "create": {}
+                    "serviceAccount": {
+                      "properties": {
+                        "create": {}
+                      },
+                      "required": [
+                        "create"
+                      ],
+                      "type": "object"
+                    }
                   },
                   "required": [
-                    "create"
+                    "serviceAccount"
                   ],
                   "type": "object"
                 }
               },
-              "required": [
-                "serviceAccount"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "serviceAccount": {
+              {
                 "properties": {
-                  "create": {
-                    "$ref": "#/$defs/helm-truthy"
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
                   }
                 },
                 "required": [
-                  "create"
+                  "serviceAccount"
                 ],
                 "type": "object"
               }
-            },
-            "required": [
-              "serviceAccount"
-            ],
-            "type": "object"
+            ]
           }
         ]
       },
@@ -819,60 +756,15 @@
           "fullnameOverride": {
             "anyOf": [
               {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[-?:]([ \\t]|$)"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-                    }
-                  }
-                ],
-                "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-                "type": "string"
-              },
-              {
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
               }
             ]
           }
@@ -5164,63 +5056,9 @@
     },
     "featureGates": {},
     "fullnameOverride": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-              }
-            }
-          ],
-          "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-          "type": "string"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        }
+      "type": [
+        "string",
+        "null"
       ]
     },
     "global": {
@@ -5440,6 +5278,11 @@
             },
             {
               "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+              }
+            },
+            {
+              "not": {
                 "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
               }
             }
@@ -5496,6 +5339,11 @@
             {
               "not": {
                 "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
               }
             },
             {
@@ -5560,6 +5408,11 @@
                 {
                   "not": {
                     "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
                   }
                 },
                 {
@@ -5990,6 +5843,11 @@
             },
             {
               "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+              }
+            },
+            {
+              "not": {
                 "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
               }
             }
@@ -6045,6 +5903,11 @@
             {
               "not": {
                 "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
               }
             },
             {
@@ -6109,6 +5972,11 @@
             },
             {
               "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+              }
+            },
+            {
+              "not": {
                 "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
               }
             }
@@ -6123,24 +5991,7 @@
         }
       ]
     },
-    "nodeSelector": {
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "kubernetes.io/os": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        }
-      ]
-    },
+    "nodeSelector": {},
     "podAnnotations": {
       "anyOf": [
         {
@@ -6250,6 +6101,11 @@
             {
               "not": {
                 "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
               }
             },
             {
@@ -6634,6 +6490,11 @@
                 {
                   "not": {
                     "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
                   }
                 },
                 {

@@ -1,6 +1,6 @@
 use super::*;
 
-/// F42 (cilium `upgradeCompatibility`): a strict parser applied to
+/// cilium `upgradeCompatibility`: a strict parser applied to
 /// `default LITERAL .Values.path` only ever sees the raw value on the truthy
 /// arm. Every Helm-empty input (`false`, `0`, `""`, `{}`, `[]`, `null`)
 /// selects the literal fallback and renders, so the raw path must stay open
@@ -48,7 +48,7 @@ fn default_literal_fallback_keeps_helm_empty_inputs_open_for_parsers() {
     }
 }
 
-/// F42 (cloudnative-pg `nameOverride`): the fullname helpers select
+/// cloudnative-pg `nameOverride`: the fullname helpers select
 /// `default .Chart.Name .Values.nameOverride` before `trunc`/`contains`, so
 /// the string contract binds only truthy raw values even when the consuming
 /// template is guarded by an unrelated liveness switch.
@@ -108,7 +108,7 @@ fn helper_default_fallback_keeps_helm_empty_inputs_open_for_string_consumers() {
     );
 }
 
-/// F42 (cloudnative-pg `namespaceOverride`): a raw value read only inside its
+/// cloudnative-pg `namespaceOverride`: a raw value read only inside its
 /// own truthy `if` arm is skipped entirely for every Helm-falsy input, so a
 /// downstream string contract must not exclude those inputs.
 #[test]
@@ -151,7 +151,7 @@ fn truthy_guarded_read_keeps_helm_falsy_inputs_open() {
         );
     }
 }
-/// F42 (cloudnative-pg, reduced): the fullname helper's `default`-selected
+/// cloudnative-pg, reduced: the fullname helper's `default`-selected
 /// string contract stays truthy-scoped even when the consuming template is
 /// gated by an unrelated liveness switch, so Helm-empty overrides render.
 #[test]

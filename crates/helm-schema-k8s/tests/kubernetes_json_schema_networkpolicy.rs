@@ -118,6 +118,7 @@ fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
         kind: ValueKind::Fragment,
         resource: ResourceRef::concrete(String::new(), "NetworkPolicy".to_string()),
         is_self_range_collection: false,
+        template_supplied_member_keys: Default::default(),
     };
 
     let schema = chain

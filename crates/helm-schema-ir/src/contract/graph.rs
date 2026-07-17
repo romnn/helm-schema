@@ -22,11 +22,11 @@ pub struct ContractIr {
     guarded_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Input-type hints from literal `default`/`coalesce` fallbacks: they
     /// type only the truthy arm of the path, so lowering must keep the
-    /// whole Helm-falsy set open beside them (F42).
+    /// whole Helm-falsy set open beside them.
     fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Fallback hints observed under branch predicates: fallback-grade
     /// intent that may type conditional overlays, but never a branch whose
-    /// renders all totally format (F76).
+    /// renders all totally format.
     guarded_fallback_type_hints: BTreeMap<String, BTreeSet<String>>,
     /// Paths consumed through total stringifications (`quote`, `toString`,
     /// `join`, `printf`) anywhere in the interpretation: the chart tolerates
@@ -160,6 +160,10 @@ impl ContractIr {
         // of the schema-signal vocabulary, so abstain instead of leaking them.
         if !guards.is_empty() {
             self.values_default_sources.clear();
+            // A path-wide runtime string contract is unconditional only
+            // within its own chart's rendering: under activation guards the
+            // consumer may never run, so the fact must not type the base.
+            self.string_contract_value_paths.clear();
         }
     }
 

@@ -607,6 +607,11 @@
                   },
                   {
                     "not": {
+                      "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                    }
+                  },
+                  {
+                    "not": {
                       "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
                     }
                   }
@@ -1789,6 +1794,7 @@
       "type": "object"
     },
     "service": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1880,6 +1886,11 @@
                       },
                       {
                         "not": {
+                          "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                        }
+                      },
+                      {
+                        "not": {
                           "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
                         }
                       }
@@ -1898,124 +1909,99 @@
           }
         }
       ],
-      "anyOf": [
-        {
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "merge": {},
+        "name": {},
+        "ports": {
           "additionalProperties": {},
           "properties": {
-            "enabled": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                {
+            "cluster": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
                   "type": "boolean"
                 }
-              ]
+              },
+              "type": "object"
             },
-            "merge": {},
-            "name": {},
-            "patch": {
-              "items": {},
-              "type": "array"
-            },
-            "ports": {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "cluster": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  }
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "gateway": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "leafnodes": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "monitor": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "mqtt": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "nats": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "profiling": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "websocket": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
+            "gateway": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
                 }
-              ]
+              },
+              "type": "object"
+            },
+            "leafnodes": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "monitor": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "mqtt": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "nats": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "profiling": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
+            "websocket": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
             }
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
           }
         }
-      ]
+      }
     }
   },
   "type": "object"

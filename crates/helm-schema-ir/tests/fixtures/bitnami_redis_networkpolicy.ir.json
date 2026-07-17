@@ -305,7 +305,14 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "commonLabels"
+      "source_expr": "commonLabels",
+      "template_supplied_member_keys": [
+        "app.kubernetes.io/instance",
+        "app.kubernetes.io/managed-by",
+        "app.kubernetes.io/name",
+        "app.kubernetes.io/version",
+        "helm.sh/chart"
+      ]
     },
     {
       "condition": [
@@ -768,7 +775,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "PartialScalar",
       "path": [],
       "resource": {
         "api_version": "networking.k8s.io/v1",
@@ -1024,7 +1031,7 @@
           }
         ]
       ],
-      "kind": "Scalar",
+      "kind": "PartialScalar",
       "path": [],
       "resource": {
         "api_version": "networking.k8s.io/v1",
@@ -1562,7 +1569,10 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "networkPolicy.extraEgress"
+      "source_expr": "networkPolicy.extraEgress",
+      "template_supplied_member_keys": [
+        "to"
+      ]
     },
     {
       "condition": [
@@ -1675,7 +1685,10 @@
         "api_version": "networking.k8s.io/v1",
         "kind": "NetworkPolicy"
       },
-      "source_expr": "networkPolicy.extraIngress"
+      "source_expr": "networkPolicy.extraIngress",
+      "template_supplied_member_keys": [
+        "from"
+      ]
     },
     {
       "condition": [

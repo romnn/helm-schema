@@ -1,6 +1,6 @@
 use super::*;
 
-/// F60: Go-template `eq`/`ne` against a STRING literal terminates on
+/// Go-template `eq`/`ne` against a STRING literal terminates on
 /// incomparable operand kinds — maps, lists, and mismatched scalars abort
 /// rendering while the schema accepted them (harbor `logLevel`, reloader
 /// `reloadStrategy` shapes).
@@ -59,7 +59,7 @@ fn string_literal_comparison_binds_operand_kind_contract() {
     }
 }
 
-/// F61: strict collection functions bind their operand domains: `merge` subjects
+/// strict collection functions bind their operand domains: `merge` subjects
 /// are maps, `concat` operands are lists, `len` needs a length-bearing value,
 /// and `has` searches a list. The call itself does not skip Helm-empty operands.
 #[test]
@@ -158,7 +158,7 @@ fn constructed_collection_operands_do_not_retype_leaf_values() {
     );
 }
 
-/// F66: an unconditional strict call evaluates Helm-falsy operands too.
+/// an unconditional strict call evaluates Helm-falsy operands too.
 /// Only structural control flow or fallback selection may make its domain conditional.
 #[test]
 fn unconditional_strict_call_rejects_falsy_wrong_kinds() {
@@ -669,7 +669,15 @@ fn semver_parser_binds_lexical_operand_contract() {
         Some("enabled: true\nkubeVersion: v1.30.0\npipelineVersion: v1.30.0\n"),
     );
 
-    for version in ["v1.30.0", "1", "1.2", "01.002.0003-alpha.1+build.7"] {
+    for version in [
+        "v1.30.0",
+        "1",
+        "1.2",
+        "01.002.0003-alpha.1+build.7",
+        // Prerelease numeric identifiers without leading zeros parse
+        "3.1.0-rc.1",
+        "1.2.3-0",
+    ] {
         let instance = serde_json::json!({
             "enabled": true,
             "kubeVersion": version,
@@ -681,7 +689,15 @@ fn semver_parser_binds_lexical_operand_contract() {
              instance={instance}; schema={schema}"
         );
     }
-    for version in ["garbage", "v", "1..2"] {
+    for version in [
+        "garbage",
+        "v",
+        "1..2",
+        // Masterminds rejects a leading zero in a NUMERIC prerelease
+        // identifier (airflow's `airflowVersion: 3.1.0-01`)
+        "3.1.0-01",
+        "1.2.3-alpha.01",
+    ] {
         let instance = serde_json::json!({
             "enabled": true,
             "kubeVersion": version,
@@ -706,7 +722,7 @@ fn semver_parser_binds_lexical_operand_contract() {
     );
 }
 
-/// F45: `substr` slices a Go string subject, so non-string inputs abort
+/// `substr` slices a Go string subject, so non-string inputs abort
 /// rendering. The subject is the LAST argument in both the direct and the
 /// pipeline spelling; the leading start/end offsets are numeric.
 #[test]
@@ -745,7 +761,7 @@ fn substr_binds_string_subject_contract() {
     }
 }
 
-/// F45 (flux2 `template.image`): the substr subject contract survives a
+/// flux2 `template.image`: the substr subject contract survives a
 /// helper called with a values sub-object whose body reads a RELATIVE
 /// selector, and the derived substring output does not leak a later strict
 /// parser's lexical domain back onto the raw input.
@@ -801,7 +817,7 @@ fn substr_contract_projects_through_helper_arguments() {
     }
 }
 
-/// F74: an `if` arm that reassigns the parser's local to a literal sentinel
+/// an `if` arm that reassigns the parser's local to a literal sentinel
 /// (`$version = "1.20.0"` under `eq $version "latest"`, datadog's cluster
 /// agent check) replaces the raw value on that arm, so the lexical contract
 /// fires only where the sentinel equality is false. The undecodable sibling
@@ -843,7 +859,7 @@ fn conditional_literal_reassignment_excludes_the_sentinel_from_the_parser_domain
     }
 }
 
-/// F74: when the reassigning arm's condition has no decodable equality
+/// when the reassigning arm's condition has no decodable equality
 /// conjunct, the exclusion is unrepresentable and the parser contract must
 /// abstain — rejecting raw inputs that the reassigned arm would have
 /// replaced is unsound.
@@ -875,7 +891,7 @@ fn conditional_reassignment_without_equality_sentinel_abstains() {
     );
 }
 
-/// F74: a `replace OLD NEW` stage with a literal OLD is the identity on raw
+/// a `replace OLD NEW` stage with a literal OLD is the identity on raw
 /// strings that do not contain OLD, so the parser's lexical domain applies
 /// only to the untransformed arm; raw strings containing the stripped
 /// sentinel are exempt.
@@ -908,7 +924,7 @@ fn replace_chain_exempts_stripped_sentinels_from_the_parser_domain() {
     );
 }
 
-/// F74: `(split "@" tag)._0` consumes only the text before the first `@`,
+/// `(split "@" tag)._0` consumes only the text before the first `@`,
 /// so a digest-suffixed tag is exempt from the parser's lexical domain
 /// while an untouched raw string still must parse.
 #[test]
@@ -940,7 +956,7 @@ fn split_prefix_member_exempts_digest_suffixes_from_the_parser_domain() {
     );
 }
 
-/// F74: a helper's replace/split chain keeps its escape-qualified identity
+/// a helper's replace/split chain keeps its escape-qualified identity
 /// across the include boundary, so the consumer-side parser weakens its
 /// pattern by the same tokens instead of projecting the final language onto
 /// raw inputs (traefik's `traefik.proxyVersion`).
@@ -990,7 +1006,7 @@ fn helper_replace_chain_keeps_escape_qualified_identity_at_the_consumer() {
     }
 }
 
-/// F74: a later dynamic transform in the same chain produces text the
+/// a later dynamic transform in the same chain produces text the
 /// escape tokens cannot account for, so the parser must abstain for the
 /// whole path instead of firing with the earlier stage's weakened pattern.
 #[test]
@@ -1405,7 +1421,7 @@ fn block_scalar_condition_absorbs_comparison_contracts() {
     );
 }
 
-/// F45: a strict string transform introduced by Sprig's regex family constrains
+/// a strict string transform introduced by Sprig's regex family constrains
 /// its dynamic subject even when a later total stringifier renders the
 /// result.
 #[test]
@@ -1469,7 +1485,7 @@ fn derived_range_header_absorbs_join_shape_erasure() {
     }
 }
 
-/// F61 (join is total): sprig `join` stringifies non-list operands instead
+/// join is total: sprig `join` stringifies non-list operands instead
 /// of failing, so a `join | split` chain accepts BOTH the comma-string and
 /// the list form (kube-state-metrics `namespaces` shape).
 #[test]
@@ -1573,7 +1589,7 @@ fn range_key_prefix_scopes_member_contract_to_matching_keys() {
     }
 }
 
-/// F86 (bitnami-redis master): the standalone/replication partition guard
+/// bitnami-redis master: the standalone/replication partition guard
 /// sits under an outer `gt (int64 .Values.master.count) 0` header. The
 /// coercing comparison cannot lower exactly, but a raw positive integer (or
 /// an absent key whose declared default is one) provably satisfies it, so
@@ -1628,7 +1644,7 @@ fn int_cast_guard_keeps_strict_operand_contract_alive() {
     }
 }
 
-/// F54 (cluster-autoscaler `expanderPriorities`): a `kindIs "string"` arm
+/// cluster-autoscaler `expanderPriorities`: a `kindIs "string"` arm
 /// inside a block scalar proves the chart handles the raw-string form even
 /// when the surrounding liveness header carries an undecodable `include`
 /// condition — the dispatch alternative widens the declared-map base
@@ -1675,7 +1691,7 @@ fn type_dispatch_survives_approximate_liveness_guard() {
     }
 }
 
-/// F53 (prometheus `server.remoteWrite`): the URL of every ranged member
+/// prometheus `server.remoteWrite`: the URL of every ranged member
 /// reaches `tpl`, a strict string consumer, even though the consuming
 /// include sits inside a foreign `range` selected by `eq $key
 /// "prometheus.yml"` — the key-equality lowers to a has-key condition
@@ -1727,6 +1743,222 @@ fn ranged_member_field_contract_survives_foreign_key_selected_range() {
         assert!(
             !schema_accepts_instance(&schema, &instance),
             "tpl requires a string url on every member: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A digest strip through `regexReplaceAll "@.*$" … ""` and a `trimPrefix
+/// "v"` are each the identity on raw strings not containing their token,
+/// so the parser exempts `@`-suffixed and `v`-prefixed spellings while an
+/// untouched non-version still terminates (cilium's Hubble UI tag check).
+#[test]
+fn regex_strip_and_trim_prefix_carry_the_parser_preimage() {
+    let src = indoc! {r#"
+        {{- if regexReplaceAll "@.*$" .Values.ui.backend.tag "" | trimPrefix "v" | semverCompare "<0.9.0" }}
+        {{- fail "requires >=v0.9.0" }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("ui:\n  backend:\n    tag: v0.13.5\n"));
+
+    for (instance, want) in [
+        (
+            serde_json::json!({ "ui": { "backend": { "tag": "v0.13.5" } } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "ui": { "backend": { "tag": "v0.13.5@sha256:abc" } } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "ui": { "backend": { "tag": "0.13.5" } } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "ui": { "backend": { "tag": "garbage" } } }),
+            false,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "the transform chain exempts its tokens and constrains the rest: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Go's `eq`/`ne` compare `nil` against anything, so a MISSING or null
+/// member is a valid comparison operand (cilium's optional
+/// `clusters[].enabled` defaulting through `ne $cluster.enabled false`);
+/// only a present value of a different basic kind aborts.
+#[test]
+fn comparison_operands_accept_missing_and_null_members() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- range $name, $cluster := .Values.clusters }}
+          {{- if ne $cluster.enabled false }}
+          {{ $name }}: live
+          {{- end }}
+          {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("clusters: {}\n"));
+
+    for (instance, want) in [
+        // The member omitted entirely evaluates nil and stays truthy
+        (
+            serde_json::json!({ "clusters": { "a": { "ips": ["1.1.1.1"] } } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "clusters": { "a": { "enabled": null } } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "clusters": { "a": { "enabled": true } } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "clusters": { "a": { "enabled": false } } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "clusters": { "a": { "enabled": "audit" } } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "clusters": { "a": { "enabled": 7 } } }),
+            false,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "nil compares while a present wrong kind aborts: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A `default`-selected capability fallback keeps Helm-falsy raw overrides
+/// renderable — directly and through a helper return: only a truthy
+/// override reaches `semverCompare`'s parser (harbor's
+/// `harbor.ingress.kubeVersion` helper feeding its ingress apiVersion
+/// switch).
+#[test]
+fn helper_returned_default_keeps_falsy_parser_operands_open() {
+    let helpers = indoc! {r#"
+        {{- define "repro.kubeVersion" -}}
+        {{- default .Capabilities.KubeVersion.Version .Values.kubeVersionOverride -}}
+        {{- end -}}
+    "#};
+    let direct = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if semverCompare "<1.14-0" (default .Capabilities.KubeVersion.Version .Values.kubeVersionOverride) }}
+          mode: legacy
+          {{- else }}
+          mode: modern
+          {{- end }}
+    "#};
+    let via_helper = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if semverCompare "<1.14-0" (include "repro.kubeVersion" .) }}
+          mode: legacy
+          {{- else }}
+          mode: modern
+          {{- end }}
+    "#};
+    for src in [direct, via_helper] {
+        let schema = schema_for_values_yaml(
+            parse_ir_with_helpers(src, helpers),
+            Some("kubeVersionOverride: \"\"\n"),
+        );
+
+        for (instance, want) in [
+            // Helm-falsy overrides select the capability fallback and render
+            (serde_json::json!({ "kubeVersionOverride": false }), true),
+            (serde_json::json!({ "kubeVersionOverride": {} }), true),
+            (serde_json::json!({ "kubeVersionOverride": [] }), true),
+            (
+                serde_json::json!({ "kubeVersionOverride": "v1.30.1" }),
+                true,
+            ),
+            // A truthy non-semver string reaches the parser and aborts
+            (
+                serde_json::json!({ "kubeVersionOverride": "garbage" }),
+                false,
+            ),
+        ] {
+            assert!(
+                schema_accepts_instance(&schema, &instance) == want,
+                "only a truthy override reaches the semver parser: \
+                 instance={instance}; schema={schema}"
+            );
+        }
+    }
+}
+
+/// `regexMatch "64$" (typeOf x)` matches Go's `int64`/`float64` spellings
+/// and nothing else, so the guard emits the field only for numeric values
+/// and OMITS every other kind (sealed-secrets' PodDisruptionBudget
+/// `pdb.minAvailable`/`pdb.maxUnavailable` arms). The derived predicate
+/// must stay a type dispatch: the omitted complement renders and stays
+/// open.
+#[test]
+fn regex_match_over_type_of_dispatches_numeric_kinds() {
+    let src = indoc! {r#"
+        apiVersion: policy/v1
+        kind: PodDisruptionBudget
+        metadata:
+          name: test
+        spec:
+          {{- if regexMatch "64$" (typeOf .Values.pdb.minAvailable) }}
+          minAvailable: {{ .Values.pdb.minAvailable }}
+          {{- end }}
+          {{- if regexMatch "64$" (typeOf .Values.pdb.maxUnavailable) }}
+          maxUnavailable: {{ .Values.pdb.maxUnavailable }}
+          {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("pdb:\n  minAvailable: 1\n  maxUnavailable: \"\"\n"),
+    );
+
+    for (instance, want) in [
+        // Non-numeric kinds fail the typeOf regex, so the guard omits the
+        // field and rendering succeeds
+        (
+            serde_json::json!({ "pdb": { "minAvailable": "audit" } }),
+            true,
+        ),
+        (serde_json::json!({ "pdb": { "minAvailable": 2 } }), true),
+        (serde_json::json!({ "pdb": { "maxUnavailable": 1 } }), true),
+        (
+            serde_json::json!({ "pdb": { "maxUnavailable": "50%" } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "pdb": { "maxUnavailable": [1] } }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "the typeOf regex dispatches kinds instead of hard-typing: \
+             instance={instance}; schema={schema}"
         );
     }
 }

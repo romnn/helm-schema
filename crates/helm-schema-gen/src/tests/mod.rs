@@ -162,7 +162,7 @@ fn root_property_schema(path: &str, schema: Value) -> Value {
     let mut properties = serde_json::Map::new();
     properties.insert(path.to_string(), schema);
     // Conditional-arm carriers stay untyped so falsy ancestors skipped by a
-    // `with` chain pass vacuously (F66 inverse direction).
+    // `with` chain pass vacuously.
     serde_json::json!({ "additionalProperties": {}, "properties": properties })
 }
 
@@ -439,7 +439,7 @@ struct SharedObjectProvider;
 impl ResourceSchemaOracle for SharedObjectProvider {
     fn schema_fragment_for_use(&self, _use_: &ProviderSchemaUse) -> Option<ProviderSchemaFragment> {
         // An ARRAY subtree: object-typed provider positions no longer bound
-        // `toYaml` fragment inputs (F56), and this stub's consumers pin the
+        // `toYaml` fragment inputs, and this stub's consumers pin the
         // `$defs` sharing machinery, not fragment typing.
         Some(ProviderSchemaFragment::new(serde_json::json!({
             "type": "array",

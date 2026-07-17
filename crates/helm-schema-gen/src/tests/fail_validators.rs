@@ -145,7 +145,7 @@ fn literal_table_traversal_binds_pattern_validators() {
 }
 
 /// A literal YAML table decoded with `fromYaml` constant-folds into a
-/// typed abstract dict (the F99 literal-data foundation): membership
+/// typed abstract dict: membership
 /// probes over it decode to exact live/dead branches, so a `fail` behind
 /// a present key binds its validator while one behind an absent key
 /// never fires.
@@ -655,7 +655,7 @@ fn range_domains_compose_with_body_and_sibling_contracts() {
     }
 }
 
-/// F67: a JSON roundtrip changes integer values into non-iterable JSON
+/// a JSON roundtrip changes integer values into non-iterable JSON
 /// numbers, while a direct Helm range retains integer-count semantics.
 #[test]
 fn json_decoded_range_excludes_integer_without_changing_raw_range() {

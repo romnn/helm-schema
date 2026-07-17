@@ -317,111 +317,69 @@
       }
     },
     {
-      "if": {
-        "properties": {
-          "image": {
-            "properties": {
-              "registry": {
-                "pattern": "[\"\\\\]",
-                "type": "string"
-              }
-            },
-            "required": [
-              "registry"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "image"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "properties": {
-              "registry": {
-                "not": {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "registry": {
+              "anyOf": [
+                {
+                  "not": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
                   "type": "string"
                 }
-              }
+              ]
             }
           }
         }
       }
     },
     {
-      "if": {
-        "properties": {
-          "image": {
-            "properties": {
-              "repository": {
-                "pattern": "[\"\\\\]",
-                "type": "string"
-              }
-            },
-            "required": [
-              "repository"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "image"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "properties": {
-              "repository": {
-                "not": {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "anyOf": [
+                {
+                  "not": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
                   "type": "string"
                 }
-              }
+              ]
             }
           }
         }
       }
     },
     {
-      "if": {
-        "properties": {
-          "image": {
-            "properties": {
-              "tag": {
-                "pattern": "[\"\\\\]",
-                "type": "string"
-              }
-            },
-            "required": [
-              "tag"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "image"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "properties": {
-              "tag": {
-                "not": {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "tag": {
+              "anyOf": [
+                {
+                  "not": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
                   "type": "string"
                 }
-              }
+              ]
             }
           }
         }
@@ -1342,6 +1300,11 @@
                       },
                       {
                         "not": {
+                          "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                        }
+                      },
+                      {
+                        "not": {
                           "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
                         }
                       }
@@ -1540,66 +1503,7 @@
         }
       ]
     },
-    "fullnameOverride": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[!&*#{}\\[\\],|>@`%]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(|~|null|Null|NULL)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-              }
-            }
-          ],
-          "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-          "type": "string"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        }
-      ]
-    },
+    "fullnameOverride": {},
     "image": {
       "additionalProperties": {},
       "properties": {
@@ -1643,6 +1547,11 @@
             {
               "not": {
                 "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
               }
             },
             {
@@ -1732,6 +1641,11 @@
             {
               "not": {
                 "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
               }
             },
             {
@@ -1849,6 +1763,11 @@
             },
             {
               "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+              }
+            },
+            {
+              "not": {
                 "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
               }
             }
@@ -1864,6 +1783,7 @@
       ]
     },
     "readinessProbe": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -1926,21 +1846,10 @@
           }
         }
       ],
-      "anyOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "initialDelaySeconds": {},
-            "periodSeconds": {}
-          },
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
-        }
-      ]
+      "properties": {
+        "initialDelaySeconds": {},
+        "periodSeconds": {}
+      }
     },
     "resources": {
       "additionalProperties": {},
@@ -2216,6 +2125,11 @@
                 {
                   "not": {
                     "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
                   }
                 },
                 {

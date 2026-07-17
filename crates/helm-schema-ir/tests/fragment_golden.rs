@@ -66,7 +66,7 @@ fn branchy_mapping_merges_guarded_entry_arms() {
 /// (plus per-item dot splices); a destructured range rendering templated
 /// entries splices the source as a fragment, with the header read recorded.
 /// The VALUE variable carries member identity (`$value` is `env.*`), so the
-/// dynamic entry also splices the member scalar (F59).
+/// dynamic entry also splices the member scalar.
 #[test]
 fn range_over_values_splices_list_and_mapping_sources() {
     let source = indoc! {r#"

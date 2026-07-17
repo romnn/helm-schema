@@ -450,6 +450,7 @@ fn wildcard_source_path_types_both_collection_lanes_without_empty_variant() {
         resource: Some(ResourceRef::concrete("v1".to_string(), "Pod".to_string())),
         provenance: Vec::new(),
         has_string_contract: false,
+        template_supplied_member_keys: Default::default(),
     }];
     let values_yaml = indoc! {"
         image:

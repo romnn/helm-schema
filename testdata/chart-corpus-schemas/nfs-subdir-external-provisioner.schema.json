@@ -26,6 +26,795 @@
       ]
     },
     "schema1": {
+      "additionalProperties": false,
+      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
+      "properties": {
+        "podAffinityTerm": {
+          "additionalProperties": false,
+          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+          "properties": {
+            "labelSelector": {
+              "additionalProperties": false,
+              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+              "properties": {
+                "matchExpressions": {
+                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                    "properties": {
+                      "key": {
+                        "description": "key is the label key that the selector applies to.",
+                        "type": "string"
+                      },
+                      "operator": {
+                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                        "type": "string"
+                      },
+                      "values": {
+                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                        "items": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "operator"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "matchLabels": {
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ],
+              "x-kubernetes-map-type": "atomic"
+            },
+            "matchLabelKeys": {
+              "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ],
+              "x-kubernetes-list-type": "atomic"
+            },
+            "mismatchLabelKeys": {
+              "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ],
+              "x-kubernetes-list-type": "atomic"
+            },
+            "namespaceSelector": {
+              "additionalProperties": false,
+              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+              "properties": {
+                "matchExpressions": {
+                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                    "properties": {
+                      "key": {
+                        "description": "key is the label key that the selector applies to.",
+                        "type": "string"
+                      },
+                      "operator": {
+                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                        "type": "string"
+                      },
+                      "values": {
+                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                        "items": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "operator"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "matchLabels": {
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ],
+              "x-kubernetes-map-type": "atomic"
+            },
+            "namespaces": {
+              "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "topologyKey": {
+              "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "topologyKey"
+          ],
+          "type": "object"
+        },
+        "weight": {
+          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "weight",
+        "podAffinityTerm"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "schema10": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "additionalProperties": false,
+        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+        "properties": {
+          "key": {
+            "description": "The label key that the selector applies to.",
+            "type": "string"
+          },
+          "operator": {
+            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+            "type": "string"
+          },
+          "values": {
+            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "operator"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "schema11": {
+      "additionalProperties": false,
+      "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
+      "properties": {
+        "localhostProfile": {
+          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-unions": [
+        {
+          "discriminator": "type",
+          "fields-to-discriminateBy": {
+            "localhostProfile": "LocalhostProfile"
+          }
+        }
+      ]
+    },
+    "schema12": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+          }
+        }
+      ],
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "string"
+    },
+    "schema18": {
+      "additionalProperties": {},
+      "properties": {
+        "path": {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+              }
+            }
+          ],
+          "description": "path that is exported by the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
+          "type": "string"
+        }
+      }
+    },
+    "schema2": {
+      "additionalProperties": false,
+      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+      "properties": {
+        "labelSelector": {
+          "additionalProperties": false,
+          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+          "properties": {
+            "matchExpressions": {
+              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+              "items": {
+                "additionalProperties": false,
+                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                "properties": {
+                  "key": {
+                    "description": "key is the label key that the selector applies to.",
+                    "type": "string"
+                  },
+                  "operator": {
+                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                    "type": "string"
+                  },
+                  "values": {
+                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                    "items": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "key",
+                  "operator"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "matchLabels": {
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ],
+          "x-kubernetes-map-type": "atomic"
+        },
+        "matchLabelKeys": {
+          "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ],
+          "x-kubernetes-list-type": "atomic"
+        },
+        "mismatchLabelKeys": {
+          "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ],
+          "x-kubernetes-list-type": "atomic"
+        },
+        "namespaceSelector": {
+          "additionalProperties": false,
+          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+          "properties": {
+            "matchExpressions": {
+              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+              "items": {
+                "additionalProperties": false,
+                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                "properties": {
+                  "key": {
+                    "description": "key is the label key that the selector applies to.",
+                    "type": "string"
+                  },
+                  "operator": {
+                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                    "type": "string"
+                  },
+                  "values": {
+                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                    "items": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "key",
+                  "operator"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "matchLabels": {
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ],
+          "x-kubernetes-map-type": "atomic"
+        },
+        "namespaces": {
+          "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "topologyKey": {
+          "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "topologyKey"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "schema20": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+              }
+            }
+          ],
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema21": {
+      "additionalProperties": false,
+      "description": "SELinuxOptions are the labels to be applied to the container",
+      "properties": {
+        "level": {
+          "description": "Level is SELinux level label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "role": {
+          "description": "Role is a SELinux role label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "Type is a SELinux type label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "description": "User is a SELinux user label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "schema22": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "schema24": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+      "properties": {},
+      "type": "object"
+    },
+    "schema26": {
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "null"
+    },
+    "schema29": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+      "properties": {},
+      "type": "object"
+    },
+    "schema37": {
+      "anyOf": [
+        {
+          "not": {
+            "type": "string"
+          }
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        }
+      ]
+    },
+    "schema38": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -44,13 +833,7 @@
         "type": "object"
       }
     },
-    "schema10": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "schema2": {
+    "schema40": {
       "not": {
         "properties": {
           "storageClass": {
@@ -69,7 +852,7 @@
         "type": "object"
       }
     },
-    "schema5": {
+    "schema45": {
       "not": {
         "properties": {
           "rbac": {
@@ -88,23 +871,91 @@
         "type": "object"
       }
     },
-    "schema7": {
+    "schema46": {
+      "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+      "type": "string"
+    },
+    "schema49": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "schema5": {
       "anyOf": [
         {
-          "type": "array"
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[!&*#{}\\[\\],|>@`%]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(|~|null|Null|NULL)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+              }
+            }
+          ],
+          "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+          "type": "string"
         },
         {
-          "type": "object"
-        },
-        {
-          "type": "integer"
-        },
-        {
+          "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
           "type": "null"
         }
       ]
     },
-    "schema8": {
+    "schema56": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema58": {
+      "not": {
+        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+      }
+    },
+    "schema59": {
       "not": {
         "properties": {
           "create": {}
@@ -114,6 +965,247 @@
         ],
         "type": "object"
       }
+    },
+    "schema6": {
+      "additionalProperties": false,
+      "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
+      "properties": {
+        "gmsaCredentialSpec": {
+          "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gmsaCredentialSpecName": {
+          "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hostProcess": {
+          "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "runAsUserName": {
+          "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "schema60": {
+      "not": {
+        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+      }
+    },
+    "schema64": {
+      "not": {
+        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+      }
+    },
+    "schema67": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "schema68": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "schema69": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "schema7": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "^[-?:]([ \\t]|$)"
+                }
+              },
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "^(|~|null|Null|NULL)$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "items": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "^[-?:]([ \\t]|$)"
+                }
+              },
+              {
+                "not": {
+                  "pattern": ":[ \\t]|:$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[ \\t]#"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "[\\r\\n]"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "^(|~|null|Null|NULL)$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                }
+              },
+              {
+                "not": {
+                  "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                }
+              }
+            ],
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "schema72": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "schema73": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "schema9": {
+      "description": "A list of node selector requirements by node's fields.",
+      "items": {
+        "additionalProperties": false,
+        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+        "properties": {
+          "key": {
+            "description": "The label key that the selector applies to.",
+            "type": "string"
+          },
+          "operator": {
+            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+            "type": "string"
+          },
+          "values": {
+            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "operator"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ]
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -182,7 +1274,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema5"
+                "$ref": "#/$defs/schema45"
               },
               {
                 "properties": {
@@ -208,7 +1300,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema1"
+                "$ref": "#/$defs/schema38"
               },
               {
                 "properties": {
@@ -265,6 +1357,9 @@
                 }
               },
               {
+                "type": "null"
+              },
+              {
                 "type": "string"
               }
             ]
@@ -301,74 +1396,26 @@
       }
     },
     {
-      "if": {
-        "properties": {
-          "image": {
-            "properties": {
-              "repository": {
-                "pattern": "[\"\\\\]",
-                "type": "string"
-              }
-            },
-            "required": [
-              "repository"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "image"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "properties": {
-              "repository": {
-                "not": {
-                  "type": "string"
-                }
-              }
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/schema37"
             }
           }
         }
       }
     },
     {
-      "if": {
-        "properties": {
-          "image": {
-            "properties": {
-              "tag": {
-                "pattern": "[\"\\\\]",
-                "type": "string"
-              }
-            },
-            "required": [
-              "tag"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "image"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "properties": {
-              "tag": {
-                "not": {
-                  "type": "string"
-                }
-              }
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "tag": {
+              "$ref": "#/$defs/schema37"
             }
           }
         }
@@ -416,28 +1463,9 @@
             "type": "object"
           },
           {
-            "properties": {
-              "podSecurityPolicy": {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "podSecurityPolicy"
-            ],
-            "type": "object"
-          },
-          {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema5"
+                "$ref": "#/$defs/schema45"
               },
               {
                 "properties": {
@@ -463,7 +1491,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema1"
+                "$ref": "#/$defs/schema38"
               },
               {
                 "properties": {
@@ -489,7 +1517,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema2"
+                "$ref": "#/$defs/schema40"
               },
               {
                 "properties": {
@@ -520,7 +1548,52 @@
           "labels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema10"
+                "$ref": "#/$defs/schema29"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Additional labels for any resource created"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "podSecurityPolicy": {
+            "properties": {
+              "enabled": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "podSecurityPolicy"
+        ],
+        "type": "object"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
               },
               {
                 "not": {
@@ -556,6 +1629,148 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "nfs": {
+                "properties": {
+                  "mountOptions": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "mountOptions"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nfs"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "podDisruptionBudget": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podDisruptionBudget"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema45"
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema38"
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema40"
+              },
+              {
+                "properties": {
+                  "storageClass": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema22"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "nameOverride": {
             "$ref": "#/$defs/helm-truthy"
@@ -578,6 +1793,127 @@
                 "type": "null"
               }
             ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "nfs": {
+                "properties": {
+                  "mountOptions": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "mountOptions"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nfs"
+            ],
+            "type": "object"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema40"
+              },
+              {
+                "properties": {
+                  "storageClass": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nfs": {
+            "additionalProperties": {},
+            "properties": {
+              "mountOptions": {
+                "$ref": "#/$defs/schema7"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/schema40"
+          },
+          {
+            "properties": {
+              "storageClass": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "storageClass"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nfs": {
+            "additionalProperties": {},
+            "properties": {
+              "mountOptions": {
+                "anyOf": [
+                  {
+                    "description": "mountOptions controls the mountOptions for dynamically provisioned PersistentVolumes of this storage class. e.g. [\"ro\", \"soft\"]. Not validated - mount of the PVs will simply fail if one is invalid.",
+                    "items": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ]
+              }
+            }
           }
         }
       }
@@ -609,7 +1945,146 @@
             "additionalProperties": {},
             "properties": {
               "mountOptions": {
-                "$ref": "#/$defs/schema7"
+                "anyOf": [
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "properties": {
+                "buildMode": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              "required": [
+                "buildMode"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "not": {
+              "properties": {
+                "nfs": {
+                  "properties": {
+                    "mountOptions": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "mountOptions"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "nfs"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nfs": {
+            "$ref": "#/$defs/schema18"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "nfs": {
+                "properties": {
+                  "mountOptions": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "mountOptions"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nfs"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "buildMode": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "buildMode"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "nfs": {
+                      "properties": {
+                        "mountOptions": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "mountOptions"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "nfs"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nfs": {
+            "additionalProperties": {},
+            "properties": {
+              "path": {
+                "not": {
+                  "type": "null"
+                }
               }
             }
           }
@@ -661,8 +2136,8 @@
           "nfs": {
             "additionalProperties": {},
             "properties": {
-              "path": {
-                "type": "string"
+              "server": {
+                "$ref": "#/$defs/schema5"
               }
             }
           }
@@ -673,7 +2148,156 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema5"
+            "properties": {
+              "nfs": {
+                "properties": {
+                  "mountOptions": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "mountOptions"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nfs"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "buildMode": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "buildMode"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "nfs": {
+                      "properties": {
+                        "mountOptions": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "mountOptions"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "nfs"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nfs": {
+            "additionalProperties": {},
+            "properties": {
+              "server": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "nfs": {
+                "properties": {
+                  "mountOptions": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "mountOptions"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "nfs"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "buildMode": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  },
+                  "required": [
+                    "buildMode"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "nfs": {
+                      "properties": {
+                        "mountOptions": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      "required": [
+                        "mountOptions"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "nfs"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nfs": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/schema45"
           },
           {
             "properties": {
@@ -705,12 +2329,47 @@
               "name": {
                 "anyOf": [
                   {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema68"
+                      },
+                      {
+                        "$ref": "#/$defs/schema69"
+                      },
+                      {
+                        "$ref": "#/$defs/schema72"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema73"
+                      },
+                      {
+                        "$ref": "#/$defs/schema67"
+                      },
+                      {
+                        "$ref": "#/$defs/schema49"
+                      },
+                      {
+                        "$ref": "#/$defs/schema58"
+                      },
+                      {
+                        "$ref": "#/$defs/schema60"
+                      },
+                      {
+                        "$ref": "#/$defs/schema64"
+                      }
+                    ],
+                    "description": "Name of the object being referenced.",
+                    "type": "string"
+                  },
+                  {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -748,8 +2407,15 @@
             "description": "For creating the StorageClass automatically:",
             "properties": {
               "accessModes": {
-                "description": "Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema22"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany"
               }
             }
           }
@@ -758,44 +2424,20 @@
     },
     {
       "if": {
-        "allOf": [
+        "anyOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema2"
-              },
-              {
-                "properties": {
-                  "storageClass": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "storageClass"
-                ],
-                "type": "object"
-              }
-            ]
+            "$ref": "#/$defs/schema40"
           },
           {
             "properties": {
               "storageClass": {
                 "properties": {
-                  "archiveOnDelete": {
-                    "pattern": "[\"\\\\]",
-                    "type": "string"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "archiveOnDelete"
+                  "create"
                 ],
                 "type": "object"
               }
@@ -815,10 +2457,17 @@
             "description": "For creating the StorageClass automatically:",
             "properties": {
               "archiveOnDelete": {
-                "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC.",
-                "not": {
-                  "type": "string"
-                }
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/schema46"
+                  }
+                ],
+                "description": "When set to false your PVs will not be archived by the provisioner upon deletion of the PVC."
               }
             }
           }
@@ -831,7 +2480,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema2"
+                "$ref": "#/$defs/schema40"
               },
               {
                 "properties": {
@@ -860,26 +2509,6 @@
                 "properties": {
                   "onDelete": {
                     "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "onDelete"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storageClass"
-            ],
-            "type": "object"
-          },
-          {
-            "properties": {
-              "storageClass": {
-                "properties": {
-                  "onDelete": {
-                    "pattern": "[\"\\\\]",
-                    "type": "string"
                   }
                 },
                 "required": [
@@ -903,10 +2532,17 @@
             "description": "For creating the StorageClass automatically:",
             "properties": {
               "onDelete": {
-                "description": "If it exists and has 'delete' value, delete the directory. If it exists and has 'retain' value, save the directory.\nOverrides archiveOnDelete.\nIgnored if value not set.",
-                "not": {
-                  "type": "string"
-                }
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/schema46"
+                  }
+                ],
+                "description": "If it exists and has 'delete' value, delete the directory. If it exists and has 'retain' value, save the directory.\nOverrides archiveOnDelete.\nIgnored if value not set."
               }
             }
           }
@@ -919,7 +2555,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema2"
+                "$ref": "#/$defs/schema40"
               },
               {
                 "properties": {
@@ -960,26 +2596,6 @@
               "storageClass"
             ],
             "type": "object"
-          },
-          {
-            "properties": {
-              "storageClass": {
-                "properties": {
-                  "pathPattern": {
-                    "pattern": "[\"\\\\]",
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "pathPattern"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "storageClass"
-            ],
-            "type": "object"
           }
         ]
       },
@@ -991,10 +2607,17 @@
             "description": "For creating the StorageClass automatically:",
             "properties": {
               "pathPattern": {
-                "description": "Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.\nIgnored if value not set.",
-                "not": {
-                  "type": "string"
-                }
+                "anyOf": [
+                  {
+                    "not": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/schema46"
+                  }
+                ],
+                "description": "Specifies a template for creating a directory path via PVC metadata's such as labels, annotations, name or namespace.\nIgnored if value not set."
               }
             }
           }
@@ -1003,25 +2626,228 @@
     }
   ],
   "properties": {
-    "affinity": {},
-    "buildMode": {},
-    "fullnameOverride": {
+    "affinity": {
       "anyOf": [
+        {
+          "additionalProperties": false,
+          "description": "Affinity is a group of affinity scheduling rules.",
+          "properties": {
+            "nodeAffinity": {
+              "additionalProperties": false,
+              "description": "Node affinity is a group of node affinity scheduling rules.",
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "An empty preferred scheduling term matches all objects with implicit weight 0 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).",
+                    "properties": {
+                      "preference": {
+                        "additionalProperties": false,
+                        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
+                        "properties": {
+                          "matchExpressions": {
+                            "$ref": "#/$defs/schema10"
+                          },
+                          "matchFields": {
+                            "$ref": "#/$defs/schema9"
+                          }
+                        },
+                        "type": "object",
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "weight": {
+                        "description": "Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.",
+                        "format": "int32",
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "weight",
+                      "preference"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "additionalProperties": false,
+                  "description": "A node selector represents the union of the results of one or more label queries over a set of nodes; that is, it represents the OR of the selectors represented by the node selector terms.",
+                  "properties": {
+                    "nodeSelectorTerms": {
+                      "description": "Required. A list of node selector terms. The terms are ORed.",
+                      "items": {
+                        "additionalProperties": false,
+                        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
+                        "properties": {
+                          "matchExpressions": {
+                            "$ref": "#/$defs/schema10"
+                          },
+                          "matchFields": {
+                            "$ref": "#/$defs/schema9"
+                          }
+                        },
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "nodeSelectorTerms"
+                  ],
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "x-kubernetes-map-type": "atomic"
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "podAffinity": {
+              "additionalProperties": false,
+              "description": "Pod affinity is a group of inter pod affinity scheduling rules.",
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
+                  "items": {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
+                  "items": {
+                    "$ref": "#/$defs/schema2"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "podAntiAffinity": {
+              "additionalProperties": false,
+              "description": "Pod anti affinity is a group of inter pod anti affinity scheduling rules.",
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
+                  "items": {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
+                  "items": {
+                    "$ref": "#/$defs/schema2"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/schema56"
+        },
         {
           "not": {
             "$ref": "#/$defs/helm-truthy"
           }
         },
         {
-          "type": "string"
+          "type": "null"
         }
+      ]
+    },
+    "buildMode": {},
+    "fullnameOverride": {
+      "type": [
+        "string",
+        "null"
       ]
     },
     "image": {
       "additionalProperties": {},
       "properties": {
         "pullPolicy": {
-          "type": "string"
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/schema68"
+                },
+                {
+                  "$ref": "#/$defs/schema69"
+                },
+                {
+                  "$ref": "#/$defs/schema72"
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/schema73"
+                },
+                {
+                  "$ref": "#/$defs/schema67"
+                },
+                {
+                  "$ref": "#/$defs/schema49"
+                },
+                {
+                  "$ref": "#/$defs/schema58"
+                },
+                {
+                  "$ref": "#/$defs/schema60"
+                },
+                {
+                  "$ref": "#/$defs/schema64"
+                }
+              ],
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "string"
+            },
+            {
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "null"
+            }
+          ]
         },
         "repository": {},
         "tag": {}
@@ -1031,8 +2857,28 @@
     "imagePullSecrets": {
       "anyOf": [
         {
-          "items": {},
-          "type": "array"
+          "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
+          "items": {
+            "additionalProperties": false,
+            "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
+            "properties": {
+              "name": {
+                "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ],
+            "x-kubernetes-map-type": "atomic"
+          },
+          "type": "array",
+          "x-kubernetes-patch-merge-key": "name",
+          "x-kubernetes-patch-strategy": "merge"
         },
         {
           "not": {
@@ -1052,12 +2898,15 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema10"
+          "$ref": "#/$defs/schema29"
         },
         {
           "not": {
             "$ref": "#/$defs/helm-truthy"
           }
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Additional labels for any resource created"
@@ -1081,7 +2930,21 @@
       },
       "type": "object"
     },
-    "nameOverride": {},
+    "nameOverride": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/schema22"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "nfs": {
       "additionalProperties": {},
       "allOf": [
@@ -1098,10 +2961,70 @@
             "type": "object"
           },
           "then": {
+            "$ref": "#/$defs/schema18"
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mountOptions": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "mountOptions"
+            ],
+            "type": "object"
+          },
+          "then": {
             "additionalProperties": {},
             "properties": {
-              "path": {
-                "type": "string"
+              "reclaimPolicy": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema68"
+                      },
+                      {
+                        "$ref": "#/$defs/schema69"
+                      },
+                      {
+                        "$ref": "#/$defs/schema72"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema73"
+                      },
+                      {
+                        "$ref": "#/$defs/schema67"
+                      },
+                      {
+                        "$ref": "#/$defs/schema49"
+                      },
+                      {
+                        "$ref": "#/$defs/schema58"
+                      },
+                      {
+                        "$ref": "#/$defs/schema60"
+                      },
+                      {
+                        "$ref": "#/$defs/schema64"
+                      }
+                    ],
+                    "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
+                    "type": "string"
+                  },
+                  {
+                    "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
+                    "type": "null"
+                  }
+                ],
+                "description": "Reclaim policy for the main nfs volume"
               }
             }
           }
@@ -1121,8 +3044,42 @@
           "then": {
             "additionalProperties": {},
             "properties": {
-              "reclaimPolicy": {
-                "description": "Reclaim policy for the main nfs volume",
+              "server": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/schema68"
+                  },
+                  {
+                    "$ref": "#/$defs/schema69"
+                  },
+                  {
+                    "$ref": "#/$defs/schema72"
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/schema73"
+                  },
+                  {
+                    "$ref": "#/$defs/schema67"
+                  },
+                  {
+                    "$ref": "#/$defs/schema49"
+                  },
+                  {
+                    "$ref": "#/$defs/schema58"
+                  },
+                  {
+                    "$ref": "#/$defs/schema60"
+                  },
+                  {
+                    "$ref": "#/$defs/schema64"
+                  }
+                ],
+                "description": "server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
                 "type": "string"
               }
             }
@@ -1144,39 +3101,117 @@
               ]
             }
           }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "mountOptions": {
+              "allOf": [
+                {
+                  "if": {
+                    "$ref": "#/$defs/helm-truthy"
+                  },
+                  "then": {
+                    "anyOf": [
+                      {
+                        "type": "array"
+                      },
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
         }
       ],
       "properties": {
-        "mountOptions": {},
+        "mountOptions": {
+          "anyOf": [
+            {
+              "description": "mountOptions is the list of mount options, e.g. [\"ro\", \"soft\"]. Not validated - mount will simply fail if one is invalid. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#mount-options",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
         "path": {
-          "type": "string"
+          "$ref": "#/$defs/schema5"
         },
         "reclaimPolicy": {
           "description": "Reclaim policy for the main nfs volume"
         },
-        "server": {},
+        "server": {
+          "$ref": "#/$defs/schema5"
+        },
         "volumeName": {
-          "type": "string"
+          "$ref": "#/$defs/schema22"
         }
       },
       "type": "object"
     },
-    "nodeSelector": {},
-    "podAnnotations": {
+    "nodeSelector": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema56"
         },
         {
-          "$ref": "#/$defs/schema10"
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
         },
         {
           "not": {
             "$ref": "#/$defs/helm-truthy"
           }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "podAnnotations": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/schema56"
+        },
+        {
+          "$ref": "#/$defs/schema24"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "null"
         }
       ],
       "description": "Deployment pod annotations"
@@ -1207,7 +3242,25 @@
                     }
                   },
                   {
-                    "type": "integer"
+                    "oneOf": [
+                      {
+                        "$ref": "#/$defs/schema20"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "pattern": "^-?(0|[1-9][0-9]*)$",
+                            "type": "string"
+                          },
+                          {
+                            "type": "integer"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    ]
                   }
                 ]
               }
@@ -1232,7 +3285,113 @@
       },
       "type": "object"
     },
-    "podSecurityContext": {},
+    "podSecurityContext": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "description": "PodSecurityContext holds pod-level security attributes and common container settings. Some fields are also present in container.securityContext.  Field values of container.securityContext take precedence over field values of PodSecurityContext.",
+          "properties": {
+            "fsGroup": {
+              "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "fsGroupChangePolicy": {
+              "description": "fsGroupChangePolicy defines behavior of changing ownership and permission of the volume before being exposed inside Pod. This field will only apply to volume types which support fsGroup based ownership(and permissions). It will have no effect on ephemeral volume types such as: secret, configmaps and emptydir. Valid values are \"OnRootMismatch\" and \"Always\". If not specified, \"Always\" is used. Note that this field cannot be set when spec.os.name is windows.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "runAsGroup": {
+              "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "runAsNonRoot": {
+              "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "runAsUser": {
+              "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "seLinuxOptions": {
+              "$ref": "#/$defs/schema21"
+            },
+            "seccompProfile": {
+              "$ref": "#/$defs/schema11"
+            },
+            "supplementalGroups": {
+              "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
+              "items": {
+                "format": "int64",
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "sysctls": {
+              "description": "Sysctls hold a list of namespaced sysctls used for the pod. Pods with unsupported sysctls (by the container runtime) might fail to launch. Note that this field cannot be set when spec.os.name is windows.",
+              "items": {
+                "additionalProperties": false,
+                "description": "Sysctl defines a kernel parameter to be set",
+                "properties": {
+                  "name": {
+                    "description": "Name of a property to set",
+                    "type": "string"
+                  },
+                  "value": {
+                    "description": "Value of a property to set",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "value"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "windowsOptions": {
+              "$ref": "#/$defs/schema6"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/schema56"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "podSecurityPolicy": {
       "additionalProperties": {},
       "description": "If true, create & use Pod Security Policy resources\nhttps://kubernetes.io/docs/concepts/policy/pod-security-policy/",
@@ -1274,12 +3433,233 @@
       "type": "object"
     },
     "replicaCount": {
-      "type": "integer"
+      "anyOf": [
+        {
+          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+          "format": "int32",
+          "type": "null"
+        },
+        {
+          "pattern": "^-?(0|[1-9][0-9]*)$",
+          "type": "string"
+        }
+      ]
     },
     "resources": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "description": "ResourceRequirements describes the compute resource requirements.",
+          "properties": {
+            "claims": {
+              "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+              "items": {
+                "additionalProperties": false,
+                "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+                "properties": {
+                  "name": {
+                    "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ],
+              "x-kubernetes-list-map-keys": [
+                "name"
+              ],
+              "x-kubernetes-list-type": "map"
+            },
+            "limits": {
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                ]
+              },
+              "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "requests": {
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                ]
+              },
+              "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/schema56"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ],
       "description": "limits:\ncpu: 100m\nmemory: 128Mi\nrequests:\ncpu: 100m\nmemory: 128Mi"
     },
-    "securityContext": {},
+    "securityContext": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
+          "properties": {
+            "allowPrivilegeEscalation": {
+              "description": "AllowPrivilegeEscalation controls whether a process can gain more privileges than its parent process. This bool directly controls if the no_new_privs flag will be set on the container process. AllowPrivilegeEscalation is true always when the container is: 1) run as Privileged 2) has CAP_SYS_ADMIN Note that this field cannot be set when spec.os.name is windows.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "capabilities": {
+              "additionalProperties": false,
+              "description": "Adds and removes POSIX capabilities from running containers.",
+              "properties": {
+                "add": {
+                  "description": "Added capabilities",
+                  "items": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "drop": {
+                  "description": "Removed capabilities",
+                  "items": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "privileged": {
+              "description": "Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "procMount": {
+              "description": "procMount denotes the type of proc mount to use for the containers. The default is DefaultProcMount which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "readOnlyRootFilesystem": {
+              "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "runAsGroup": {
+              "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "runAsNonRoot": {
+              "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "runAsUser": {
+              "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "seLinuxOptions": {
+              "$ref": "#/$defs/schema21"
+            },
+            "seccompProfile": {
+              "$ref": "#/$defs/schema11"
+            },
+            "windowsOptions": {
+              "$ref": "#/$defs/schema6"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/schema56"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
     "serviceAccount": {
       "additionalProperties": {},
       "allOf": [
@@ -1287,7 +3667,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "properties": {
@@ -1308,12 +3688,15 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Annotations to add to the service account"
@@ -1325,7 +3708,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "properties": {
@@ -1346,12 +3729,15 @@
               "name": {
                 "anyOf": [
                   {
+                    "$ref": "#/$defs/schema12"
+                  },
+                  {
+                    "$ref": "#/$defs/schema26"
+                  },
+                  {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -1380,15 +3766,54 @@
         "name": {
           "anyOf": [
             {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/schema68"
+                },
+                {
+                  "$ref": "#/$defs/schema69"
+                },
+                {
+                  "$ref": "#/$defs/schema72"
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/schema73"
+                },
+                {
+                  "$ref": "#/$defs/schema67"
+                },
+                {
+                  "$ref": "#/$defs/schema49"
+                },
+                {
+                  "$ref": "#/$defs/schema58"
+                },
+                {
+                  "$ref": "#/$defs/schema60"
+                },
+                {
+                  "$ref": "#/$defs/schema64"
+                }
+              ],
+              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+              "type": "string"
+            },
+            {
+              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+              "type": "null"
+            },
+            {
               "not": {
                 "$ref": "#/$defs/helm-truthy"
               }
             },
             {
               "type": "null"
-            },
-            {
-              "type": "string"
             }
           ],
           "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -1403,7 +3828,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "properties": {
@@ -1422,8 +3847,21 @@
             "additionalProperties": {},
             "properties": {
               "allowVolumeExpansion": {
-                "description": "Allow volume to be expanded dynamically",
-                "type": "boolean"
+                "anyOf": [
+                  {
+                    "description": "allowVolumeExpansion shows whether the storage class allow volume expand.",
+                    "type": "boolean"
+                  },
+                  {
+                    "description": "allowVolumeExpansion shows whether the storage class allow volume expand.",
+                    "type": "null"
+                  },
+                  {
+                    "pattern": "^(true|false|True|False|TRUE|FALSE)$",
+                    "type": "string"
+                  }
+                ],
+                "description": "Allow volume to be expanded dynamically"
               }
             }
           }
@@ -1432,7 +3870,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "properties": {
@@ -1453,12 +3891,15 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema24"
                   },
                   {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Storage class annotations"
@@ -1470,7 +3911,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "properties": {
@@ -1489,8 +3930,15 @@
             "additionalProperties": {},
             "properties": {
               "name": {
-                "description": "Set a StorageClass name\nIgnored if storageClass.create is false",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema12"
+                  },
+                  {
+                    "$ref": "#/$defs/schema26"
+                  }
+                ],
+                "description": "Set a StorageClass name\nIgnored if storageClass.create is false"
               }
             }
           }
@@ -1499,7 +3947,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "properties": {
@@ -1525,6 +3973,9 @@
                     }
                   },
                   {
+                    "type": "null"
+                  },
+                  {
                     "type": "string"
                   }
                 ]
@@ -1536,7 +3987,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "properties": {
@@ -1555,8 +4006,51 @@
             "additionalProperties": {},
             "properties": {
               "reclaimPolicy": {
-                "description": "Method used to reclaim an obsoleted volume",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema68"
+                      },
+                      {
+                        "$ref": "#/$defs/schema69"
+                      },
+                      {
+                        "$ref": "#/$defs/schema72"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema73"
+                      },
+                      {
+                        "$ref": "#/$defs/schema67"
+                      },
+                      {
+                        "$ref": "#/$defs/schema49"
+                      },
+                      {
+                        "$ref": "#/$defs/schema58"
+                      },
+                      {
+                        "$ref": "#/$defs/schema60"
+                      },
+                      {
+                        "$ref": "#/$defs/schema64"
+                      }
+                    ],
+                    "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
+                    "type": "string"
+                  },
+                  {
+                    "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
+                    "type": "null"
+                  }
+                ],
+                "description": "Method used to reclaim an obsoleted volume"
               }
             }
           }
@@ -1565,7 +4059,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema8"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "properties": {
@@ -1584,8 +4078,51 @@
             "additionalProperties": {},
             "properties": {
               "volumeBindingMode": {
-                "description": "Set volume bindinng mode - Immediate or WaitForFirstConsumer",
-                "type": "string"
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema68"
+                      },
+                      {
+                        "$ref": "#/$defs/schema69"
+                      },
+                      {
+                        "$ref": "#/$defs/schema72"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema73"
+                      },
+                      {
+                        "$ref": "#/$defs/schema67"
+                      },
+                      {
+                        "$ref": "#/$defs/schema49"
+                      },
+                      {
+                        "$ref": "#/$defs/schema58"
+                      },
+                      {
+                        "$ref": "#/$defs/schema60"
+                      },
+                      {
+                        "$ref": "#/$defs/schema64"
+                      }
+                    ],
+                    "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
+                    "type": "string"
+                  },
+                  {
+                    "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
+                    "type": "null"
+                  }
+                ],
+                "description": "Set volume bindinng mode - Immediate or WaitForFirstConsumer"
               }
             }
           }
@@ -1641,7 +4178,50 @@
       "type": "object"
     },
     "strategyType": {
-      "type": "string"
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/schema68"
+            },
+            {
+              "$ref": "#/$defs/schema69"
+            },
+            {
+              "$ref": "#/$defs/schema72"
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "$ref": "#/$defs/schema73"
+            },
+            {
+              "$ref": "#/$defs/schema67"
+            },
+            {
+              "$ref": "#/$defs/schema49"
+            },
+            {
+              "$ref": "#/$defs/schema58"
+            },
+            {
+              "$ref": "#/$defs/schema60"
+            },
+            {
+              "$ref": "#/$defs/schema64"
+            }
+          ],
+          "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
+          "type": "string"
+        },
+        {
+          "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
+          "type": "null"
+        }
+      ]
     },
     "tolerations": {
       "items": {},

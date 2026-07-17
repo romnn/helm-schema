@@ -126,7 +126,7 @@ pub(crate) struct ValuePathSchemaInputs {
     pub(crate) guarded_type_hint_schema: Value,
     /// Hints from literal `default`/`coalesce` fallbacks: they type only the
     /// truthy arm of the path, so when they are the path's only typing the
-    /// base must keep the whole Helm-falsy set open beside them (F42).
+    /// base must keep the whole Helm-falsy set open beside them.
     pub(crate) fallback_type_hint_schema: Value,
 }
 
@@ -142,7 +142,10 @@ impl ResolvePolicy {
             // directly back to the input. Opaque fragment output does not
             // provide that identity guarantee; only a sequence placement is
             // structurally load-bearing there.
-            ValueKind::YamlSerialized => Some(schema.clone()),
+            ValueKind::YamlSerialized => Some(relax_template_supplied_required(
+                schema.clone(),
+                &use_.template_supplied_member_keys,
+            )),
             ValueKind::Fragment => schema_allows_type(schema, "array").then(|| schema.clone()),
             ValueKind::PartialScalar | ValueKind::Serialized => None,
             ValueKind::Scalar if use_.is_self_range_collection => {
@@ -210,7 +213,7 @@ impl ResolvePolicy {
         // A literal fallback documents intent, not a contract: like the
         // declared default, its type must not narrow a path that some
         // serializing or totally-formatting render provably tolerates any
-        // input at (F76: flux2's `--log-level={{ .Values.logLevel |
+        // input at (flux2's `--log-level={{ .Values.logLevel |
         // default "info" }}` embeds every value kind as argument text).
         let fallback_type_hint_schema = if facts.contract.used_as_serialized {
             empty_schema()
@@ -222,7 +225,7 @@ impl ResolvePolicy {
         // channel types the path (a provider slot, a guard comparison, a
         // runtime string contract, or an ordinary hint), the merged base
         // must keep the whole Helm-falsy set open beside the hinted type
-        // (F42: cilium `default "1.8" .Values.upgradeCompatibility`).
+        // (cilium `default "1.8" .Values.upgradeCompatibility`).
         let fallback_hint_only_typing = !is_empty_schema(&fallback_type_hint_schema)
             && is_empty_schema(&type_hint_schema)
             && is_empty_schema(&provider_schema)
@@ -309,6 +312,7 @@ impl ResolvePolicy {
         };
         let merged = if !is_empty_schema(&merged)
             && !facts.contract.is_direct_ranged_source
+            && !facts.contract.has_string_contract
             && ((facts.contract.has_render_use
                 && facts.contract.all_render_uses_self_guarded
                 && !facts.contract.has_unconditional_render_use)
@@ -317,7 +321,9 @@ impl ResolvePolicy {
             // Every Helm-falsy value skips a self-guarded consumer (or takes
             // a literal fallback before any consumer runs). Keeping only the
             // declared falsy default made schema validity depend on which
-            // off-state the chart happened to ship.
+            // off-state the chart happened to ship. A path-wide runtime
+            // string contract disables the escape: that consumer parses the
+            // RAW value before any selection runs.
             union_schema_list(vec![merged, helm_falsy_schema()])
         } else {
             merged
@@ -352,7 +358,7 @@ impl ResolvePolicy {
                 // a destructured `range $k, $v` iterates maps just as well,
                 // so its member rows must keep the declared-`{}` map OPEN
                 // for user-named entries instead of pinning the exact empty
-                // off-state (F30: cluster-autoscaler `extraEnvConfigMaps`).
+                // off-state (cluster-autoscaler `extraEnvConfigMaps`).
                 facts.contract.has_structured_item_descendants
                     && !facts.contract.has_destructured_range_use,
                 facts.contract.has_render_use && facts.contract.all_render_uses_self_guarded,
@@ -550,10 +556,39 @@ impl ResolvePolicy {
     }
 }
 
+/// Drop provider `required` entries the template already satisfies with
+/// literal sibling keys in the splice's own mapping: the rendered object
+/// carries them regardless of the user value (metrics-server's `- name:
+/// tmp` beside `toYaml .Values.tmpVolume` at a Volume slot).
+fn relax_template_supplied_required(
+    mut schema: Value,
+    supplied: &std::collections::BTreeSet<String>,
+) -> Value {
+    if supplied.is_empty() {
+        return schema;
+    }
+    if let Some(object) = schema.as_object_mut() {
+        if let Some(required) = object.get_mut("required").and_then(Value::as_array_mut) {
+            required.retain(|key| key.as_str().is_none_or(|key| !supplied.contains(key)));
+            if required.is_empty() {
+                object.remove("required");
+            }
+        }
+        for arms_key in ["allOf", "anyOf", "oneOf"] {
+            if let Some(arms) = object.get_mut(arms_key).and_then(Value::as_array_mut) {
+                for arm in arms {
+                    *arm = relax_template_supplied_required(arm.take(), supplied);
+                }
+            }
+        }
+    }
+    schema
+}
+
 fn plain_scalar_provider_preimage(schema: Value) -> Value {
     // A raw string spelling an implicit YAML token of ANOTHER kind the slot
     // ALSO allows still validates once the completed document reparses
-    // (F76: aws-load-balancer-controller's `nameOverride: "null"` renders a
+    // (aws-load-balancer-controller's `nameOverride: "null"` renders a
     // null the null-widened provider slot accepts), so the token-class
     // exclusions below apply only for kinds the slot rejects.
     let allowed = ImplicitTokenAllowance {
@@ -636,6 +671,13 @@ fn scalar_plain_string_preimage(schema: Value, allowed: &ImplicitTokenAllowance)
     if !allowed.number && !allowed.integer {
         exclusions.push(serde_json::json!({
             "not": { "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$" }
+        }));
+        // Helm's YAML 1.1 resolver also reads hex, explicit octal, binary,
+        // and legacy leading-zero spellings as integers, so a bare token in
+        // any of those forms reparses away from the string the sink needs
+        // (velero's unquoted BackupStorageLocation provider).
+        exclusions.push(serde_json::json!({
+            "not": { "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$" }
         }));
     }
     if !allowed.number {
@@ -735,7 +777,7 @@ pub(crate) fn conditional_target_schema(
     // A branch whose renders all sit behind the path's OWN truthy selection
     // (`if .Values.x`, `with`, `default`) never consumes a Helm-falsy value:
     // the guard skips or the fallback substitutes, so the branch's typing
-    // holds only for truthy inputs (F42). The self-guard predicates are
+    // holds only for truthy inputs. The self-guard predicates are
     // deliberately absent from the overlay key (they double as nullability
     // evidence), so the falsy escape must ride the arm schema itself. The
     // declared-default and values.yaml merges above may narrow the escape

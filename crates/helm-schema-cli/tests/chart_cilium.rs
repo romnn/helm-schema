@@ -1,4 +1,4 @@
-//! Semantic assertions for the cilium chart (F37): the SPIRE agent and
+//! Semantic assertions for the cilium chart: the SPIRE agent and
 //! server images are string-or-object type dispatches NESTED under outer
 //! enable guards, and the string arm must stay valid with every outer
 //! guard ACTIVE. A sparse values document does not exercise this — the

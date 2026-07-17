@@ -1,6 +1,6 @@
 use super::*;
 
-/// F59: a range body that reads MEMBER STRUCTURE (`.tls` on each item)
+/// a range body that reads MEMBER STRUCTURE (`.tls` on each item)
 /// constrains every iterable lane — array items and map values must be
 /// objects, and positive integer iteration produces integer members that
 /// fail the access (surveyor `config.jetstream.accounts` shape).
@@ -42,7 +42,7 @@ fn range_member_structure_constrains_all_iterable_lanes() {
     }
 }
 
-/// F59 (string body): a range body that feeds each member to a STRING
+/// string body: a range body that feeds each member to a STRING
 /// consumer (`tpl $arg $`) requires string members on every lane — scalar
 /// non-string items and integer iteration (int members) abort rendering
 /// (jaeger `args` / jenkins `installPlugins` shape).
@@ -78,7 +78,7 @@ fn range_string_consumer_constrains_all_iterable_lanes() {
     }
 }
 
-/// F58 (guarded lane): the branch-scoped iterable domain of a GUARDED
+/// guarded lane: the branch-scoped iterable domain of a GUARDED
 /// two-variable range excludes integers too (kyverno/prometheus extraArgs
 /// shape — the range sits under an enable guard).
 #[test]
@@ -121,7 +121,7 @@ fn guarded_destructured_range_excludes_integer_iteration() {
     );
 }
 
-/// F64: a strict consumer under an UNDECODABLE outer guard (semverCompare)
+/// a strict consumer under an UNDECODABLE outer guard (semverCompare)
 /// must not bind its contract globally — with the shipped version the
 /// branch is dead and the raw value renders through other paths (airflow
 /// `config.webserver.base_url` shape).
@@ -151,7 +151,7 @@ fn unlowerable_outer_guard_abstains_from_child_string_contract() {
     );
 }
 
-/// F64 (control): the SAME consumer under a decodable guard keeps its
+/// control: the SAME consumer under a decodable guard keeps its
 /// branch-scoped contract — abstention is only for guards the encoding
 /// cannot represent.
 #[test]
@@ -189,7 +189,7 @@ fn decodable_guard_keeps_child_string_contract() {
     );
 }
 
-/// F64 (hint degradation): when an approximate guard poisons a path's
+/// hint degradation: when an approximate guard poisons a path's
 /// conditional overlays, its branch-scoped "string" hint must stay a
 /// widen-only guarded hint instead of degrading to path-level typing —
 /// the unconditional total render proves non-strings pass (bitnami

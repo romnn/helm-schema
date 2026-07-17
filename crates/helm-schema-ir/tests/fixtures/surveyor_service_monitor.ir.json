@@ -131,7 +131,14 @@
         "api_version": "monitoring.coreos.com/v1",
         "kind": "ServiceMonitor"
       },
-      "source_expr": "global.labels"
+      "source_expr": "global.labels",
+      "template_supplied_member_keys": [
+        "app.kubernetes.io/instance",
+        "app.kubernetes.io/managed-by",
+        "app.kubernetes.io/name",
+        "app.kubernetes.io/version",
+        "helm.sh/chart"
+      ]
     },
     {
       "condition": [
@@ -471,7 +478,14 @@
         "api_version": "monitoring.coreos.com/v1",
         "kind": "ServiceMonitor"
       },
-      "source_expr": "serviceMonitor.labels"
+      "source_expr": "serviceMonitor.labels",
+      "template_supplied_member_keys": [
+        "app.kubernetes.io/instance",
+        "app.kubernetes.io/managed-by",
+        "app.kubernetes.io/name",
+        "app.kubernetes.io/version",
+        "helm.sh/chart"
+      ]
     },
     {
       "condition": [

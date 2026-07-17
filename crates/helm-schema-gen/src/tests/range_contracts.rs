@@ -1,6 +1,6 @@
 use super::*;
 
-/// F40: an outer range binds each item to a local that an INNER range
+/// an outer range binds each item to a local that an INNER range
 /// iterates — the nested iterable requirement must reach the outer item
 /// identity (reloader `deployment.env.existing` shape).
 #[test]
@@ -65,7 +65,7 @@ fn nested_range_over_ranged_local_requires_iterable_items() {
     }
 }
 
-/// F42: a string consumer behind `default` constrains the raw subject only
+/// a string consumer behind `default` constrains the raw subject only
 /// where it survives the fallback — `truthy(nameOverride) ⇒ string`, never
 /// an unconditional type (zalando/promtail fullname helper shape).
 #[test]
@@ -101,7 +101,7 @@ fn default_guarded_string_consumer_binds_conditional_contract() {
     );
 }
 
-/// F43: a range in one template must not bypass an independent member
+/// a range in one template must not bypass an independent member
 /// contract from another — the object requirement holds wherever the value
 /// is truthy, while the Helm-empty array off-state stays valid (reloader
 /// `deployment.env.secret` shape).
@@ -147,7 +147,7 @@ fn range_alternative_does_not_bypass_member_contract() {
     );
 }
 
-/// F55: independent positive type-guarded blocks with NO catch-all leave
+/// independent positive type-guarded blocks with NO catch-all leave
 /// unmatched types valid — they execute neither block (external-dns
 /// `extraArgs` shape, declared `{}`).
 #[test]
@@ -190,7 +190,7 @@ fn independent_type_blocks_keep_silent_complement_open() {
     }
 }
 
-/// F54: a `kindIs "slice"` arm whose body serializes the value must stay
+/// a `kindIs "slice"` arm whose body serializes the value must stay
 /// SATISFIABLE for arrays — the branch resolve must never contradict its
 /// own partition (oauth2-proxy `extraArgs` list form, which the chart's
 /// own ci values render).
@@ -264,7 +264,7 @@ fn mapping_value_yaml_serialization_keeps_provider_shape() {
     );
 }
 
-/// F56: a shape-neutral `toYaml` input still inherits the sequence domain of
+/// a shape-neutral `toYaml` input still inherits the sequence domain of
 /// its structural sink. The surrounding truthy guard preserves Helm-falsy
 /// skip values without admitting a truthy scalar into the sequence.
 #[test]
@@ -307,7 +307,7 @@ fn sequence_fragment_keeps_provider_array_domain() {
     );
 }
 
-/// F57: a truthy-guarded object that is BOTH serialized and member-read is
+/// a truthy-guarded object that is BOTH serialized and member-read is
 /// falsy-or-object — the fragment lane must not bypass the member access
 /// (coredns `podDisruptionBudget` shape). Encoded size-aware: one folded
 /// arm per path, pruned where the schema tree already types the node.
@@ -349,7 +349,7 @@ fn member_read_beside_serialize_requires_object_when_truthy() {
     }
 }
 
-/// F57: a total serialized use in one document cannot bypass an independent
+/// a total serialized use in one document cannot bypass an independent
 /// range contract in another. Only the range's live truthy branch constrains
 /// the shared input.
 #[test]
@@ -452,7 +452,7 @@ fn yaml_serialization_does_not_erase_unconditional_range_domain() {
     }
 }
 
-/// F57/F66: a ranged member access executes for every member after its outer
+/// a ranged member access executes for every member after its outer
 /// guard and range are live. The member's own Helm truthiness does not guard
 /// the access.
 #[test]
@@ -500,7 +500,7 @@ fn ranged_member_access_rejects_falsy_members_only_when_live() {
     }
 }
 
-/// F62: opening a declared empty mapping must retain its object domain.
+/// opening a declared empty mapping must retain its object domain.
 /// Arbitrary members remain valid, but a scalar cannot host the member read.
 #[test]
 fn opened_empty_member_host_keeps_object_type() {
@@ -544,7 +544,7 @@ fn opened_empty_member_host_keeps_object_type() {
     }
 }
 
-/// F63: a chained selector read requires every nonterminal segment to be
+/// a chained selector read requires every nonterminal segment to be
 /// present and object-shaped under the executing guard; the leaf stays free
 /// (surveyor `config.credentials.secret.key` shape).
 #[test]
@@ -584,7 +584,7 @@ fn chained_member_read_requires_intermediate_objects() {
     }
 }
 
-/// F58: integer iteration is a zero/one-variable range feature — a
+/// integer iteration is a zero/one-variable range feature — a
 /// TWO-variable range aborts on integers (`can't use 7 to iterate over
 /// more than one variable`), so the iterable domain must follow the
 /// parsed binding arity (ingress-nginx `controller.containerPort` shape).

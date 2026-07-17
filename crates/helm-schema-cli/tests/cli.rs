@@ -1440,7 +1440,7 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> color_eyre:
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {
-            // F42/F76: the `default "fallback"` literal types only the
+            // the `default "fallback"` literal types only the
             // truthy arm, and the only consumer is `printf`, which totally
             // formats ANY input — so the documented string intent must not
             // constrain the path at all.

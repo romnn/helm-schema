@@ -669,7 +669,7 @@ fn integer_and_float_comparisons_keep_distinct_runtime_kinds() {
     sim_assert_eq!(
         have: captures("eq .Values.input 1"),
         want: BTreeSet::from([(
-            crate::eval_effect::CaptureKind::ValueType {
+            crate::eval_effect::CaptureKind::ComparableKind {
                 path: "input".to_string(),
                 schema_type: "integer".to_string(),
             },
@@ -679,7 +679,7 @@ fn integer_and_float_comparisons_keep_distinct_runtime_kinds() {
     sim_assert_eq!(
         have: captures("eq .Values.input 1.5"),
         want: BTreeSet::from([(
-            crate::eval_effect::CaptureKind::ValueType {
+            crate::eval_effect::CaptureKind::ComparableKind {
                 path: "input".to_string(),
                 schema_type: "number".to_string(),
             },
@@ -1221,4 +1221,33 @@ fn finite_selector_program_construction_stays_exact() {
             "{{((((.Values.telemetry).v2).stackdriver).disableOutbound)}}".to_string(),
         ])))
     );
+}
+
+/// A ternary's condition only SELECTS an arm: its identity must not join
+/// the result's output paths, or the placement slot's provider schema
+/// stamps onto the raw flag (harbor's `ternary "https-web" "http-web"
+/// .Values.internalTLS.enabled` at a Service port-name slot). The Boolean
+/// operand contract still rides the capture lane.
+#[test]
+fn ternary_condition_identity_stays_out_of_output_paths() {
+    for action in [
+        r#"ternary "https-web" "http-web" .Values.internalTLS.enabled"#,
+        r#".Values.internalTLS.enabled | ternary "https-web" "http-web""#,
+    ] {
+        let result = eval_expr(&single_expr(action), &EvalEnv::default());
+
+        assert!(
+            !result.effects.output_paths.contains("internalTLS.enabled"),
+            "the condition never renders into the slot: {action}"
+        );
+        assert!(
+            result.effects.helper_fails.iter().any(|capture| matches!(
+                &capture.kind,
+                crate::eval_effect::CaptureKind::ComparableKind { path, schema_type }
+                    | crate::eval_effect::CaptureKind::ValueType { path, schema_type }
+                    if path == "internalTLS.enabled" && schema_type == "boolean"
+            )),
+            "the Boolean operand contract must survive: {action}"
+        );
+    }
 }

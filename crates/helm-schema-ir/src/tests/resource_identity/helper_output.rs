@@ -619,7 +619,7 @@ fn single_literal_helper_is_not_branched() {
     );
 }
 
-/// F83 (datadog `policy.poddisruptionbudget.apiVersion`): a helper body that
+/// datadog `policy.poddisruptionbudget.apiVersion`: a helper body that
 /// writes its literal as a QUOTED YAML scalar (`"policy/v1"`, quotes
 /// included) denotes the unquoted scalar once the composed manifest is
 /// parsed, so provider lookup must see `policy/v1`.

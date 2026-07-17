@@ -26,6 +26,212 @@
       ]
     },
     "schema1": {
+      "additionalProperties": false,
+      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
+      "properties": {
+        "podAffinityTerm": {
+          "additionalProperties": false,
+          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+          "properties": {
+            "labelSelector": {
+              "additionalProperties": false,
+              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+              "properties": {
+                "matchExpressions": {
+                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                    "properties": {
+                      "key": {
+                        "description": "key is the label key that the selector applies to.",
+                        "type": "string"
+                      },
+                      "operator": {
+                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                        "type": "string"
+                      },
+                      "values": {
+                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                        "items": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "operator"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "matchLabels": {
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ],
+              "x-kubernetes-map-type": "atomic"
+            },
+            "matchLabelKeys": {
+              "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ],
+              "x-kubernetes-list-type": "atomic"
+            },
+            "mismatchLabelKeys": {
+              "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ],
+              "x-kubernetes-list-type": "atomic"
+            },
+            "namespaceSelector": {
+              "additionalProperties": false,
+              "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+              "properties": {
+                "matchExpressions": {
+                  "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                    "properties": {
+                      "key": {
+                        "description": "key is the label key that the selector applies to.",
+                        "type": "string"
+                      },
+                      "operator": {
+                        "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                        "type": "string"
+                      },
+                      "values": {
+                        "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                        "items": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "type": [
+                          "array",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key",
+                      "operator"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "matchLabels": {
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ],
+              "x-kubernetes-map-type": "atomic"
+            },
+            "namespaces": {
+              "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "topologyKey": {
+              "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "topologyKey"
+          ],
+          "type": "object"
+        },
+        "weight": {
+          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "weight",
+        "podAffinityTerm"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "schema13": {
       "allOf": [
         {
           "not": {
@@ -69,77 +275,22 @@
         },
         {
           "not": {
+            "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+          }
+        },
+        {
+          "not": {
             "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
           }
         }
       ],
       "type": "string"
     },
-    "schema10": {
-      "not": {
-        "properties": {
-          "rbac": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "rbac"
-        ],
-        "type": "object"
-      }
+    "schema15": {
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "null"
     },
-    "schema13": {
-      "additionalProperties": {},
-      "properties": {
-        "cpu": {
-          "type": "string"
-        },
-        "memory": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "schema14": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "schema16": {
-      "default": "https://info.example.com/oauth2/tokeninfo?access_token= uid realm=/employees",
-      "type": "string"
-    },
-    "schema18": {
-      "properties": {
-        "configTarget": {
-          "enum": [
-            "ConfigMap"
-          ]
-        }
-      },
-      "required": [
-        "configTarget"
-      ],
-      "type": "object"
-    },
-    "schema19": {
-      "not": {
-        "properties": {
-          "readinessProbe": {}
-        },
-        "required": [
-          "readinessProbe"
-        ],
-        "type": "object"
-      }
-    },
-    "schema2": {
+    "schema17": {
       "items": {
         "properties": {
           "defaultrolevalue": {
@@ -177,100 +328,197 @@
       "nullable": true,
       "type": "array"
     },
-    "schema20": {
-      "additionalProperties": {
-        "additionalProperties": {}
-      },
-      "items": {
-        "additionalProperties": {}
-      }
-    },
-    "schema22": {
-      "pattern": "^(\\d+(e\\d+)?|\\d+(\\.\\d+)?(e\\d+)?[EPTGMK]i?)$|^$",
-      "type": "string"
-    },
-    "schema24": {
-      "pattern": "^(\\d+(e\\d+)?|\\d+(\\.\\d+)?(e\\d+)?[EPTGMK]i?)$",
-      "type": "string"
-    },
-    "schema26": {
-      "not": {
-        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-      }
-    },
-    "schema27": {
-      "not": {
-        "properties": {
-          "create": {}
+    "schema2": {
+      "additionalProperties": false,
+      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+      "properties": {
+        "labelSelector": {
+          "additionalProperties": false,
+          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+          "properties": {
+            "matchExpressions": {
+              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+              "items": {
+                "additionalProperties": false,
+                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                "properties": {
+                  "key": {
+                    "description": "key is the label key that the selector applies to.",
+                    "type": "string"
+                  },
+                  "operator": {
+                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                    "type": "string"
+                  },
+                  "values": {
+                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                    "items": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "key",
+                  "operator"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "matchLabels": {
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ],
+          "x-kubernetes-map-type": "atomic"
         },
-        "required": [
-          "create"
-        ],
-        "type": "object"
-      }
-    },
-    "schema28": {
-      "properties": {
-        "*": {
-          "type": "object"
+        "matchLabelKeys": {
+          "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ],
+          "x-kubernetes-list-type": "atomic"
+        },
+        "mismatchLabelKeys": {
+          "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ],
+          "x-kubernetes-list-type": "atomic"
+        },
+        "namespaceSelector": {
+          "additionalProperties": false,
+          "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+          "properties": {
+            "matchExpressions": {
+              "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+              "items": {
+                "additionalProperties": false,
+                "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+                "properties": {
+                  "key": {
+                    "description": "key is the label key that the selector applies to.",
+                    "type": "string"
+                  },
+                  "operator": {
+                    "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                    "type": "string"
+                  },
+                  "values": {
+                    "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                    "items": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "key",
+                  "operator"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ]
+            },
+            "matchLabels": {
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          },
+          "type": [
+            "object",
+            "null"
+          ],
+          "x-kubernetes-map-type": "atomic"
+        },
+        "namespaces": {
+          "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+          "items": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "topologyKey": {
+          "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+          "type": "string"
         }
       },
       "required": [
-        "*"
+        "topologyKey"
       ],
-      "type": "object"
-    },
-    "schema29": {
-      "properties": {
-        "*": {
-          "type": "array"
-        }
-      },
-      "required": [
-        "*"
-      ],
-      "type": "object"
-    },
-    "schema30": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "schema33": {
-      "pattern": "^(\\d+m|\\d+(\\.\\d{1,3})?)$|^$",
-      "type": "string"
-    },
-    "schema34": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "schema35": {
-      "pattern": "^(\\d+m|\\d+(\\.\\d{1,3})?)$",
-      "type": "string"
-    },
-    "schema36": {
-      "not": {
-        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-      }
-    },
-    "schema38": {
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    },
-    "schema39": {
-      "enum": [
-        "OperatorConfigurationCRD"
+      "type": [
+        "object",
+        "null"
       ]
     },
-    "schema4": {
+    "schema21": {
       "allOf": [
         {
           "anyOf": [
@@ -317,15 +565,7 @@
         }
       ]
     },
-    "schema40": {
-      "default": false,
-      "type": "boolean"
-    },
-    "schema41": {
-      "default": true,
-      "type": "boolean"
-    },
-    "schema5": {
+    "schema23": {
       "anyOf": [
         {
           "not": {
@@ -353,7 +593,20 @@
         }
       ]
     },
-    "schema6": {
+    "schema24": {
+      "anyOf": [
+        {
+          "not": {
+            "type": "string"
+          }
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        }
+      ]
+    },
+    "schema25": {
       "not": {
         "properties": {
           "podPriorityClassName": {
@@ -372,7 +625,7 @@
         "type": "object"
       }
     },
-    "schema8": {
+    "schema27": {
       "not": {
         "properties": {
           "podServiceAccount": {
@@ -390,6 +643,386 @@
         ],
         "type": "object"
       }
+    },
+    "schema28": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "schema29": {
+      "not": {
+        "properties": {
+          "serviceAccount": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "serviceAccount"
+        ],
+        "type": "object"
+      }
+    },
+    "schema35": {
+      "description": "List of teams which members need the superuser role in each Postgres cluster",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "schema36": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema39": {
+      "description": "operator watches for postgres objects in the given namespace\nlisten to all namespaces",
+      "type": "string"
+    },
+    "schema41": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "schema42": {
+      "description": "S3 retention time for stored backups for example \"2 week\" or \"7 days\"",
+      "type": "string"
+    },
+    "schema44": {
+      "default": "https://info.example.com/oauth2/tokeninfo?access_token= uid realm=/employees",
+      "type": "string"
+    },
+    "schema46": {
+      "properties": {
+        "configTarget": {
+          "enum": [
+            "ConfigMap"
+          ]
+        }
+      },
+      "required": [
+        "configTarget"
+      ],
+      "type": "object"
+    },
+    "schema47": {
+      "description": "secret to be used as reference for env variables in cronjob",
+      "type": "string"
+    },
+    "schema48": {
+      "not": {
+        "properties": {
+          "readinessProbe": {}
+        },
+        "required": [
+          "readinessProbe"
+        ],
+        "type": "object"
+      }
+    },
+    "schema49": {
+      "additionalProperties": {
+        "additionalProperties": {}
+      },
+      "items": {
+        "additionalProperties": {}
+      }
+    },
+    "schema5": {
+      "description": "A list of node selector requirements by node's fields.",
+      "items": {
+        "additionalProperties": false,
+        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+        "properties": {
+          "key": {
+            "description": "The label key that the selector applies to.",
+            "type": "string"
+          },
+          "operator": {
+            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+            "type": "string"
+          },
+          "values": {
+            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "operator"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "schema52": {
+      "pattern": "^(\\d+(e\\d+)?|\\d+(\\.\\d+)?(e\\d+)?[EPTGMK]i?)$|^$",
+      "type": "string"
+    },
+    "schema54": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "schema55": {
+      "pattern": "^(\\d+(e\\d+)?|\\d+(\\.\\d+)?(e\\d+)?[EPTGMK]i?)$",
+      "type": "string"
+    },
+    "schema58": {
+      "not": {
+        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+      }
+    },
+    "schema59": {
+      "not": {
+        "properties": {
+          "create": {}
+        },
+        "required": [
+          "create"
+        ],
+        "type": "object"
+      }
+    },
+    "schema6": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "additionalProperties": false,
+        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+        "properties": {
+          "key": {
+            "description": "The label key that the selector applies to.",
+            "type": "string"
+          },
+          "operator": {
+            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+            "type": "string"
+          },
+          "values": {
+            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "operator"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "schema60": {
+      "properties": {
+        "*": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "*"
+      ],
+      "type": "object"
+    },
+    "schema61": {
+      "not": {
+        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+      }
+    },
+    "schema62": {
+      "properties": {
+        "*": {
+          "type": "array"
+        }
+      },
+      "required": [
+        "*"
+      ],
+      "type": "object"
+    },
+    "schema65": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "schema68": {
+      "pattern": "^(\\d+m|\\d+(\\.\\d{1,3})?)$|^$",
+      "type": "string"
+    },
+    "schema69": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "schema7": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+          }
+        }
+      ],
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "string"
+    },
+    "schema70": {
+      "pattern": "^(\\d+m|\\d+(\\.\\d{1,3})?)$",
+      "type": "string"
+    },
+    "schema71": {
+      "not": {
+        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+      }
+    },
+    "schema73": {
+      "pattern": "^-?(0|[1-9][0-9]*)$",
+      "type": "string"
+    },
+    "schema74": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "schema75": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "schema76": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "schema77": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "schema78": {
+      "enum": [
+        "OperatorConfigurationCRD"
+      ]
+    },
+    "schema81": {
+      "default": false,
+      "type": "boolean"
+    },
+    "schema82": {
+      "default": true,
+      "type": "boolean"
+    },
+    "schema83": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -399,13 +1032,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "not": {
               "properties": {
                 "configAwsOrGcp": {
-                  "$ref": "#/$defs/schema29"
+                  "$ref": "#/$defs/schema62"
                 }
               },
               "required": [
@@ -418,7 +1051,7 @@
             "not": {
               "properties": {
                 "configAwsOrGcp": {
-                  "$ref": "#/$defs/schema28"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -446,7 +1079,42 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configAwsOrGcp": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "aws_region": {
+                    "description": "AWS region used to store EBS volumes",
+                    "type": "string"
+                  },
+                  "enable_ebs_gp3_migration": {
+                    "description": "enable automatic migration on AWS from gp2 to gp3 volumes\ndefines maximum volume size in GB until which auto migration happens\nenable_ebs_gp3_migration_max_size: 1000",
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\""
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -475,7 +1143,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -499,7 +1167,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -555,13 +1223,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "not": {
               "properties": {
                 "configConnectionPooler": {
-                  "$ref": "#/$defs/schema29"
+                  "$ref": "#/$defs/schema62"
                 }
               },
               "required": [
@@ -574,7 +1242,7 @@
             "not": {
               "properties": {
                 "configConnectionPooler": {
-                  "$ref": "#/$defs/schema28"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -602,7 +1270,71 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configConnectionPooler": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "connection_pooler_default_cpu_limit": {
+                    "type": "string"
+                  },
+                  "connection_pooler_default_cpu_request": {
+                    "description": "default resources",
+                    "type": "string"
+                  },
+                  "connection_pooler_default_memory_limit": {
+                    "type": "string"
+                  },
+                  "connection_pooler_default_memory_request": {
+                    "type": "string"
+                  },
+                  "connection_pooler_image": {
+                    "description": "docker image",
+                    "type": "string"
+                  },
+                  "connection_pooler_max_db_connections": {
+                    "description": "max db connections the pooler should hold",
+                    "type": "integer"
+                  },
+                  "connection_pooler_mode": {
+                    "description": "default pooling mode",
+                    "type": "string"
+                  },
+                  "connection_pooler_number_of_instances": {
+                    "description": "number of pooler instances",
+                    "type": "integer"
+                  },
+                  "connection_pooler_schema": {
+                    "description": "db schema to install lookup function into",
+                    "type": "string"
+                  },
+                  "connection_pooler_user": {
+                    "description": "db user for pooler to use",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "configure connection pooler deployment created by the operator"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -631,7 +1363,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -655,7 +1387,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -664,7 +1396,7 @@
             "description": "configure connection pooler deployment created by the operator",
             "properties": {
               "connection_pooler_default_cpu_limit": {
-                "$ref": "#/$defs/schema35"
+                "$ref": "#/$defs/schema70"
               },
               "connection_pooler_default_cpu_request": {
                 "description": "default resources",
@@ -672,10 +1404,10 @@
                 "type": "string"
               },
               "connection_pooler_default_memory_limit": {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema55"
               },
               "connection_pooler_default_memory_request": {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema55"
               },
               "connection_pooler_image": {
                 "default": "registry.opensource.zalan.do/acid/pgbouncer:master-32",
@@ -722,13 +1454,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "not": {
               "properties": {
                 "configDebug": {
-                  "$ref": "#/$defs/schema29"
+                  "$ref": "#/$defs/schema62"
                 }
               },
               "required": [
@@ -741,7 +1473,7 @@
             "not": {
               "properties": {
                 "configDebug": {
-                  "$ref": "#/$defs/schema28"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -769,7 +1501,42 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configDebug": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "debug_logging": {
+                    "description": "toggles verbose debug logs from the operator",
+                    "type": "boolean"
+                  },
+                  "enable_database_access": {
+                    "description": "toggles operator functionality that require access to the postgres database",
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "options to aid debugging of the operator itself"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -798,7 +1565,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -822,7 +1589,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -850,13 +1617,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "not": {
               "properties": {
                 "configGeneral": {
-                  "$ref": "#/$defs/schema29"
+                  "$ref": "#/$defs/schema62"
                 }
               },
               "required": [
@@ -869,7 +1636,7 @@
             "not": {
               "properties": {
                 "configGeneral": {
-                  "$ref": "#/$defs/schema28"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -897,7 +1664,93 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configGeneral": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "crd_categories": {
+                    "description": "specify categories under which crds should be listed",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "docker_image": {
+                    "description": "Spilo docker image",
+                    "type": "string"
+                  },
+                  "enable_crd_registration": {
+                    "description": "the deployment should create/update the CRDs",
+                    "type": "boolean"
+                  },
+                  "enable_lazy_spilo_upgrade": {
+                    "description": "update only the statefulsets without immediately doing the rolling update",
+                    "type": "boolean"
+                  },
+                  "enable_pgversion_env_var": {
+                    "description": "set the PGVERSION env var instead of providing the version via postgresql.bin_dir in SPILO_CONFIGURATION",
+                    "type": "boolean"
+                  },
+                  "enable_shm_volume": {
+                    "description": "start any new database pod without limitations on shm memory",
+                    "type": "boolean"
+                  },
+                  "enable_spilo_wal_path_compat": {
+                    "description": "enables backwards compatible path between Spilo 12 and Spilo 13+ images",
+                    "type": "boolean"
+                  },
+                  "enable_team_id_clustername_prefix": {
+                    "description": "operator will sync only clusters where name starts with teamId prefix",
+                    "type": "boolean"
+                  },
+                  "etcd_host": {
+                    "description": "etcd connection string for Patroni. Empty uses K8s-native DCS.",
+                    "type": "string"
+                  },
+                  "max_instances": {
+                    "description": "max number of instances in Postgres cluster. -1 = no limit",
+                    "type": "integer"
+                  },
+                  "min_instances": {
+                    "description": "min number of instances in Postgres cluster. -1 = no limit",
+                    "type": "integer"
+                  },
+                  "repair_period": {
+                    "description": "period between consecutive repair requests",
+                    "type": "string"
+                  },
+                  "resync_period": {
+                    "description": "period between consecutive sync requests\ncan prevent certain cases of memory overcommitment\nset_memory_request_to_limit: false",
+                    "type": "string"
+                  },
+                  "workers": {
+                    "description": "number of routines the operator spawns to process requests concurrently",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "general configuration parameters"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -926,7 +1779,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -952,7 +1805,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema10"
+            "$ref": "#/$defs/schema36"
           },
           {
             "properties": {
@@ -991,7 +1844,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -1012,7 +1865,7 @@
                     "type": "string"
                   },
                   "enable_ebs_gp3_migration": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "enable_ebs_gp3_migration_max_size": {
                     "default": 1000,
@@ -1042,16 +1895,16 @@
               "connection_pooler": {
                 "properties": {
                   "connection_pooler_default_cpu_limit": {
-                    "$ref": "#/$defs/schema35"
+                    "$ref": "#/$defs/schema70"
                   },
                   "connection_pooler_default_cpu_request": {
-                    "$ref": "#/$defs/schema35"
+                    "$ref": "#/$defs/schema70"
                   },
                   "connection_pooler_default_memory_limit": {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema55"
                   },
                   "connection_pooler_default_memory_request": {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema55"
                   },
                   "connection_pooler_image": {
                     "default": "registry.opensource.zalan.do/acid/pgbouncer:master-32",
@@ -1096,10 +1949,10 @@
               "debug": {
                 "properties": {
                   "debug_logging": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema82"
                   },
                   "enable_database_access": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema82"
                   }
                 },
                 "type": "object"
@@ -1158,7 +2011,7 @@
               "kubernetes": {
                 "properties": {
                   "additional_pod_capabilities": {
-                    "$ref": "#/$defs/schema38"
+                    "$ref": "#/$defs/schema76"
                   },
                   "cluster_domain": {
                     "default": "cluster.local",
@@ -1178,7 +2031,7 @@
                     "type": "string"
                   },
                   "custom_pod_annotations": {
-                    "$ref": "#/$defs/schema34"
+                    "$ref": "#/$defs/schema69"
                   },
                   "delete_annotation_date_key": {
                     "type": "string"
@@ -1187,59 +2040,59 @@
                     "type": "string"
                   },
                   "downscaler_annotations": {
-                    "$ref": "#/$defs/schema38"
+                    "$ref": "#/$defs/schema76"
                   },
                   "enable_cross_namespace_secret": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "enable_finalizers": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "enable_init_containers": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema82"
                   },
                   "enable_owner_references": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "enable_persistent_volume_claim_deletion": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema82"
                   },
                   "enable_pod_antiaffinity": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "enable_pod_disruption_budget": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema82"
                   },
                   "enable_readiness_probe": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "enable_secrets_deletion": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema82"
                   },
                   "enable_sidecars": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema82"
                   },
                   "ignored_annotations": {
-                    "$ref": "#/$defs/schema38"
+                    "$ref": "#/$defs/schema76"
                   },
                   "infrastructure_roles_secret_name": {
                     "type": "string"
                   },
                   "infrastructure_roles_secrets": {
-                    "$ref": "#/$defs/schema2"
+                    "$ref": "#/$defs/schema17"
                   },
                   "inherited_annotations": {
-                    "$ref": "#/$defs/schema38"
+                    "$ref": "#/$defs/schema76"
                   },
                   "inherited_labels": {
-                    "$ref": "#/$defs/schema38"
+                    "$ref": "#/$defs/schema76"
                   },
                   "master_pod_move_timeout": {
                     "default": "20m",
                     "type": "string"
                   },
                   "node_readiness_label": {
-                    "$ref": "#/$defs/schema34"
+                    "$ref": "#/$defs/schema69"
                   },
                   "node_readiness_label_merge": {
                     "enum": [
@@ -1253,7 +2106,7 @@
                     "type": "string"
                   },
                   "pdb_master_label_selector": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema82"
                   },
                   "pdb_name_format": {
                     "default": "postgres-{cluster}-pdb",
@@ -1279,7 +2132,7 @@
                     "type": "object"
                   },
                   "pod_antiaffinity_preferred_during_scheduling": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "pod_antiaffinity_topology_key": {
                     "default": "kubernetes.io/hostname",
@@ -1327,16 +2180,16 @@
                     "type": "string"
                   },
                   "share_pgsocket_with_sidecars": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "spilo_allow_privilege_escalation": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema82"
                   },
                   "spilo_fsgroup": {
                     "type": "integer"
                   },
                   "spilo_privileged": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "spilo_runasgroup": {
                     "type": "integer"
@@ -1355,7 +2208,7 @@
                     "type": "string"
                   },
                   "toleration": {
-                    "$ref": "#/$defs/schema34"
+                    "$ref": "#/$defs/schema69"
                   },
                   "watched_namespace": {
                     "type": "string"
@@ -1364,28 +2217,28 @@
                 "type": "object"
               },
               "kubernetes_use_configmaps": {
-                "$ref": "#/$defs/schema40"
+                "$ref": "#/$defs/schema81"
               },
               "load_balancer": {
                 "properties": {
                   "custom_service_annotations": {
-                    "$ref": "#/$defs/schema34"
+                    "$ref": "#/$defs/schema69"
                   },
                   "db_hosted_zone": {
                     "default": "db.example.com",
                     "type": "string"
                   },
                   "enable_master_load_balancer": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema82"
                   },
                   "enable_master_pooler_load_balancer": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "enable_replica_load_balancer": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "enable_replica_pooler_load_balancer": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "external_traffic_policy": {
                     "default": "Cluster",
@@ -1443,10 +2296,10 @@
                     "type": "string"
                   },
                   "logical_backup_cpu_limit": {
-                    "$ref": "#/$defs/schema35"
+                    "$ref": "#/$defs/schema70"
                   },
                   "logical_backup_cpu_request": {
-                    "$ref": "#/$defs/schema35"
+                    "$ref": "#/$defs/schema70"
                   },
                   "logical_backup_cronjob_environment_secret": {
                     "type": "string"
@@ -1463,10 +2316,10 @@
                     "type": "string"
                   },
                   "logical_backup_memory_limit": {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema55"
                   },
                   "logical_backup_memory_request": {
-                    "$ref": "#/$defs/schema24"
+                    "$ref": "#/$defs/schema55"
                   },
                   "logical_backup_provider": {
                     "default": "s3",
@@ -1523,7 +2376,7 @@
                     "type": "string"
                   },
                   "major_version_upgrade_team_allow_list": {
-                    "$ref": "#/$defs/schema38"
+                    "$ref": "#/$defs/schema76"
                   },
                   "minimal_major_version": {
                     "default": "13",
@@ -1551,7 +2404,7 @@
               "patroni": {
                 "properties": {
                   "enable_patroni_failsafe_mode": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   }
                 },
                 "type": "object"
@@ -1559,28 +2412,28 @@
               "postgres_pod_resources": {
                 "properties": {
                   "default_cpu_limit": {
-                    "$ref": "#/$defs/schema33"
+                    "$ref": "#/$defs/schema68"
                   },
                   "default_cpu_request": {
-                    "$ref": "#/$defs/schema33"
+                    "$ref": "#/$defs/schema68"
                   },
                   "default_memory_limit": {
-                    "$ref": "#/$defs/schema22"
+                    "$ref": "#/$defs/schema52"
                   },
                   "default_memory_request": {
-                    "$ref": "#/$defs/schema22"
+                    "$ref": "#/$defs/schema52"
                   },
                   "max_cpu_request": {
-                    "$ref": "#/$defs/schema33"
+                    "$ref": "#/$defs/schema68"
                   },
                   "max_memory_request": {
-                    "$ref": "#/$defs/schema22"
+                    "$ref": "#/$defs/schema52"
                   },
                   "min_cpu_limit": {
-                    "$ref": "#/$defs/schema33"
+                    "$ref": "#/$defs/schema68"
                   },
                   "min_memory_limit": {
-                    "$ref": "#/$defs/schema22"
+                    "$ref": "#/$defs/schema52"
                   }
                 },
                 "type": "object"
@@ -1631,10 +2484,10 @@
                 "type": "object"
               },
               "set_memory_request_to_limit": {
-                "$ref": "#/$defs/schema40"
+                "$ref": "#/$defs/schema81"
               },
               "sidecar_docker_images": {
-                "$ref": "#/$defs/schema34"
+                "$ref": "#/$defs/schema69"
               },
               "sidecars": {
                 "items": {
@@ -1647,32 +2500,32 @@
               "teams_api": {
                 "properties": {
                   "enable_admin_role_for_users": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema82"
                   },
                   "enable_postgres_team_crd": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema82"
                   },
                   "enable_postgres_team_crd_superusers": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "enable_team_member_deprecation": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "enable_team_superuser": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "enable_teams_api": {
-                    "$ref": "#/$defs/schema41"
+                    "$ref": "#/$defs/schema82"
                   },
                   "pam_configuration": {
-                    "$ref": "#/$defs/schema16"
+                    "$ref": "#/$defs/schema44"
                   },
                   "pam_role_name": {
                     "default": "zalandos",
                     "type": "string"
                   },
                   "postgres_superuser_teams": {
-                    "$ref": "#/$defs/schema38"
+                    "$ref": "#/$defs/schema76"
                   },
                   "protected_role_names": {
                     "default": [
@@ -1755,7 +2608,7 @@
                     "type": "array"
                   },
                   "enable_password_rotation": {
-                    "$ref": "#/$defs/schema40"
+                    "$ref": "#/$defs/schema81"
                   },
                   "password_rotation_interval": {
                     "default": 90,
@@ -1792,13 +2645,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "not": {
               "properties": {
                 "configKubernetes": {
-                  "$ref": "#/$defs/schema29"
+                  "$ref": "#/$defs/schema62"
                 }
               },
               "required": [
@@ -1811,7 +2664,7 @@
             "not": {
               "properties": {
                 "configKubernetes": {
-                  "$ref": "#/$defs/schema28"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -1839,7 +2692,156 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configKubernetes": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "cluster_domain": {
+                    "description": "default DNS domain of K8s cluster where operator is running",
+                    "type": "string"
+                  },
+                  "cluster_labels": {
+                    "additionalProperties": {},
+                    "description": "additional labels assigned to the cluster objects",
+                    "properties": {
+                      "application": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "cluster_name_label": {
+                    "description": "label assigned to Kubernetes objects created by the operator\nadditional annotations to add to every database pod\ncustom_pod_annotations:\nkeya: valuea\nkeyb: valueb",
+                    "type": "string"
+                  },
+                  "enable_cross_namespace_secret": {
+                    "description": "allow user secrets in other namespaces than the Postgres cluster",
+                    "type": "boolean"
+                  },
+                  "enable_finalizers": {
+                    "description": "use finalizers to ensure all managed resources are deleted prior to the postgresql CR\nthis avoids stale resources in case the operator misses a delete event or is not running\nduring deletion",
+                    "type": "boolean"
+                  },
+                  "enable_init_containers": {
+                    "description": "enables initContainers to run actions before Spilo is started",
+                    "type": "boolean"
+                  },
+                  "enable_owner_references": {
+                    "description": "toggles if child resources should have an owner reference to the postgresql CR",
+                    "type": "boolean"
+                  },
+                  "enable_persistent_volume_claim_deletion": {
+                    "description": "toggles if operator should delete PVCs on cluster deletion",
+                    "type": "boolean"
+                  },
+                  "enable_pod_antiaffinity": {
+                    "description": "toggles pod anti affinity on the Postgres pods",
+                    "type": "boolean"
+                  },
+                  "enable_pod_disruption_budget": {
+                    "description": "toggles PDB to set to MinAvailabe 0 or 1",
+                    "type": "boolean"
+                  },
+                  "enable_readiness_probe": {
+                    "description": "toogles readiness probe for database pods",
+                    "type": "boolean"
+                  },
+                  "enable_secrets_deletion": {
+                    "description": "toggles if operator should delete secrets on cluster deletion",
+                    "type": "boolean"
+                  },
+                  "enable_sidecars": {
+                    "description": "enables sidecar containers to run alongside Spilo in the same pod",
+                    "type": "boolean"
+                  },
+                  "pdb_master_label_selector": {
+                    "description": "toggle if `spilo-role=master` selector should be added to the PDB (Pod Disruption Budget)",
+                    "type": "boolean"
+                  },
+                  "pdb_name_format": {
+                    "description": "defines the template for PDB names",
+                    "type": "string"
+                  },
+                  "persistent_volume_claim_retention_policy": {
+                    "additionalProperties": {},
+                    "description": "specify the PVC retention policy when scaling down and/or deleting",
+                    "properties": {
+                      "when_deleted": {
+                        "type": "string"
+                      },
+                      "when_scaled": {
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  },
+                  "pod_antiaffinity_preferred_during_scheduling": {
+                    "description": "switches pod anti affinity type to `preferredDuringSchedulingIgnoredDuringExecution`",
+                    "type": "boolean"
+                  },
+                  "pod_antiaffinity_topology_key": {
+                    "description": "override topology key for pod anti affinity\nnamespaced name of the ConfigMap with environment variables to populate on every pod\npod_environment_configmap: \"default/my-custom-config\"\nname of the Secret (in cluster namespace) with environment variables to populate on every pod\npod_environment_secret: \"my-custom-secret\"",
+                    "type": "string"
+                  },
+                  "pod_management_policy": {
+                    "description": "specify the pod management policy of stateful sets of Postgres clusters",
+                    "type": "string"
+                  },
+                  "pod_role_label": {
+                    "description": "label assigned to the Postgres pods (and services/endpoints)\nservice account definition as JSON/YAML string to be used by postgres cluster pods\npod_service_account_definition: \"\"",
+                    "type": "string"
+                  },
+                  "pod_terminate_grace_period": {
+                    "description": "Postgres pods are terminated forcefully after this timeout",
+                    "type": "string"
+                  },
+                  "secret_name_template": {
+                    "description": "template for database user secrets generated by the operator,\nhere username contains the namespace in the format namespace.username\nif the user is in different namespace than cluster and cross namespace secrets\nare enabled via `enable_cross_namespace_secret` flag in the configuration.",
+                    "type": "string"
+                  },
+                  "share_pgsocket_with_sidecars": {
+                    "description": "sharing unix socket of PostgreSQL (`pg_socket`) with the sidecars\nset user and group for the spilo container (required to run Spilo as non-root process)\nspilo_runasuser: 101\nspilo_runasgroup: 103",
+                    "type": "boolean"
+                  },
+                  "spilo_allow_privilege_escalation": {
+                    "description": "whether the Spilo container should run with additional permissions other than parent.\nrequired by cron which needs setuid",
+                    "type": "boolean"
+                  },
+                  "spilo_privileged": {
+                    "description": "whether the Spilo container should run in privileged mode",
+                    "type": "boolean"
+                  },
+                  "storage_resize_mode": {
+                    "description": "storage resize strategy, available options are: ebs, pvc, off or mixed\npod toleration assigned to instances of every Postgres cluster\ntoleration:\nkey: db-only\noperator: Exists\neffect: NoSchedule",
+                    "type": "string"
+                  },
+                  "watched_namespace": {
+                    "$ref": "#/$defs/schema39"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -1868,7 +2870,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -1894,7 +2896,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema10"
+            "$ref": "#/$defs/schema36"
           },
           {
             "properties": {
@@ -1933,7 +2935,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -1942,7 +2944,7 @@
             "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\"",
             "properties": {
               "additional_pod_capabilities": {
-                "$ref": "#/$defs/schema38"
+                "$ref": "#/$defs/schema76"
               },
               "cluster_domain": {
                 "default": "cluster.local",
@@ -1965,7 +2967,7 @@
                 "type": "string"
               },
               "custom_pod_annotations": {
-                "$ref": "#/$defs/schema34"
+                "$ref": "#/$defs/schema69"
               },
               "delete_annotation_date_key": {
                 "type": "string"
@@ -1974,7 +2976,7 @@
                 "type": "string"
               },
               "downscaler_annotations": {
-                "$ref": "#/$defs/schema38"
+                "$ref": "#/$defs/schema76"
               },
               "enable_cross_namespace_secret": {
                 "default": false,
@@ -2027,26 +3029,26 @@
                 "type": "boolean"
               },
               "ignored_annotations": {
-                "$ref": "#/$defs/schema38"
+                "$ref": "#/$defs/schema76"
               },
               "infrastructure_roles_secret_name": {
                 "type": "string"
               },
               "infrastructure_roles_secrets": {
-                "$ref": "#/$defs/schema2"
+                "$ref": "#/$defs/schema17"
               },
               "inherited_annotations": {
-                "$ref": "#/$defs/schema38"
+                "$ref": "#/$defs/schema76"
               },
               "inherited_labels": {
-                "$ref": "#/$defs/schema38"
+                "$ref": "#/$defs/schema76"
               },
               "master_pod_move_timeout": {
                 "default": "20m",
                 "type": "string"
               },
               "node_readiness_label": {
-                "$ref": "#/$defs/schema34"
+                "$ref": "#/$defs/schema69"
               },
               "node_readiness_label_merge": {
                 "enum": [
@@ -2180,11 +3182,10 @@
                 "type": "string"
               },
               "toleration": {
-                "$ref": "#/$defs/schema34"
+                "$ref": "#/$defs/schema69"
               },
               "watched_namespace": {
-                "description": "operator watches for postgres objects in the given namespace\nlisten to all namespaces",
-                "type": "string"
+                "$ref": "#/$defs/schema39"
               }
             },
             "type": "object"
@@ -2196,13 +3197,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "not": {
               "properties": {
                 "configLoadBalancer": {
-                  "$ref": "#/$defs/schema29"
+                  "$ref": "#/$defs/schema62"
                 }
               },
               "required": [
@@ -2215,7 +3216,7 @@
             "not": {
               "properties": {
                 "configLoadBalancer": {
-                  "$ref": "#/$defs/schema28"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -2243,7 +3244,74 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLoadBalancer": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "db_hosted_zone": {
+                    "description": "DNS zone for cluster DNS name when load balancer is configured for cluster\nannotations to apply to service when load balancing is enabled\ncustom_service_annotations:\nkeyx: valuez\nkeya: valuea",
+                    "type": "string"
+                  },
+                  "enable_master_load_balancer": {
+                    "description": "toggles service type load balancer pointing to the master pod of the cluster",
+                    "type": "boolean"
+                  },
+                  "enable_master_pooler_load_balancer": {
+                    "description": "toggles service type load balancer pointing to the master pooler pod of the cluster",
+                    "type": "boolean"
+                  },
+                  "enable_replica_load_balancer": {
+                    "description": "toggles service type load balancer pointing to the replica pod of the cluster",
+                    "type": "boolean"
+                  },
+                  "enable_replica_pooler_load_balancer": {
+                    "description": "toggles service type load balancer pointing to the replica pooler pod of the cluster",
+                    "type": "boolean"
+                  },
+                  "external_traffic_policy": {
+                    "description": "define external traffic policy for the load balancer",
+                    "type": "string"
+                  },
+                  "master_dns_name_format": {
+                    "description": "defines the DNS name string template for the master load balancer cluster",
+                    "type": "string"
+                  },
+                  "master_legacy_dns_name_format": {
+                    "description": "deprecated DNS template for master load balancer using team name",
+                    "type": "string"
+                  },
+                  "replica_dns_name_format": {
+                    "description": "defines the DNS name string template for the replica load balancer cluster",
+                    "type": "string"
+                  },
+                  "replica_legacy_dns_name_format": {
+                    "description": "deprecated DNS template for replica load balancer using team name",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "configure behavior of load balancers"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -2272,7 +3340,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -2296,7 +3364,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -2305,7 +3373,7 @@
             "description": "configure behavior of load balancers",
             "properties": {
               "custom_service_annotations": {
-                "$ref": "#/$defs/schema34"
+                "$ref": "#/$defs/schema69"
               },
               "db_hosted_zone": {
                 "default": "db.example.com",
@@ -2371,13 +3439,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "not": {
               "properties": {
                 "configLoggingRestApi": {
-                  "$ref": "#/$defs/schema29"
+                  "$ref": "#/$defs/schema62"
                 }
               },
               "required": [
@@ -2390,7 +3458,7 @@
             "not": {
               "properties": {
                 "configLoggingRestApi": {
-                  "$ref": "#/$defs/schema28"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -2420,7 +3488,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema19"
+            "$ref": "#/$defs/schema48"
           },
           {
             "properties": {
@@ -2451,7 +3519,9 @@
             "properties": {
               "api_port": {
                 "description": "REST API listener listens to this port",
-                "type": "integer"
+                "not": {
+                  "type": "null"
+                }
               }
             }
           }
@@ -2460,7 +3530,112 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "anyOf": [
+          {
+            "$ref": "#/$defs/schema48"
+          },
+          {
+            "properties": {
+              "readinessProbe": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "readinessProbe"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLoggingRestApi": {
+            "additionalProperties": {},
+            "description": "parameters affecting logging and REST API listener",
+            "properties": {
+              "api_port": {
+                "description": "REST API listener listens to this port",
+                "oneOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema13"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/schema73"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLoggingRestApi": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "api_port": {
+                    "description": "REST API listener listens to this port",
+                    "type": "integer"
+                  },
+                  "cluster_history_entries": {
+                    "description": "number of entries in the cluster history ring buffer",
+                    "type": "integer"
+                  },
+                  "ring_log_lines": {
+                    "description": "number of lines in the ring buffer used to store cluster logs",
+                    "type": "integer"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "parameters affecting logging and REST API listener"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -2489,7 +3664,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -2515,7 +3690,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema19"
+            "$ref": "#/$defs/schema48"
           },
           {
             "properties": {
@@ -2553,7 +3728,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -2584,15 +3759,51 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/schema48"
+          },
+          {
+            "properties": {
+              "readinessProbe": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "readinessProbe"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLoggingRestApi": {
+            "description": "parameters affecting logging and REST API listener",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "not": {
               "properties": {
                 "configLogicalBackup": {
-                  "$ref": "#/$defs/schema29"
+                  "$ref": "#/$defs/schema62"
                 }
               },
               "required": [
@@ -2605,7 +3816,7 @@
             "not": {
               "properties": {
                 "configLogicalBackup": {
-                  "$ref": "#/$defs/schema28"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -2633,7 +3844,84 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configLogicalBackup": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "logical_backup_cronjob_environment_secret": {
+                    "$ref": "#/$defs/schema47"
+                  },
+                  "logical_backup_docker_image": {
+                    "description": "image for pods of the logical backup job (example runs pg_dumpall)\npath of google cloud service account json file\nlogical_backup_google_application_credentials: \"\"",
+                    "type": "string"
+                  },
+                  "logical_backup_job_prefix": {
+                    "description": "prefix for the backup job name",
+                    "type": "string"
+                  },
+                  "logical_backup_provider": {
+                    "description": "storage provider - either \"s3\", \"gcs\" or \"az\"",
+                    "type": "string"
+                  },
+                  "logical_backup_s3_access_key_id": {
+                    "description": "S3 Access Key ID",
+                    "type": "string"
+                  },
+                  "logical_backup_s3_bucket": {
+                    "description": "S3 bucket to store backup results",
+                    "type": "string"
+                  },
+                  "logical_backup_s3_bucket_prefix": {
+                    "description": "S3 bucket prefix to use",
+                    "type": "string"
+                  },
+                  "logical_backup_s3_endpoint": {
+                    "description": "S3 endpoint url when not using AWS",
+                    "type": "string"
+                  },
+                  "logical_backup_s3_region": {
+                    "description": "S3 region of bucket",
+                    "type": "string"
+                  },
+                  "logical_backup_s3_retention_time": {
+                    "$ref": "#/$defs/schema42"
+                  },
+                  "logical_backup_s3_secret_access_key": {
+                    "description": "S3 Secret Access Key",
+                    "type": "string"
+                  },
+                  "logical_backup_s3_sse": {
+                    "description": "S3 server side encryption",
+                    "type": "string"
+                  },
+                  "logical_backup_schedule": {
+                    "description": "backup schedule in the cron format",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\""
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -2662,7 +3950,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -2686,7 +3974,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -2704,14 +3992,13 @@
                 "type": "string"
               },
               "logical_backup_cpu_limit": {
-                "$ref": "#/$defs/schema35"
+                "$ref": "#/$defs/schema70"
               },
               "logical_backup_cpu_request": {
-                "$ref": "#/$defs/schema35"
+                "$ref": "#/$defs/schema70"
               },
               "logical_backup_cronjob_environment_secret": {
-                "description": "secret to be used as reference for env variables in cronjob",
-                "type": "string"
+                "$ref": "#/$defs/schema47"
               },
               "logical_backup_docker_image": {
                 "default": "ghcr.io/zalando/postgres-operator/logical-backup:v1.15.1",
@@ -2727,10 +4014,10 @@
                 "type": "string"
               },
               "logical_backup_memory_limit": {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema55"
               },
               "logical_backup_memory_request": {
-                "$ref": "#/$defs/schema24"
+                "$ref": "#/$defs/schema55"
               },
               "logical_backup_provider": {
                 "default": "s3",
@@ -2763,8 +4050,7 @@
                 "type": "string"
               },
               "logical_backup_s3_retention_time": {
-                "description": "S3 retention time for stored backups for example \"2 week\" or \"7 days\"",
-                "type": "string"
+                "$ref": "#/$defs/schema42"
               },
               "logical_backup_s3_secret_access_key": {
                 "description": "S3 Secret Access Key",
@@ -2790,13 +4076,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "not": {
               "properties": {
                 "configMajorVersionUpgrade": {
-                  "$ref": "#/$defs/schema29"
+                  "$ref": "#/$defs/schema62"
                 }
               },
               "required": [
@@ -2809,7 +4095,7 @@
             "not": {
               "properties": {
                 "configMajorVersionUpgrade": {
-                  "$ref": "#/$defs/schema28"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -2824,14 +4110,52 @@
         "additionalProperties": {},
         "properties": {
           "configMajorVersionUpgrade": {
-            "$ref": "#/$defs/schema20"
+            "$ref": "#/$defs/schema49"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configMajorVersionUpgrade": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "major_version_upgrade_mode": {
+                    "description": "\"off\": no upgrade, \"manual\": manifest triggers action, \"full\": minimal version violation triggers too\nupgrades will only be carried out for clusters of listed teams when mode is \"off\"\nmajor_version_upgrade_team_allow_list:\n- acid",
+                    "type": "string"
+                  },
+                  "minimal_major_version": {
+                    "description": "minimal Postgres major version that will not automatically be upgraded",
+                    "type": "string"
+                  },
+                  "target_major_version": {
+                    "description": "target Postgres major version when upgrading clusters automatically",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -2859,7 +4183,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -2882,7 +4206,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -2895,7 +4219,7 @@
                 "type": "string"
               },
               "major_version_upgrade_team_allow_list": {
-                "$ref": "#/$defs/schema38"
+                "$ref": "#/$defs/schema76"
               },
               "minimal_major_version": {
                 "default": "13",
@@ -2917,13 +4241,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "not": {
               "properties": {
                 "configPatroni": {
-                  "$ref": "#/$defs/schema29"
+                  "$ref": "#/$defs/schema62"
                 }
               },
               "required": [
@@ -2936,7 +4260,7 @@
             "not": {
               "properties": {
                 "configPatroni": {
-                  "$ref": "#/$defs/schema28"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -2951,14 +4275,44 @@
         "additionalProperties": {},
         "properties": {
           "configPatroni": {
-            "$ref": "#/$defs/schema20"
+            "$ref": "#/$defs/schema49"
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configPatroni": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "enable_patroni_failsafe_mode": {
+                    "description": "enable Patroni DCS failsafe_mode feature",
+                    "type": "boolean"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -2986,7 +4340,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -3009,7 +4363,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -3029,7 +4383,58 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configPostgresPodResources": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "default_cpu_limit": {
+                    "description": "CPU limits for the postgres containers",
+                    "type": "string"
+                  },
+                  "default_cpu_request": {
+                    "description": "CPU request value for the postgres containers",
+                    "type": "string"
+                  },
+                  "default_memory_limit": {
+                    "description": "memory limits for the postgres containers",
+                    "type": "string"
+                  },
+                  "default_memory_request": {
+                    "description": "memory request value for the postgres containers\noptional upper boundary for CPU request\nmax_cpu_request: \"1\"",
+                    "type": "string"
+                  },
+                  "min_cpu_limit": {
+                    "description": "hard CPU minimum required to properly run a Postgres cluster",
+                    "type": "string"
+                  },
+                  "min_memory_limit": {
+                    "description": "hard memory minimum required to properly run a Postgres cluster",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "configure resource requests for the Postgres pods"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -3058,10 +4463,10 @@
                 "type": "string"
               },
               "max_cpu_request": {
-                "$ref": "#/$defs/schema33"
+                "$ref": "#/$defs/schema68"
               },
               "max_memory_request": {
-                "$ref": "#/$defs/schema22"
+                "$ref": "#/$defs/schema52"
               },
               "min_cpu_limit": {
                 "description": "hard CPU minimum required to properly run a Postgres cluster",
@@ -3098,13 +4503,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "not": {
               "properties": {
                 "configTeamsApi": {
-                  "$ref": "#/$defs/schema29"
+                  "$ref": "#/$defs/schema62"
                 }
               },
               "required": [
@@ -3117,7 +4522,7 @@
             "not": {
               "properties": {
                 "configTeamsApi": {
-                  "$ref": "#/$defs/schema28"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -3145,7 +4550,91 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configTeamsApi": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "enable_admin_role_for_users": {
+                    "description": "team_admin_role will have the rights to grant roles coming from PG manifests",
+                    "type": "boolean"
+                  },
+                  "enable_postgres_team_crd": {
+                    "description": "operator watches for PostgresTeam CRs to assign additional teams and members to clusters",
+                    "type": "boolean"
+                  },
+                  "enable_postgres_team_crd_superusers": {
+                    "description": "toogle to create additional superuser teams from PostgresTeam CRs",
+                    "type": "boolean"
+                  },
+                  "enable_team_member_deprecation": {
+                    "description": "toggle to automatically rename roles of former team members and deny LOGIN",
+                    "type": "boolean"
+                  },
+                  "enable_team_superuser": {
+                    "description": "toggle to grant superuser to team members created from the Teams API",
+                    "type": "boolean"
+                  },
+                  "enable_teams_api": {
+                    "description": "toggles usage of the Teams API by the operator\nshould contain a URL to use for authentication (username and token)\npam_configuration: https://info.example.com/oauth2/tokeninfo?access_token= uid realm=/employees",
+                    "type": "boolean"
+                  },
+                  "pam_role_name": {
+                    "description": "operator will add all team member roles to this group and add a pg_hba line",
+                    "type": "string"
+                  },
+                  "postgres_superuser_teams": {
+                    "$ref": "#/$defs/schema35"
+                  },
+                  "protected_role_names": {
+                    "description": "List of roles that cannot be overwritten by an application, team or infrastructure role",
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  "role_deletion_suffix": {
+                    "description": "Suffix to add if members are removed from TeamsAPI or PostgresTeam CRD",
+                    "type": "string"
+                  },
+                  "team_admin_role": {
+                    "description": "role name to grant to team members created from the Teams API",
+                    "type": "string"
+                  },
+                  "team_api_role_configuration": {
+                    "additionalProperties": {},
+                    "description": "postgres config parameters to apply to each team member role",
+                    "properties": {
+                      "log_statement": {
+                        "description": "URL of the Teams API service\nteams_api_url: http://fake-teams-api.default.svc.cluster.local",
+                        "type": "string"
+                      }
+                    },
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "automate creation of human users with teams API service"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -3174,7 +4663,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -3198,7 +4687,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -3237,7 +4726,7 @@
                 "type": "boolean"
               },
               "pam_configuration": {
-                "$ref": "#/$defs/schema16"
+                "$ref": "#/$defs/schema44"
               },
               "pam_role_name": {
                 "default": "zalandos",
@@ -3245,11 +4734,7 @@
                 "type": "string"
               },
               "postgres_superuser_teams": {
-                "description": "List of teams which members need the superuser role in each Postgres cluster",
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
+                "$ref": "#/$defs/schema35"
               },
               "protected_role_names": {
                 "default": [
@@ -3296,13 +4781,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "not": {
               "properties": {
                 "configTimeouts": {
-                  "$ref": "#/$defs/schema29"
+                  "$ref": "#/$defs/schema62"
                 }
               },
               "required": [
@@ -3315,7 +4800,7 @@
             "not": {
               "properties": {
                 "configTimeouts": {
-                  "$ref": "#/$defs/schema28"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -3343,7 +4828,66 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configTimeouts": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "patroni_api_check_interval": {
+                    "description": "interval between consecutive attempts of operator calling the Patroni API",
+                    "type": "string"
+                  },
+                  "patroni_api_check_timeout": {
+                    "description": "timeout when waiting for successful response from Patroni API",
+                    "type": "string"
+                  },
+                  "pod_deletion_wait_timeout": {
+                    "description": "timeout when waiting for the Postgres pods to be deleted",
+                    "type": "string"
+                  },
+                  "pod_label_wait_timeout": {
+                    "description": "timeout when waiting for pod role and cluster labels",
+                    "type": "string"
+                  },
+                  "ready_wait_interval": {
+                    "description": "interval between consecutive attempts waiting for postgresql CRD to be created",
+                    "type": "string"
+                  },
+                  "ready_wait_timeout": {
+                    "description": "timeout for the complete postgres CRD creation",
+                    "type": "string"
+                  },
+                  "resource_check_interval": {
+                    "description": "interval to wait between consecutive attempts to check for some K8s resources",
+                    "type": "string"
+                  },
+                  "resource_check_timeout": {
+                    "description": "timeout when waiting for the presence of a certain K8s resource (e.g. Sts, PDB)",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "timeouts related to some operator actions"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -3372,7 +4916,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -3396,7 +4940,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -3454,13 +4998,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "not": {
               "properties": {
                 "configUsers": {
-                  "$ref": "#/$defs/schema29"
+                  "$ref": "#/$defs/schema62"
                 }
               },
               "required": [
@@ -3473,7 +5017,7 @@
             "not": {
               "properties": {
                 "configUsers": {
-                  "$ref": "#/$defs/schema28"
+                  "$ref": "#/$defs/schema60"
                 }
               },
               "required": [
@@ -3501,7 +5045,54 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema21"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "configUsers": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "properties": {
+                  "enable_password_rotation": {
+                    "description": "enable password rotation for app users that are not database owners",
+                    "type": "boolean"
+                  },
+                  "password_rotation_interval": {
+                    "description": "rotation interval for updating credentials in K8s secrets of app users",
+                    "type": "integer"
+                  },
+                  "password_rotation_user_retention": {
+                    "description": "retention interval to keep rotation users",
+                    "type": "integer"
+                  },
+                  "replication_username": {
+                    "description": "postgres username used for replication between instances",
+                    "type": "string"
+                  },
+                  "super_username": {
+                    "description": "postgres superuser name to be created by initdb",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -3530,7 +5121,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema18"
+        "$ref": "#/$defs/schema46"
       },
       "then": {
         "additionalProperties": {},
@@ -3554,7 +5145,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -3602,75 +5193,11 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "fullnameOverride": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "not": {
-                      "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^[-?:]([ \\t]|$)"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": ":[ \\t]|:$"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[ \\t]#"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "[\\r\\n]"
-                    }
-                  },
-                  {
-                    "not": {
-                      "pattern": "^(|~|null|Null|NULL)$"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/schema14"
-                  },
-                  {
-                    "$ref": "#/$defs/schema26"
-                  },
-                  {
-                    "$ref": "#/$defs/schema36"
-                  }
-                ],
-                "default": "postgresql-operator",
-                "type": "string"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema6"
+                "$ref": "#/$defs/schema25"
               },
               {
                 "properties": {
@@ -3696,7 +5223,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema10"
+                "$ref": "#/$defs/schema36"
               },
               {
                 "properties": {
@@ -3741,17 +5268,7 @@
           {
             "anyOf": [
               {
-                "not": {
-                  "properties": {
-                    "serviceAccount": {
-                      "$ref": "#/$defs/schema30"
-                    }
-                  },
-                  "required": [
-                    "serviceAccount"
-                  ],
-                  "type": "object"
-                }
+                "$ref": "#/$defs/schema29"
               },
               {
                 "properties": {
@@ -3775,10 +5292,10 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
-            "$ref": "#/$defs/schema4"
+            "$ref": "#/$defs/schema23"
           }
         ]
       },
@@ -3791,6 +5308,9 @@
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
+              },
+              {
+                "type": "null"
               },
               {
                 "type": "string"
@@ -3836,7 +5356,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema6"
+                    "$ref": "#/$defs/schema25"
                   },
                   {
                     "properties": {
@@ -3887,7 +5407,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema36"
                   },
                   {
                     "properties": {
@@ -3914,7 +5434,7 @@
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema8"
+                      "$ref": "#/$defs/schema27"
                     },
                     {
                       "properties": {
@@ -3943,7 +5463,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema18"
+                "$ref": "#/$defs/schema46"
               },
               {
                 "not": {
@@ -3971,7 +5491,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema6"
+                        "$ref": "#/$defs/schema25"
                       },
                       {
                         "properties": {
@@ -4020,13 +5540,13 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema18"
+                "$ref": "#/$defs/schema46"
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema8"
+                      "$ref": "#/$defs/schema27"
                     },
                     {
                       "properties": {
@@ -4055,13 +5575,13 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema5"
+                "$ref": "#/$defs/schema23"
               },
               {
                 "not": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/schema8"
+                      "$ref": "#/$defs/schema27"
                     },
                     {
                       "properties": {
@@ -4099,37 +5619,39 @@
       }
     },
     {
-      "if": {
-        "properties": {
-          "image": {
-            "properties": {
-              "registry": {
-                "pattern": "[\"\\\\]",
-                "type": "string"
-              }
-            },
-            "required": [
-              "registry"
-            ],
-            "type": "object"
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "registry": {
+              "$ref": "#/$defs/schema24"
+            }
           }
-        },
-        "required": [
-          "image"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "properties": {
-              "registry": {
-                "not": {
-                  "type": "string"
-                }
-              }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/schema24"
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "tag": {
+              "$ref": "#/$defs/schema24"
             }
           }
         }
@@ -4137,81 +5659,108 @@
     },
     {
       "if": {
-        "properties": {
-          "image": {
+        "anyOf": [
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema25"
+              },
+              {
+                "properties": {
+                  "podPriorityClassName": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "podPriorityClassName"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema36"
+              },
+              {
+                "properties": {
+                  "rbac": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "rbac"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
             "properties": {
-              "repository": {
-                "pattern": "[\"\\\\]",
-                "type": "string"
+              "rbac": {
+                "properties": {
+                  "createAggregateClusterRoles": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "createAggregateClusterRoles"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "repository"
+              "rbac"
             ],
             "type": "object"
-          }
-        },
-        "required": [
-          "image"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "properties": {
-              "repository": {
-                "not": {
-                  "type": "string"
-                }
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema29"
+              },
+              {
+                "properties": {
+                  "serviceAccount": {
+                    "properties": {
+                      "create": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "serviceAccount"
+                ],
+                "type": "object"
               }
-            }
+            ]
+          },
+          {
+            "$ref": "#/$defs/schema46"
           }
-        }
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "image": {
-            "properties": {
-              "tag": {
-                "pattern": "[\"\\\\]",
-                "type": "string"
-              }
-            },
-            "required": [
-              "tag"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "image"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "image": {
-            "additionalProperties": {},
-            "properties": {
-              "tag": {
-                "not": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/schema5"
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -4219,7 +5768,32 @@
           "nameOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema1"
+                "$ref": "#/$defs/schema13"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/helm-truthy"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema23"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "nameOverride": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/schema13"
               },
               {
                 "not": {
@@ -4228,6 +5802,14 @@
               }
             ]
           }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "nameOverride": {
+          "$ref": "#/$defs/schema24"
         }
       }
     },
@@ -4261,45 +5843,16 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "podPriorityClassName": {
-            "additionalProperties": {},
-            "description": "priority class for database pods",
-            "properties": {
-              "name": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/schema1"
-                  },
-                  {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
-                  }
-                ],
-                "description": "If not set a name is generated using the fullname template and \"-pod\" suffix"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
             "anyOf": [
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema6"
+                    "$ref": "#/$defs/schema25"
                   },
                   {
                     "properties": {
@@ -4355,12 +5908,15 @@
               "name": {
                 "anyOf": [
                   {
+                    "$ref": "#/$defs/schema13"
+                  },
+                  {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
                   },
                   {
-                    "type": "string"
+                    "type": "null"
                   }
                 ],
                 "description": "If not set a name is generated using the fullname template and \"-pod\" suffix"
@@ -4372,7 +5928,117 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema5"
+        "$ref": "#/$defs/schema23"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podPriorityClassName": {
+            "additionalProperties": {},
+            "description": "priority class for database pods",
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema13"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "If not set a name is generated using the fullname template and \"-pod\" suffix"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/schema25"
+          },
+          {
+            "properties": {
+              "podPriorityClassName": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podPriorityClassName"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podPriorityClassName": {
+            "additionalProperties": {},
+            "description": "priority class for database pods",
+            "properties": {
+              "priority": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/schema25"
+          },
+          {
+            "properties": {
+              "podPriorityClassName": {
+                "properties": {
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "podPriorityClassName"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podPriorityClassName": {
+            "description": "priority class for database pods",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/schema23"
       },
       "then": {
         "additionalProperties": {},
@@ -4385,19 +6051,13 @@
                   {
                     "allOf": [
                       {
-                        "not": {
-                          "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                        }
+                        "$ref": "#/$defs/schema75"
                       },
                       {
-                        "not": {
-                          "pattern": "^[-?:]([ \\t]|$)"
-                        }
+                        "$ref": "#/$defs/schema77"
                       },
                       {
-                        "not": {
-                          "pattern": ":[ \\t]|:$"
-                        }
+                        "$ref": "#/$defs/schema83"
                       },
                       {
                         "not": {
@@ -4410,18 +6070,19 @@
                         }
                       },
                       {
-                        "not": {
-                          "pattern": "^(|~|null|Null|NULL)$"
-                        }
+                        "$ref": "#/$defs/schema74"
                       },
                       {
-                        "$ref": "#/$defs/schema14"
+                        "$ref": "#/$defs/schema41"
                       },
                       {
-                        "$ref": "#/$defs/schema26"
+                        "$ref": "#/$defs/schema58"
                       },
                       {
-                        "$ref": "#/$defs/schema36"
+                        "$ref": "#/$defs/schema61"
+                      },
+                      {
+                        "$ref": "#/$defs/schema71"
                       }
                     ],
                     "default": "postgres-pod",
@@ -4444,36 +6105,26 @@
       "if": {
         "anyOf": [
           {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema10"
-              },
-              {
+            "$ref": "#/$defs/schema36"
+          },
+          {
+            "properties": {
+              "rbac": {
                 "properties": {
-                  "rbac": {
-                    "properties": {
-                      "create": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "create"
-                    ],
-                    "type": "object"
+                  "create": {
+                    "$ref": "#/$defs/helm-truthy"
                   }
                 },
                 "required": [
-                  "rbac"
+                  "create"
                 ],
                 "type": "object"
               }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema18"
-          },
-          {
-            "$ref": "#/$defs/schema4"
+            },
+            "required": [
+              "rbac"
+            ],
+            "type": "object"
           }
         ]
       },
@@ -4486,12 +6137,53 @@
               "name": {
                 "anyOf": [
                   {
+                    "$ref": "#/$defs/schema7"
+                  },
+                  {
+                    "$ref": "#/$defs/schema15"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/schema46"
+          },
+          {
+            "$ref": "#/$defs/schema21"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "podServiceAccount": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/schema13"
+                  },
+                  {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
                   },
                   {
-                    "type": "string"
+                    "type": "null"
                   }
                 ],
                 "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix"
@@ -4507,7 +6199,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema10"
+                "$ref": "#/$defs/schema36"
               },
               {
                 "properties": {
@@ -4531,13 +6223,13 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema46"
           },
           {
-            "$ref": "#/$defs/schema5"
+            "$ref": "#/$defs/schema23"
           },
           {
-            "$ref": "#/$defs/schema4"
+            "$ref": "#/$defs/schema21"
           }
         ]
       },
@@ -4558,7 +6250,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema19"
+            "$ref": "#/$defs/schema48"
           },
           {
             "properties": {
@@ -4598,7 +6290,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema10"
+            "$ref": "#/$defs/schema36"
           },
           {
             "properties": {
@@ -4630,12 +6322,52 @@
               "name": {
                 "anyOf": [
                   {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema75"
+                      },
+                      {
+                        "$ref": "#/$defs/schema77"
+                      },
+                      {
+                        "$ref": "#/$defs/schema83"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema74"
+                      },
+                      {
+                        "$ref": "#/$defs/schema41"
+                      },
+                      {
+                        "$ref": "#/$defs/schema58"
+                      },
+                      {
+                        "$ref": "#/$defs/schema61"
+                      },
+                      {
+                        "$ref": "#/$defs/schema71"
+                      }
+                    ],
+                    "description": "Name of the object being referenced.",
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/schema15"
+                  },
+                  {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -4648,6 +6380,166 @@
   ],
   "properties": {
     "affinity": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "description": "Affinity is a group of affinity scheduling rules.",
+          "properties": {
+            "nodeAffinity": {
+              "additionalProperties": false,
+              "description": "Node affinity is a group of node affinity scheduling rules.",
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.",
+                  "items": {
+                    "additionalProperties": false,
+                    "description": "An empty preferred scheduling term matches all objects with implicit weight 0 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).",
+                    "properties": {
+                      "preference": {
+                        "additionalProperties": false,
+                        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
+                        "properties": {
+                          "matchExpressions": {
+                            "$ref": "#/$defs/schema6"
+                          },
+                          "matchFields": {
+                            "$ref": "#/$defs/schema5"
+                          }
+                        },
+                        "type": "object",
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "weight": {
+                        "description": "Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.",
+                        "format": "int32",
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "weight",
+                      "preference"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "additionalProperties": false,
+                  "description": "A node selector represents the union of the results of one or more label queries over a set of nodes; that is, it represents the OR of the selectors represented by the node selector terms.",
+                  "properties": {
+                    "nodeSelectorTerms": {
+                      "description": "Required. A list of node selector terms. The terms are ORed.",
+                      "items": {
+                        "additionalProperties": false,
+                        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
+                        "properties": {
+                          "matchExpressions": {
+                            "$ref": "#/$defs/schema6"
+                          },
+                          "matchFields": {
+                            "$ref": "#/$defs/schema5"
+                          }
+                        },
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "x-kubernetes-map-type": "atomic"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "nodeSelectorTerms"
+                  ],
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "x-kubernetes-map-type": "atomic"
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "podAffinity": {
+              "additionalProperties": false,
+              "description": "Pod affinity is a group of inter pod affinity scheduling rules.",
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
+                  "items": {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
+                  "items": {
+                    "$ref": "#/$defs/schema2"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "podAntiAffinity": {
+              "additionalProperties": false,
+              "description": "Pod anti affinity is a group of inter pod anti affinity scheduling rules.",
+              "properties": {
+                "preferredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
+                  "items": {
+                    "$ref": "#/$defs/schema1"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "requiredDuringSchedulingIgnoredDuringExecution": {
+                  "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
+                  "items": {
+                    "$ref": "#/$defs/schema2"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/schema54"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "description": "Affinity for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
     },
     "configAwsOrGcp": {
@@ -4709,7 +6601,7 @@
           ]
         },
         {
-          "$ref": "#/$defs/schema39"
+          "$ref": "#/$defs/schema78"
         },
         {
           "not": {
@@ -4732,6 +6624,80 @@
     },
     "controllerID": {
       "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "create": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "name": {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/schema75"
+                      },
+                      {
+                        "$ref": "#/$defs/schema77"
+                      },
+                      {
+                        "$ref": "#/$defs/schema83"
+                      },
+                      {
+                        "not": {
+                          "pattern": "[ \\t]#"
+                        }
+                      },
+                      {
+                        "not": {
+                          "pattern": "[\\r\\n]"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/schema74"
+                      },
+                      {
+                        "$ref": "#/$defs/schema41"
+                      },
+                      {
+                        "$ref": "#/$defs/schema58"
+                      },
+                      {
+                        "$ref": "#/$defs/schema61"
+                      },
+                      {
+                        "$ref": "#/$defs/schema71"
+                      }
+                    ],
+                    "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                    "type": "string"
+                  },
+                  {
+                    "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                    "type": "null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/helm-truthy"
+                    }
+                  }
+                ],
+                "description": "The name of the controller ID to use.\nIf not set and create is true, a name is generated using the fullname template"
+              }
+            }
+          }
+        }
+      ],
       "properties": {
         "create": {
           "anyOf": [
@@ -4763,8 +6729,153 @@
     "extraEnvs": {
       "anyOf": [
         {
-          "items": {},
-          "type": "array"
+          "description": "List of environment variables to set in the container. Cannot be updated.",
+          "items": {
+            "additionalProperties": false,
+            "description": "EnvVar represents an environment variable present in a Container.",
+            "properties": {
+              "name": {
+                "description": "Name of the environment variable. Must be a C_IDENTIFIER.",
+                "type": "string"
+              },
+              "value": {
+                "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "valueFrom": {
+                "additionalProperties": false,
+                "description": "EnvVarSource represents a source for the value of an EnvVar.",
+                "properties": {
+                  "configMapKeyRef": {
+                    "additionalProperties": false,
+                    "description": "Selects a key from a ConfigMap.",
+                    "properties": {
+                      "key": {
+                        "description": "The key to select.",
+                        "type": "string"
+                      },
+                      "name": {
+                        "$ref": "#/$defs/schema28"
+                      },
+                      "optional": {
+                        "description": "Specify whether the ConfigMap or its key must be defined",
+                        "type": [
+                          "boolean",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "x-kubernetes-map-type": "atomic"
+                  },
+                  "fieldRef": {
+                    "additionalProperties": false,
+                    "description": "ObjectFieldSelector selects an APIVersioned field of an object.",
+                    "properties": {
+                      "apiVersion": {
+                        "description": "Version of the schema the FieldPath is written in terms of, defaults to \"v1\".",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "fieldPath": {
+                        "description": "Path of the field to select in the specified API version.",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "fieldPath"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "x-kubernetes-map-type": "atomic"
+                  },
+                  "resourceFieldRef": {
+                    "additionalProperties": false,
+                    "description": "ResourceFieldSelector represents container resources (cpu, memory) and their output format",
+                    "properties": {
+                      "containerName": {
+                        "description": "Container name: required for volumes, optional for env vars",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "divisor": {
+                        "$ref": "#/$defs/schema65"
+                      },
+                      "resource": {
+                        "description": "Required: resource to select",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "resource"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "x-kubernetes-map-type": "atomic"
+                  },
+                  "secretKeyRef": {
+                    "additionalProperties": false,
+                    "description": "SecretKeySelector selects a key of a Secret.",
+                    "properties": {
+                      "key": {
+                        "description": "The key of the secret to select from.  Must be a valid secret key.",
+                        "type": "string"
+                      },
+                      "name": {
+                        "$ref": "#/$defs/schema28"
+                      },
+                      "optional": {
+                        "description": "Specify whether the Secret or its key must be defined",
+                        "type": [
+                          "boolean",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "key"
+                    ],
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "x-kubernetes-map-type": "atomic"
+                  }
+                },
+                "type": [
+                  "object",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": "array",
+          "x-kubernetes-patch-merge-key": "name",
+          "x-kubernetes-patch-strategy": "merge"
         },
         {
           "not": {
@@ -4784,7 +6895,52 @@
       "additionalProperties": {},
       "properties": {
         "pullPolicy": {
-          "type": "string"
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/schema75"
+                },
+                {
+                  "$ref": "#/$defs/schema77"
+                },
+                {
+                  "$ref": "#/$defs/schema83"
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/schema74"
+                },
+                {
+                  "$ref": "#/$defs/schema41"
+                },
+                {
+                  "$ref": "#/$defs/schema58"
+                },
+                {
+                  "$ref": "#/$defs/schema61"
+                },
+                {
+                  "$ref": "#/$defs/schema71"
+                }
+              ],
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "string"
+            },
+            {
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "null"
+            }
+          ]
         },
         "registry": {},
         "repository": {},
@@ -4792,44 +6948,132 @@
       },
       "type": "object"
     },
-    "imagePullSecrets": {},
-    "nameOverride": {},
-    "nodeSelector": {
-      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
-    },
-    "podAnnotations": {
+    "imagePullSecrets": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/schema34"
+          "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
+          "items": {
+            "additionalProperties": false,
+            "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/schema28"
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ],
+            "x-kubernetes-map-type": "atomic"
+          },
+          "type": "array",
+          "x-kubernetes-patch-merge-key": "name",
+          "x-kubernetes-patch-strategy": "merge"
         },
         {
           "not": {
             "$ref": "#/$defs/helm-truthy"
           }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nameOverride": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/schema13"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "nodeSelector": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/schema54"
+        },
+        {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/"
+    },
+    "podAnnotations": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/schema54"
+        },
+        {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+          "properties": {},
+          "type": "object"
+        },
+        {
+          "not": {
+            "$ref": "#/$defs/helm-truthy"
+          }
+        },
+        {
+          "type": "null"
         }
       ]
     },
     "podLabels": {
       "anyOf": [
         {
-          "additionalProperties": false,
-          "maxProperties": 0,
-          "properties": {},
-          "type": "object"
+          "$ref": "#/$defs/schema54"
         },
         {
-          "$ref": "#/$defs/schema34"
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+          "properties": {},
+          "type": "object"
         },
         {
           "not": {
             "$ref": "#/$defs/helm-truthy"
           }
+        },
+        {
+          "type": "null"
         }
       ]
     },
@@ -4840,7 +7084,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema27"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "properties": {
@@ -4861,12 +7105,15 @@
               "name": {
                 "anyOf": [
                   {
+                    "$ref": "#/$defs/schema7"
+                  },
+                  {
+                    "$ref": "#/$defs/schema15"
+                  },
+                  {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "If not set a name is generated using the fullname template and \"-pod\" suffix"
@@ -4878,7 +7125,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema27"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "properties": {
@@ -4897,7 +7144,21 @@
             "additionalProperties": {},
             "properties": {
               "priority": {
-                "type": "integer"
+                "anyOf": [
+                  {
+                    "description": "value represents the integer value of this priority class. This is the actual priority that pods receive when they have the name of this class in their pod spec.",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "value represents the integer value of this priority class. This is the actual priority that pods receive when they have the name of this class in their pod spec.",
+                    "format": "int32",
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/schema73"
+                  }
+                ]
               }
             }
           }
@@ -4937,12 +7198,53 @@
     "priorityClassName": {
       "anyOf": [
         {
+          "allOf": [
+            {
+              "$ref": "#/$defs/schema75"
+            },
+            {
+              "$ref": "#/$defs/schema77"
+            },
+            {
+              "$ref": "#/$defs/schema83"
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "$ref": "#/$defs/schema74"
+            },
+            {
+              "$ref": "#/$defs/schema41"
+            },
+            {
+              "$ref": "#/$defs/schema58"
+            },
+            {
+              "$ref": "#/$defs/schema61"
+            },
+            {
+              "$ref": "#/$defs/schema71"
+            }
+          ],
+          "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
+          "type": "string"
+        },
+        {
+          "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
+          "type": "null"
+        },
+        {
           "not": {
             "$ref": "#/$defs/helm-truthy"
           }
-        },
-        {
-          "type": "string"
         }
       ],
       "description": "priority class for operator pod"
@@ -4980,6 +7282,7 @@
       "type": "object"
     },
     "readinessProbe": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -4996,7 +7299,21 @@
             "additionalProperties": {},
             "properties": {
               "initialDelaySeconds": {
-                "type": "integer"
+                "anyOf": [
+                  {
+                    "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+                    "format": "int32",
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/schema73"
+                  }
+                ]
               }
             }
           }
@@ -5016,58 +7333,342 @@
             "additionalProperties": {},
             "properties": {
               "periodSeconds": {
-                "type": "integer"
+                "anyOf": [
+                  {
+                    "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+                    "format": "int32",
+                    "type": "integer"
+                  },
+                  {
+                    "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+                    "format": "int32",
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/schema73"
+                  }
+                ]
               }
             }
           }
         }
       ],
+      "description": "Allow to setup operator Deployment readiness probe",
+      "properties": {
+        "initialDelaySeconds": {},
+        "periodSeconds": {}
+      }
+    },
+    "resources": {
       "anyOf": [
         {
           "additionalProperties": {},
+          "description": "ResourceRequirements describes the compute resource requirements.",
           "properties": {
-            "initialDelaySeconds": {},
-            "periodSeconds": {}
+            "claims": {
+              "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+              "items": {
+                "additionalProperties": false,
+                "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+                "properties": {
+                  "name": {
+                    "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": [
+                  "object",
+                  "null"
+                ]
+              },
+              "type": [
+                "array",
+                "null"
+              ],
+              "x-kubernetes-list-map-keys": [
+                "name"
+              ],
+              "x-kubernetes-list-type": "map"
+            },
+            "limits": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "$ref": "#/$defs/schema65"
+                  },
+                  "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                  "properties": {
+                    "cpu": {
+                      "type": "string"
+                    },
+                    "memory": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "requests": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "$ref": "#/$defs/schema65"
+                  },
+                  "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+                  "properties": {
+                    "cpu": {
+                      "type": "string"
+                    },
+                    "memory": {
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
           },
           "type": "object"
         },
         {
-          "not": {
-            "$ref": "#/$defs/helm-truthy"
-          }
+          "type": "null"
         }
-      ],
-      "description": "Allow to setup operator Deployment readiness probe"
-    },
-    "resources": {
-      "additionalProperties": {},
-      "properties": {
-        "limits": {
-          "$ref": "#/$defs/schema13"
-        },
-        "requests": {
-          "$ref": "#/$defs/schema13"
-        }
-      },
-      "type": "object"
+      ]
     },
     "securityContext": {
-      "additionalProperties": {},
-      "properties": {
-        "allowPrivilegeEscalation": {
-          "type": "boolean"
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
+          "properties": {
+            "allowPrivilegeEscalation": {
+              "anyOf": [
+                {
+                  "description": "AllowPrivilegeEscalation controls whether a process can gain more privileges than its parent process. This bool directly controls if the no_new_privs flag will be set on the container process. AllowPrivilegeEscalation is true always when the container is: 1) run as Privileged 2) has CAP_SYS_ADMIN Note that this field cannot be set when spec.os.name is windows.",
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "capabilities": {
+              "additionalProperties": false,
+              "description": "Adds and removes POSIX capabilities from running containers.",
+              "properties": {
+                "add": {
+                  "description": "Added capabilities",
+                  "items": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                },
+                "drop": {
+                  "description": "Removed capabilities",
+                  "items": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "privileged": {
+              "description": "Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "procMount": {
+              "description": "procMount denotes the type of proc mount to use for the containers. The default is DefaultProcMount which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "readOnlyRootFilesystem": {
+              "anyOf": [
+                {
+                  "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "runAsGroup": {
+              "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "runAsNonRoot": {
+              "anyOf": [
+                {
+                  "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "runAsUser": {
+              "anyOf": [
+                {
+                  "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+                  "format": "int64",
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "seLinuxOptions": {
+              "additionalProperties": false,
+              "description": "SELinuxOptions are the labels to be applied to the container",
+              "properties": {
+                "level": {
+                  "description": "Level is SELinux level label that applies to the container.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "role": {
+                  "description": "Role is a SELinux role label that applies to the container.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "description": "Type is a SELinux type label that applies to the container.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "user": {
+                  "description": "User is a SELinux user label that applies to the container.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "seccompProfile": {
+              "additionalProperties": false,
+              "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
+              "properties": {
+                "localhostProfile": {
+                  "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": [
+                "object",
+                "null"
+              ],
+              "x-kubernetes-unions": [
+                {
+                  "discriminator": "type",
+                  "fields-to-discriminateBy": {
+                    "localhostProfile": "LocalhostProfile"
+                  }
+                }
+              ]
+            },
+            "windowsOptions": {
+              "additionalProperties": false,
+              "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
+              "properties": {
+                "gmsaCredentialSpec": {
+                  "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "gmsaCredentialSpecName": {
+                  "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "hostProcess": {
+                  "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "runAsUserName": {
+                  "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "type": [
+                "object",
+                "null"
+              ]
+            }
+          },
+          "type": "object"
         },
-        "readOnlyRootFilesystem": {
-          "type": "boolean"
-        },
-        "runAsNonRoot": {
-          "type": "boolean"
-        },
-        "runAsUser": {
-          "type": "integer"
+        {
+          "type": "null"
         }
-      },
-      "type": "object"
+      ]
     },
     "serviceAccount": {
       "additionalProperties": {},
@@ -5076,7 +7677,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema27"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "properties": {
@@ -5097,12 +7698,15 @@
               "name": {
                 "anyOf": [
                   {
+                    "$ref": "#/$defs/schema7"
+                  },
+                  {
+                    "$ref": "#/$defs/schema15"
+                  },
+                  {
                     "not": {
                       "$ref": "#/$defs/helm-truthy"
                     }
-                  },
-                  {
-                    "type": "string"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -5126,6 +7730,60 @@
           "description": "Specifies whether a ServiceAccount should be created"
         },
         "name": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/schema75"
+                },
+                {
+                  "$ref": "#/$defs/schema77"
+                },
+                {
+                  "$ref": "#/$defs/schema83"
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/schema74"
+                },
+                {
+                  "$ref": "#/$defs/schema41"
+                },
+                {
+                  "$ref": "#/$defs/schema58"
+                },
+                {
+                  "$ref": "#/$defs/schema61"
+                },
+                {
+                  "$ref": "#/$defs/schema71"
+                }
+              ],
+              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+              "type": "string"
+            },
+            {
+              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+              "type": "null"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/helm-truthy"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
           "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
         }
       },
@@ -5134,7 +7792,53 @@
     "tolerations": {
       "anyOf": [
         {
-          "items": {},
+          "description": "If specified, the pod's tolerations.",
+          "items": {
+            "additionalProperties": false,
+            "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
+            "properties": {
+              "effect": {
+                "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "key": {
+                "description": "Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "operator": {
+                "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "tolerationSeconds": {
+                "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
+                "format": "int64",
+                "type": [
+                  "integer",
+                  "null"
+                ]
+              },
+              "value": {
+                "description": "Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "type": "array"
         },
         {

@@ -50,15 +50,24 @@ pub fn generate_chart_schema_for_path(
         infer_required: false,
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
+            // Provider availability is a deterministic test INPUT: the
+            // committed bundle under testdata/ pins exactly which upstream
+            // schemas generation can see, so cold and warm runs produce the
+            // same fixtures. The gitignored .cache/ dirs must not be used
+            // here — an empty cache silently strips provider-backed facts
+            // from every expected schema.
             k8s_schema_cache_dir: Some(
-                test_util::workspace_root().join(".cache/kubernetes-json-schema-cache"),
+                test_util::workspace_testdata()
+                    .join("provider-bundle/kubernetes-json-schema-cache"),
             ),
             allow_net: false,
             crd_catalog_cache_dir: Some(
-                test_util::workspace_root().join(".cache/crds-catalog-cache"),
+                test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"),
             ),
             disable_k8s_schemas: false,
-            crd_override_dir: Some(test_util::workspace_root().join(".cache/crds-catalog-cache")),
+            crd_override_dir: Some(
+                test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"),
+            ),
             ..Default::default()
         },
     };

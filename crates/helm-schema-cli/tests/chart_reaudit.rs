@@ -11,6 +11,7 @@
 use std::collections::BTreeSet;
 
 use serde_json::{Value, json};
+use test_util::prelude::sim_assert_eq;
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
@@ -1006,13 +1007,53 @@ fn bitnami_redis_ternary_selector_requires_boolean() -> color_eyre::eyre::Result
     )
 }
 
+/// Helm coalesces LISTS atomically: a replacement list's members reach the
+/// template verbatim, so a `enabled: null` member must survive instance
+/// composition and validate against the nil-tolerant comparison operand
+/// (cilium's `ne $cluster.enabled false` clustermesh arm).
 #[test]
-fn kube_state_metrics_namespace_fallback_accepts_null() -> color_eyre::eyre::Result<()> {
+fn cilium_replacement_list_members_keep_literal_nulls() -> color_eyre::eyre::Result<()> {
+    let composed = chart_instances::with_override(
+        "cilium",
+        json!({
+            "clustermesh": {
+                "config": {
+                    "clusters": [{ "name": "c1", "enabled": null, "ips": ["1.1.1.1"] }]
+                }
+            }
+        }),
+    )?;
+    sim_assert_eq!(
+        have: composed.pointer("/clustermesh/config/clusters/0/enabled"),
+        want: Some(&Value::Null),
+        "the compositor must not scrub nulls inside replacement lists"
+    );
+    assert_chart_cases(
+        "cilium",
+        vec![SemanticCase::accepted(
+            "null enabled member of a replacement cluster list",
+            json!({
+                "clustermesh": {
+                    "config": {
+                        "clusters": [{ "name": "c1", "enabled": null, "ips": ["1.1.1.1"] }]
+                    }
+                }
+            }),
+        )],
+    )
+}
+
+/// A null override composes through Helm's map-key deletion, so the
+/// accepted instance validates the key's ABSENCE (the release-namespace
+/// fallback), not a literal null at the property.
+#[test]
+fn kube_state_metrics_null_namespace_override_composes_to_absent_key()
+-> color_eyre::eyre::Result<()> {
     assert_chart_cases(
         "kube-state-metrics",
         vec![
             SemanticCase::accepted(
-                "null namespaceOverride selects release namespace",
+                "null namespaceOverride deletes the key and selects the release namespace",
                 json!({ "namespaceOverride": null }),
             ),
             SemanticCase::accepted(
@@ -1458,7 +1499,7 @@ fn jaeger_http_route_validator_requires_a_parent_reference() -> color_eyre::eyre
     )
 }
 
-/// F45: flux2's shared `template.image` helper slices every controller tag
+/// flux2's shared `template.image` helper slices every controller tag
 /// with `substr 0 7` before comparing against `sha256:`, so a non-string tag
 /// terminates rendering while ordinary and digest tags render.
 #[test]
@@ -1481,7 +1522,7 @@ fn flux2_controller_tags_require_substr_string_subjects() -> color_eyre::eyre::R
     )
 }
 
-/// F42: `semverCompare ">=X" (default "X" .Values.upgradeCompatibility)`
+/// `semverCompare ">=X" (default "X" .Values.upgradeCompatibility)`
 /// only parses the raw value on its truthy arm. Every Helm-empty input
 /// selects the literal fallback and renders, while a truthy non-semver
 /// input still terminates inside the parser.
@@ -1516,7 +1557,7 @@ fn cilium_upgrade_compatibility_keeps_helm_empty_inputs_open() -> color_eyre::ey
     )
 }
 
-/// F42: cloudnative-pg selects `default .Chart.Name .Values.nameOverride`
+/// cloudnative-pg selects `default .Chart.Name .Values.nameOverride`
 /// before `trunc`/`contains`, and reads `namespaceOverride` only inside its
 /// own truthy `if`; Helm-empty overrides substitute or skip and render.
 #[test]
@@ -1544,7 +1585,7 @@ fn cloudnative_pg_override_fallbacks_keep_helm_empty_inputs_open() -> color_eyre
     )
 }
 
-/// F86: the master template's direct `ternary "no" "yes" .Values.auth.enabled`
+/// the master template's direct `ternary "no" "yes" .Values.auth.enabled`
 /// call sits under `gt (int64 .Values.master.count) 0` plus the
 /// standalone/sentinel partition. The Boolean contract must hold on BOTH
 /// architecture arms, while scaling the master to zero keeps the whole
@@ -1585,7 +1626,7 @@ fn bitnami_redis_auth_ternary_holds_across_architecture_partitions() -> color_ey
     )
 }
 
-/// F59/F93: velero ranges `.Values.schedules` and emits each member as a
+/// velero ranges `.Values.schedules` and emits each member as a
 /// `velero.io/v1 Schedule`, so the chart-local CRD's member schema applies
 /// through `additionalProperties` to every (arbitrarily named) entry.
 #[test]
@@ -1631,7 +1672,7 @@ fn velero_schedule_members_carry_the_crd_member_schema() -> color_eyre::eyre::Re
     )
 }
 
-/// F30: `extraEnvConfigMaps` is a user-keyed map the deployment destructures
+/// `extraEnvConfigMaps` is a user-keyed map the deployment destructures
 /// (`range $key, $value`), so a complete member renders while the member
 /// contract still enforces the `required "Must specify key!"` read and the
 /// structural `.name` access.
@@ -1667,7 +1708,7 @@ fn cluster_autoscaler_env_config_map_members_stay_open_with_contracts()
     )
 }
 
-/// F53: every `server.remoteWrite` member's `url` reaches `tpl` (a strict
+/// every `server.remoteWrite` member's `url` reaches `tpl` (a strict
 /// string consumer) inside the serverFiles dispatch, so a non-string URL
 /// terminates rendering while string URLs pass.
 #[test]
@@ -1693,7 +1734,7 @@ fn prometheus_remote_write_urls_require_strings() -> color_eyre::eyre::Result<()
     )
 }
 
-/// F74: datadog's `check-dca-version` helper converts the exact tag
+/// datadog's `check-dca-version` helper converts the exact tag
 /// `latest` to `1.20.0` before `semverCompare`, so the raw-input contract
 /// accepts the sentinel while other lexically invalid tags still terminate
 /// rendering. `doNotCheckTag` disables the whole check.
@@ -1723,7 +1764,7 @@ fn datadog_cluster_agent_latest_tag_survives_the_version_check() -> color_eyre::
     )
 }
 
-/// F74: traefik's `traefik.proxyVersion` helper strips the documented
+/// traefik's `traefik.proxyVersion` helper strips the documented
 /// `latest-`/`experimental-` prefixes, replaces `master` with the chart's
 /// appVersion, and trims any `@digest` suffix before its version checks, so
 /// those raw forms render while an untouched non-version string still
@@ -1764,7 +1805,7 @@ fn traefik_transformed_tag_sentinels_survive_the_version_checks() -> color_eyre:
     )
 }
 
-/// F76: zalando's operator manually double-quotes its assembled image
+/// zalando's operator manually double-quotes its assembled image
 /// scalar (`image: "{{ .registry }}/{{ .repository }}:{{ .tag }}"`), so a
 /// raw `"` inside any component corrupts the completed quoted token while
 /// ordinary strings and numbers format safely.
@@ -1792,7 +1833,7 @@ fn zalando_operator_quoted_image_scalar_excludes_raw_quotes() -> color_eyre::eyr
     )
 }
 
-/// F76: tempo assembles `image: {{ .registry }}/{{ .repository }}:{{ .tag }}`
+/// tempo assembles `image: {{ .registry }}/{{ .repository }}:{{ .tag }}`
 /// unquoted, so a list registry opens a flow sequence at the token start and
 /// breaks the final YAML; maps and strings format as plain text.
 #[test]
@@ -1822,7 +1863,7 @@ fn tempo_assembled_image_scalar_excludes_token_initial_lists() -> color_eyre::ey
     )
 }
 
-/// F76: flux2 embeds `logLevel` after the literal `--log-level=` prefix in
+/// flux2 embeds `logLevel` after the literal `--log-level=` prefix in
 /// every controller command, so Helm totally formats any value into one
 /// argument string; the `default "info"` fallback documents intent without
 /// constraining the input kind.
@@ -1839,7 +1880,7 @@ fn flux2_prefixed_log_level_accepts_every_input_kind() -> color_eyre::eyre::Resu
     )
 }
 
-/// F76 adjudication: the re-audit claimed aws-load-balancer-controller's
+/// Adjudication: a re-audit claimed aws-load-balancer-controller's
 /// `nameOverride: "null"` should validate, but rendering it produces
 /// `app.kubernetes.io/name: null` on every resource and the v1.35.0 strict
 /// schemas reject a null label value (`labels.additionalProperties` is
@@ -1862,7 +1903,7 @@ fn aws_lbc_null_spelling_name_override_stays_rejected() -> color_eyre::eyre::Res
     )
 }
 
-/// F56/F62: `tpl (toYaml .Values.X) .` re-renders the serialized fragment,
+/// `tpl (toYaml .Values.X) .` re-renders the serialized fragment,
 /// so the parsed placement carries through to the sequence/provider slot
 /// exactly like a bare `toYaml` splice: cloudnative-pg's `additionalEnv`
 /// and airflow's scheduler fragments reject scalar inputs that break the
@@ -1906,7 +1947,7 @@ fn tpl_serialized_fragments_keep_their_structural_slots() -> color_eyre::eyre::R
     )
 }
 
-/// F63: external-secrets' webhook PDB header reads
+/// external-secrets' webhook PDB header reads
 /// `.Values.webhook.podDisruptionBudget.enabled`, so a truthy non-object
 /// host terminates rendering while the object form (and the default) render.
 #[test]

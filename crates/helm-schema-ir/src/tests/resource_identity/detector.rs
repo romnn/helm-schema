@@ -323,7 +323,7 @@ fn helper_output_under_guarded_resource_does_not_become_api_version_candidate() 
     assert!(resource.api_version_branches.is_empty());
 }
 
-/// F83 (signoz HPA): a capability call piped into `ternary` selects one of
+/// signoz HPA: a capability call piped into `ternary` selects one of
 /// two literal apiVersions exactly like an `if`/`else` pair, so the
 /// identity keeps guard-qualified branches instead of reporting an unknown
 /// apiVersion.

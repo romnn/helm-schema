@@ -138,7 +138,12 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "affinity"
+      "source_expr": "affinity",
+      "template_supplied_member_keys": [
+        "nodeAffinity",
+        "podAffinity",
+        "podAntiAffinity"
+      ]
     },
     {
       "condition": [
@@ -203,7 +208,12 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "affinity"
+      "source_expr": "affinity",
+      "template_supplied_member_keys": [
+        "nodeAffinity",
+        "podAffinity",
+        "podAntiAffinity"
+      ]
     },
     {
       "condition": [
@@ -544,51 +554,6 @@
     },
     {
       "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "auth.client.enabled"
-    },
-    {
-      "condition": [
         [
           {
             "path": "auth.client.enabled",
@@ -816,51 +781,6 @@
           },
           "template_path": "<inline:0>"
         }
-      ],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "auth.quorum.enabled"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
       ],
       "resource": {
         "api_version": "apps/v1beta1",
@@ -1875,7 +1795,15 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "commonLabels"
+      "source_expr": "commonLabels",
+      "template_supplied_member_keys": [
+        "app.kubernetes.io/component",
+        "app.kubernetes.io/instance",
+        "app.kubernetes.io/managed-by",
+        "app.kubernetes.io/name",
+        "helm.sh/chart",
+        "role"
+      ]
     },
     {
       "condition": [
@@ -1938,7 +1866,15 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "commonLabels"
+      "source_expr": "commonLabels",
+      "template_supplied_member_keys": [
+        "app.kubernetes.io/component",
+        "app.kubernetes.io/instance",
+        "app.kubernetes.io/managed-by",
+        "app.kubernetes.io/name",
+        "helm.sh/chart",
+        "role"
+      ]
     },
     {
       "condition": [
@@ -3063,7 +2999,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "customLivenessProbe"
+      "source_expr": "customLivenessProbe",
+      "template_supplied_member_keys": [
+        "exec"
+      ]
     },
     {
       "condition": [
@@ -3133,7 +3072,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "customLivenessProbe"
+      "source_expr": "customLivenessProbe",
+      "template_supplied_member_keys": [
+        "exec"
+      ]
     },
     {
       "condition": [
@@ -3286,7 +3228,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "customReadinessProbe"
+      "source_expr": "customReadinessProbe",
+      "template_supplied_member_keys": [
+        "exec"
+      ]
     },
     {
       "condition": [
@@ -3356,7 +3301,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "customReadinessProbe"
+      "source_expr": "customReadinessProbe",
+      "template_supplied_member_keys": [
+        "exec"
+      ]
     },
     {
       "condition": [
@@ -3509,7 +3457,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "customStartupProbe"
+      "source_expr": "customStartupProbe",
+      "template_supplied_member_keys": [
+        "tcpSocket"
+      ]
     },
     {
       "condition": [
@@ -3579,7 +3530,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "customStartupProbe"
+      "source_expr": "customStartupProbe",
+      "template_supplied_member_keys": [
+        "tcpSocket"
+      ]
     },
     {
       "condition": [
@@ -9080,7 +9034,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "initContainers"
+      "source_expr": "initContainers",
+      "template_supplied_member_keys": [
+        "volumeMounts"
+      ]
     },
     {
       "condition": [
@@ -9146,7 +9103,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "initContainers"
+      "source_expr": "initContainers",
+      "template_supplied_member_keys": [
+        "volumeMounts"
+      ]
     },
     {
       "condition": [
@@ -9516,51 +9476,6 @@
     },
     {
       "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [
-        "spec",
-        "template",
-        "spec",
-        "containers[*]",
-        "env[*]",
-        "value"
-      ],
-      "resource": {
-        "api_version": "apps/v1beta1",
-        "api_version_branches": [
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1beta1"
-              ]
-            },
-            "guard": {
-              "text": "semverCompare \"<1.14-0\" (include \"common.capabilities.kubeVersion\" .)",
-              "type": "opaque"
-            }
-          },
-          {
-            "body": {
-              "type": "literals",
-              "values": [
-                "apps/v1"
-              ]
-            },
-            "guard": null
-          }
-        ],
-        "api_version_candidates": [
-          "apps/v1"
-        ],
-        "kind": "StatefulSet"
-      },
-      "source_expr": "listenOnAllIPs"
-    },
-    {
-      "condition": [
         [
           {
             "path": "livenessProbe.enabled",
@@ -9671,7 +9586,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "livenessProbe"
+      "source_expr": "livenessProbe",
+      "template_supplied_member_keys": [
+        "exec"
+      ]
     },
     {
       "condition": [
@@ -9745,7 +9663,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "livenessProbe"
+      "source_expr": "livenessProbe",
+      "template_supplied_member_keys": [
+        "exec"
+      ]
     },
     {
       "condition": [
@@ -14750,7 +14671,12 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "podAnnotations"
+      "source_expr": "podAnnotations",
+      "template_supplied_member_keys": [
+        "checksum/configuration",
+        "checksum/secrets",
+        "checksum/tls-secrets"
+      ]
     },
     {
       "condition": [
@@ -14815,7 +14741,12 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "podAnnotations"
+      "source_expr": "podAnnotations",
+      "template_supplied_member_keys": [
+        "checksum/configuration",
+        "checksum/secrets",
+        "checksum/tls-secrets"
+      ]
     },
     {
       "condition": [
@@ -15002,7 +14933,14 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "podLabels"
+      "source_expr": "podLabels",
+      "template_supplied_member_keys": [
+        "app.kubernetes.io/component",
+        "app.kubernetes.io/instance",
+        "app.kubernetes.io/managed-by",
+        "app.kubernetes.io/name",
+        "helm.sh/chart"
+      ]
     },
     {
       "condition": [
@@ -15067,7 +15005,14 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "podLabels"
+      "source_expr": "podLabels",
+      "template_supplied_member_keys": [
+        "app.kubernetes.io/component",
+        "app.kubernetes.io/instance",
+        "app.kubernetes.io/managed-by",
+        "app.kubernetes.io/name",
+        "helm.sh/chart"
+      ]
     },
     {
       "condition": [
@@ -15496,7 +15441,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "readinessProbe"
+      "source_expr": "readinessProbe",
+      "template_supplied_member_keys": [
+        "exec"
+      ]
     },
     {
       "condition": [
@@ -15570,7 +15518,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "readinessProbe"
+      "source_expr": "readinessProbe",
+      "template_supplied_member_keys": [
+        "exec"
+      ]
     },
     {
       "condition": [
@@ -16767,7 +16718,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "startupProbe"
+      "source_expr": "startupProbe",
+      "template_supplied_member_keys": [
+        "tcpSocket"
+      ]
     },
     {
       "condition": [
@@ -16841,7 +16795,10 @@
         ],
         "kind": "StatefulSet"
       },
-      "source_expr": "startupProbe"
+      "source_expr": "startupProbe",
+      "template_supplied_member_keys": [
+        "tcpSocket"
+      ]
     },
     {
       "condition": [

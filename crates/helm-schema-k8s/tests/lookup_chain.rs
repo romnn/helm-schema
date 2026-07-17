@@ -35,6 +35,7 @@ fn provider_use(path: YamlPath, resource: ResourceRef) -> ProviderSchemaUse {
         kind: ValueKind::Scalar,
         resource,
         is_self_range_collection: false,
+        template_supplied_member_keys: Default::default(),
     }
 }
 

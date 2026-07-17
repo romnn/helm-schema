@@ -304,7 +304,7 @@ fn member_local_guard_does_not_leak_its_string_contract() {
         }),
     );
     // The unconditional arm's carrier stays untyped: it must hold vacuously
-    // for falsy ancestors a `with` chain would skip (F66 inverse direction).
+    // for falsy ancestors a `with` chain would skip.
     let all_of = vec![serde_json::json!({
         "additionalProperties": {},
         "properties": {
@@ -337,7 +337,7 @@ fn member_local_guard_does_not_leak_its_string_contract() {
     }
 }
 
-/// F66 inverse direction: interior carriers of conditional arms must hold
+/// Interior carriers of conditional arms must hold
 /// vacuously for falsy ancestors that a `with` chain skips at runtime, so
 /// only the truthy states carry the leaf's iterable requirement.
 #[test]
@@ -441,7 +441,7 @@ fn nested_member_range_keeps_map_lane_in_member_arm() {
     );
 }
 
-/// F63: an `if` header's chained selector (`and .Values.webhook.create
+/// an `if` header's chained selector (`and .Values.webhook.create
 /// .Values.webhook.podDisruptionBudget.enabled`) field-accesses `.enabled`
 /// on the intermediate map, so a non-object host aborts rendering even
 /// though the region's own body never renders for it. The member-host arm

@@ -337,3 +337,100 @@ fn with_guarded_quote_into_string_sink_accepts_any_input() {
         );
     }
 }
+
+/// `htpasswd` bcrypt-hashes two Go strings, so a non-string member value
+/// aborts rendering — including through a destructured range and a helper
+/// include (prometheus-pushgateway's `basicAuthUsers`).
+#[test]
+fn htpasswd_operands_require_strings() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          direct: {{ htpasswd "" .Values.adminPassword | quote }}
+          config: |
+            {{- include "repro.webConfiguration" . | nindent 4 }}
+    "#};
+    let helpers = indoc! {r#"
+        {{- define "repro.webConfiguration" -}}
+        basic_auth_users:
+        {{- range $k, $v := .Values.basicAuthUsers }}
+          {{ $k }}: {{ htpasswd "" $v | trimPrefix ":" }}
+        {{- end }}
+        {{- end -}}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some("adminPassword: hunter2\nbasicAuthUsers: {}\n"),
+    );
+
+    for (instance, want) in [
+        (serde_json::json!({ "adminPassword": 7 }), false),
+        (serde_json::json!({ "adminPassword": "ok" }), true),
+        (
+            serde_json::json!({ "basicAuthUsers": { "admin": 7 } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "basicAuthUsers": { "admin": { "bad": 1 } } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "basicAuthUsers": { "admin": "hunter2" } }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "htpasswd consumes Go strings only: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A direct `tpl` program input keeps its Go string contract through a
+/// `default` selection chain: `tpl` parses the RAW value before any
+/// truthiness selection runs, so a map aborts rendering even when its
+/// Helm-falsy spelling would select a later arm (oauth2-proxy's
+/// `tpl .Values.image.registry $ | default (tpl .Values.global.imageRegistry $) | default "quay.io"`).
+#[test]
+fn tpl_program_contract_survives_default_chain() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          image: "{{ tpl .Values.image.registry $ | default (tpl .Values.global.imageRegistry $) | default "quay.io" }}/proxy"
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("image:\n  registry: \"\"\nglobal:\n  imageRegistry: \"\"\n"),
+    );
+
+    for (instance, want) in [
+        (serde_json::json!({ "image": { "registry": {} } }), false),
+        (serde_json::json!({ "image": { "registry": ["x"] } }), false),
+        (
+            serde_json::json!({ "image": { "registry": "quay.io" } }),
+            true,
+        ),
+        (serde_json::json!({ "image": { "registry": "" } }), true),
+        // The eagerly evaluated fallback arm parses its own program too
+        (
+            serde_json::json!({ "global": { "imageRegistry": {} } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "global": { "imageRegistry": "ghcr.io" } }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "tpl parses raw program text before default selection: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}

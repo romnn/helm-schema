@@ -1,6 +1,6 @@
 use super::*;
 
-/// F52 follow-up (bitnami `validateValues` aggregators): a local bound to
+/// Bitnami `validateValues` aggregators: a local bound to
 /// DERIVED TEXT (`$message := join "\n" $messages`) is falsy when NO
 /// validator fired, not when its input identities are falsy — the truthy
 /// stand-in over the flowing paths must count as approximate so the fail
@@ -132,7 +132,7 @@ fn monotone_list_accumulator_preserves_guarded_fail_condition() {
     }
 }
 
-/// F53: a self-guarded `tpl` inside a named helper binds its
+/// a self-guarded `tpl` inside a named helper binds its
 /// truthy-implies-string contract at every call site (oauth2-proxy
 /// `alphaConfig.configFile` shape).
 #[test]
@@ -177,7 +177,7 @@ fn helper_internal_self_guarded_tpl_contract_reaches_callers() {
     );
 }
 
-/// F53 (literal-returning helper condition): a `tpl` guarded by
+/// literal-returning helper condition: a `tpl` guarded by
 /// `eq (include "mode" .) "literal"` binds where the mode helper's OWN
 /// branch guards select that literal (oauth2-proxy
 /// `legacy-config.content` chain). The mode helper is a pure literal
@@ -335,7 +335,7 @@ fn guarded_set_conversion_does_not_escape_its_outer_guard() {
     );
 }
 
-/// F65: an ordered `set` mutation converts the string image form into the
+/// an ordered `set` mutation converts the string image form into the
 /// map the later member reads require — the accepted union is EXACTLY
 /// string-or-map, and untouched scalars still abort the member read (nack
 /// `jsc.fixImage`/`jsc.image` shape). The member-access arm carries the
@@ -386,7 +386,7 @@ fn ordered_set_mutation_accepts_converted_and_map_forms() {
     );
 }
 
-/// F51 (statically empty subject): `required "msg" nil` is a pure guarded
+/// statically empty subject: `required "msg" nil` is a pure guarded
 /// validator — under its branch guards rendering always terminates, so the
 /// guard conjunction is a terminal clause (airflow check-values
 /// `elasticsearch/opensearch` mutual exclusion; ingress-nginx
@@ -429,7 +429,7 @@ fn required_nil_subject_is_a_guarded_terminal_clause() {
     );
 }
 
-/// F51 (ranged member subject): `required` over each member's field
+/// ranged member subject: `required` over each member's field
 /// survives the conversion pipeline and binds per member (argo-cd
 /// `configs.clusterCredentials.*.config` shape).
 #[test]
@@ -500,7 +500,7 @@ fn required_in_suppressed_block_scalar_binds_ranged_member() {
     );
 }
 
-/// F51 (helper-internal subject): a `required` inside a named helper holds
+/// helper-internal subject: a `required` inside a named helper holds
 /// at every call site (kyverno `kyverno.chartVersion` requires
 /// `global.templating.version` before `replace`).
 #[test]
@@ -627,7 +627,7 @@ fn ignored_helper_context_does_not_render_argument_value() {
     );
 }
 
-/// F51 (unrepresentable sentinel, conservative pin): a `required nil`
+/// unrepresentable sentinel, conservative pin: a `required nil`
 /// behind a loop-computed local guard must NOT bind — the valid
 /// alternative (the matching env entry) stays accepted (airflow broker-url
 /// sentinel shape).
