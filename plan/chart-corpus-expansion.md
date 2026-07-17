@@ -1,22 +1,9 @@
 # Popular-chart corpus expansion: inventory and findings
 
-Status: FRESH POST-F69 ACCURACY AUDIT COMPLETE (2026-07-14) — the committed
-fixtures still contain eight additional runtime-verified root causes
-(F70-F77). They cover index preconditions, dependency activation, integer
-range iteration, statically executed file bodies, parser lexical domains,
-collection-element shape erasure, YAML scalar lexical safety, and the value
-results of `and`/`or`. The prior pass's F36/F41/F45/F49/F51-F53/F56/F57/
-F59-F64 residuals and F66-F69 remain recorded separately; candidates that
-only reproduced one of those roots were deliberately not renumbered.
-F31/F34/F44 residuals stay adjudicated-abstained; F12 remains a policy item
-awaiting a user decision.
-Previous status: ROUND 2 IMPLEMENTED, ACCURACY RE-AUDIT CONTINUES —
-F1–F29 are recorded as fixed. A fresh parallel audit of the committed fixtures
-against the actual chart templates and Helm runtime found sixteen more
-runtime-verified accuracy classes (F30–F45) below. They cover residual
-termination, predicate, type-dispatch, range-provenance, structural-navigation,
-and string-consumer gaps that the F25–F29 pins and mechanical corpus gates do
-not exercise.
+Status: see `plan/chart-corpus-status.md` — the single authoritative
+classification of every finding (Completed / In progress / Rejected).
+This file is the chronological work log; dated status lines inside it are
+historical and superseded by that ledger.
 
 ## Goal
 
@@ -41,6 +28,13 @@ manually during round 1 and any findings are recorded below.
 Regeneration flow: `SCHEMA_DUMP=1 cargo nextest run -p helm-schema-cli
 --no-fail-fast -E 'binary(chart_corpus)'`, review dumps in the system temp
 dir, copy adjudicated dumps into `tests/fixtures/chart_corpus/`.
+
+## Status ledger
+
+The authoritative Completed / In progress / Rejected classification of
+every finding lives in `plan/chart-corpus-status.md`. Status claims in
+the historical log below are snapshots of their date and are superseded
+by that ledger.
 
 ## Chart inventory (round 1, fetched 2026-07-11)
 
@@ -118,6 +112,13 @@ Notes:
   (all `BEGIN ... PRIVATE KEY` hits are documentation placeholders in
   values comments).
 - Total added corpus size: ~45 MB uncompressed (charts), ~34 MB fixtures.
+
+## Historical work log
+
+Everything below this point is the chronological record of audit rounds and
+fix rounds, kept for its evidence and design notes. Status claims inside it
+(including sections once titled "authoritative") are snapshots of their
+date and are superseded by the Status ledger at the top of this document.
 
 ## Round-1 results
 
@@ -6949,3 +6950,124 @@ open alternative.
 F31/F38/F51/F68/F70/F71/F72/F75/F83/F85/F93/F95, the datadog
 printf-composed tag, and the F82/F84-family notes keep their prior
 positions and diagnoses.
+
+## In-progress completion round (2026-07-17, fourth round)
+
+Directive: reorganize the plan into an authoritative status ledger
+(`plan/chart-corpus-status.md`) and complete the remaining in-progress
+findings. Every fix has a focused reproducer that fails without it; the
+full workspace suite (1256 tests), doc tests, `task lint`, and the luup2
+`check:local` pipeline are green at the end of the round.
+
+### F93 — same-map `pluck` member identity (FIXED; corpus chart adjudicated relational)
+
+`keys m` over a single values identity now evaluates to
+`AbstractValue::KeysList` (ranging it binds the item dot to `RangeKey`,
+in helper scope and at document scope); `sortAlpha` preserves the keys
+list; `pluck . $dict | first` with the ranged key of the SAME map is a
+member projection returning the singleton member list; and
+`printf "%T"` joined `typeOf`/`kindOf` in the type-descriptor family
+(`helm_schema_ast::type_descriptor_call_subject`). Member-local type
+partitions now lower into member overlays (`extend_lowerable_predicate`
+passes wildcard targets through the complement path), structural
+dispatch arms keep their provider projection scoped to structured-type
+partitions, and the path/branch fact split stops the dispatch tolerance
+from dissolving the arm's typing. Two collateral fixes: a sourced value
+hole that lowers to nothing now occupies its entry (an open-header
+misattribution had hung floated fragments under `name:` keys), and
+type-partition conditional carriers stay untyped while member-test
+carriers keep the object host. Pins:
+`same_map_pluck_of_ranged_key_projects_member_identity` (gen). The real
+signoz chart gates renders on a case-folding dedup accumulator whose
+member set is relational (a case-colliding earlier key SHADOWS a
+member), so the corpus chart soundly abstains — pinned by
+`signoz_additional_env_members_stay_open_under_dedup_shadowing` and
+classified Rejected in the ledger.
+
+### F68 — range-key slot domains (FIXED)
+
+A RAW range key rendered at a scalar slot rides a marked splice
+(`SpliceMeta::range_key`, carried through `ContractUse` and
+`ProviderSchemaUse`); the builder routes such rows to a dedicated
+channel (path-level or overlay-branch by their residual guards), and the
+generator synthesizes a `Keys`/string implication when the provider slot
+is string-only — non-empty lists (integer keys) rejected, maps and
+empty lists open. Dynamic-key reads skip range-key splices (the key
+says nothing about the collection's VALUE domain). minio's
+`environment` pin plus corpus-wide `extraObjects`-family arms. Pins:
+`range_key_at_string_slot_excludes_integer_key_lanes` (gen),
+`minio_environment_list_lane_is_excluded_at_the_name_slot` (CLI).
+
+### F51 — existential range sentinels (FIXED)
+
+Branch joins now stamp each arm's condition onto truthiness reductions
+the arm CHANGED (bounded: exact conditions only, ≤6 guards — unbounded
+stamping made kyverno's join blow up combinatorially), so the
+`$found = true` flag pattern joins to `Range(env) ∧ Eq(env.*.name, L)`
+instead of a swallowed `True`. That conjunction lowers as the new
+`ConditionalGuard::ContainsMemberEquals` (Draft-07 `contains` on the
+array lane, `not additionalProperties not` on the object lane), and
+terminal clauses now admit approximate conjuncts through their sound
+subsets (positive polarity only). airflow's celery-broker sentinel
+rejects collections without the matching env item end-to-end. Pins:
+`existential_range_sentinel_lowers_to_contains` (gen),
+`airflow_celery_broker_sentinel_requires_a_matching_env_item` (CLI).
+
+### F31 — scalar-domain fail implications (FIXED, bounded)
+
+Three new sound-subset recognizers in the condition lowering:
+`gt (len x) N` → the string-length pattern subset (`^[\s\S]{N+1,}$` —
+chars ≥ bytes soundness), `ne (int x) L` → the raw-integer subset
+(`TypeIs integer ∧ NotEq L`), and `not (list … | has x)` → the exact
+NotEq conjunction (Sprig `has` is deep equality). With the
+terminal-subset lowering these close cilium's name-length, kvstoreMode
+membership, and 255-or-511 checks, and airflow's semver minimum
+(2.10.0 rejected) — coerced spellings outside the subsets stay open by
+construction. The jenkins variable-bound coercion validator remains In
+progress (needs retained binding expressions). Pins:
+`scalar_domain_fail_guards_lower_through_sound_subsets` (gen),
+`cilium_scalar_domain_validators_reject_out_of_domain_values` and
+`airflow_minimum_version_terminal_rejects_older_semver` (CLI).
+
+### NATS extraResources member kinds (FIXED)
+
+A ranged member spliced as a whole fragment at COLUMN ZERO with no
+explicit indent renders as document-root content, and Helm decodes every
+manifest as a mapping: the member gains a null-tolerant object
+requirement (`CaptureKind::ComparableKind` at the document-splice site;
+`JsonDecodedPath` identities included for the `$tplYaml` roundtrip).
+Boolean/list/scalar items reject; object items, wrappers, nulls, and
+empty lists stay open. Corpus-wide this typed the `extraObjects` idiom
+in 13 charts. Pins: `document_root_member_splices_require_object_items`
+(gen), `nats_extra_resources_items_must_be_objects` (CLI).
+
+### F71 — optional-dependency helper availability (FIXED)
+
+`helm_schema_ast::unconditional_include_names` walks the template tree
+outside every control region; the analysis layer closes it over define
+bodies (`define_bodies_in_source`), assigns define OWNERSHIP by deepest
+chart directory, and for helper names solely owned by one optional
+direct dependency mints a terminal fail condition for the dependency's
+inactive states (`ContractIr::add_terminal_fail_condition`). The clause
+is added after path scoping and before the including chart's own
+activation guards, so an optional child's clause fires only while the
+child is active. bitnami-postgresql rejects `tags.bitnami-common: false`
+(the parent's live includes need `common.*`); airflow accepts the same
+tag once `postgresql.enabled: false` disables the consuming child.
+Corpus arms also landed in bitnami-redis, kyverno, and signoz. Pins:
+`bitnami_postgresql_disabled_common_tag_loses_live_helpers`,
+`airflow_disabled_common_tag_is_scoped_to_the_postgresql_child` (CLI).
+
+### Still in progress after this round
+
+- **F83/F85 (airflow inline-local kind partition):** needs
+  predicate-qualified kind branches on `ResourceRef` (mirroring
+  `api_version_branches`) threaded from the resource detector through
+  the generator's kind partitioning; design recorded in the ledger.
+- **F31 remainder:** the jenkins variable-bound coercion validator.
+
+Fixture churn this round: 40+ corpus schemas regenerated across the
+F93/F68/F51/F31/NATS/F71 waves (each wave's semantic diff reviewed via a
+canonical `$defs`-inlined comparison before adoption), the
+signoz-zookeeper gen fixture, its IR fixture, and two IR goldens that now
+render the range-key splice (`splice env partial range-key`).
