@@ -6654,3 +6654,152 @@ with the same bundle):
   abstains there.
 - Reconfirmed pre-existing residuals (F20/F23/F31/F38/F51/F58/F64/F68/
   F70/F71/F75/F80/F84/F93) stay open as documented above.
+
+## Open-findings fix round (2026-07-17, second round)
+
+Directive: proceed with the remaining open findings. Every fix below has a
+minimal reproducer test; validation state is recorded at the end.
+
+### F76 quoted/serialization preimages — placement machinery complete
+
+Audited case status against freshly generated schemas:
+
+- **F76.1 (double-quoted escapes):** zalando was already fixed; grafana's
+  `sidecar.dashboards.folder` was verified fixed once probed with
+  `sidecar.dashboards.enabled: true` (the earlier ACCEPT was the guard
+  correctly not firing). New pin:
+  `double_quoted_splice_before_inline_region_keeps_the_contract`.
+- **F76.3 (single quotes):** kube-state-metrics was already fixed; plain
+  sequence items work (new pin
+  `single_quoted_sequence_item_excludes_undoubled_apostrophes`). cilium's
+  `- '--log-level {{ … }}'` under the debug `else if` chain was dropped by
+  the APPROXIMATE ambient conjunct — fixed by the fail-arm strengthening
+  below and pinned (`single_quoted_item_survives_undecodable_sibling_arms`).
+  The corpus site itself remains gated by `eq (include
+  "envoyDaemonSetEnabled" .) "true"` — an F83-family helper-literal decode,
+  not a quoting gap.
+- **F76.4 (flow style):** the flow placement worked; the cilium clustermesh
+  hostname was dropped because the capture sat under a RANGE. Fixed (Range
+  conjuncts become Truthy outer guards; member-field targets) and pinned
+  (`flow_quoted_splice_after_range_variable_keeps_the_contract`); the
+  corpus `domain` case now rejects with a live cluster. `$cluster.name`
+  itself ranges over `include "clustermesh-clusters" . | fromJson` — the
+  helper-collection identity residual (F93/F59 family), still open.
+- **F76.5 (plain-scalar numeric grammar):** already landed last round
+  (hex/octal/binary/leading-zero exclusions; velero pinned) — the deferral
+  note was stale.
+- **F76.6 (mapping keys):** verified fixed (numeric keys accepted, composite
+  keys rejected) for external-secrets and fluent-bit.
+- **F76.2 (composite-in-quotes):** still open; needs the recursive
+  Go-`fmt` serialization preimage (a `$defs`-recursive "no unsafe nested
+  string" schema). Deferred with that design.
+
+### Fail-arm machinery: sound strengthening under approximation
+
+`record_fail_conjunction` previously dropped ANY capture containing an
+approximate conjunct. Fail polarity permits firing LESS often, so:
+
+- `approximate_condition_predicate_expr` now decomposes `and` like `or`,
+  keeping exact conjuncts beside per-argument `Approximate` markers;
+- `fail_outer_guard` lowers a positive approximate conjunct through its
+  recognized `sound_subset`, and `¬(c₁ ∧ … ∧ cₙ)` as
+  `Not(AllOf(decodable cᵢ))` — dropping conjuncts weakens a conjunction,
+  so negating the remainder is a sound strengthening;
+- an iteration conjunct (`Guard::Range`) on a DIRECTLY ranged collection
+  becomes a `Truthy` outer guard (the body executed ⇒ the collection is
+  truthy; truthy non-collections abort rendering and never reach a valid
+  document); indirect ranges abstain;
+- member tests resolve against the member scope first (`required`-style
+  HasMember conjuncts), then against the single shared field path
+  (`clusters.*.name`), lowering to a `MembersAt` target; `NotSchemaType`
+  requirements now mark the leaf tolerant (absence never fails a
+  strings-only test);
+- `foreign_range_does_not_globalize_strict_consumer` now pins the guarded
+  implication instead of absence.
+
+### F20/F23 — self-kind-dispatch openness under approximate liveness
+
+`used_as_serialized` (including the `type_dispatched` case) is widen-only
+evidence: it never rejects an input, it only stops intent-grade channels
+(declared defaults, fallback hints, standalone guard typing) from
+narrowing. It now survives an approximate ambient conjunct. loki's
+`kindIs "bool"` hostUsers behind the Capabilities semver check accepts
+maps end-to-end; vault's server affinity (`typeOf` dispatch behind
+`ne .mode "dev"`) accepts structured values while `nodeAffinity: 7` stays
+provider-rejected. Pins:
+`self_kind_dispatch_keeps_complement_kinds_open`,
+`type_of_dispatch_keeps_serialized_arm_structured`.
+
+### F58/F59 — range/hasKey argument kinds
+
+- jenkins `additionalAgents.audit: 7` rejected: grafting a TYPELESS
+  member-host carrier (`{"additionalProperties": {}}`) into the Members
+  arm's object-typed member slot degraded the slot into a union whose
+  typeless alternative matched scalars. The slot merge
+  (`merge_into_schema_slot`) now conjoins such carriers into the object
+  instead of unioning. (A first attempt that skipped vacuous descendants
+  outright broke grafana's nested dashboards member structure — the
+  empty carriers are load-bearing scaffolding for nested grafts — and
+  was replaced by the merge fix.) Pinned
+  (`ranged_member_map_consumers_reject_scalar_members`; the grafana
+  nested-member reaudit pin guards the other direction).
+- jenkins `configScripts: 7` rejected: the chart ranges configScripts
+  under BOTH sidecar-reload states in different files; the merged row
+  condition simplifies to unconditional and the guarded iterable
+  requirement vanished. Unconditional direct ranges now emit the
+  iterable implication too (two-variable form excludes integers). Pinned
+  (`guarded_destructured_range_rejects_scalar_collections`,
+  `complementary_guarded_ranges_keep_the_iterable_requirement`); three
+  range-key pins gained the new arm.
+- NATS `extraResources: [true]` deferred to the F104 wrapper work: the
+  member kind question is inseparable from the `$tplYaml` program
+  semantics that chart routes every value through.
+
+### F84 — split-segment provider preimage (tempo)
+
+Full provenance thread: `regexSplit SEP x -1 | last` (and `first`) now
+produces `AbstractValue::SplitSegment`; a single-source raw-subject
+segment lowers to a splice with `SpliceMeta::split_segment`, carried
+through `ContractUse`/`ProviderSchemaUse.split_segment` (raw-identity
+consumers like quoted-token claims explicitly exempt it). The generator
+synthesizes a self-truthy-guarded fail arm whose pattern embeds the
+integer slot grammar into the named segment
+(`^([\s\S]*SEP)?[+-]?[0-9]+$`); non-integer slots abstain. tempo's four
+jaeger receiver endpoints now reject non-numeric port suffixes end-to-end.
+Pinned (`split_last_segment_into_numeric_slot_requires_numeric_suffix`).
+The provider lookup cache was also under-keyed (missing
+`template_supplied_member_keys` since last round and the new
+`split_segment`) — both are in the key now.
+
+### F101 completion — gen private tests on the committed bundle
+
+`crates/helm-schema-gen/src/tests` provider chains (v1.35.0 and
+v1.29.0-standalone-strict, plus the CRD chain in provider_evidence) now
+resolve against `testdata/provider-bundle` with downloads off. The bundle
+gained pod, secret, daemonset, and persistentvolumeclaim v1.35.0 schemas
+plus four negative-cache records the tests exercise.
+
+### Deferred with rationale
+
+- **F80 (velero):** the correct model is per-key merge shadowing:
+  `merge (.Values.podSecurityContext | default dict) (.Values.securityContext | default dict)`
+  gives the FIRST argument's keys precedence, so the legacy value's
+  member typing must hold only where the preferred object lacks that
+  member. Design: for each provider property `k` with schema `S_k`, emit
+  `if not(hasKey(podSecurityContext, k)) then securityContext.k: S_k`
+  arms (finite, provider-enumerated). The current emitted arms are
+  guard-inverted (legacy typed only under truthy preferred); left open
+  rather than shipping the inversion.
+- **F64 (airflow):** needs the semver comparison on `airflowVersion`
+  lowered as a cross-path conditional arm gating the `tpl` string
+  contract; bounded but not attempted this round.
+- **F104 ($tplYaml):** unchanged position — a typed program-alternative
+  representation at every reachable leaf is a feature; the NATS
+  extraResources member-kind case joins it.
+- **F76.2** composite-in-quotes (recursive Go-fmt preimage), the datadog
+  printf-composed tag, and the reconfirmed residuals
+  F31/F38/F72/F95/F51/F68/F70/F71/F75/F83/F85/F93 keep their prior
+  positions. This round adds two sharpened diagnoses: cilium's envoy
+  log-level gate is exactly the F83 helper-literal `eq (include …) "true"`
+  decode, and cilium's clustermesh `$cluster.name` is the
+  helper-`fromJson` collection identity gap.
