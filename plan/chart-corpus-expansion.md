@@ -7526,3 +7526,78 @@ All 55 chart-corpus fixtures regenerated (13 changed), the cert-manager
 IR fixture updated, gen corpus unchanged. 1290/1290 workspace tests, doc
 tests clean, `task lint` exit 0, and the downstream luup2 `check:local`
 exit 0 with the fresh release binary.
+
+## F105 labels audit round (2026-07-18, ninth round)
+
+### Diagnosis
+
+The F105 arm (`¬truthy ∨ null ∨ string` on truthy root `labels` under the
+connection-secret condition families) came from the checksum lane, in three
+steps. (1) Every secret/configmap template re-renders through
+`include (print $.Template.BasePath …) . | sha256sum`, and the include's
+bound-helper summary keeps the `labels` flow's `with`-branch meta (helper
+scope decodes `with` as a truthy header). (2) `sha256sum` keeps unknown-call
+value semantics, so the digest is a `Widened` value whose guarded-meta paths
+re-lower into splices at the annotation slot; the summary's
+`yaml_serialized` mark then promoted the splice's row to `YamlSerialized`.
+(3) Provider typing resolved the Deployment schema at
+`spec.template.metadata.annotations.checksum/*` — a string slot — and typed
+`labels` string under its own truthiness. A minimal two-template fixture
+chart reproduced the arm exactly; `helm template` renders
+`labels: {team: data}` cleanly at every affected site, so the claim was a
+false rejection.
+
+### Lowerings
+
+- `fragment_eval/lower.rs` + `fragment_eval/project.rs` +
+  `contract_signal_builder/builder.rs`: a widened transform's guarded arms
+  at a SCALAR slot become DIGEST rows for derived-text paths that are
+  neither shape-erased nor encoded. The row lowers as `Serialized` (no
+  provider or metadata typing — the slot observes fresh digest text), and
+  the builder splits its facts: the BRANCH keeps serialized tolerance
+  (grafana's checksum'd `datasources` deployment overlay must not re-type
+  through the declared default, which dropping the row outright
+  regressed), while the PATH gains no serialization use (which would hand
+  the base resolution to the serialization owner and cost airflow's
+  `labels` its base assembly). Fragment slots (`$ctx := include … }}`
+  locals placed via `nindent`) keep their splices: their pipelines carry
+  the serialized payload to the sink intact, which the
+  `airflow_break_scopes_the_deprecated_security_context_candidate` pin
+  guards.
+- `contract_normalization.rs`: `contract_use_base_cmp` includes
+  `merge_layers` and `digest` in the render-site identity. Previously a
+  marked row folded into a plain row at the same site and the surviving
+  row's marker mis-attributed the other's condition disjuncts (airflow's
+  otel `mustMerge` beside the pod-template `with` renders).
+- `fragment_eval/lower.rs`: merge-layer identities come from
+  `layer_identity_path`, which requires each layer to BE a path identity —
+  through `Choice` arms, nested `MergedLayers` lineage (the per-set worker
+  context), and pathless literal off-states (`| default dict`) — instead
+  of `unique_path` over arbitrary containers. A constructed dict merely
+  referencing one path no longer keys the merge shadow on that path
+  (external-dns's `merge $defaultSelector .podAffinityTerm` selector built
+  from `nameOverride`, bitnami's `common.labels.standard`).
+
+### Attempted and reverted
+
+Treating merge-layer rows as self-guarded renders (falsy merge operands
+are no-ops, so the row fires only for truthy layers) is semantically
+sound but let the declared-default array typing leak into the
+self-guarded `sets` overlay branch, rejecting map-shaped `sets` the F80
+pins accept. Reverted; the base falsy tolerance for `labels` (`""`/`[]`)
+stays open as F106.
+
+### Validation
+
+`labels: {team: data}` accepts and a truthy scalar `labels` still rejects
+(the `mustMerge` sites abort — helm-verified); grafana's
+`datasources`/`notifiers`/`dashboardProviders` keep accepting null/empty
+(helm renders). Airflow's incidental `labels: null` acceptance — fallout
+of the buggy string overlays' base assembly — joins the pre-existing
+`""`/`[]` falsy-family rejection tracked as F106. New CLI pin
+`airflow_checksum_annotations_do_not_string_type_root_labels`. 21 corpus
+fixtures, 2 gen fixtures (bitnami-redis: the `commonLabels` arms rescope
+from the mis-attributed merge synthesis to the templates' real render
+conditions), and 3 IR fixtures (the `[commonLabels, nameOverride]` merge
+marker removed) regenerated; a per-chart old-versus-new acceptance probe
+over every changed chart's top-level keys shows zero tightenings.

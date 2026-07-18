@@ -1,7 +1,7 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-18 (eighth round) after implementing the airflow
-recursive `workersMergeValues` lane. Green corpus tests are a
+Last reconciled 2026-07-18 (ninth round) after auditing the F105 airflow
+`labels` string-typing claim. Green corpus tests are a
 baseline, not completion evidence: the reopening pass verified claims with
 concrete opposite-polarity probes, and the recent rounds implemented the ones
 that survived verification, re-adjudicating the ones whose root cause turned
@@ -299,6 +299,41 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   stay open — every polarity verified under `helm template`; pinned by
   `airflow_worker_set_overrides_bind_strict_member_kinds` (CLI) and the
   recognizer tests (IR)
+- F105 airflow root `labels` string-typed under the connection-secret
+  conditions (ninth round): the producer was the checksum lane — the
+  `include (print $.Template.BasePath …) . | sha256sum` annotations render
+  each secret/configmap template through a bound-helper summary whose
+  `labels` flow keeps its `with`-branch meta, and the widened digest value
+  re-lowered that influence path into a guarded splice at the annotation
+  slot, where the summary's `yaml_serialized` mark promoted the row to
+  `YamlSerialized` and provider typing read the Deployment's
+  annotation-value schema (string). Three lowerings landed: (a) a widened
+  transform's guarded arms at a SCALAR slot become DIGEST rows for
+  derived-text paths that are neither shape-erased nor encoded — the row
+  lowers as `Serialized` (no provider or metadata typing) and the builder
+  splits its facts so the BRANCH keeps serialized tolerance (grafana's
+  checksum'd `datasources` overlay must not re-type through the declared
+  default) while the PATH gains no serialization use (which would hand
+  the base resolution to the serialization owner); Fragment slots
+  (`include … | nindent` locals) keep their payload-carrying rows;
+  (b) `contract_use_base_cmp` includes `merge_layers` and `digest` in the
+  render-site identity so a marked row no longer folds into a plain row
+  at the same site and mis-attributes its disjuncts; (c) merge-layer
+  identities require the layer to BE a path identity (also through
+  `Choice` arms and nested `MergedLayers` lineage, with pathless literal
+  off-states) — a constructed dict merely referencing one path
+  (external-dns's `merge $defaultSelector .podAffinityTerm` selector
+  built from `nameOverride`, bitnami's `common.labels.standard`) no
+  longer keys the merge shadow on the referenced path. The real chart now
+  accepts `labels: {team: data}` (helm renders) while a truthy scalar
+  still rejects (the `mustMerge` sites abort — helm-verified); grafana's
+  `datasources`/`notifiers`/`dashboardProviders` keep accepting
+  null/empty (helm renders; the falsy family joins F106 for airflow's
+  `labels`). Pinned by
+  `airflow_checksum_annotations_do_not_string_type_root_labels` (CLI);
+  21 corpus fixtures, 2 gen fixtures, and 3 IR fixtures regenerated with
+  a per-chart old-versus-new acceptance probe showing no tightenings at
+  the top-level key domain
 
 ## In progress
 
@@ -317,17 +352,24 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `toString | trimSuffix "-jmx"` tag domain — the latter needs the semver
   comparator preimage to flow through derived-text subjects with lexical
   escapes.
-- **F105 — airflow root `labels` string-typed under the metadata-secret
-  conditions (suspected false rejection).** Observed while landing the
-  eighth round, present in the fixtures before it: an `if`-arm keyed on the
-  metadata-connection-secret conditions (scheduler enabled or the
-  triggerer/keda family, no `data.metadataSecretName`) constrains a TRUTHY
-  root `labels` to `¬truthy ∨ null ∨ string`, yet
-  `helm template --skip-schema-validation` renders `labels: {team: data}`
-  under composed defaults cleanly. The arm's shape points at the checksum
-  string-consumer lane (`include (print $.Template.BasePath …) . |
-  sha256sum` over the secret templates). Needs its own audit: find the
-  producer, verify polarity, and either scope or delete the claim.
+- **F106 — airflow root `labels` Helm-falsy scalars at the base
+  (false rejection, partially pre-existing).** Uncovered by the F105
+  audit: `labels: ""` and `labels: []` were already rejected by the base
+  typing, and with the digest rows no longer provider-typed the previous
+  fixtures' incidental `labels: null` acceptance is gone too, while
+  `helm template` renders all three (every `with` guard skips a falsy
+  value, and the `if or .Values.labels .Values.X.labels` `mustMerge`
+  sites tolerate falsy operands — sprig merge no-ops them; all
+  helm-verified). The base falsy escape is blocked because the or-guarded
+  `mustMerge` rows are not self-guarded renders; treating merge-layer
+  rows as self-guarded by construction was attempted and reverted (it let
+  the declared-default array typing leak into the self-guarded `sets`
+  overlay branch and regressed the F80 map-shaped `sets` pins). The old
+  null arm was itself fallout of the conditional-target base assembly
+  under the buggy string overlays, not a nullability grant. Reopening
+  needs either a falsy-tolerance catalog fact for merge operand rows that
+  does not reroute the overlay's declared-default merge, or the F80
+  merge-aware candidate decoding below.
 - **F80 residual — worker-family provider typing under the merged
   context.** With `.Values.workers` resolving through the per-set merge,
   the `airflowPodSecurityContext` priority-chain decoding cannot scope the
