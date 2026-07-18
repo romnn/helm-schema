@@ -71,6 +71,13 @@ pub struct ContractUse {
     /// survival is undecidable and its sink typing must abstain entirely.
     #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
     pub omitted_members: std::collections::BTreeMap<String, Vec<Guard>>,
+    /// Set when the slot renders fresh text DERIVED from the value
+    /// (`include … | sha256sum` checksum annotations): the sink observes
+    /// neither the value nor its serialization, so the row grants its
+    /// branch serialized tolerance without claiming a path-wide
+    /// serialization use.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub digest: bool,
 }
 
 impl<'de> Deserialize<'de> for ContractUse {
@@ -99,6 +106,8 @@ impl<'de> Deserialize<'de> for ContractUse {
             range_key: bool,
             #[serde(default)]
             omitted_members: std::collections::BTreeMap<String, Vec<Guard>>,
+            #[serde(default)]
+            digest: bool,
         }
 
         let wire = WireContractUse::deserialize(deserializer)?;
@@ -115,6 +124,7 @@ impl<'de> Deserialize<'de> for ContractUse {
             merge_layers: wire.merge_layers,
             range_key: wire.range_key,
             omitted_members: wire.omitted_members,
+            digest: wire.digest,
         })
     }
 }
@@ -170,6 +180,7 @@ impl ContractUse {
             merge_layers: None,
             range_key: false,
             omitted_members: std::collections::BTreeMap::new(),
+            digest: false,
         }
     }
 

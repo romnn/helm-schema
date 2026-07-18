@@ -105,24 +105,70 @@
     },
     {
       "if": {
-        "properties": {
-          "commonLabels": {
-            "$ref": "#/$defs/helm-truthy"
+        "allOf": [
+          {
+            "properties": {
+              "metrics": {
+                "properties": {
+                  "enabled": {
+                    "$ref": "#/$defs/helm-truthy"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "metrics": {
+                "properties": {
+                  "prometheusRule": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "prometheusRule"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "metrics"
+            ],
+            "type": "object"
           }
-        },
-        "required": [
-          "commonLabels"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "commonLabels": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object"
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "string"
+              }
+            ]
           }
         }
       }
@@ -834,28 +880,7 @@
   ],
   "properties": {
     "commonAnnotations": {},
-    "commonLabels": {
-      "allOf": [
-        {
-          "if": {
-            "$ref": "#/$defs/helm-truthy"
-          },
-          "then": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
-              },
-              {
-                "type": "string"
-              }
-            ]
-          }
-        }
-      ]
-    },
+    "commonLabels": {},
     "fullnameOverride": {},
     "metrics": {
       "additionalProperties": {},

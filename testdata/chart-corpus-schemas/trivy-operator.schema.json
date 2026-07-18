@@ -11997,14 +11997,42 @@
             "additionalProperties": {},
             "properties": {
               "mountPath": {
-                "anyOf": [
+                "allOf": [
                   {
-                    "$ref": "#/$defs/schema263"
+                    "$ref": "#/$defs/schema332"
                   },
                   {
-                    "type": "null"
+                    "$ref": "#/$defs/schema334"
+                  },
+                  {
+                    "$ref": "#/$defs/schema336"
+                  },
+                  {
+                    "not": {
+                      "pattern": "[ \\t]#"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/schema337"
+                  },
+                  {
+                    "$ref": "#/$defs/schema333"
+                  },
+                  {
+                    "$ref": "#/$defs/schema283"
+                  },
+                  {
+                    "$ref": "#/$defs/schema152"
+                  },
+                  {
+                    "$ref": "#/$defs/schema315"
+                  },
+                  {
+                    "$ref": "#/$defs/schema326"
                   }
-                ]
+                ],
+                "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
+                "type": "string"
               }
             }
           }

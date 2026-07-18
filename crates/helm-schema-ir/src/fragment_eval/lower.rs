@@ -106,6 +106,7 @@ impl LowerScope<'_> {
                 split_segment: None,
                 merge_layers: None,
                 range_key: false,
+                digest: false,
                 omitted_members: helper_meta
                     .map(|meta| meta.omitted_keys.clone())
                     .unwrap_or_default(),
@@ -280,8 +281,13 @@ pub(crate) fn lower_value(
             // a shadowed layer's member contracts to keys the earlier
             // layers do not supply (velero's destination-first
             // `merge podSecurityContext securityContext`).
-            let identities: Option<Vec<String>> =
-                layers.iter().map(AbstractValue::unique_path).collect();
+            // A layer identity must BE the path's value, not merely mention
+            // it: a constructed dict layer whose leaves reference one path
+            // (external-dns's `merge $defaultSelector .podAffinityTerm`
+            // with a selector built from `nameOverride`) supplies its OWN
+            // literal keys, so keying its shadow on the referenced path
+            // would scope sibling-layer members by the wrong value.
+            let identities: Option<Vec<String>> = layers.iter().map(layer_identity_path).collect();
             let mut out = Guarded::empty();
             for (position, layer) in layers.iter().enumerate() {
                 let mut lowered = lower_value(layer, kind, scope);
@@ -343,7 +349,26 @@ pub(crate) fn lower_value(
             for path in paths {
                 match scope.local_output_meta.get(path) {
                     Some(meta) if !meta.predicates.is_empty() || meta.defaulted => {
-                        for (condition, splice) in scope.path_splice_arms(path, kind) {
+                        // A derived-text path whose identity the transform
+                        // lost renders FRESH text into a scalar slot
+                        // (airflow's `include … | sha256sum` checksum
+                        // annotations over the secret templates), so the
+                        // slot observes neither the value nor its
+                        // serialization: the splice becomes a digest row,
+                        // abstaining from slot typing without the
+                        // serialization marks picked up INSIDE the
+                        // transform re-typing the slot. Fragment slots keep
+                        // their splices intact — their pipelines
+                        // (`include … | nindent`) carry the payload to the
+                        // sink — as do already shape-erased
+                        // (printf-collapsed) and encoded (`b64enc`) flows.
+                        let digest_input =
+                            matches!(kind, ValueKind::Scalar | ValueKind::PartialScalar)
+                                && path_is_encoded(path, scope.derived_text_paths)
+                                && !path_is_encoded(path, scope.shape_erased_paths)
+                                && !path_is_encoded(path, scope.encoded_paths);
+                        for (condition, mut splice) in scope.path_splice_arms(path, kind) {
+                            splice.meta.digest |= digest_input;
                             out.arms.push((condition, AbstractFragment::Splice(splice)));
                         }
                     }
@@ -378,6 +403,35 @@ pub(crate) fn lower_value(
             out
         }
     }
+}
+
+/// The values path a merge layer's runtime value IS.
+///
+/// Accepts a direct path identity, possibly alternated with pathless
+/// literal arms (velero's `.Values.podSecurityContext | default dict`
+/// off-state).
+///
+/// A constructed container REFERENCING a path returns `None` — its keys
+/// are template-supplied (external-dns's `merge $defaultSelector
+/// .podAffinityTerm` selector built from `nameOverride`), so keying the
+/// merge shadow on the referenced path would scope sibling-layer members
+/// by the wrong value.
+fn layer_identity_path(layer: &AbstractValue) -> Option<String> {
+    fn arms_are_identity_or_literal(value: &AbstractValue) -> bool {
+        match value {
+            AbstractValue::ValuesPath(_)
+            | AbstractValue::JsonDecodedPath(_)
+            | AbstractValue::OutputPath(_, _) => true,
+            // A nested merge of identities keeps the lineage: airflow's
+            // per-set worker context resolves `.Values.workers.x` to
+            // `MergedLayers([overwrite, workers.x])`, which still IS the
+            // `workers.x` value wherever the overwrite abstains.
+            AbstractValue::Choice(choices) => choices.iter().all(arms_are_identity_or_literal),
+            AbstractValue::MergedLayers(layers) => layers.iter().all(arms_are_identity_or_literal),
+            other => other.paths().is_empty(),
+        }
+    }
+    arms_are_identity_or_literal(layer).then(|| layer.unique_path())?
 }
 
 fn lower_entries(

@@ -1025,13 +1025,6 @@
       "type": "string"
     },
     "schema51": {
-      "description": "List of teams which members need the superuser role in each Postgres cluster",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    },
-    "schema52": {
       "not": {
         "properties": {
           "rbac": {
@@ -1050,22 +1043,31 @@
         "type": "object"
       }
     },
-    "schema53": {
+    "schema52": {
       "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
       "type": "string"
     },
     "schema55": {
-      "description": "operator watches for postgres objects in the given namespace\nlisten to all namespaces",
-      "type": "string"
-    },
-    "schema57": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema58": {
-      "description": "S3 retention time for stored backups for example \"2 week\" or \"7 days\"",
+    "schema57": {
+      "default": "https://info.example.com/oauth2/tokeninfo?access_token= uid realm=/employees",
       "type": "string"
+    },
+    "schema59": {
+      "properties": {
+        "configTarget": {
+          "enum": [
+            "ConfigMap"
+          ]
+        }
+      },
+      "required": [
+        "configTarget"
+      ],
+      "type": "object"
     },
     "schema6": {
       "description": "A list of node selector requirements by node's fields.",
@@ -1110,27 +1112,6 @@
       ]
     },
     "schema60": {
-      "default": "https://info.example.com/oauth2/tokeninfo?access_token= uid realm=/employees",
-      "type": "string"
-    },
-    "schema62": {
-      "properties": {
-        "configTarget": {
-          "enum": [
-            "ConfigMap"
-          ]
-        }
-      },
-      "required": [
-        "configTarget"
-      ],
-      "type": "object"
-    },
-    "schema63": {
-      "description": "secret to be used as reference for env variables in cronjob",
-      "type": "string"
-    },
-    "schema64": {
       "not": {
         "properties": {
           "readinessProbe": {}
@@ -1141,7 +1122,7 @@
         "type": "object"
       }
     },
-    "schema65": {
+    "schema61": {
       "additionalProperties": {
         "additionalProperties": {}
       },
@@ -1149,13 +1130,17 @@
         "additionalProperties": {}
       }
     },
-    "schema67": {
+    "schema63": {
       "not": {
         "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
       }
     },
-    "schema69": {
+    "schema65": {
       "pattern": "^(\\d+(e\\d+)?|\\d+(\\.\\d+)?(e\\d+)?[EPTGMK]i?)$|^$",
+      "type": "string"
+    },
+    "schema67": {
+      "pattern": "^(\\d+(e\\d+)?|\\d+(\\.\\d+)?(e\\d+)?[EPTGMK]i?)$",
       "type": "string"
     },
     "schema7": {
@@ -1201,10 +1186,6 @@
       ]
     },
     "schema71": {
-      "pattern": "^(\\d+(e\\d+)?|\\d+(\\.\\d+)?(e\\d+)?[EPTGMK]i?)$",
-      "type": "string"
-    },
-    "schema75": {
       "not": {
         "properties": {
           "create": {}
@@ -1215,7 +1196,7 @@
         "type": "object"
       }
     },
-    "schema76": {
+    "schema72": {
       "additionalProperties": {
         "type": "object"
       },
@@ -1223,7 +1204,7 @@
         "type": "object"
       }
     },
-    "schema79": {
+    "schema75": {
       "oneOf": [
         {
           "type": [
@@ -1239,26 +1220,26 @@
         }
       ]
     },
-    "schema80": {
+    "schema76": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "schema82": {
+    "schema78": {
       "pattern": "^(\\d+m|\\d+(\\.\\d{1,3})?)$|^$",
       "type": "string"
     },
-    "schema83": {
+    "schema79": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "schema84": {
+    "schema80": {
       "pattern": "^(\\d+m|\\d+(\\.\\d{1,3})?)$",
       "type": "string"
     },
-    "schema85": {
+    "schema81": {
       "anyOf": [
         {
           "additionalProperties": {}
@@ -1268,36 +1249,36 @@
         }
       ]
     },
-    "schema87": {
+    "schema83": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
     },
-    "schema88": {
+    "schema84": {
       "items": {
         "type": "string"
       },
       "type": "array"
     },
-    "schema89": {
+    "schema85": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "schema90": {
+    "schema86": {
       "enum": [
         "OperatorConfigurationCRD"
       ]
     },
-    "schema92": {
+    "schema88": {
       "default": false,
       "type": "boolean"
     },
-    "schema93": {
+    "schema89": {
       "default": true,
       "type": "boolean"
     },
-    "schema94": {
+    "schema90": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
@@ -1310,7 +1291,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "not": {
@@ -1321,7 +1302,7 @@
             "not": {
               "properties": {
                 "configAwsOrGcp": {
-                  "$ref": "#/$defs/schema76"
+                  "$ref": "#/$defs/schema72"
                 }
               },
               "required": [
@@ -1351,7 +1332,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema42"
@@ -1363,11 +1344,11 @@
         "properties": {
           "configAwsOrGcp": {
             "additionalProperties": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             },
             "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\"",
             "items": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             }
           }
         }
@@ -1381,28 +1362,7 @@
         "additionalProperties": {},
         "properties": {
           "configAwsOrGcp": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "aws_region": {
-                    "description": "AWS region used to store EBS volumes",
-                    "type": "string"
-                  },
-                  "enable_ebs_gp3_migration": {
-                    "description": "enable automatic migration on AWS from gp2 to gp3 volumes\ndefines maximum volume size in GB until which auto migration happens\nenable_ebs_gp3_migration_max_size: 1000",
-                    "type": "boolean"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
+            "additionalProperties": {},
             "description": "configure interaction with non-Kubernetes objects from AWS or GCP\nAdditional Secret (aws or gcp credentials) to mount in the pod\nadditional_secret_mount: \"some-secret-name\""
           }
         }
@@ -1410,7 +1370,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -1439,7 +1399,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -1519,7 +1479,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "not": {
@@ -1530,7 +1490,7 @@
             "not": {
               "properties": {
                 "configConnectionPooler": {
-                  "$ref": "#/$defs/schema76"
+                  "$ref": "#/$defs/schema72"
                 }
               },
               "required": [
@@ -1560,7 +1520,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema29"
@@ -1572,11 +1532,11 @@
         "properties": {
           "configConnectionPooler": {
             "additionalProperties": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             },
             "description": "configure connection pooler deployment created by the operator",
             "items": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             }
           }
         }
@@ -1590,57 +1550,7 @@
         "additionalProperties": {},
         "properties": {
           "configConnectionPooler": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "connection_pooler_default_cpu_limit": {
-                    "type": "string"
-                  },
-                  "connection_pooler_default_cpu_request": {
-                    "description": "default resources",
-                    "type": "string"
-                  },
-                  "connection_pooler_default_memory_limit": {
-                    "type": "string"
-                  },
-                  "connection_pooler_default_memory_request": {
-                    "type": "string"
-                  },
-                  "connection_pooler_image": {
-                    "description": "docker image",
-                    "type": "string"
-                  },
-                  "connection_pooler_max_db_connections": {
-                    "description": "max db connections the pooler should hold",
-                    "type": "integer"
-                  },
-                  "connection_pooler_mode": {
-                    "description": "default pooling mode",
-                    "type": "string"
-                  },
-                  "connection_pooler_number_of_instances": {
-                    "description": "number of pooler instances",
-                    "type": "integer"
-                  },
-                  "connection_pooler_schema": {
-                    "description": "db schema to install lookup function into",
-                    "type": "string"
-                  },
-                  "connection_pooler_user": {
-                    "description": "db user for pooler to use",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
+            "additionalProperties": {},
             "description": "configure connection pooler deployment created by the operator"
           }
         }
@@ -1648,7 +1558,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -1677,7 +1587,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -1710,7 +1620,7 @@
             "description": "configure connection pooler deployment created by the operator",
             "properties": {
               "connection_pooler_default_cpu_limit": {
-                "$ref": "#/$defs/schema84"
+                "$ref": "#/$defs/schema80"
               },
               "connection_pooler_default_cpu_request": {
                 "description": "default resources",
@@ -1718,10 +1628,10 @@
                 "type": "string"
               },
               "connection_pooler_default_memory_limit": {
-                "$ref": "#/$defs/schema71"
+                "$ref": "#/$defs/schema67"
               },
               "connection_pooler_default_memory_request": {
-                "$ref": "#/$defs/schema71"
+                "$ref": "#/$defs/schema67"
               },
               "connection_pooler_image": {
                 "default": "registry.opensource.zalan.do/acid/pgbouncer:master-32",
@@ -1768,7 +1678,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "not": {
@@ -1779,7 +1689,7 @@
             "not": {
               "properties": {
                 "configDebug": {
-                  "$ref": "#/$defs/schema76"
+                  "$ref": "#/$defs/schema72"
                 }
               },
               "required": [
@@ -1809,7 +1719,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema48"
@@ -1821,11 +1731,11 @@
         "properties": {
           "configDebug": {
             "additionalProperties": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             },
             "description": "options to aid debugging of the operator itself",
             "items": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             }
           }
         }
@@ -1839,28 +1749,7 @@
         "additionalProperties": {},
         "properties": {
           "configDebug": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "debug_logging": {
-                    "description": "toggles verbose debug logs from the operator",
-                    "type": "boolean"
-                  },
-                  "enable_database_access": {
-                    "description": "toggles operator functionality that require access to the postgres database",
-                    "type": "boolean"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
+            "additionalProperties": {},
             "description": "options to aid debugging of the operator itself"
           }
         }
@@ -1868,7 +1757,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -1897,7 +1786,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -1949,7 +1838,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "not": {
@@ -1960,7 +1849,7 @@
             "not": {
               "properties": {
                 "configGeneral": {
-                  "$ref": "#/$defs/schema76"
+                  "$ref": "#/$defs/schema72"
                 }
               },
               "required": [
@@ -1990,7 +1879,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema46"
@@ -2002,11 +1891,11 @@
         "properties": {
           "configGeneral": {
             "additionalProperties": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             },
             "description": "general configuration parameters",
             "items": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             }
           }
         }
@@ -2020,79 +1909,7 @@
         "additionalProperties": {},
         "properties": {
           "configGeneral": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "crd_categories": {
-                    "description": "specify categories under which crds should be listed",
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "docker_image": {
-                    "description": "Spilo docker image",
-                    "type": "string"
-                  },
-                  "enable_crd_registration": {
-                    "description": "the deployment should create/update the CRDs",
-                    "type": "boolean"
-                  },
-                  "enable_lazy_spilo_upgrade": {
-                    "description": "update only the statefulsets without immediately doing the rolling update",
-                    "type": "boolean"
-                  },
-                  "enable_pgversion_env_var": {
-                    "description": "set the PGVERSION env var instead of providing the version via postgresql.bin_dir in SPILO_CONFIGURATION",
-                    "type": "boolean"
-                  },
-                  "enable_shm_volume": {
-                    "description": "start any new database pod without limitations on shm memory",
-                    "type": "boolean"
-                  },
-                  "enable_spilo_wal_path_compat": {
-                    "description": "enables backwards compatible path between Spilo 12 and Spilo 13+ images",
-                    "type": "boolean"
-                  },
-                  "enable_team_id_clustername_prefix": {
-                    "description": "operator will sync only clusters where name starts with teamId prefix",
-                    "type": "boolean"
-                  },
-                  "etcd_host": {
-                    "description": "etcd connection string for Patroni. Empty uses K8s-native DCS.",
-                    "type": "string"
-                  },
-                  "max_instances": {
-                    "description": "max number of instances in Postgres cluster. -1 = no limit",
-                    "type": "integer"
-                  },
-                  "min_instances": {
-                    "description": "min number of instances in Postgres cluster. -1 = no limit",
-                    "type": "integer"
-                  },
-                  "repair_period": {
-                    "description": "period between consecutive repair requests",
-                    "type": "string"
-                  },
-                  "resync_period": {
-                    "description": "period between consecutive sync requests\ncan prevent certain cases of memory overcommitment\nset_memory_request_to_limit: false",
-                    "type": "string"
-                  },
-                  "workers": {
-                    "description": "number of routines the operator spawns to process requests concurrently",
-                    "type": "integer"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
+            "additionalProperties": {},
             "description": "general configuration parameters"
           }
         }
@@ -2100,7 +1917,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -2129,7 +1946,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -2155,7 +1972,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema52"
+            "$ref": "#/$defs/schema51"
           },
           {
             "properties": {
@@ -2215,7 +2032,7 @@
                     "type": "string"
                   },
                   "enable_ebs_gp3_migration": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "enable_ebs_gp3_migration_max_size": {
                     "default": 1000,
@@ -2245,16 +2062,16 @@
               "connection_pooler": {
                 "properties": {
                   "connection_pooler_default_cpu_limit": {
-                    "$ref": "#/$defs/schema84"
+                    "$ref": "#/$defs/schema80"
                   },
                   "connection_pooler_default_cpu_request": {
-                    "$ref": "#/$defs/schema84"
+                    "$ref": "#/$defs/schema80"
                   },
                   "connection_pooler_default_memory_limit": {
-                    "$ref": "#/$defs/schema71"
+                    "$ref": "#/$defs/schema67"
                   },
                   "connection_pooler_default_memory_request": {
-                    "$ref": "#/$defs/schema71"
+                    "$ref": "#/$defs/schema67"
                   },
                   "connection_pooler_image": {
                     "default": "registry.opensource.zalan.do/acid/pgbouncer:master-32",
@@ -2299,10 +2116,10 @@
               "debug": {
                 "properties": {
                   "debug_logging": {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema89"
                   },
                   "enable_database_access": {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema89"
                   }
                 },
                 "type": "object"
@@ -2361,7 +2178,7 @@
               "kubernetes": {
                 "properties": {
                   "additional_pod_capabilities": {
-                    "$ref": "#/$defs/schema88"
+                    "$ref": "#/$defs/schema84"
                   },
                   "cluster_domain": {
                     "default": "cluster.local",
@@ -2381,7 +2198,7 @@
                     "type": "string"
                   },
                   "custom_pod_annotations": {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema79"
                   },
                   "delete_annotation_date_key": {
                     "type": "string"
@@ -2390,40 +2207,40 @@
                     "type": "string"
                   },
                   "downscaler_annotations": {
-                    "$ref": "#/$defs/schema88"
+                    "$ref": "#/$defs/schema84"
                   },
                   "enable_cross_namespace_secret": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "enable_finalizers": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "enable_init_containers": {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema89"
                   },
                   "enable_owner_references": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "enable_persistent_volume_claim_deletion": {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema89"
                   },
                   "enable_pod_antiaffinity": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "enable_pod_disruption_budget": {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema89"
                   },
                   "enable_readiness_probe": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "enable_secrets_deletion": {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema89"
                   },
                   "enable_sidecars": {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema89"
                   },
                   "ignored_annotations": {
-                    "$ref": "#/$defs/schema88"
+                    "$ref": "#/$defs/schema84"
                   },
                   "infrastructure_roles_secret_name": {
                     "type": "string"
@@ -2432,17 +2249,17 @@
                     "$ref": "#/$defs/schema18"
                   },
                   "inherited_annotations": {
-                    "$ref": "#/$defs/schema88"
+                    "$ref": "#/$defs/schema84"
                   },
                   "inherited_labels": {
-                    "$ref": "#/$defs/schema88"
+                    "$ref": "#/$defs/schema84"
                   },
                   "master_pod_move_timeout": {
                     "default": "20m",
                     "type": "string"
                   },
                   "node_readiness_label": {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema79"
                   },
                   "node_readiness_label_merge": {
                     "enum": [
@@ -2456,7 +2273,7 @@
                     "type": "string"
                   },
                   "pdb_master_label_selector": {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema89"
                   },
                   "pdb_name_format": {
                     "default": "postgres-{cluster}-pdb",
@@ -2482,7 +2299,7 @@
                     "type": "object"
                   },
                   "pod_antiaffinity_preferred_during_scheduling": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "pod_antiaffinity_topology_key": {
                     "default": "kubernetes.io/hostname",
@@ -2530,16 +2347,16 @@
                     "type": "string"
                   },
                   "share_pgsocket_with_sidecars": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "spilo_allow_privilege_escalation": {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema89"
                   },
                   "spilo_fsgroup": {
                     "type": "integer"
                   },
                   "spilo_privileged": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "spilo_runasgroup": {
                     "type": "integer"
@@ -2558,7 +2375,7 @@
                     "type": "string"
                   },
                   "toleration": {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema79"
                   },
                   "watched_namespace": {
                     "type": "string"
@@ -2567,28 +2384,28 @@
                 "type": "object"
               },
               "kubernetes_use_configmaps": {
-                "$ref": "#/$defs/schema92"
+                "$ref": "#/$defs/schema88"
               },
               "load_balancer": {
                 "properties": {
                   "custom_service_annotations": {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema79"
                   },
                   "db_hosted_zone": {
                     "default": "db.example.com",
                     "type": "string"
                   },
                   "enable_master_load_balancer": {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema89"
                   },
                   "enable_master_pooler_load_balancer": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "enable_replica_load_balancer": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "enable_replica_pooler_load_balancer": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "external_traffic_policy": {
                     "default": "Cluster",
@@ -2646,10 +2463,10 @@
                     "type": "string"
                   },
                   "logical_backup_cpu_limit": {
-                    "$ref": "#/$defs/schema84"
+                    "$ref": "#/$defs/schema80"
                   },
                   "logical_backup_cpu_request": {
-                    "$ref": "#/$defs/schema84"
+                    "$ref": "#/$defs/schema80"
                   },
                   "logical_backup_cronjob_environment_secret": {
                     "type": "string"
@@ -2666,10 +2483,10 @@
                     "type": "string"
                   },
                   "logical_backup_memory_limit": {
-                    "$ref": "#/$defs/schema71"
+                    "$ref": "#/$defs/schema67"
                   },
                   "logical_backup_memory_request": {
-                    "$ref": "#/$defs/schema71"
+                    "$ref": "#/$defs/schema67"
                   },
                   "logical_backup_provider": {
                     "default": "s3",
@@ -2726,7 +2543,7 @@
                     "type": "string"
                   },
                   "major_version_upgrade_team_allow_list": {
-                    "$ref": "#/$defs/schema88"
+                    "$ref": "#/$defs/schema84"
                   },
                   "minimal_major_version": {
                     "default": "13",
@@ -2754,7 +2571,7 @@
               "patroni": {
                 "properties": {
                   "enable_patroni_failsafe_mode": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   }
                 },
                 "type": "object"
@@ -2762,28 +2579,28 @@
               "postgres_pod_resources": {
                 "properties": {
                   "default_cpu_limit": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema78"
                   },
                   "default_cpu_request": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema78"
                   },
                   "default_memory_limit": {
-                    "$ref": "#/$defs/schema69"
+                    "$ref": "#/$defs/schema65"
                   },
                   "default_memory_request": {
-                    "$ref": "#/$defs/schema69"
+                    "$ref": "#/$defs/schema65"
                   },
                   "max_cpu_request": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema78"
                   },
                   "max_memory_request": {
-                    "$ref": "#/$defs/schema69"
+                    "$ref": "#/$defs/schema65"
                   },
                   "min_cpu_limit": {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema78"
                   },
                   "min_memory_limit": {
-                    "$ref": "#/$defs/schema69"
+                    "$ref": "#/$defs/schema65"
                   }
                 },
                 "type": "object"
@@ -2834,10 +2651,10 @@
                 "type": "object"
               },
               "set_memory_request_to_limit": {
-                "$ref": "#/$defs/schema92"
+                "$ref": "#/$defs/schema88"
               },
               "sidecar_docker_images": {
-                "$ref": "#/$defs/schema83"
+                "$ref": "#/$defs/schema79"
               },
               "sidecars": {
                 "items": {
@@ -2850,32 +2667,32 @@
               "teams_api": {
                 "properties": {
                   "enable_admin_role_for_users": {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema89"
                   },
                   "enable_postgres_team_crd": {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema89"
                   },
                   "enable_postgres_team_crd_superusers": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "enable_team_member_deprecation": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "enable_team_superuser": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "enable_teams_api": {
-                    "$ref": "#/$defs/schema93"
+                    "$ref": "#/$defs/schema89"
                   },
                   "pam_configuration": {
-                    "$ref": "#/$defs/schema60"
+                    "$ref": "#/$defs/schema57"
                   },
                   "pam_role_name": {
                     "default": "zalandos",
                     "type": "string"
                   },
                   "postgres_superuser_teams": {
-                    "$ref": "#/$defs/schema88"
+                    "$ref": "#/$defs/schema84"
                   },
                   "protected_role_names": {
                     "default": [
@@ -2958,7 +2775,7 @@
                     "type": "array"
                   },
                   "enable_password_rotation": {
-                    "$ref": "#/$defs/schema92"
+                    "$ref": "#/$defs/schema88"
                   },
                   "password_rotation_interval": {
                     "default": 90,
@@ -2995,7 +2812,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "not": {
@@ -3006,7 +2823,7 @@
             "not": {
               "properties": {
                 "configKubernetes": {
-                  "$ref": "#/$defs/schema76"
+                  "$ref": "#/$defs/schema72"
                 }
               },
               "required": [
@@ -3036,7 +2853,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema39"
@@ -3048,11 +2865,11 @@
         "properties": {
           "configKubernetes": {
             "additionalProperties": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             },
             "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\"",
             "items": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             }
           }
         }
@@ -3066,142 +2883,7 @@
         "additionalProperties": {},
         "properties": {
           "configKubernetes": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "cluster_domain": {
-                    "description": "default DNS domain of K8s cluster where operator is running",
-                    "type": "string"
-                  },
-                  "cluster_labels": {
-                    "additionalProperties": {},
-                    "description": "additional labels assigned to the cluster objects",
-                    "properties": {
-                      "application": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "cluster_name_label": {
-                    "description": "label assigned to Kubernetes objects created by the operator\nadditional annotations to add to every database pod\ncustom_pod_annotations:\nkeya: valuea\nkeyb: valueb",
-                    "type": "string"
-                  },
-                  "enable_cross_namespace_secret": {
-                    "description": "allow user secrets in other namespaces than the Postgres cluster",
-                    "type": "boolean"
-                  },
-                  "enable_finalizers": {
-                    "description": "use finalizers to ensure all managed resources are deleted prior to the postgresql CR\nthis avoids stale resources in case the operator misses a delete event or is not running\nduring deletion",
-                    "type": "boolean"
-                  },
-                  "enable_init_containers": {
-                    "description": "enables initContainers to run actions before Spilo is started",
-                    "type": "boolean"
-                  },
-                  "enable_owner_references": {
-                    "description": "toggles if child resources should have an owner reference to the postgresql CR",
-                    "type": "boolean"
-                  },
-                  "enable_persistent_volume_claim_deletion": {
-                    "description": "toggles if operator should delete PVCs on cluster deletion",
-                    "type": "boolean"
-                  },
-                  "enable_pod_antiaffinity": {
-                    "description": "toggles pod anti affinity on the Postgres pods",
-                    "type": "boolean"
-                  },
-                  "enable_pod_disruption_budget": {
-                    "description": "toggles PDB to set to MinAvailabe 0 or 1",
-                    "type": "boolean"
-                  },
-                  "enable_readiness_probe": {
-                    "description": "toogles readiness probe for database pods",
-                    "type": "boolean"
-                  },
-                  "enable_secrets_deletion": {
-                    "description": "toggles if operator should delete secrets on cluster deletion",
-                    "type": "boolean"
-                  },
-                  "enable_sidecars": {
-                    "description": "enables sidecar containers to run alongside Spilo in the same pod",
-                    "type": "boolean"
-                  },
-                  "pdb_master_label_selector": {
-                    "description": "toggle if `spilo-role=master` selector should be added to the PDB (Pod Disruption Budget)",
-                    "type": "boolean"
-                  },
-                  "pdb_name_format": {
-                    "description": "defines the template for PDB names",
-                    "type": "string"
-                  },
-                  "persistent_volume_claim_retention_policy": {
-                    "additionalProperties": {},
-                    "description": "specify the PVC retention policy when scaling down and/or deleting",
-                    "properties": {
-                      "when_deleted": {
-                        "type": "string"
-                      },
-                      "when_scaled": {
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  },
-                  "pod_antiaffinity_preferred_during_scheduling": {
-                    "description": "switches pod anti affinity type to `preferredDuringSchedulingIgnoredDuringExecution`",
-                    "type": "boolean"
-                  },
-                  "pod_antiaffinity_topology_key": {
-                    "description": "override topology key for pod anti affinity\nnamespaced name of the ConfigMap with environment variables to populate on every pod\npod_environment_configmap: \"default/my-custom-config\"\nname of the Secret (in cluster namespace) with environment variables to populate on every pod\npod_environment_secret: \"my-custom-secret\"",
-                    "type": "string"
-                  },
-                  "pod_management_policy": {
-                    "description": "specify the pod management policy of stateful sets of Postgres clusters",
-                    "type": "string"
-                  },
-                  "pod_role_label": {
-                    "description": "label assigned to the Postgres pods (and services/endpoints)\nservice account definition as JSON/YAML string to be used by postgres cluster pods\npod_service_account_definition: \"\"",
-                    "type": "string"
-                  },
-                  "pod_terminate_grace_period": {
-                    "description": "Postgres pods are terminated forcefully after this timeout",
-                    "type": "string"
-                  },
-                  "secret_name_template": {
-                    "description": "template for database user secrets generated by the operator,\nhere username contains the namespace in the format namespace.username\nif the user is in different namespace than cluster and cross namespace secrets\nare enabled via `enable_cross_namespace_secret` flag in the configuration.",
-                    "type": "string"
-                  },
-                  "share_pgsocket_with_sidecars": {
-                    "description": "sharing unix socket of PostgreSQL (`pg_socket`) with the sidecars\nset user and group for the spilo container (required to run Spilo as non-root process)\nspilo_runasuser: 101\nspilo_runasgroup: 103",
-                    "type": "boolean"
-                  },
-                  "spilo_allow_privilege_escalation": {
-                    "description": "whether the Spilo container should run with additional permissions other than parent.\nrequired by cron which needs setuid",
-                    "type": "boolean"
-                  },
-                  "spilo_privileged": {
-                    "description": "whether the Spilo container should run in privileged mode",
-                    "type": "boolean"
-                  },
-                  "storage_resize_mode": {
-                    "description": "storage resize strategy, available options are: ebs, pvc, off or mixed\npod toleration assigned to instances of every Postgres cluster\ntoleration:\nkey: db-only\noperator: Exists\neffect: NoSchedule",
-                    "type": "string"
-                  },
-                  "watched_namespace": {
-                    "$ref": "#/$defs/schema55"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
+            "additionalProperties": {},
             "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\""
           }
         }
@@ -3209,7 +2891,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -3238,7 +2920,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -3264,7 +2946,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema52"
+            "$ref": "#/$defs/schema51"
           },
           {
             "properties": {
@@ -3312,7 +2994,7 @@
             "description": "list of additional capabilities for postgres container\nadditional_pod_capabilities:\n- \"SYS_NICE\"",
             "properties": {
               "additional_pod_capabilities": {
-                "$ref": "#/$defs/schema88"
+                "$ref": "#/$defs/schema84"
               },
               "cluster_domain": {
                 "default": "cluster.local",
@@ -3335,7 +3017,7 @@
                 "type": "string"
               },
               "custom_pod_annotations": {
-                "$ref": "#/$defs/schema83"
+                "$ref": "#/$defs/schema79"
               },
               "delete_annotation_date_key": {
                 "type": "string"
@@ -3344,7 +3026,7 @@
                 "type": "string"
               },
               "downscaler_annotations": {
-                "$ref": "#/$defs/schema88"
+                "$ref": "#/$defs/schema84"
               },
               "enable_cross_namespace_secret": {
                 "default": false,
@@ -3397,7 +3079,7 @@
                 "type": "boolean"
               },
               "ignored_annotations": {
-                "$ref": "#/$defs/schema88"
+                "$ref": "#/$defs/schema84"
               },
               "infrastructure_roles_secret_name": {
                 "type": "string"
@@ -3406,17 +3088,17 @@
                 "$ref": "#/$defs/schema18"
               },
               "inherited_annotations": {
-                "$ref": "#/$defs/schema88"
+                "$ref": "#/$defs/schema84"
               },
               "inherited_labels": {
-                "$ref": "#/$defs/schema88"
+                "$ref": "#/$defs/schema84"
               },
               "master_pod_move_timeout": {
                 "default": "20m",
                 "type": "string"
               },
               "node_readiness_label": {
-                "$ref": "#/$defs/schema83"
+                "$ref": "#/$defs/schema79"
               },
               "node_readiness_label_merge": {
                 "enum": [
@@ -3550,10 +3232,11 @@
                 "type": "string"
               },
               "toleration": {
-                "$ref": "#/$defs/schema83"
+                "$ref": "#/$defs/schema79"
               },
               "watched_namespace": {
-                "$ref": "#/$defs/schema55"
+                "description": "operator watches for postgres objects in the given namespace\nlisten to all namespaces",
+                "type": "string"
               }
             },
             "type": "object"
@@ -3565,7 +3248,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "not": {
@@ -3576,7 +3259,7 @@
             "not": {
               "properties": {
                 "configLoadBalancer": {
-                  "$ref": "#/$defs/schema76"
+                  "$ref": "#/$defs/schema72"
                 }
               },
               "required": [
@@ -3606,7 +3289,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema36"
@@ -3618,11 +3301,11 @@
         "properties": {
           "configLoadBalancer": {
             "additionalProperties": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             },
             "description": "configure behavior of load balancers",
             "items": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             }
           }
         }
@@ -3636,60 +3319,7 @@
         "additionalProperties": {},
         "properties": {
           "configLoadBalancer": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "db_hosted_zone": {
-                    "description": "DNS zone for cluster DNS name when load balancer is configured for cluster\nannotations to apply to service when load balancing is enabled\ncustom_service_annotations:\nkeyx: valuez\nkeya: valuea",
-                    "type": "string"
-                  },
-                  "enable_master_load_balancer": {
-                    "description": "toggles service type load balancer pointing to the master pod of the cluster",
-                    "type": "boolean"
-                  },
-                  "enable_master_pooler_load_balancer": {
-                    "description": "toggles service type load balancer pointing to the master pooler pod of the cluster",
-                    "type": "boolean"
-                  },
-                  "enable_replica_load_balancer": {
-                    "description": "toggles service type load balancer pointing to the replica pod of the cluster",
-                    "type": "boolean"
-                  },
-                  "enable_replica_pooler_load_balancer": {
-                    "description": "toggles service type load balancer pointing to the replica pooler pod of the cluster",
-                    "type": "boolean"
-                  },
-                  "external_traffic_policy": {
-                    "description": "define external traffic policy for the load balancer",
-                    "type": "string"
-                  },
-                  "master_dns_name_format": {
-                    "description": "defines the DNS name string template for the master load balancer cluster",
-                    "type": "string"
-                  },
-                  "master_legacy_dns_name_format": {
-                    "description": "deprecated DNS template for master load balancer using team name",
-                    "type": "string"
-                  },
-                  "replica_dns_name_format": {
-                    "description": "defines the DNS name string template for the replica load balancer cluster",
-                    "type": "string"
-                  },
-                  "replica_legacy_dns_name_format": {
-                    "description": "deprecated DNS template for replica load balancer using team name",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
+            "additionalProperties": {},
             "description": "configure behavior of load balancers"
           }
         }
@@ -3697,7 +3327,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -3726,7 +3356,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -3759,7 +3389,7 @@
             "description": "configure behavior of load balancers",
             "properties": {
               "custom_service_annotations": {
-                "$ref": "#/$defs/schema83"
+                "$ref": "#/$defs/schema79"
               },
               "db_hosted_zone": {
                 "default": "db.example.com",
@@ -3825,7 +3455,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "not": {
@@ -3836,7 +3466,7 @@
             "not": {
               "properties": {
                 "configLoggingRestApi": {
-                  "$ref": "#/$defs/schema76"
+                  "$ref": "#/$defs/schema72"
                 }
               },
               "required": [
@@ -3866,7 +3496,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema31"
@@ -3878,11 +3508,11 @@
         "properties": {
           "configLoggingRestApi": {
             "additionalProperties": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             },
             "description": "parameters affecting logging and REST API listener",
             "items": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             }
           }
         }
@@ -3892,7 +3522,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema64"
+            "$ref": "#/$defs/schema60"
           },
           {
             "properties": {
@@ -3936,7 +3566,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema64"
+            "$ref": "#/$defs/schema60"
           },
           {
             "properties": {
@@ -3973,13 +3603,13 @@
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/schema87"
+                            "$ref": "#/$defs/schema83"
                           },
                           {
-                            "$ref": "#/$defs/schema89"
+                            "$ref": "#/$defs/schema85"
                           },
                           {
-                            "$ref": "#/$defs/schema94"
+                            "$ref": "#/$defs/schema90"
                           },
                           {
                             "not": {
@@ -3992,10 +3622,10 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/schema57"
+                            "$ref": "#/$defs/schema55"
                           },
                           {
-                            "$ref": "#/$defs/schema80"
+                            "$ref": "#/$defs/schema76"
                           }
                         ],
                         "type": "string"
@@ -4008,7 +3638,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema53"
+                        "$ref": "#/$defs/schema52"
                       },
                       {
                         "type": "integer"
@@ -4033,32 +3663,7 @@
         "additionalProperties": {},
         "properties": {
           "configLoggingRestApi": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "api_port": {
-                    "description": "REST API listener listens to this port",
-                    "type": "integer"
-                  },
-                  "cluster_history_entries": {
-                    "description": "number of entries in the cluster history ring buffer",
-                    "type": "integer"
-                  },
-                  "ring_log_lines": {
-                    "description": "number of lines in the ring buffer used to store cluster logs",
-                    "type": "integer"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
+            "additionalProperties": {},
             "description": "parameters affecting logging and REST API listener"
           }
         }
@@ -4066,7 +3671,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -4095,7 +3700,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -4121,7 +3726,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema64"
+            "$ref": "#/$defs/schema60"
           },
           {
             "properties": {
@@ -4192,7 +3797,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema64"
+            "$ref": "#/$defs/schema60"
           },
           {
             "properties": {
@@ -4228,7 +3833,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "not": {
@@ -4239,7 +3844,7 @@
             "not": {
               "properties": {
                 "configLogicalBackup": {
-                  "$ref": "#/$defs/schema76"
+                  "$ref": "#/$defs/schema72"
                 }
               },
               "required": [
@@ -4269,7 +3874,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema33"
@@ -4281,11 +3886,11 @@
         "properties": {
           "configLogicalBackup": {
             "additionalProperties": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             },
             "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\"",
             "items": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             }
           }
         }
@@ -4299,70 +3904,7 @@
         "additionalProperties": {},
         "properties": {
           "configLogicalBackup": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "logical_backup_cronjob_environment_secret": {
-                    "$ref": "#/$defs/schema63"
-                  },
-                  "logical_backup_docker_image": {
-                    "description": "image for pods of the logical backup job (example runs pg_dumpall)\npath of google cloud service account json file\nlogical_backup_google_application_credentials: \"\"",
-                    "type": "string"
-                  },
-                  "logical_backup_job_prefix": {
-                    "description": "prefix for the backup job name",
-                    "type": "string"
-                  },
-                  "logical_backup_provider": {
-                    "description": "storage provider - either \"s3\", \"gcs\" or \"az\"",
-                    "type": "string"
-                  },
-                  "logical_backup_s3_access_key_id": {
-                    "description": "S3 Access Key ID",
-                    "type": "string"
-                  },
-                  "logical_backup_s3_bucket": {
-                    "description": "S3 bucket to store backup results",
-                    "type": "string"
-                  },
-                  "logical_backup_s3_bucket_prefix": {
-                    "description": "S3 bucket prefix to use",
-                    "type": "string"
-                  },
-                  "logical_backup_s3_endpoint": {
-                    "description": "S3 endpoint url when not using AWS",
-                    "type": "string"
-                  },
-                  "logical_backup_s3_region": {
-                    "description": "S3 region of bucket",
-                    "type": "string"
-                  },
-                  "logical_backup_s3_retention_time": {
-                    "$ref": "#/$defs/schema58"
-                  },
-                  "logical_backup_s3_secret_access_key": {
-                    "description": "S3 Secret Access Key",
-                    "type": "string"
-                  },
-                  "logical_backup_s3_sse": {
-                    "description": "S3 server side encryption",
-                    "type": "string"
-                  },
-                  "logical_backup_schedule": {
-                    "description": "backup schedule in the cron format",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
+            "additionalProperties": {},
             "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\""
           }
         }
@@ -4370,7 +3912,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -4399,7 +3941,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -4441,13 +3983,14 @@
                 "type": "string"
               },
               "logical_backup_cpu_limit": {
-                "$ref": "#/$defs/schema84"
+                "$ref": "#/$defs/schema80"
               },
               "logical_backup_cpu_request": {
-                "$ref": "#/$defs/schema84"
+                "$ref": "#/$defs/schema80"
               },
               "logical_backup_cronjob_environment_secret": {
-                "$ref": "#/$defs/schema63"
+                "description": "secret to be used as reference for env variables in cronjob",
+                "type": "string"
               },
               "logical_backup_docker_image": {
                 "default": "ghcr.io/zalando/postgres-operator/logical-backup:v1.15.1",
@@ -4463,10 +4006,10 @@
                 "type": "string"
               },
               "logical_backup_memory_limit": {
-                "$ref": "#/$defs/schema71"
+                "$ref": "#/$defs/schema67"
               },
               "logical_backup_memory_request": {
-                "$ref": "#/$defs/schema71"
+                "$ref": "#/$defs/schema67"
               },
               "logical_backup_provider": {
                 "default": "s3",
@@ -4499,7 +4042,8 @@
                 "type": "string"
               },
               "logical_backup_s3_retention_time": {
-                "$ref": "#/$defs/schema58"
+                "description": "S3 retention time for stored backups for example \"2 week\" or \"7 days\"",
+                "type": "string"
               },
               "logical_backup_s3_secret_access_key": {
                 "description": "S3 Secret Access Key",
@@ -4525,7 +4069,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "not": {
@@ -4536,7 +4080,7 @@
             "not": {
               "properties": {
                 "configMajorVersionUpgrade": {
-                  "$ref": "#/$defs/schema76"
+                  "$ref": "#/$defs/schema72"
                 }
               },
               "required": [
@@ -4551,7 +4095,7 @@
         "additionalProperties": {},
         "properties": {
           "configMajorVersionUpgrade": {
-            "$ref": "#/$defs/schema65"
+            "$ref": "#/$defs/schema61"
           }
         }
       }
@@ -4560,7 +4104,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema27"
@@ -4584,39 +4128,14 @@
         "additionalProperties": {},
         "properties": {
           "configMajorVersionUpgrade": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "major_version_upgrade_mode": {
-                    "description": "\"off\": no upgrade, \"manual\": manifest triggers action, \"full\": minimal version violation triggers too\nupgrades will only be carried out for clusters of listed teams when mode is \"off\"\nmajor_version_upgrade_team_allow_list:\n- acid",
-                    "type": "string"
-                  },
-                  "minimal_major_version": {
-                    "description": "minimal Postgres major version that will not automatically be upgraded",
-                    "type": "string"
-                  },
-                  "target_major_version": {
-                    "description": "target Postgres major version when upgrading clusters automatically",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "additionalProperties": {}
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -4644,7 +4163,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -4680,7 +4199,7 @@
                 "type": "string"
               },
               "major_version_upgrade_team_allow_list": {
-                "$ref": "#/$defs/schema88"
+                "$ref": "#/$defs/schema84"
               },
               "minimal_major_version": {
                 "default": "13",
@@ -4702,7 +4221,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "not": {
@@ -4713,7 +4232,7 @@
             "not": {
               "properties": {
                 "configPatroni": {
-                  "$ref": "#/$defs/schema76"
+                  "$ref": "#/$defs/schema72"
                 }
               },
               "required": [
@@ -4728,7 +4247,7 @@
         "additionalProperties": {},
         "properties": {
           "configPatroni": {
-            "$ref": "#/$defs/schema65"
+            "$ref": "#/$defs/schema61"
           }
         }
       }
@@ -4737,7 +4256,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema47"
@@ -4761,31 +4280,14 @@
         "additionalProperties": {},
         "properties": {
           "configPatroni": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "enable_patroni_failsafe_mode": {
-                    "description": "enable Patroni DCS failsafe_mode feature",
-                    "type": "boolean"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ]
+            "additionalProperties": {}
           }
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -4813,7 +4315,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -4856,57 +4358,6 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema22"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "configPostgresPodResources": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "default_cpu_limit": {
-                    "description": "CPU limits for the postgres containers",
-                    "type": "string"
-                  },
-                  "default_cpu_request": {
-                    "description": "CPU request value for the postgres containers",
-                    "type": "string"
-                  },
-                  "default_memory_limit": {
-                    "description": "memory limits for the postgres containers",
-                    "type": "string"
-                  },
-                  "default_memory_request": {
-                    "description": "memory request value for the postgres containers\noptional upper boundary for CPU request\nmax_cpu_request: \"1\"",
-                    "type": "string"
-                  },
-                  "min_cpu_limit": {
-                    "description": "hard CPU minimum required to properly run a Postgres cluster",
-                    "type": "string"
-                  },
-                  "min_memory_limit": {
-                    "description": "hard memory minimum required to properly run a Postgres cluster",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "configure resource requests for the Postgres pods"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/$defs/schema26"
       },
       "then": {
@@ -4936,10 +4387,10 @@
                 "type": "string"
               },
               "max_cpu_request": {
-                "$ref": "#/$defs/schema82"
+                "$ref": "#/$defs/schema78"
               },
               "max_memory_request": {
-                "$ref": "#/$defs/schema69"
+                "$ref": "#/$defs/schema65"
               },
               "min_cpu_limit": {
                 "description": "hard CPU minimum required to properly run a Postgres cluster",
@@ -4976,7 +4427,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "not": {
@@ -4987,7 +4438,7 @@
             "not": {
               "properties": {
                 "configTeamsApi": {
-                  "$ref": "#/$defs/schema76"
+                  "$ref": "#/$defs/schema72"
                 }
               },
               "required": [
@@ -5017,7 +4468,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema43"
@@ -5029,11 +4480,11 @@
         "properties": {
           "configTeamsApi": {
             "additionalProperties": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             },
             "description": "automate creation of human users with teams API service",
             "items": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             }
           }
         }
@@ -5047,77 +4498,7 @@
         "additionalProperties": {},
         "properties": {
           "configTeamsApi": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "enable_admin_role_for_users": {
-                    "description": "team_admin_role will have the rights to grant roles coming from PG manifests",
-                    "type": "boolean"
-                  },
-                  "enable_postgres_team_crd": {
-                    "description": "operator watches for PostgresTeam CRs to assign additional teams and members to clusters",
-                    "type": "boolean"
-                  },
-                  "enable_postgres_team_crd_superusers": {
-                    "description": "toogle to create additional superuser teams from PostgresTeam CRs",
-                    "type": "boolean"
-                  },
-                  "enable_team_member_deprecation": {
-                    "description": "toggle to automatically rename roles of former team members and deny LOGIN",
-                    "type": "boolean"
-                  },
-                  "enable_team_superuser": {
-                    "description": "toggle to grant superuser to team members created from the Teams API",
-                    "type": "boolean"
-                  },
-                  "enable_teams_api": {
-                    "description": "toggles usage of the Teams API by the operator\nshould contain a URL to use for authentication (username and token)\npam_configuration: https://info.example.com/oauth2/tokeninfo?access_token= uid realm=/employees",
-                    "type": "boolean"
-                  },
-                  "pam_role_name": {
-                    "description": "operator will add all team member roles to this group and add a pg_hba line",
-                    "type": "string"
-                  },
-                  "postgres_superuser_teams": {
-                    "$ref": "#/$defs/schema51"
-                  },
-                  "protected_role_names": {
-                    "description": "List of roles that cannot be overwritten by an application, team or infrastructure role",
-                    "items": {
-                      "type": "string"
-                    },
-                    "type": "array"
-                  },
-                  "role_deletion_suffix": {
-                    "description": "Suffix to add if members are removed from TeamsAPI or PostgresTeam CRD",
-                    "type": "string"
-                  },
-                  "team_admin_role": {
-                    "description": "role name to grant to team members created from the Teams API",
-                    "type": "string"
-                  },
-                  "team_api_role_configuration": {
-                    "additionalProperties": {},
-                    "description": "postgres config parameters to apply to each team member role",
-                    "properties": {
-                      "log_statement": {
-                        "description": "URL of the Teams API service\nteams_api_url: http://fake-teams-api.default.svc.cluster.local",
-                        "type": "string"
-                      }
-                    },
-                    "type": "object"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
+            "additionalProperties": {},
             "description": "automate creation of human users with teams API service"
           }
         }
@@ -5125,7 +4506,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -5154,7 +4535,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -5217,7 +4598,7 @@
                 "type": "boolean"
               },
               "pam_configuration": {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema57"
               },
               "pam_role_name": {
                 "default": "zalandos",
@@ -5225,7 +4606,11 @@
                 "type": "string"
               },
               "postgres_superuser_teams": {
-                "$ref": "#/$defs/schema51"
+                "description": "List of teams which members need the superuser role in each Postgres cluster",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
               },
               "protected_role_names": {
                 "default": [
@@ -5272,7 +4657,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "not": {
@@ -5283,7 +4668,7 @@
             "not": {
               "properties": {
                 "configTimeouts": {
-                  "$ref": "#/$defs/schema76"
+                  "$ref": "#/$defs/schema72"
                 }
               },
               "required": [
@@ -5313,7 +4698,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema44"
@@ -5325,11 +4710,11 @@
         "properties": {
           "configTimeouts": {
             "additionalProperties": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             },
             "description": "timeouts related to some operator actions",
             "items": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             }
           }
         }
@@ -5343,52 +4728,7 @@
         "additionalProperties": {},
         "properties": {
           "configTimeouts": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "patroni_api_check_interval": {
-                    "description": "interval between consecutive attempts of operator calling the Patroni API",
-                    "type": "string"
-                  },
-                  "patroni_api_check_timeout": {
-                    "description": "timeout when waiting for successful response from Patroni API",
-                    "type": "string"
-                  },
-                  "pod_deletion_wait_timeout": {
-                    "description": "timeout when waiting for the Postgres pods to be deleted",
-                    "type": "string"
-                  },
-                  "pod_label_wait_timeout": {
-                    "description": "timeout when waiting for pod role and cluster labels",
-                    "type": "string"
-                  },
-                  "ready_wait_interval": {
-                    "description": "interval between consecutive attempts waiting for postgresql CRD to be created",
-                    "type": "string"
-                  },
-                  "ready_wait_timeout": {
-                    "description": "timeout for the complete postgres CRD creation",
-                    "type": "string"
-                  },
-                  "resource_check_interval": {
-                    "description": "interval to wait between consecutive attempts to check for some K8s resources",
-                    "type": "string"
-                  },
-                  "resource_check_timeout": {
-                    "description": "timeout when waiting for the presence of a certain K8s resource (e.g. Sts, PDB)",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
+            "additionalProperties": {},
             "description": "timeouts related to some operator actions"
           }
         }
@@ -5396,7 +4736,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -5425,7 +4765,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -5507,7 +4847,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "not": {
@@ -5518,7 +4858,7 @@
             "not": {
               "properties": {
                 "configUsers": {
-                  "$ref": "#/$defs/schema76"
+                  "$ref": "#/$defs/schema72"
                 }
               },
               "required": [
@@ -5548,7 +4888,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema49"
@@ -5560,11 +4900,11 @@
         "properties": {
           "configUsers": {
             "additionalProperties": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             },
             "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin",
             "items": {
-              "$ref": "#/$defs/schema85"
+              "$ref": "#/$defs/schema81"
             }
           }
         }
@@ -5578,40 +4918,7 @@
         "additionalProperties": {},
         "properties": {
           "configUsers": {
-            "anyOf": [
-              {
-                "additionalProperties": {},
-                "properties": {
-                  "enable_password_rotation": {
-                    "description": "enable password rotation for app users that are not database owners",
-                    "type": "boolean"
-                  },
-                  "password_rotation_interval": {
-                    "description": "rotation interval for updating credentials in K8s secrets of app users",
-                    "type": "integer"
-                  },
-                  "password_rotation_user_retention": {
-                    "description": "retention interval to keep rotation users",
-                    "type": "integer"
-                  },
-                  "replication_username": {
-                    "description": "postgres username used for replication between instances",
-                    "type": "string"
-                  },
-                  "super_username": {
-                    "description": "postgres superuser name to be created by initdb",
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
+            "additionalProperties": {},
             "description": "parameters describing Postgres users\nroles to be granted to database owners\nadditional_owner_roles:\n- cron_admin"
           }
         }
@@ -5619,7 +4926,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -5648,7 +4955,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/schema62"
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -5750,7 +5057,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema52"
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -5819,7 +5126,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema26"
@@ -5934,7 +5241,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema52"
+                    "$ref": "#/$defs/schema51"
                   },
                   {
                     "properties": {
@@ -5990,7 +5297,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema62"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "not": {
@@ -6067,7 +5374,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/schema62"
+                "$ref": "#/$defs/schema59"
               },
               {
                 "not": {
@@ -6224,7 +5531,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema52"
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -6293,7 +5600,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           }
         ]
       },
@@ -6372,7 +5679,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "anyOf": [
@@ -6567,7 +5874,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema52"
+            "$ref": "#/$defs/schema51"
           },
           {
             "properties": {
@@ -6619,14 +5926,7 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/schema62"
-          },
-          {
-            "$ref": "#/$defs/schema22"
-          }
-        ]
+        "$ref": "#/$defs/schema59"
       },
       "then": {
         "additionalProperties": {},
@@ -6670,13 +5970,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema87"
+                        "$ref": "#/$defs/schema83"
                       },
                       {
-                        "$ref": "#/$defs/schema89"
+                        "$ref": "#/$defs/schema85"
                       },
                       {
-                        "$ref": "#/$defs/schema94"
+                        "$ref": "#/$defs/schema90"
                       },
                       {
                         "not": {
@@ -6694,16 +5994,16 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema57"
+                        "$ref": "#/$defs/schema55"
                       },
                       {
                         "$ref": "#/$defs/schema24"
                       },
                       {
-                        "$ref": "#/$defs/schema67"
+                        "$ref": "#/$defs/schema63"
                       },
                       {
-                        "$ref": "#/$defs/schema80"
+                        "$ref": "#/$defs/schema76"
                       }
                     ],
                     "default": "postgres-pod",
@@ -6728,7 +6028,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema52"
+                "$ref": "#/$defs/schema51"
               },
               {
                 "properties": {
@@ -6752,7 +6052,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema62"
+            "$ref": "#/$defs/schema59"
           },
           {
             "$ref": "#/$defs/schema26"
@@ -6779,7 +6079,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema64"
+            "$ref": "#/$defs/schema60"
           },
           {
             "properties": {
@@ -6819,7 +6119,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema52"
+            "$ref": "#/$defs/schema51"
           },
           {
             "properties": {
@@ -6853,13 +6153,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema87"
+                        "$ref": "#/$defs/schema83"
                       },
                       {
-                        "$ref": "#/$defs/schema89"
+                        "$ref": "#/$defs/schema85"
                       },
                       {
-                        "$ref": "#/$defs/schema94"
+                        "$ref": "#/$defs/schema90"
                       },
                       {
                         "not": {
@@ -6877,16 +6177,16 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema57"
+                        "$ref": "#/$defs/schema55"
                       },
                       {
                         "$ref": "#/$defs/schema24"
                       },
                       {
-                        "$ref": "#/$defs/schema67"
+                        "$ref": "#/$defs/schema63"
                       },
                       {
-                        "$ref": "#/$defs/schema80"
+                        "$ref": "#/$defs/schema76"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -7124,7 +6424,7 @@
           ]
         },
         {
-          "$ref": "#/$defs/schema90"
+          "$ref": "#/$defs/schema86"
         },
         {
           "not": {
@@ -7168,13 +6468,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema87"
+                        "$ref": "#/$defs/schema83"
                       },
                       {
-                        "$ref": "#/$defs/schema89"
+                        "$ref": "#/$defs/schema85"
                       },
                       {
-                        "$ref": "#/$defs/schema94"
+                        "$ref": "#/$defs/schema90"
                       },
                       {
                         "not": {
@@ -7187,16 +6487,16 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema57"
+                        "$ref": "#/$defs/schema55"
                       },
                       {
                         "$ref": "#/$defs/schema24"
                       },
                       {
-                        "$ref": "#/$defs/schema67"
+                        "$ref": "#/$defs/schema63"
                       },
                       {
-                        "$ref": "#/$defs/schema80"
+                        "$ref": "#/$defs/schema76"
                       }
                     ],
                     "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -7334,7 +6634,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/schema79"
+                        "$ref": "#/$defs/schema75"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -7419,13 +6719,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema87"
+                  "$ref": "#/$defs/schema83"
                 },
                 {
-                  "$ref": "#/$defs/schema89"
+                  "$ref": "#/$defs/schema85"
                 },
                 {
-                  "$ref": "#/$defs/schema94"
+                  "$ref": "#/$defs/schema90"
                 },
                 {
                   "not": {
@@ -7438,16 +6738,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema57"
+                  "$ref": "#/$defs/schema55"
                 },
                 {
                   "$ref": "#/$defs/schema24"
                 },
                 {
-                  "$ref": "#/$defs/schema67"
+                  "$ref": "#/$defs/schema63"
                 },
                 {
-                  "$ref": "#/$defs/schema80"
+                  "$ref": "#/$defs/schema76"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -7599,7 +6899,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema75"
+                "$ref": "#/$defs/schema71"
               },
               {
                 "properties": {
@@ -7640,7 +6940,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema75"
+                "$ref": "#/$defs/schema71"
               },
               {
                 "properties": {
@@ -7671,7 +6971,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema53"
+                    "$ref": "#/$defs/schema52"
                   }
                 ]
               }
@@ -7715,13 +7015,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema87"
+              "$ref": "#/$defs/schema83"
             },
             {
-              "$ref": "#/$defs/schema89"
+              "$ref": "#/$defs/schema85"
             },
             {
-              "$ref": "#/$defs/schema94"
+              "$ref": "#/$defs/schema90"
             },
             {
               "not": {
@@ -7734,16 +7034,16 @@
               }
             },
             {
-              "$ref": "#/$defs/schema57"
+              "$ref": "#/$defs/schema55"
             },
             {
               "$ref": "#/$defs/schema24"
             },
             {
-              "$ref": "#/$defs/schema67"
+              "$ref": "#/$defs/schema63"
             },
             {
-              "$ref": "#/$defs/schema80"
+              "$ref": "#/$defs/schema76"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -7823,7 +7123,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema53"
+                    "$ref": "#/$defs/schema52"
                   }
                 ]
               }
@@ -7857,7 +7157,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema53"
+                    "$ref": "#/$defs/schema52"
                   }
                 ]
               }
@@ -7909,7 +7209,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema79"
+                    "$ref": "#/$defs/schema75"
                   },
                   "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -7931,7 +7231,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/schema79"
+                    "$ref": "#/$defs/schema75"
                   },
                   "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -8189,7 +7489,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema75"
+                "$ref": "#/$defs/schema71"
               },
               {
                 "properties": {
@@ -8246,13 +7546,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema87"
+                  "$ref": "#/$defs/schema83"
                 },
                 {
-                  "$ref": "#/$defs/schema89"
+                  "$ref": "#/$defs/schema85"
                 },
                 {
-                  "$ref": "#/$defs/schema94"
+                  "$ref": "#/$defs/schema90"
                 },
                 {
                   "not": {
@@ -8265,16 +7565,16 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema57"
+                  "$ref": "#/$defs/schema55"
                 },
                 {
                   "$ref": "#/$defs/schema24"
                 },
                 {
-                  "$ref": "#/$defs/schema67"
+                  "$ref": "#/$defs/schema63"
                 },
                 {
-                  "$ref": "#/$defs/schema80"
+                  "$ref": "#/$defs/schema76"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",

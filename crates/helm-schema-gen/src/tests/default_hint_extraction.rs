@@ -114,6 +114,7 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
         merge_layers: None,
         range_key: false,
         omitted_members: Default::default(),
+        digest: false,
     };
     let bare = ContractUse {
         source_expr: "image.tag".into(),
@@ -128,6 +129,7 @@ fn contract_ir_nullable_paths_require_all_render_uses_to_be_null_tolerant() {
         merge_layers: None,
         range_key: false,
         omitted_members: Default::default(),
+        digest: false,
     };
 
     let signals = schema_signals_for(vec![guarded, bare]);

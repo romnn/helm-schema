@@ -648,6 +648,7 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
         merge_layers: None,
         range_key: false,
         omitted_members: Default::default(),
+        digest: false,
     }]);
     contract.push_pathless_dependency_fragment("webhook");
 
@@ -691,6 +692,7 @@ fn type_hint_only_descendant_preserves_object_input_branch() {
         merge_layers: None,
         range_key: false,
         omitted_members: Default::default(),
+        digest: false,
     }];
     let contract = with_type_hints(
         ContractIr::from_contract_uses(uses),
@@ -1024,6 +1026,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             merge_layers: None,
             range_key: false,
             omitted_members: Default::default(),
+            digest: false,
         },
         ContractUse {
             source_expr: "serviceMonitor.metricRelabelings".to_string(),
@@ -1047,6 +1050,7 @@ fn guarded_fragment_array_provider_schema_stays_precise() {
             merge_layers: None,
             range_key: false,
             omitted_members: Default::default(),
+            digest: false,
         },
     ];
 
@@ -1112,6 +1116,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             merge_layers: None,
             range_key: false,
             omitted_members: Default::default(),
+            digest: false,
         },
         ContractUse {
             source_expr: "second".to_string(),
@@ -1126,6 +1131,7 @@ fn repeated_exact_provider_subtrees_emit_provider_definitions() {
             merge_layers: None,
             range_key: false,
             omitted_members: Default::default(),
+            digest: false,
         },
     ];
     let schema_signals = schema_signals_for(uses);
@@ -1177,6 +1183,7 @@ fn values_yaml_comments_override_provider_descriptions() {
         merge_layers: None,
         range_key: false,
         omitted_members: Default::default(),
+        digest: false,
     }];
     let descriptions = BTreeMap::from([("name".to_string(), "chart description".to_string())]);
     let schema_signals = schema_signals_for(uses);

@@ -705,6 +705,16 @@ fn record_contract_use_conjunction(
             let mut branch_facts = facts;
             branch_facts.used_as_serialized = false;
             (path_facts, branch_facts)
+        } else if contract_use.digest {
+            // A digest row's slot observes fresh derived text, so its
+            // serialized tolerance holds only where the row fires: the
+            // BRANCH keeps it (grafana's checksum'd `datasources` branch
+            // must not re-type through the declared default), while the
+            // PATH must not gain a serialization use that would let the
+            // base resolution treat the whole path as serialization-owned.
+            let mut path_facts = facts;
+            path_facts.used_as_serialized = false;
+            (path_facts, facts)
         } else {
             (facts, facts)
         };

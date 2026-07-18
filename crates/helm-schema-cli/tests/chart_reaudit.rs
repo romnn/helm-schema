@@ -2605,6 +2605,31 @@ fn airflow_disabled_common_tag_is_scoped_to_the_postgresql_child() -> color_eyre
     )
 }
 
+/// airflow renders root `labels` through the checksum annotations too:
+/// every secret/configmap template is re-rendered by
+/// `include (print $.Template.BasePath …) . | sha256sum`, whose digest
+/// text lands at a string-typed annotation slot. The digest must not
+/// type `labels` against that slot: a map is the normal input (the
+/// direct `with .Values.labels` + `toYaml` renders keep it a labels
+/// map), while a truthy string still aborts at the `mustMerge` sites.
+#[test]
+fn airflow_checksum_annotations_do_not_string_type_root_labels() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::accepted(
+                "map-shaped root labels render through every template",
+                json!({ "labels": { "team": "data" } }),
+            ),
+            SemanticCase::rejected(
+                "truthy scalar root labels terminate the mustMerge sites",
+                "/labels",
+                json!({ "labels": "oops" }),
+            ),
+        ],
+    )
+}
+
 /// airflow's worker templates rebuild `.Values.workers` per worker set:
 /// `workersMergeValues` merges each `workers.celery.sets[]` entry over the
 /// celery-merged workers map, and `set $globals.Values "workers" $workers`

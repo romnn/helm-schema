@@ -350,7 +350,7 @@ fn splice_row(
     // scalar text transform so provider resolution cannot recover its shape.
     // A total stringification (`quote`, `toString`, `join`) erases shape at
     // every position: unlike `b64enc`, its input is not required to be text.
-    let kind = if splice.meta.shape_erased {
+    let kind = if splice.meta.digest || splice.meta.shape_erased {
         ValueKind::Serialized
     } else if splice.meta.encoded {
         if splice.kind == ValueKind::Fragment {
@@ -377,6 +377,7 @@ fn splice_row(
     row.range_key = splice.meta.range_key;
     row.merge_layers = splice.meta.merge_layers.clone();
     row.omitted_members = splice.meta.omitted_members.clone();
+    row.digest = splice.meta.digest;
     row
 }
 

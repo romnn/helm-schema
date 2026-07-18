@@ -332,6 +332,11 @@ pub struct SpliceMeta {
     /// rendered map, with the sound RETAIN guards under which each key
     /// certainly survives.
     pub omitted_members: std::collections::BTreeMap<String, Vec<helm_schema_core::Guard>>,
+    /// The slot renders fresh text DERIVED from the value
+    /// (`include … | sha256sum`): the sink observes neither the value nor
+    /// its serialization, so the row abstains from slot typing and from
+    /// path-wide serialization claims while keeping branch tolerance.
+    pub digest: bool,
     /// Helper-body source sites this splice was derived through.
     pub provenance: Vec<ContractProvenance>,
     /// The render site the splice materializes at.

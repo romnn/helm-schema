@@ -11849,162 +11849,6 @@
             "allOf": [
               {
                 "properties": {
-                  "authenticatedEmailsFile": {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "authenticatedEmailsFile"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "authenticatedEmailsFile": {
-                    "properties": {
-                      "restricted_access": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "restricted_access"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "authenticatedEmailsFile"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema228"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "config": {
-                    "properties": {
-                      "google": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "google"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "config"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "google": {
-                          "properties": {
-                            "existingSecret": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "existingSecret"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "google"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
-              },
-              {
-                "not": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "google": {
-                          "properties": {
-                            "useApplicationDefaultCredentials": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "useApplicationDefaultCredentials"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "google"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "customLabels": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema235"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
-              }
-            ],
-            "description": "Custom labels to add into metadata"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "properties": {
                   "alphaConfig": {
                     "properties": {
                       "enabled": {
@@ -12107,6 +11951,51 @@
                 "type": "object"
               },
               {
+                "$ref": "#/$defs/schema228"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "authenticatedEmailsFile": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "authenticatedEmailsFile"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "authenticatedEmailsFile": {
+                    "properties": {
+                      "restricted_access": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "restricted_access"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "authenticatedEmailsFile"
+                ],
+                "type": "object"
+              },
+              {
                 "$ref": "#/$defs/schema372"
               }
             ]
@@ -12129,6 +12018,87 @@
               "autoscaling"
             ],
             "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "config": {
+                    "properties": {
+                      "google": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "google"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "config"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "google": {
+                          "properties": {
+                            "existingSecret": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "existingSecret"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "google"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "config": {
+                      "properties": {
+                        "google": {
+                          "properties": {
+                            "useApplicationDefaultCredentials": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "useApplicationDefaultCredentials"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "google"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "config"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           },
           {
             "allOf": [
@@ -12755,156 +12725,6 @@
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
-              }
-            ],
-            "description": "Custom labels to add into metadata"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema515"
-              },
-              {
-                "properties": {
-                  "sessionStorage": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "sessionStorage"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema402"
-          },
-          {
-            "not": {
-              "properties": {
-                "sessionStorage": {
-                  "properties": {
-                    "redis": {
-                      "properties": {
-                        "existingSecret": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "existingSecret"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "redis"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "sessionStorage"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "sessionStorage": {
-                    "properties": {
-                      "redis": {
-                        "properties": {
-                          "password": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "password"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "redis"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "sessionStorage"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "sessionStorage": {
-                    "properties": {
-                      "redis": {
-                        "properties": {
-                          "sentinel": {
-                            "properties": {
-                              "password": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "password"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "sentinel"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "redis"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "sessionStorage"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "customLabels": {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
-              },
-              {
-                "type": "string"
               }
             ],
             "description": "Custom labels to add into metadata"
@@ -18517,156 +18337,6 @@
                 "not": {
                   "$ref": "#/$defs/helm-truthy"
                 }
-              }
-            ],
-            "description": "Override the deployment namespace"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema515"
-              },
-              {
-                "properties": {
-                  "sessionStorage": {
-                    "anyOf": [
-                      {
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    ]
-                  }
-                },
-                "required": [
-                  "sessionStorage"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/schema402"
-          },
-          {
-            "not": {
-              "properties": {
-                "sessionStorage": {
-                  "properties": {
-                    "redis": {
-                      "properties": {
-                        "existingSecret": {
-                          "$ref": "#/$defs/helm-truthy"
-                        }
-                      },
-                      "required": [
-                        "existingSecret"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "redis"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "sessionStorage"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "sessionStorage": {
-                    "properties": {
-                      "redis": {
-                        "properties": {
-                          "password": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "password"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "redis"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "sessionStorage"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "sessionStorage": {
-                    "properties": {
-                      "redis": {
-                        "properties": {
-                          "sentinel": {
-                            "properties": {
-                              "password": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "password"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "sentinel"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "redis"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "sessionStorage"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "namespaceOverride": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/schema131"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/helm-truthy"
-                }
-              },
-              {
-                "type": "null"
               }
             ],
             "description": "Override the deployment namespace"
@@ -45287,86 +44957,64 @@
       "allOf": [
         {
           "if": {
-            "allOf": [
+            "anyOf": [
               {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "restricted_access": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "restricted_access"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema369"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "anyOf": [
+                "allOf": [
                   {
-                    "$ref": "#/$defs/schema214"
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
                   },
                   {
-                    "not": {
-                      "$ref": "#/$defs/helm-truthy"
-                    }
+                    "properties": {
+                      "restricted_access": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "restricted_access"
+                    ],
+                    "type": "object"
                   },
                   {
-                    "type": "null"
+                    "$ref": "#/$defs/schema369"
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
                   },
                   {
-                    "type": "string"
+                    "properties": {
+                      "restricted_access": {
+                        "$ref": "#/$defs/helm-truthy"
+                      }
+                    },
+                    "required": [
+                      "restricted_access"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/schema510"
                   }
-                ],
-                "description": "helm.sh/resource-policy: keep"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "properties": {
-                  "enabled": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "type": "object"
-              },
-              {
-                "properties": {
-                  "restricted_access": {
-                    "$ref": "#/$defs/helm-truthy"
-                  }
-                },
-                "required": [
-                  "restricted_access"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/schema510"
+                ]
               }
             ]
           },
@@ -53670,190 +53318,6 @@
                       "haproxy"
                     ],
                     "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "tls": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "tls"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "tls": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "tls"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema531"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "containerPort": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/schema131"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ],
-                    "description": "Modify HAProxy deployment container port"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
                   }
                 ]
               },
@@ -55153,196 +54617,6 @@
                       "haproxy"
                     ],
                     "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "metrics": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "metrics"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema531"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "metrics": {
-                    "additionalProperties": {},
-                    "description": "Official HAProxy embedded prometheus metrics settings.\nRef: https://github.com/haproxy/haproxy/tree/master/contrib/prometheus-exporter",
-                    "properties": {
-                      "port": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema131"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "HAProxy prometheus metrics scraping port"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "metrics": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "metrics"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
                   }
                 ]
               },
@@ -55602,196 +54876,6 @@
                           }
                         ],
                         "description": "HAProxy metrics scraping port name"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "metrics": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "metrics"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "metrics": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "metrics"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema531"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "metrics": {
-                    "additionalProperties": {},
-                    "description": "Official HAProxy embedded prometheus metrics settings.\nRef: https://github.com/haproxy/haproxy/tree/master/contrib/prometheus-exporter",
-                    "properties": {
-                      "scrapePath": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema131"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "HAProxy prometheus metrics scraping path"
                       }
                     }
                   }
@@ -57346,196 +56430,6 @@
                       }
                     ],
                     "description": "Pod Disruption Budget\nref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/\nUse only one of the two\nmaxUnavailable: 1\nminAvailable: 1"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "readOnly": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "readOnly"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "readOnly": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "readOnly"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema531"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "readOnly": {
-                    "additionalProperties": {},
-                    "description": "Enable read-only redis-slaves",
-                    "properties": {
-                      "port": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema131"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Port for the read-only redis-slaves"
-                      }
-                    }
                   }
                 }
               }
@@ -59454,681 +58348,6 @@
                     "type": "object"
                   },
                   {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema531"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "timeout": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "check": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema131"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "haproxy.cfg `timeout check` setting"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema531"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "timeout": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "client": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema131"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "haproxy.cfg `timeout client` setting"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema531"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "timeout": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "connect": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema131"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "haproxy.cfg `timeout connect` setting"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema531"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "timeout": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "server": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema131"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "haproxy.cfg `timeout server` setting"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema531"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "timeout": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "tunnel": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema131"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "haproxy.cfg `timeout tunnel` setting"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
                     "properties": {
                       "haproxy": {
                         "properties": {
@@ -60258,386 +58477,6 @@
                         ],
                         "description": "Path to mount the secret that contains the certificates. haproxy",
                         "type": "string"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "tls": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "tls"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "tls": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "tls"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema531"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "tls": {
-                    "additionalProperties": {},
-                    "description": "Enable TLS termination on HAproxy, This will create a volume mount",
-                    "properties": {
-                      "certMountPath": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema131"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Path to mount the secret that contains the certificates. haproxy"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "anyOf": [
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "enabled": {
-                        "$ref": "#/$defs/helm-truthy"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "tls": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "tls"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              },
-              {
-                "allOf": [
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "enabled": {
-                            "$ref": "#/$defs/helm-truthy"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "properties": {
-                      "haproxy": {
-                        "properties": {
-                          "tls": {
-                            "properties": {
-                              "enabled": {
-                                "$ref": "#/$defs/helm-truthy"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "tls"
-                        ],
-                        "type": "object"
-                      }
-                    },
-                    "required": [
-                      "haproxy"
-                    ],
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/schema531"
-                  },
-                  {
-                    "not": {
-                      "properties": {
-                        "haproxy": {
-                          "properties": {
-                            "customConfig": {
-                              "$ref": "#/$defs/helm-truthy"
-                            }
-                          },
-                          "required": [
-                            "customConfig"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "haproxy"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "haproxy": {
-                "additionalProperties": {},
-                "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-                "properties": {
-                  "tls": {
-                    "additionalProperties": {},
-                    "description": "Enable TLS termination on HAproxy, This will create a volume mount",
-                    "properties": {
-                      "keyName": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/schema131"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Key file name"
                       }
                     }
                   }
