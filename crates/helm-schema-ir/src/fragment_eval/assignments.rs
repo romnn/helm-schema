@@ -440,6 +440,18 @@ impl Interpreter<'_> {
                     .typeof_sources
                     .insert(assignment.variable.clone(), sources);
             }
+            // `$replicas := int (default 1 .Values.x)` binds an INTEGER
+            // COERCION of the path: comparisons on the local strengthen
+            // through the raw-integer sound subsets exactly as the inline
+            // cast expression would (jenkins' controller.replicas domain).
+            let cast_source = self
+                .value_path_context()
+                .int_cast_operand(&assignment.rhs_expr);
+            if let Some(source) = cast_source {
+                self.locals
+                    .int_cast_sources
+                    .insert(assignment.variable.clone(), source);
+            }
             let mut output_meta = output_effects.local_output_meta.clone();
             merge_rendered_row_meta(&mut output_meta, &hole.effects.helper_rendered);
             if let Some(binding) = &fragment_value {

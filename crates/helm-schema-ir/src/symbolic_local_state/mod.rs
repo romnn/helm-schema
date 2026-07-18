@@ -27,6 +27,11 @@ pub(crate) struct SymbolicLocalState {
     /// Locals bound to a type descriptor. Each described path retains the
     /// predicates under which that path supplied the selected value.
     pub(crate) typeof_sources: HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    /// Locals bound to a total integer cast of one values path
+    /// (`$replicas := int (default 1 .Values.controller.replicas)`):
+    /// comparisons on the local may strengthen through the raw-integer
+    /// sound subsets exactly as the inline cast expression would.
+    pub(crate) int_cast_sources: HashMap<String, IntCastSource>,
     /// Range variables bound to the MEMBER identity of a directly ranged
     /// path (`$v` in `range $k, $v := .Values.x` holds each `x.*` value).
     /// Conditions and assignments resolve through these; hole rendering
@@ -40,6 +45,16 @@ pub(crate) struct SymbolicLocalState {
     /// holds at runtime when the advance really happened.
     pub(crate) traversal_advances: BTreeSet<String>,
     local_scopes: Vec<LocalScopeFrame>,
+}
+
+/// The values path (and optional literal-integer `default` fallback) behind
+/// a local's `int`/`int64` cast binding. The fallback matters for
+/// soundness: a raw `0` at the path is numerically empty, so `default`
+/// substitutes the literal before the comparison runs.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct IntCastSource {
+    pub(crate) path: String,
+    pub(crate) default_int: Option<i64>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -57,6 +72,7 @@ struct VariableLocalState {
     output_meta: Option<BTreeMap<String, HelperOutputMeta>>,
     truthy_reduction: Option<Predicate>,
     typeof_source: Option<BTreeMap<String, HelperOutputMeta>>,
+    int_cast_source: Option<IntCastSource>,
     range_member_value: Option<AbstractValue>,
 }
 
@@ -177,6 +193,7 @@ impl SymbolicLocalState {
             output_meta: self.output_meta.get(variable).cloned(),
             truthy_reduction: self.truthy_reductions.get(variable).cloned(),
             typeof_source: self.typeof_sources.get(variable).cloned(),
+            int_cast_source: self.int_cast_sources.get(variable).cloned(),
             range_member_value: self.range_member_values.get(variable).cloned(),
         }
     }
@@ -189,6 +206,7 @@ impl SymbolicLocalState {
             || self.output_meta.contains_key(variable)
             || self.truthy_reductions.contains_key(variable)
             || self.typeof_sources.contains_key(variable)
+            || self.int_cast_sources.contains_key(variable)
             || self.range_member_values.contains_key(variable)
     }
 
@@ -215,6 +233,11 @@ impl SymbolicLocalState {
         );
         restore_map_entry(&mut self.typeof_sources, variable, previous.typeof_source);
         restore_map_entry(
+            &mut self.int_cast_sources,
+            variable,
+            previous.int_cast_source,
+        );
+        restore_map_entry(
             &mut self.range_member_values,
             variable,
             previous.range_member_value,
@@ -239,6 +262,7 @@ impl SymbolicLocalState {
         self.output_meta.remove(variable);
         self.truthy_reductions.remove(variable);
         self.typeof_sources.remove(variable);
+        self.int_cast_sources.remove(variable);
         self.range_member_values.remove(variable);
     }
 }

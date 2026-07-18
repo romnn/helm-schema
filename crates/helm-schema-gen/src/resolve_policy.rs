@@ -201,6 +201,7 @@ impl ResolvePolicy {
             | ConditionalGuard::TypeIs { .. }
             | ConditionalGuard::MatchesPattern { .. }
             | ConditionalGuard::IntGt { .. }
+            | ConditionalGuard::IntLt { .. }
             | ConditionalGuard::HasKey { .. }
             | ConditionalGuard::Not(_)
             | ConditionalGuard::AllOf(_)
@@ -993,6 +994,7 @@ fn collect_positive_self_types(
         helm_schema_core::ConditionalGuard::Truthy { .. }
         | helm_schema_core::ConditionalGuard::With { .. }
         | helm_schema_core::ConditionalGuard::IntGt { .. }
+        | helm_schema_core::ConditionalGuard::IntLt { .. }
         | helm_schema_core::ConditionalGuard::HasKey { .. }
         | helm_schema_core::ConditionalGuard::ContainsMemberEquals { .. }
         | helm_schema_core::ConditionalGuard::Eq { .. }

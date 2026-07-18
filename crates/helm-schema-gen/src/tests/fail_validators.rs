@@ -950,3 +950,57 @@ fn scalar_domain_fail_guards_lower_through_sound_subsets() {
         );
     }
 }
+
+/// jenkins' `controller.replicas` validator binds the int cast to a LOCAL
+/// (`$replicas := int (default 1 …)`) inside a helper and fails outside
+/// 0..=1. The cast provenance rides the binding, so both disjuncts lower
+/// through the raw-integer subsets exactly as the inline spellings would —
+/// including the new below-bound direction.
+#[test]
+fn variable_bound_coercion_fail_guards_lower_through_sound_subsets() {
+    let helpers = indoc! {r#"
+        {{- define "controller.replicas" -}}
+        {{- $replicas := int (default 1 .Values.controller.replicas) -}}
+        {{- if or (lt $replicas 0) (gt $replicas 1) -}}
+        {{- fail "controller.replicas must be 0 or 1" -}}
+        {{- end -}}
+        {{- .Values.controller.replicas -}}
+        {{- end -}}
+    "#};
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          replicas: {{ include "controller.replicas" . | quote }}
+    "#};
+    let values_yaml = indoc! {r#"
+        controller:
+          replicas: 1
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(src, helpers), Some(values_yaml));
+    for (instance, want) in [
+        (
+            serde_json::json!({ "controller": { "replicas": 2 } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "controller": { "replicas": -1 } }),
+            false,
+        ),
+        (serde_json::json!({ "controller": { "replicas": 1 } }), true),
+        (serde_json::json!({ "controller": { "replicas": 0 } }), true),
+        // A numeric string coerces into the failing domain at render time
+        // but stays outside the raw-integer subset (sound abstention).
+        (
+            serde_json::json!({ "controller": { "replicas": "5" } }),
+            true,
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "variable-bound coercion fail guards: instance={instance}; schema={schema}"
+        );
+    }
+}

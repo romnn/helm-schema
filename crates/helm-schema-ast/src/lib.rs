@@ -28,7 +28,7 @@ pub use range_structure::{
     range_destructured_key_variable, range_destructured_value_variable,
     range_has_destructured_variable_definition, range_header_from_source, range_variable_name_expr,
 };
-pub use resource_span::ResourceSpan;
+pub use resource_span::{KindBranchSource, ResourceSpan};
 pub use semver_constraint::semver_constraint_match_pattern;
 pub use template_action::contains_template_action;
 pub use tree_sitter_utils::{

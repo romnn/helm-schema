@@ -20,8 +20,8 @@
 use std::collections::HashSet;
 
 use helm_schema_ast::{
-    Literal, ResourceSpan, TemplateExpr, TemplateHeader, children_with_field, decode_guard,
-    decode_guard_expr, parse_expr_text, parse_go_template, unquote_yaml_scalar,
+    KindBranchSource, Literal, ResourceSpan, TemplateExpr, TemplateHeader, children_with_field,
+    decode_guard, decode_guard_expr, parse_expr_text, parse_go_template, unquote_yaml_scalar,
 };
 use helm_schema_core::{CapabilityGuard, HelperBranch, HelperBranchBody, ResourceRef};
 use helm_schema_syntax::{
@@ -95,6 +95,7 @@ fn collect_window_spans(
     }
     let kind = parts.kind.take();
     let kind_candidates = std::mem::take(&mut parts.kind_candidates);
+    let kind_branch_sources = std::mem::take(&mut parts.kind_branch_sources);
     let Some(resource) = resource_from_parts(kind, kind_candidates, parts.into_api_version_body())
     else {
         return;
@@ -126,7 +127,46 @@ fn collect_window_spans(
         end: window.end,
         resource,
         path_prefix,
+        kind_branch_sources,
     });
+}
+
+/// The per-arm sources of an inline-conditional `kind:` value. Only
+/// complete literal chains qualify: every arm yields exactly one kind
+/// literal, guarded arms carry raw condition text, and the chain ends in
+/// an unguarded `else` — without it some render states produce no kind at
+/// all and the recorded partition would be incomplete. Capability-guarded
+/// arms abstain: their liveness is an oracle question, not a values
+/// predicate.
+fn inline_kind_branch_sources(branches: &[HelperBranch]) -> Vec<KindBranchSource> {
+    if branches.len() < 2 {
+        return Vec::new();
+    }
+    let mut sources = Vec::new();
+    for (index, branch) in branches.iter().enumerate() {
+        let HelperBranchBody::Literals { values } = &branch.body else {
+            return Vec::new();
+        };
+        let [kind] = values.as_slice() else {
+            return Vec::new();
+        };
+        if kind.is_empty() {
+            return Vec::new();
+        }
+        let last = index == branches.len() - 1;
+        let condition = match (&branch.guard, last) {
+            (Some(CapabilityGuard::Opaque { text }), false) if !text.trim().is_empty() => {
+                Some(text.clone())
+            }
+            (None, true) => None,
+            _ => return Vec::new(),
+        };
+        sources.push(KindBranchSource {
+            condition,
+            kind: kind.clone(),
+        });
+    }
+    sources
 }
 
 /// The document's header indent: the shallowest mapping-entry indent among
@@ -168,6 +208,7 @@ struct HeaderParts {
     kind: Option<String>,
     kind_candidates: Vec<String>,
     kind_selector: Option<String>,
+    kind_branch_sources: Vec<KindBranchSource>,
 }
 
 impl HeaderParts {
@@ -302,7 +343,17 @@ fn capture_header_entry(
         }
         "kind" => {
             if let Some(text) = value {
-                let mut kinds = scalar_value_body(text, analysis_db).all_literals();
+                let body = scalar_value_body(text, analysis_db);
+                // An inline conditional selecting between literal kinds
+                // keeps its per-arm guard texts beside the flat candidate
+                // list: the evaluator later lowers them into predicates
+                // the builder can match row conjunctions against.
+                if parts.kind.is_none()
+                    && let HelperBranchBody::Nested { branches } = &body
+                {
+                    parts.kind_branch_sources = inline_kind_branch_sources(branches);
+                }
+                let mut kinds = body.all_literals();
                 kinds.retain(|kind| !kind.is_empty());
                 if parts.kind.is_none() && !kinds.is_empty() {
                     parts.kind = Some(kinds.remove(0));
@@ -509,6 +560,7 @@ fn resource_from_parts(
         kind_candidates,
         api_version_candidates: api_versions,
         api_version_branches,
+        kind_branches: Vec::new(),
     })
 }
 

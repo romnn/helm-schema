@@ -48,6 +48,20 @@ fn literal_string(expr: &TemplateExpr) -> Option<&str> {
     }
 }
 
+/// The typed guard value of a plain scalar literal. Floats abstain: their
+/// file-vs-`--set` numeric channels compare differently, so an equality
+/// target would overstate what the analysis knows.
+fn literal_guard_value(expr: &TemplateExpr) -> Option<GuardValue> {
+    match expr.deparen() {
+        TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
+            Some(GuardValue::string(value.clone()))
+        }
+        TemplateExpr::Literal(Literal::Bool(value)) => Some(GuardValue::Bool(*value)),
+        TemplateExpr::Literal(Literal::Int(value)) => Some(GuardValue::Int(*value)),
+        _ => None,
+    }
+}
+
 fn literal_membership_string(expr: &TemplateExpr) -> Option<String> {
     if let Some(value) = literal_string(expr) {
         return Some(value.to_string());
@@ -541,6 +555,20 @@ impl ValuePathContext<'_> {
             TemplateExpr::Call { function, args } if function == "and" => {
                 self.and_predicate(args).map(|p| p.negated())
             }
+            // A local's negation lowers through its stored truthy
+            // reduction — the same trust the positive Variable lowering
+            // extends (`not $stateful` selecting airflow's Deployment
+            // arm). Only approximation-free reductions qualify: negating
+            // an approximate marker would fire in states the marker never
+            // described. The path fallback below would mint a truthy
+            // stand-in over the flowing paths, which negation must not do.
+            TemplateExpr::Variable(name)
+                if self
+                    .variable_truthy_reduction(name)
+                    .is_some_and(|reduction| !reduction.contains_approximation()) =>
+            {
+                self.variable_truthy_reduction(name).map(Predicate::negated)
+            }
             _ => {
                 if let Some(predicate) = self.root_field_truthy_predicate(arg) {
                     return Some(predicate.negated());
@@ -555,6 +583,13 @@ impl ValuePathContext<'_> {
                 None
             }
         }
+    }
+
+    fn variable_truthy_reduction(&self, name: &str) -> Option<&Predicate> {
+        self.template_truthy_reductions.get(name).or_else(|| {
+            self.template_truthy_reductions
+                .get(name.trim_start_matches('$'))
+        })
     }
 
     fn negated_or_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
@@ -761,6 +796,43 @@ impl ValuePathContext<'_> {
         let [needle, haystack] = args else {
             return None;
         };
+        // `has X (list L1 L2 …)` over a direct selector with typed scalar
+        // literals is EXACTLY "X equals one of the literals" (Sprig `has`
+        // is deep equality per item). Typed targets keep non-string
+        // literals precise: airflow probes explicit Boolean flags with
+        // `has .Values.…enabled (list true false)`.
+        if let TemplateExpr::Call {
+            function,
+            args: list_args,
+        } = haystack.deparen()
+            && matches!(function.as_str(), "list" | "tuple")
+            && !list_args.is_empty()
+            && matches!(
+                needle.deparen(),
+                TemplateExpr::Field(_) | TemplateExpr::Selector { .. } | TemplateExpr::Variable(_)
+            )
+            && let Some(values) = list_args
+                .iter()
+                .map(literal_guard_value)
+                .collect::<Option<Vec<_>>>()
+        {
+            let mut paths = self.paths_for_expr(needle).into_iter();
+            let path = paths.next()?;
+            if paths.next().is_some() {
+                return None;
+            }
+            return Some(predicate_any(
+                values
+                    .into_iter()
+                    .map(|value| {
+                        Predicate::from(Guard::Eq {
+                            path: path.clone(),
+                            value,
+                        })
+                    })
+                    .collect(),
+            ));
+        }
         let targets: Vec<String> = match haystack.deparen() {
             TemplateExpr::Call { function, args } if function == "list" && !args.is_empty() => args
                 .iter()
@@ -1061,7 +1133,7 @@ impl ValuePathContext<'_> {
     /// is its own coercion, so a raw JSON integer different from the
     /// literal always satisfies the comparison (cilium's 255-or-511
     /// `maxConnectedClusters` check). Strings and other kinds coerce and
-    /// stay outside the subset.
+    /// stay outside the subset. The cast may sit behind a bound local.
     fn int_cast_inequality_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             return Vec::new();
@@ -1077,25 +1149,29 @@ impl ValuePathContext<'_> {
             (TemplateExpr::Literal(Literal::Int(literal)), cast) => (cast, *literal),
             _ => return Vec::new(),
         };
-        let TemplateExpr::Call { function, args } = cast_expr else {
+        let Some(source) = self.int_cast_operand(cast_expr) else {
             return Vec::new();
         };
-        if !matches!(function.as_str(), "int" | "int64") || args.len() != 1 {
-            return Vec::new();
-        }
-        let Some(path) = self.single_resolved_values_path_expr(&args[0]) else {
-            return Vec::new();
-        };
-        vec![
+        let mut guards = vec![
             Guard::TypeIs {
-                path: path.clone(),
+                path: source.path.clone(),
                 schema_type: "integer".to_string(),
             },
             Guard::NotEq {
-                path,
+                path: source.path.clone(),
                 value: helm_schema_core::GuardValue::Int(literal),
             },
-        ]
+        ];
+        // A literal `default` substitutes for a raw 0 (numerically empty)
+        // BEFORE the comparison: when the fallback equals the literal, a
+        // raw 0 no longer satisfies `ne`, so exclude it from the claim.
+        if literal != 0 && source.default_int == Some(literal) {
+            guards.push(Guard::NotEq {
+                path: source.path,
+                value: helm_schema_core::GuardValue::Int(0),
+            });
+        }
+        guards
     }
 
     /// `not (list "a" "b" | has .Values.x)` is EXACTLY "x differs from
@@ -1202,12 +1278,14 @@ impl ValuePathContext<'_> {
         }]
     }
 
-    /// `gt (int64 x) N` / `gt (int x) N` (and the flipped `lt N (…)`) with
-    /// an integer literal bound and one values-backed subject admits a
-    /// bounded sound strengthening: a RAW JSON integer above the bound
-    /// always satisfies the coercing comparison, so a fail-arm keyed on the
-    /// strengthened guard keeps firing there instead of abstaining
-    /// wholesale (redis `gt (int64 .Values.master.count) 0`).
+    /// `gt (int64 x) N` / `gt (int x) N` and the mirrored below-bound forms
+    /// (`lt (int x) N`, either operand order flipped) with an integer
+    /// literal bound admit a bounded sound strengthening: a RAW JSON
+    /// integer beyond the bound always satisfies the coercing comparison,
+    /// so a fail-arm keyed on the strengthened guard keeps firing there
+    /// instead of abstaining wholesale (redis `gt (int64 .Values.
+    /// master.count) 0`, jenkins' `$replicas` domain). The cast may sit
+    /// behind a bound local.
     fn int_cast_comparison_sound_subset(&self, expr: &TemplateExpr) -> Vec<Guard> {
         let TemplateExpr::Call { function, args } = expr.deparen() else {
             return Vec::new();
@@ -1215,22 +1293,87 @@ impl ValuePathContext<'_> {
         let [left, right] = args.as_slice() else {
             return Vec::new();
         };
-        let (cast_expr, bound) = match (function.as_str(), left.deparen(), right.deparen()) {
-            ("gt", cast, TemplateExpr::Literal(Literal::Int(bound))) => (cast, *bound),
-            ("lt", TemplateExpr::Literal(Literal::Int(bound)), cast) => (cast, *bound),
+        let (cast_expr, bound, greater) = match (function.as_str(), left.deparen(), right.deparen())
+        {
+            ("gt", cast, TemplateExpr::Literal(Literal::Int(bound))) => (cast, *bound, true),
+            ("lt", TemplateExpr::Literal(Literal::Int(bound)), cast) => (cast, *bound, true),
+            ("lt", cast, TemplateExpr::Literal(Literal::Int(bound))) => (cast, *bound, false),
+            ("gt", TemplateExpr::Literal(Literal::Int(bound)), cast) => (cast, *bound, false),
             _ => return Vec::new(),
         };
-        let TemplateExpr::Call { function, args } = cast_expr else {
+        let Some(source) = self.int_cast_operand(cast_expr) else {
             return Vec::new();
+        };
+        let mut guards = vec![if greater {
+            Guard::IntGt {
+                path: source.path.clone(),
+                bound,
+            }
+        } else {
+            Guard::IntLt {
+                path: source.path.clone(),
+                bound,
+            }
+        }];
+        // A literal `default` substitutes for a raw 0 (numerically empty)
+        // BEFORE the comparison: when 0 itself would satisfy the claim but
+        // the substituted fallback does not, exclude 0 from the claim.
+        let zero_claims = if greater { 0 > bound } else { 0 < bound };
+        let fallback_escapes = source.default_int.is_some_and(|fallback| {
+            !(if greater {
+                fallback > bound
+            } else {
+                fallback < bound
+            })
+        });
+        if zero_claims && fallback_escapes {
+            guards.push(Guard::NotEq {
+                path: source.path,
+                value: helm_schema_core::GuardValue::Int(0),
+            });
+        }
+        guards
+    }
+
+    /// The int-cast provenance behind a comparison operand: the inline
+    /// `int X` / `int (default L X)` call over one direct values selector,
+    /// or a local bound to exactly that shape. Any other subject transform
+    /// breaks the "a raw JSON integer at the path reaches the comparison
+    /// unchanged" argument the raw-integer subsets rely on.
+    pub(crate) fn int_cast_operand(
+        &self,
+        expr: &TemplateExpr,
+    ) -> Option<crate::symbolic_local_state::IntCastSource> {
+        if let TemplateExpr::Variable(name) = expr.deparen() {
+            return self
+                .int_cast_bindings
+                .get(name)
+                .or_else(|| self.int_cast_bindings.get(name.trim_start_matches('$')))
+                .cloned();
+        }
+        let TemplateExpr::Call { function, args } = expr.deparen() else {
+            return None;
         };
         if !matches!(function.as_str(), "int" | "int64") || args.len() != 1 {
-            return Vec::new();
+            return None;
         }
-        let Some(Predicate::Guard(Guard::Truthy { path })) = self.single_truthy_predicate(&args[0])
-        else {
-            return Vec::new();
+        let (subject, default_int) = match args[0].deparen() {
+            TemplateExpr::Call { function, args } if function == "default" && args.len() == 2 => {
+                let TemplateExpr::Literal(Literal::Int(fallback)) = args[0].deparen() else {
+                    return None;
+                };
+                (&args[1], Some(*fallback))
+            }
+            _ => (&args[0], None),
         };
-        vec![Guard::IntGt { path, bound }]
+        if !matches!(
+            subject.deparen(),
+            TemplateExpr::Field(_) | TemplateExpr::Selector { .. }
+        ) {
+            return None;
+        }
+        let path = self.single_resolved_values_path_expr(subject)?;
+        Some(crate::symbolic_local_state::IntCastSource { path, default_int })
     }
 
     fn single_truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {

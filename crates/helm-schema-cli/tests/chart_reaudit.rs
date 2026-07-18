@@ -2181,6 +2181,85 @@ fn airflow_minimum_version_terminal_rejects_older_semver() -> color_eyre::eyre::
     )
 }
 
+/// jenkins' `controller.replicas` helper binds the int cast to a local
+/// (`$replicas := int (default 1 …)`) and fails outside 0..=1: the cast
+/// provenance rides the binding, so both disjuncts reach the terminal
+/// clause through the raw-integer subsets.
+#[test]
+fn jenkins_controller_replicas_domain_is_bounded() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "jenkins",
+        vec![
+            SemanticCase::rejected(
+                "replicas above the domain",
+                "/controller/replicas",
+                json!({ "controller": { "replicas": 2 } }),
+            ),
+            SemanticCase::rejected(
+                "negative replicas below the domain",
+                "/controller/replicas",
+                json!({ "controller": { "replicas": -1 } }),
+            ),
+            SemanticCase::accepted(
+                "the scale-down replica count",
+                json!({ "controller": { "replicas": 0 } }),
+            ),
+            SemanticCase::accepted(
+                "the single supported replica",
+                json!({ "controller": { "replicas": 1 } }),
+            ),
+            SemanticCase::accepted(
+                "a numeric string stays outside the raw-integer subset",
+                json!({ "controller": { "replicas": "5" } }),
+            ),
+        ],
+    )
+}
+
+/// airflow's scheduler selects its workload kind through an inline local
+/// (`kind: {{ if $stateful }}StatefulSet{{ else }}Deployment{{ end }}`)
+/// and guards the strategy slots with the same local: each row concretizes
+/// to its arm's kind, so the provider projection follows the partition and
+/// stays scoped to the arm's liveness.
+#[test]
+fn airflow_scheduler_kind_partition_scopes_strategy_providers() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::rejected(
+                "numeric strategy in the live Deployment arm",
+                "/scheduler/strategy",
+                json!({ "scheduler": { "strategy": 7 } }),
+            ),
+            SemanticCase::rejected(
+                "a StatefulSet-only member at the Deployment strategy slot",
+                "/scheduler/strategy",
+                json!({ "scheduler": { "strategy": { "rollingUpdate": { "partition": 1 } } } }),
+            ),
+            SemanticCase::accepted(
+                "a Deployment strategy in the live arm",
+                json!({ "scheduler": { "strategy": { "type": "RollingUpdate" } } }),
+            ),
+            SemanticCase::accepted(
+                "numeric strategy is harmless while the Deployment arm is dead",
+                json!({ "executor": "LocalExecutor", "scheduler": { "strategy": 7 } }),
+            ),
+            SemanticCase::rejected(
+                "numeric updateStrategy in the live StatefulSet arm",
+                "/scheduler/updateStrategy",
+                json!({ "executor": "LocalExecutor", "scheduler": { "updateStrategy": 7 } }),
+            ),
+            SemanticCase::accepted(
+                "a StatefulSet updateStrategy in the live arm",
+                json!({
+                    "executor": "LocalExecutor",
+                    "scheduler": { "updateStrategy": { "rollingUpdate": { "partition": 1 } } },
+                }),
+            ),
+        ],
+    )
+}
+
 /// nats renders each `extraResources` item as its own document
 /// (`extra-resources.yaml`): Helm decodes every manifest as a mapping, so
 /// scalar and list items cannot become resources; object items (including

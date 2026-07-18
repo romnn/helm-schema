@@ -186,6 +186,7 @@ fn fmt_guard(guard: &Guard) -> String {
         Guard::TypeIs { path, schema_type } => format!("typeIs({path}: {schema_type})"),
         Guard::NotTypeIs { path, schema_type } => format!("notTypeIs({path}: {schema_type})"),
         Guard::IntGt { path, bound } => format!("intGt({path} > {bound})"),
+        Guard::IntLt { path, bound } => format!("intLt({path} < {bound})"),
         Guard::RangeKeyEquals { path, key } => format!("rangeKeyEquals({path}[{key}])"),
     }
 }

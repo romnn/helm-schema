@@ -674,10 +674,7 @@ impl<'a> Interpreter<'a> {
                     .cmp(&right_len)
                     .then_with(|| right.start.cmp(&left.start))
             });
-        self.site_facts(
-            resource_span.map(|resource| (resource.resource.clone(), resource.path_prefix.clone())),
-            span,
-        )
+        self.site_facts(resource_span.map(|span| self.span_resource(span)), span)
     }
 
     /// The site facts of one control region: the region's resource is the
@@ -698,10 +695,55 @@ impl<'a> Interpreter<'a> {
                 None => unique = Some(resource),
             }
         }
-        self.site_facts(
-            unique.map(|resource| (resource.resource.clone(), resource.path_prefix.clone())),
-            span,
-        )
+        self.site_facts(unique.map(|span| self.span_resource(span)), span)
+    }
+
+    /// The span's resource for one tagged use, with any inline-conditional
+    /// kind arms predicate-qualified through the CURRENT scope: the
+    /// selecting locals bind above the header, so each guard lowers exactly
+    /// as the body's own branch conditions do and the builder can match row
+    /// conjunctions to arms structurally.
+    fn span_resource(&self, resource_span: &ResourceSpan) -> (ResourceRef, Vec<String>) {
+        let mut resource = resource_span.resource.clone();
+        resource.kind_branches = self.resolved_kind_branches(&resource_span.kind_branch_sources);
+        (resource, resource_span.path_prefix.clone())
+    }
+
+    /// Lower an inline kind chain's raw guard texts into per-arm
+    /// predicates. An arm holds where its own guard does AND every earlier
+    /// guard failed. Any undecodable guard abstains entirely: dropping one
+    /// arm would leave an incomplete partition that misassigns rows.
+    fn resolved_kind_branches(
+        &self,
+        sources: &[helm_schema_ast::KindBranchSource],
+    ) -> Vec<helm_schema_core::KindBranch> {
+        if sources.is_empty() {
+            return Vec::new();
+        }
+        let context = self.value_path_context();
+        let mut prior_negations: Vec<Predicate> = Vec::new();
+        let mut branches = Vec::new();
+        for source in sources {
+            let mut conjuncts = prior_negations.clone();
+            if let Some(text) = &source.condition {
+                let wrapped = format!("{{{{ {} }}}}", text.trim());
+                let exprs = helm_schema_ast::parse_action_expressions(&wrapped);
+                let [expr] = exprs.as_slice() else {
+                    return Vec::new();
+                };
+                if !context.condition_lowering_is_faithful(expr) {
+                    return Vec::new();
+                }
+                let predicate = context.condition_predicate_expr(expr);
+                prior_negations.push(predicate.negated());
+                conjuncts.push(predicate);
+            }
+            branches.push(helm_schema_core::KindBranch {
+                predicate: Predicate::all(conjuncts),
+                kind: source.kind.clone(),
+            });
+        }
+        branches
     }
 
     fn site_facts(
@@ -800,6 +842,7 @@ impl<'a> Interpreter<'a> {
             template_output_meta: &self.locals.output_meta,
             template_truthy_reductions: &self.locals.truthy_reductions,
             typeof_bindings: &self.locals.typeof_sources,
+            int_cast_bindings: &self.locals.int_cast_sources,
             fragment_context: FragmentEvalContext::new(self.db),
             current_dot_fragment: self.current_dot_fragment(),
             current_dot_binding: self.current_value_dot(),

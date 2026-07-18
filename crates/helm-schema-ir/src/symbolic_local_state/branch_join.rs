@@ -28,6 +28,7 @@ pub(super) fn joined_branch_outcomes(
             join_predicate_union,
         ),
         typeof_sources: join_map(&outcomes, |state| &state.typeof_sources, join_if_equal),
+        int_cast_sources: join_map(&outcomes, |state| &state.int_cast_sources, join_if_equal),
         range_member_values: join_map(
             &outcomes,
             |state| &state.range_member_values,

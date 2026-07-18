@@ -76,6 +76,149 @@ fn values_selected_kind_partitions_strategy_provider_projection() {
     }
 }
 
+/// airflow's scheduler: an INLINE LOCAL selects the workload kind
+/// (`kind: {{ if $stateful }}StatefulSet{{ else }}Deployment{{ end }}`)
+/// and the body's strategy slots are guarded by the same local. The kind
+/// arms carry the selecting predicate, so rows entailed by one arm
+/// concretize to that arm's kind and the provider projection follows the
+/// partition: the Deployment arm owns `spec.strategy`, the StatefulSet arm
+/// `spec.updateStrategy`, and each rejects the shape it cannot hold.
+#[test]
+fn inline_local_kind_partition_projects_per_arm_provider_schemas() {
+    let src = indoc! {r#"
+        {{- $stateful := and (contains "Local" .Values.executor) .Values.persistence.enabled }}
+        apiVersion: apps/v1
+        kind: {{ if $stateful }}StatefulSet{{ else }}Deployment{{ end }}
+        metadata:
+          name: test
+        spec:
+          replicas: {{ .Values.replicas }}
+          {{- if and $stateful .Values.updateStrategy }}
+          updateStrategy: {{- toYaml .Values.updateStrategy | nindent 4 }}
+          {{- end }}
+          {{- if and (not $stateful) .Values.strategy }}
+          strategy: {{- toYaml .Values.strategy | nindent 4 }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        executor: CeleryExecutor
+        persistence:
+          enabled: false
+        replicas: 1
+        updateStrategy: ~
+        strategy: ~
+    "};
+    let signals = schema_signals_for(parse_ir(src));
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&signals, &strict_provider()).with_values_yaml(Some(values_yaml)),
+    );
+
+    for instance in [
+        serde_json::json!({ "strategy": { "rollingUpdate": { "maxSurge": "25%" } } }),
+        serde_json::json!({ "strategy": { "type": "RollingUpdate" } }),
+        serde_json::json!({
+            "executor": "LocalExecutor",
+            "persistence": { "enabled": true },
+            "updateStrategy": { "rollingUpdate": { "partition": 1 } },
+        }),
+        // The strategy value from the OTHER kind's arm is harmless while
+        // its own arm is dead: the template never renders it.
+        serde_json::json!({
+            "executor": "LocalExecutor",
+            "persistence": { "enabled": true },
+            "strategy": 7,
+        }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "the arm-matching strategy shape renders and validates: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({ "strategy": 7 }),
+        serde_json::json!({ "strategy": { "rollingUpdate": { "partition": 1 } } }),
+        serde_json::json!({
+            "executor": "LocalExecutor",
+            "persistence": { "enabled": true },
+            "updateStrategy": { "rollingUpdate": { "maxSurge": "25%" } },
+        }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a strategy shape outside the LIVE arm's kind is rejected: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// Both arms of an inline-local kind chain write the SAME manifest slot
+/// (`spec.updateStrategy`) from different values paths, and both kinds
+/// hold that slot with different member sets (StatefulSet `partition`,
+/// DaemonSet `maxSurge`). Pointer-miss fallback cannot pick the arm here
+/// — only the row conjunction entailing the arm's selecting predicate
+/// resolves each row to ITS kind's schema.
+#[test]
+fn shared_slot_kind_arms_resolve_through_selecting_predicates() {
+    let src = indoc! {r#"
+        {{- $stateful := and (contains "Local" .Values.executor) .Values.persistence.enabled }}
+        apiVersion: apps/v1
+        kind: {{ if $stateful }}StatefulSet{{ else }}DaemonSet{{ end }}
+        metadata:
+          name: test
+        spec:
+          {{- if and $stateful .Values.updateStrategy }}
+          updateStrategy: {{- toYaml .Values.updateStrategy | nindent 4 }}
+          {{- end }}
+          {{- if and (not $stateful) .Values.daemonUpdateStrategy }}
+          updateStrategy: {{- toYaml .Values.daemonUpdateStrategy | nindent 4 }}
+          {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        executor: CeleryExecutor
+        persistence:
+          enabled: false
+        updateStrategy: ~
+        daemonUpdateStrategy: ~
+    "};
+    let signals = schema_signals_for(parse_ir(src));
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&signals, &strict_provider()).with_values_yaml(Some(values_yaml)),
+    );
+
+    for instance in [
+        // The default executor keeps the DaemonSet arm live: its slot
+        // accepts maxSurge, which the primary (first-literal) StatefulSet
+        // schema would reject.
+        serde_json::json!({ "daemonUpdateStrategy": { "rollingUpdate": { "maxSurge": 1 } } }),
+        serde_json::json!({
+            "executor": "LocalExecutor",
+            "persistence": { "enabled": true },
+            "updateStrategy": { "rollingUpdate": { "partition": 1 } },
+        }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "each arm's row resolves to its OWN kind's slot schema: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    for instance in [
+        serde_json::json!({ "daemonUpdateStrategy": { "rollingUpdate": { "partition": 1 } } }),
+        serde_json::json!({
+            "executor": "LocalExecutor",
+            "persistence": { "enabled": true },
+            "updateStrategy": { "rollingUpdate": { "maxSurge": 1 } },
+        }),
+    ] {
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a member from the OTHER kind's slot schema is rejected: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// nfs-subdir-external-provisioner: `maxUnavailable` flows through
 /// `default 1` into a PodDisruptionBudget's int-or-string slot, so the
 /// declared integer default documents intent without narrowing away the

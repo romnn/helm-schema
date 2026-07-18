@@ -52,6 +52,62 @@ fn preserves_inline_conditional_kind_candidates() {
     sim_assert_eq!(have: resource.kind_candidates, want: vec!["Deployment"]);
 }
 
+/// An inline conditional between literal kinds ALSO records its per-arm
+/// guard texts (raw, unresolved — locals only bind in template scope) so
+/// the evaluator can predicate-qualify the arms at use-tagging time.
+#[test]
+fn records_inline_conditional_kind_branch_sources() {
+    let defines = DefineIndex::new();
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let spans = collect_spans(
+        indoc! {r#"
+            {{- $stateful := and .Values.local .Values.persistence }}
+            apiVersion: apps/v1
+            kind: {{ if $stateful }}StatefulSet{{ else }}Deployment{{ end }}
+            metadata:
+              name: example
+        "#},
+        &analysis_db,
+    );
+
+    let sources = &spans.first().expect("span").kind_branch_sources;
+    sim_assert_eq!(
+        have: sources,
+        want: &vec![
+            helm_schema_ast::KindBranchSource {
+                condition: Some("$stateful".to_string()),
+                kind: "StatefulSet".to_string(),
+            },
+            helm_schema_ast::KindBranchSource {
+                condition: None,
+                kind: "Deployment".to_string(),
+            },
+        ]
+    );
+}
+
+/// A chain WITHOUT a trailing `else` leaves render states with no kind at
+/// all; the recorded partition would be incomplete, so it abstains while
+/// the flat candidate list is unaffected.
+#[test]
+fn incomplete_inline_kind_chains_record_no_branch_sources() {
+    let defines = DefineIndex::new();
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let spans = collect_spans(
+        indoc! {r#"
+            apiVersion: apps/v1
+            kind: {{ if .Values.persistence }}StatefulSet{{ end }}
+            metadata:
+              name: example
+        "#},
+        &analysis_db,
+    );
+
+    let span = spans.first().expect("span");
+    sim_assert_eq!(have: span.resource.kind.as_str(), want: "StatefulSet");
+    assert!(span.kind_branch_sources.is_empty());
+}
+
 #[test]
 fn recovers_values_selected_kind_candidates_from_body_partitions() {
     let resource = detect(

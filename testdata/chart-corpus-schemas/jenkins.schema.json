@@ -45491,6 +45491,37 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "anyOf": [
+              {
+                "properties": {
+                  "replicas": {
+                    "exclusiveMinimum": 1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "replicas"
+                ],
+                "type": "object"
+              },
+              {
+                "properties": {
+                  "replicas": {
+                    "exclusiveMaximum": 0,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "replicas"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          "then": false
         }
       ],
       "properties": {

@@ -170,6 +170,12 @@ pub enum Guard {
     /// less often is safe (a fail-arm condition), never as an exact branch
     /// condition whose negation must also hold.
     IntGt { path: String, bound: i64 },
+    /// The path's RAW value is a JSON integer strictly less than `bound`.
+    ///
+    /// The mirror of [`Guard::IntGt`], with the same sound-subset contract:
+    /// `lt (int .Values.x) N` also holds for coercible non-integers, so
+    /// this guard may only strengthen positive-polarity consumers.
+    IntLt { path: String, bound: i64 },
 }
 
 impl Guard {
@@ -207,7 +213,8 @@ impl Guard {
             | Self::Default { .. }
             | Self::TypeIs { .. }
             | Self::NotTypeIs { .. }
-            | Self::IntGt { .. } => {}
+            | Self::IntGt { .. }
+            | Self::IntLt { .. } => {}
         }
     }
 
@@ -228,7 +235,8 @@ impl Guard {
             | Guard::Default { path }
             | Guard::TypeIs { path, .. }
             | Guard::NotTypeIs { path, .. }
-            | Guard::IntGt { path, .. } => {
+            | Guard::IntGt { path, .. }
+            | Guard::IntLt { path, .. } => {
                 vec![path.as_str()]
             }
             Guard::Or { paths } => paths.iter().map(std::string::String::as_str).collect(),
@@ -300,6 +308,10 @@ impl Guard {
                 schema_type,
             },
             Guard::IntGt { path, bound } => Guard::IntGt {
+                path: map(&path),
+                bound,
+            },
+            Guard::IntLt { path, bound } => Guard::IntLt {
                 path: map(&path),
                 bound,
             },

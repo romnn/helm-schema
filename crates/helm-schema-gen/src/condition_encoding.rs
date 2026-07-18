@@ -121,6 +121,19 @@ fn build_single_condition_fragment(
                     if number.as_i64().is_some_and(|value| value > *bound)
             ),
         ),
+        ConditionalGuard::IntLt { path, bound } => build_default_aware_leaf_condition_fragment(
+            path,
+            ancestor_segments,
+            SchemaNode::foreign(serde_json::json!({
+                "type": "integer",
+                "exclusiveMaximum": bound,
+            })),
+            matches!(
+                yaml_value_at_path(values_yaml_doc, path),
+                Some(YamlValue::Number(number))
+                    if number.as_i64().is_some_and(|value| value < *bound)
+            ),
+        ),
         ConditionalGuard::Absent { path } => {
             let segments = split_value_path(path);
             let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
@@ -355,6 +368,11 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
             yaml_value_at_path(values_yaml_doc, path),
             Some(YamlValue::Number(number))
                 if number.as_i64().is_some_and(|value| value > *bound)
+        )),
+        ConditionalGuard::IntLt { path, bound } => Some(matches!(
+            yaml_value_at_path(values_yaml_doc, path),
+            Some(YamlValue::Number(number))
+                if number.as_i64().is_some_and(|value| value < *bound)
         )),
         ConditionalGuard::HasKey { path, key } => Some(matches!(
             yaml_value_at_path(values_yaml_doc, path),

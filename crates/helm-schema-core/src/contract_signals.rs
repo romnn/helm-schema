@@ -38,6 +38,13 @@ pub enum ConditionalGuard {
         path: String,
         bound: i64,
     },
+    /// The mirror of [`ConditionalGuard::IntGt`]: the path's RAW value is a
+    /// JSON integer strictly less than `bound`, under the same sound-subset
+    /// contract.
+    IntLt {
+        path: String,
+        bound: i64,
+    },
     /// The mapping at `path` contains the literal member `key`. The key is
     /// an OPAQUE property name (it may contain dots), so it rides beside
     /// the segmented path instead of being appended to it.
@@ -78,6 +85,7 @@ impl ConditionalGuard {
             | Self::TypeIs { path, .. }
             | Self::MatchesPattern { path, .. }
             | Self::IntGt { path, .. }
+            | Self::IntLt { path, .. }
             | Self::HasKey { path, .. }
             | Self::ContainsMemberEquals { path, .. } => {
                 paths.insert(path.clone());

@@ -4,6 +4,7 @@ use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::GetBinding;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::HelperOutputMeta;
+use crate::symbolic_local_state::IntCastSource;
 use helm_schema_core::Predicate;
 
 mod condition_predicate;
@@ -21,6 +22,7 @@ pub(crate) struct ValuePathContext<'a> {
     pub(crate) template_output_meta: &'a HashMap<String, BTreeMap<String, HelperOutputMeta>>,
     pub(crate) template_truthy_reductions: &'a HashMap<String, Predicate>,
     pub(crate) typeof_bindings: &'a HashMap<String, BTreeMap<String, HelperOutputMeta>>,
+    pub(crate) int_cast_bindings: &'a HashMap<String, IntCastSource>,
     pub(crate) fragment_context: FragmentEvalContext<'a>,
     pub(crate) current_dot_fragment: Option<AbstractValue>,
     pub(crate) current_dot_binding: Option<AbstractValue>,

@@ -394,12 +394,58 @@ fn record_range_key_slot_use(
     }
 }
 
+/// A use whose resource carries predicate-qualified kind branches
+/// concretizes per disjunct: when the conjunction structurally entails
+/// exactly one arm's selecting predicate, this row's kind IS that arm's
+/// literal (airflow's `strategy:` under `not $stateful` is a Deployment
+/// row). Unmatched rows keep the flat candidates; the branches themselves
+/// never leave the builder.
+fn kind_branch_resolved_use(
+    contract_use: &ContractUse,
+    predicates: &[Predicate],
+) -> Option<ContractUse> {
+    let resource = contract_use.resource.as_ref()?;
+    if resource.kind_branches.is_empty() {
+        return None;
+    }
+    let conjuncts: Vec<&Predicate> = predicates.iter().flat_map(flattened_conjuncts).collect();
+    let mut selected = resource.kind_branches.iter().filter(|branch| {
+        flattened_conjuncts(&branch.predicate)
+            .iter()
+            .all(|conjunct| matches!(conjunct, Predicate::True) || conjuncts.contains(conjunct))
+    });
+    let selected_kind = match (selected.next(), selected.next()) {
+        (Some(branch), None) => Some(branch.kind.clone()),
+        _ => None,
+    };
+    let mut resolved = contract_use.clone();
+    if let Some(resource) = resolved.resource.as_mut() {
+        if let Some(kind) = selected_kind {
+            resource.kind = kind;
+            resource.kind_candidates.clear();
+        }
+        resource.kind_branches.clear();
+    }
+    Some(resolved)
+}
+
+/// The leaf conjuncts of a predicate: nested `And`s flatten, everything
+/// else (including `Not`/`Or`) is one leaf.
+fn flattened_conjuncts(predicate: &Predicate) -> Vec<&Predicate> {
+    match predicate {
+        Predicate::And(items) => items.iter().flat_map(flattened_conjuncts).collect(),
+        other => vec![other],
+    }
+}
+
 fn record_contract_use_conjunction(
     paths: &mut BTreeMap<String, ContractPathAccumulator>,
     contract_use: &ContractUse,
     predicates: &[Predicate],
     range_modes: &crate::range_modes::RangeModes,
 ) {
+    let kind_resolved = kind_branch_resolved_use(contract_use, predicates);
+    let contract_use = kind_resolved.as_ref().unwrap_or(contract_use);
     // An approximate ambient conjunct means the row's exact firing states
     // are unknown, so its NARROWING evidence (sink typing, provider uses,
     // nullability) must abstain — but the conjunction's widen-only evidence
@@ -641,8 +687,10 @@ fn record_contract_use_conjunction(
             (facts, facts)
         };
         acc.record_source_use(
-            path_facts,
-            branch_facts,
+            SourceUseFactSplit {
+                path: path_facts,
+                branch: branch_facts,
+            },
             path_is_empty || has_matching_self_guard,
             lowerable_guards,
             branch_provider_use,
@@ -1392,6 +1440,22 @@ fn fail_outer_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
             };
             Some(ConditionalGuard::Not(Box::new(inner)))
         }
+        // A disjunction lowers arm-by-arm: each strengthened arm implies
+        // its real arm, so their disjunction implies the real disjunction
+        // (jenkins' `or (lt $replicas 0) (gt $replicas 1)` domain check).
+        Predicate::Or(items) => {
+            let mut guards = items
+                .iter()
+                .map(fail_outer_guard)
+                .collect::<Option<Vec<_>>>()?;
+            guards.sort();
+            guards.dedup();
+            match guards.as_slice() {
+                [] => None,
+                [guard] => Some(guard.clone()),
+                _ => Some(ConditionalGuard::AnyOf(guards)),
+            }
+        }
         _ => None,
     }
 }
@@ -2106,11 +2170,19 @@ fn path_accumulator<'a>(
     paths.entry(path.to_string()).or_default()
 }
 
+/// The path-level and branch-level halves of one recorded source use's
+/// facts: a structural dispatch arm keeps different facts on each side
+/// (the path keeps only the dispatch tolerance, the branch the real
+/// structural use).
+struct SourceUseFactSplit {
+    path: ContractValuePathFacts,
+    branch: ContractValuePathFacts,
+}
+
 impl ContractPathAccumulator {
     fn record_source_use(
         &mut self,
-        facts: ContractValuePathFacts,
-        branch_facts: ContractValuePathFacts,
+        facts: SourceUseFactSplit,
         source_null_tolerant: bool,
         lowerable_guards: Option<Vec<ConditionalGuard>>,
         provider_schema_use: Option<ProviderSchemaUse>,
@@ -2122,9 +2194,9 @@ impl ContractPathAccumulator {
             self.saw_unsupported_overlay = true;
             return;
         }
-        self.facts.record_facts(facts);
-        let row_forms_overlay_branch = facts.has_render_use
-            && !facts.has_unconditional_render_use
+        self.facts.record_facts(facts.path);
+        let row_forms_overlay_branch = facts.path.has_render_use
+            && !facts.path.has_unconditional_render_use
             && lowerable_guards
                 .as_ref()
                 .is_some_and(|guards| !guards.is_empty());
@@ -2144,8 +2216,8 @@ impl ContractPathAccumulator {
             }
             self.facts.record_metadata_field_kind(metadata_field_kind);
         }
-        if facts.has_render_use {
-            if facts.has_unconditional_render_use
+        if facts.path.has_render_use {
+            if facts.path.has_unconditional_render_use
                 || lowerable_guards.as_ref().is_some_and(Vec::is_empty)
             {
                 // All predicates were the row's own structural range
@@ -2157,7 +2229,7 @@ impl ContractPathAccumulator {
                 branch.facts.is_nullable = true;
                 branch.record_nullable_observation(source_null_tolerant);
                 branch.record_metadata_field_kind(metadata_field_kind);
-                branch.record_facts(branch_facts);
+                branch.record_facts(facts.branch);
 
                 if let Some(provider_schema_use) = provider_schema_use {
                     branch.record_provider_schema_use(provider_schema_use);
@@ -2620,6 +2692,24 @@ fn terminal_clause_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
             _ => Some(ConditionalGuard::AllOf(guards)),
         };
     }
+    // A disjunction of strengthened arms implies the real disjunction, so
+    // it stays inside the clause's positive position (jenkins' two-sided
+    // `$replicas` domain check).
+    if let Predicate::Or(items) = predicate
+        && predicate.contains_approximation()
+    {
+        let mut guards = items
+            .iter()
+            .map(terminal_clause_guard)
+            .collect::<Option<Vec<_>>>()?;
+        guards.sort();
+        guards.dedup();
+        return match guards.as_slice() {
+            [] => None,
+            [guard] => Some(guard.clone()),
+            _ => Some(ConditionalGuard::AnyOf(guards)),
+        };
+    }
     predicate_to_guard(predicate, None)
 }
 
@@ -2705,6 +2795,13 @@ fn guard_to_conditional_guard(
             path: value_path,
             bound,
         } => Some(ConditionalGuard::IntGt {
+            path: path(value_path)?,
+            bound: *bound,
+        }),
+        Guard::IntLt {
+            path: value_path,
+            bound,
+        } => Some(ConditionalGuard::IntLt {
             path: path(value_path)?,
             bound: *bound,
         }),

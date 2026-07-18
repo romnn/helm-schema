@@ -181,7 +181,8 @@ impl Predicate {
                 | Guard::Not { .. }
                 | Guard::Or { .. }
                 | Guard::AnyOf { .. }
-                | Guard::IntGt { .. },
+                | Guard::IntGt { .. }
+                | Guard::IntLt { .. },
             ) => vec![self],
         }
     }
@@ -287,7 +288,8 @@ impl Predicate {
                 | Guard::Not { .. }
                 | Guard::Or { .. }
                 | Guard::AnyOf { .. }
-                | Guard::IntGt { .. },
+                | Guard::IntGt { .. }
+                | Guard::IntLt { .. },
             ) => {}
         }
     }
