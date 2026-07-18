@@ -7071,3 +7071,130 @@ F93/F68/F51/F31/NATS/F71 waves (each wave's semantic diff reviewed via a
 canonical `$defs`-inlined comparison before adoption), the
 signoz-zookeeper gen fixture, its IR fixture, and two IR goldens that now
 render the range-key splice (`splice env partial range-key`).
+
+## Remainder completion round (2026-07-18, fifth round)
+
+Directive: complete the two In-progress remainders (the jenkins
+variable-bound coercion validator and the airflow inline-local kind
+partition). Both are done; the status ledger's In-progress section is
+now empty.
+
+### F31 remainder — variable-bound coercion validators (FIXED)
+
+jenkins binds `$replicas := int (default 1 .Values.controller.replicas)`
+in a helper and fails outside 0..=1 via
+`or (lt $replicas 0) (gt $replicas 1)`. Three structural pieces:
+
+- **Int-cast binding provenance.** A local bound to `int`/`int64` of one
+  direct values selector (optionally through a literal-integer `default`)
+  records an `IntCastSource { path, default_int }` in the symbolic local
+  state, mirroring `typeof_sources` (recorded in `eval_assignment_exprs`,
+  scope-shadowed/restored/joined like every other local domain, surfaced
+  on `ValuePathContext` as `int_cast_bindings`). Both int-cast sound-
+  subset recognizers now resolve a `TemplateExpr::Variable` operand
+  through it; the inline `int (…)` spelling routes through the same
+  `int_cast_operand` resolver, which also tightened the accepted subject
+  shapes to direct selectors (the previous `paths_for_expr`-based
+  resolution would have blessed transformed subjects).
+- **The below-bound direction.** `Guard::IntLt` /
+  `ConditionalGuard::IntLt` mirror `IntGt` (raw JSON integer strictly
+  below the bound; encoding `{type: integer, exclusiveMaximum}`), so
+  `lt $replicas 0` and the flipped `gt N (…)` spelling lower instead of
+  abstaining. A literal `default` interferes exactly at a raw `0`
+  (numerically empty, substituted before the comparison): when `0` is
+  inside the claimed region but the fallback escapes it, the subset
+  conjoins `NotEq 0` instead of abstaining (same rule for the `ne`
+  recognizer when the fallback equals the literal).
+- **Disjunctive fail conditions.** `fail_outer_guard` and
+  `terminal_clause_guard` gained `Or` arms: each strengthened disjunct
+  implies its real disjunct, so the disjunction of the per-arm sound
+  lowerings stays inside the positive polarity both consumers hold
+  (`AnyOf` of the arm guards). The jenkins clause lands as
+  `AnyOf [IntGt(replicas, 1), IntLt(replicas, 0)]`.
+
+Pins: `variable_bound_coercion_fail_guards_lower_through_sound_subsets`
+(gen) and `jenkins_controller_replicas_domain_is_bounded` (CLI; numeric
+strings stay accepted as sound abstention). Fixture fallout: jenkins
+gained the domain arm, and kyverno gained four PDB
+`minAvailable`/`maxUnavailable` mutual-exclusion terminal arms — its
+render gate `or pdb.enabled (gt (int replicas) 1)` is an Or of a truthy
+guard and an int-cast comparison that previously made the whole capture
+abstain; adjudicated as true rejections (the declared `minAvailable: 1`
+default makes an absent override compose to the failing pair).
+
+### F83/F85 — inline-local kind partition (FIXED)
+
+airflow's scheduler selects its workload kind with
+`kind: {{ if $stateful }}StatefulSet{{ else }}Deployment{{ end }}` over
+a local bound from `contains`/`or`/`has` compositions. Implemented as
+three explicit phases (no gen/k8s changes):
+
+- **Detector.** The `kind:` arm already built the guarded branch tree
+  and then flattened it via `all_literals()`; it now ALSO records
+  per-arm `KindBranchSource { condition, kind }` (raw guard text plus
+  kind literal) on the `ResourceSpan` — only for complete literal
+  chains ending in an unguarded `else` (an incomplete chain leaves
+  kind-less render states; capability-guarded arms are an oracle
+  question and abstain).
+- **Evaluator.** At use-tagging time (`hole_site`/`region_site`), the
+  span's sources lower through the CURRENT scope — the selecting locals
+  bind above the header — into `KindBranch { predicate, kind }` on the
+  cloned `ResourceRef` (`kind_branches`, a serde-skipped IR-internal
+  field). Arm predicates are cumulative (`arm_i = ¬g_1 ∧ … ∧ g_i`); any
+  unfaithful guard abstains wholly so the partition stays complete.
+- **Builder.** `record_contract_use_conjunction` concretizes per
+  disjunct: when the row's flattened conjunction structurally entails
+  exactly one arm's predicate, the use's kind IS that arm's literal
+  (candidates cleared); unmatched rows keep the flat candidate list,
+  and the branches never leave the builder.
+
+Two collateral exact lowerings make the airflow predicates decodable
+and are load-bearing for the guard scoping:
+
+- `has X (list L1 L2 …)` over a direct selector with typed scalar
+  literals lowers to the exact `Eq` disjunction (Sprig `has` is deep
+  equality per item) — previously only string literals decoded, so
+  airflow's `has …enabled (list true false)` explicit-flag probe made
+  `$persistence` unfaithful.
+- `not $var` lowers through the local's stored truthy reduction when
+  that reduction is approximation-free (the same trust the positive
+  Variable lowering already extends). Without this, the negated arm's
+  row conditions carried position-marked approximates that could never
+  match the branch predicate.
+
+A first attempt additionally stopped treating reduction-less multi-path
+variable truthiness stand-ins as faithful; that was REVERTED — the
+stand-in markers are load-bearing for the merge-layer lane
+(`with $ctx` over a `merge` local supplies the per-layer truthy markers
+that `record_contract_use` rewrites per layer), and the velero/gen
+merge-shadowing pins caught the regression. The residual risk (negating
+a reduction that embeds another local's multi-path stand-in) is bounded
+by the approximation-free gate plus corpus adjudication.
+
+Pins: `records_inline_conditional_kind_branch_sources` and
+`incomplete_inline_kind_chains_record_no_branch_sources` (detector),
+`inline_local_kind_partition_projects_per_arm_provider_schemas` (gen,
+airflow shape incl. dead-arm tolerance) and
+`shared_slot_kind_arms_resolve_through_selecting_predicates` (gen; a
+StatefulSet/DaemonSet chain writing the SAME `spec.updateStrategy` slot
+from different paths — pointer-miss fallback cannot pick the arm there,
+so this discriminates the concretization itself), and
+`airflow_scheduler_kind_partition_scopes_strategy_providers` (CLI, six
+cases: live-arm numeric and wrong-member rejections for both kinds,
+matching-shape accepts, and numeric `strategy` staying harmless while
+its arm is dead).
+
+### Collateral
+
+- `record_source_use` now takes a `SourceUseFactSplit` (the path/branch
+  fact halves as one value) — the eighth parameter had started tripping
+  `clippy::too_many_arguments`.
+- Fixture updates this round: jenkins and kyverno (F31 wave), airflow
+  and falco (kind-partition wave; falco's `extra.env` sentinel arms
+  re-lowered through the exact `not $userHostnameOverride` reduction,
+  and string/number `extra.env` now reject — the sentinel loop ranges
+  the value unconditionally and Go templates cannot range scalars).
+
+Validation: 1263/1263 workspace tests, doc tests, `task lint`
+warning-free (exit 0), luup2 `check:local` with the fresh release
+binary.

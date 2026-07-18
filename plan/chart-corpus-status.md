@@ -1,8 +1,9 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-17, after the in-progress completion round
-(F31/F51/F68/F71/F93 same-map/NATS member kinds; see the work log's
-"In-progress completion round"). One classification per finding. Where a finding has
+Last reconciled 2026-07-18, after the remainder completion round (the
+jenkins F31 variable-bound coercion validator and the F83/F85
+inline-local kind partition; see the work log's "Remainder completion
+round"). One classification per finding. Where a finding has
 both a completed bounded part and a remainder, the remainder is what is
 classified here; the completed part is listed under Completed with a
 "(bounded)" marker. Per-finding evidence and fix history live in the dated
@@ -131,14 +132,20 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   corpus-integrity gate
 - F103 test compositors scrubbing nulls only along map chains
 - F104 `$tplYaml` program-wrapper alternatives at value nodes (bounded;
-  the extraResources member-kind case is tracked under In progress)
+  the extraResources member-kind case is the NATS entry below)
 
 - F31 scalar-domain fail implications: `len` bounds via the pattern
   subset, `int`-coerced inequality pairs via the raw-integer subset,
   negated literal membership via the exact NotEq conjunction, and the
   semver-minimum terminal through the comparator pattern subset (cilium
-  name/kvstoreMode/maxConnectedClusters, airflow minimum version; the
-  jenkins variable-bound coercion validator remains In progress)
+  name/kvstoreMode/maxConnectedClusters, airflow minimum version).
+  Variable-bound casts included: a local bound to `int`/`int64` of a
+  direct selector (optionally through a literal-integer `default`)
+  carries `IntCastSource` provenance, both raw-integer recognizers
+  resolve through it, `IntLt` mirrors `IntGt` for the below-bound
+  direction, and disjunctive fail conditions lower arm-by-arm
+  (`AnyOf`) — jenkins' `controller.replicas` 0..=1 domain, plus
+  kyverno's PDB mutual-exclusion terminals as fallout
 - F51 existential range sentinels: branch joins stamp arm conditions onto
   changed truthiness reductions (bounded), the joined
   `Range ∧ member-Eq` flag lowers as `ConditionalGuard::
@@ -167,29 +174,22 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   document at column zero must be an object when present and non-null
   (Helm decodes every manifest as a mapping); wrapper items are objects
   and stay open
+- F83/F85 inline-local kind partition: an inline-conditional `kind:`
+  chain records per-arm guard sources (detector), the evaluator lowers
+  them through the live scope into `KindBranch` predicates on the
+  per-use `ResourceRef`, and the builder concretizes each row's kind
+  when its conjunction entails exactly one arm — with exact `has X
+  (list <scalar literals>)` membership and reduction-backed `not $var`
+  lowering as load-bearing collateral (airflow scheduler
+  strategy/updateStrategy per-arm provider scoping incl. dead-arm
+  tolerance; a StatefulSet/DaemonSet shared-slot gen pin discriminates
+  the concretization from pointer-miss fallback)
 
 ## In progress
 
-Implementable remainders. Each entry lists the current reproducer evidence
-and the intended structural fix.
-
-- **F31 remainder — variable-bound coercion validators.** Jenkins binds
-  `$replicas := int (default 1 .Values.controller.replicas)` and fails
-  outside 0/1; the sound-subset recognizers only see inline cast
-  expressions, so the bound form abstains. Needs retained binding
-  expressions (or reduction-carried cast provenance) for locals so the
-  raw-integer subset can fire through the variable.
-- **F83/F85 — inline-local kind partition provider projection.** Airflow's
-  scheduler selects its workload kind through an inline local
-  (`kind: {{ if $stateful }}StatefulSet{{ else }}Deployment{{ end }}`);
-  numeric `scheduler.strategy` is accepted in the live Deployment arm
-  though the provider rejects `/spec/strategy`, and `updateStrategy`
-  mirrors it in the StatefulSet arm. The kind×apiVersion×guard machinery
-  works for values-selected kinds (synthetic matrix pin); the inline form
-  needs predicate-qualified kind branches on `ResourceRef` (mirroring
-  `api_version_branches`) threaded from the resource detector through the
-  generator's kind partitioning, so rows guarded by the selecting
-  predicate resolve their kind.
+Nothing. Both former remainders (the jenkins F31 variable-bound
+coercion validator and the F83/F85 inline-local kind partition)
+completed in the 2026-07-18 remainder round.
 
 ## Rejected (invalid or won't fix by design)
 
