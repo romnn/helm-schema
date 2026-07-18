@@ -37,7 +37,17 @@ pub(crate) fn node_action(source: &str, node: tree_sitter::Node<'_>) -> NodeActi
         | "parenthesized_pipeline"
         | "selector_expression"
         | "function_call"
-        | "method_call" => NodeAction::Output(parse_node_exprs(source, node)),
+        | "method_call"
+        // A bare literal action (`{{- true -}}`) renders static text; it is
+        // output, not structure to descend into (redis' `createConfigmap`
+        // gate spells its body this way).
+        | "true"
+        | "false"
+        | "int_literal"
+        | "float_literal"
+        | "interpreted_string_literal"
+        | "raw_string_literal"
+        | "nil" => NodeAction::Output(parse_node_exprs(source, node)),
         _ => NodeAction::Descend,
     }
 }

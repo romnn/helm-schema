@@ -127,10 +127,12 @@ pub(crate) enum CaptureKind {
     /// Collections whose range key reaches a strict string consumer.
     RangeKeyStrings { paths: BTreeSet<String> },
     /// Every member of the named collection paths reaches a strict runtime
-    /// consumer with the given JSON kind.
+    /// consumer with the given JSON kind; a pattern additionally binds each
+    /// member to a parser's lexical domain (genSignedCert's ip list).
     CollectionItems {
         paths: BTreeSet<String>,
         schema_type: String,
+        pattern: Option<String>,
     },
     /// A literal zero-based `index` executes on this source path.
     IndexAccess { path: String, index: usize },

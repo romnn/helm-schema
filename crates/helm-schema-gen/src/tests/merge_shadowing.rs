@@ -76,6 +76,63 @@ fn shadowed_merge_layer_binds_members_only_where_unshadowed() {
     }
 }
 
+/// Member selection over `mergeOverwrite` layers keeps the layered
+/// precedence (mergo recurses into nested maps with the same override
+/// order), so a `pick`ed member of the merged dict still resolves each
+/// layer's path — kyverno's `featuresOverride.logging` reaches the helper's
+/// member reads instead of vanishing behind the base layer. The base
+/// layer's declared-map typing stays: the scalar-base-fully-shadowed lane
+/// is a documented declared-default policy limitation.
+#[test]
+fn merged_member_projection_reaches_both_layers() {
+    let src = indoc! {r#"
+        {{- $picked := pick (mergeOverwrite (deepCopy .Values.features) .Values.ctrl.featuresOverride) "logging" }}
+        {{- $flags := list -}}
+        {{- with $picked.logging -}}
+          {{- $flags = append $flags (print "--loggingFormat=" .format) -}}
+          {{- $flags = append $flags (print "--v=" .verbosity) -}}
+        {{- end -}}
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+            - name: test
+              image: busybox
+              args:
+                {{- range $flags }}
+                - {{ . }}
+                {{- end }}
+    "#};
+    let values = "features:\n  logging:\n    format: text\n    verbosity: 2\nctrl:\n  featuresOverride: {}\n";
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values));
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "features": { "logging": { "format": "json", "verbosity": 4 } } }),
+            true,
+            "map base logging",
+        ),
+        (
+            serde_json::json!({
+                "ctrl": { "featuresOverride": { "logging": { "format": "json", "verbosity": 4 } } }
+            }),
+            true,
+            "map override logging",
+        ),
+        (
+            serde_json::json!({ "features": { "logging": 5 } }),
+            false,
+            "scalar base unshadowed",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "merged member projection {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// `mergeOverwrite` has the opposite precedence — later arguments win — so
 /// the layer roles flip: the SECOND path becomes the preferred layer and
 /// the first is typed only where the second lacks the key.

@@ -311,7 +311,9 @@ impl Interpreter<'_> {
             };
             match guard {
                 Guard::Range { .. } | Guard::With { .. } | Guard::Default { .. } => false,
-                Guard::RangeKeyPrefix { .. } | Guard::RangeKeyEquals { .. } => true,
+                Guard::RangeKeyPrefix { .. }
+                | Guard::RangeKeyEquals { .. }
+                | Guard::RangeKeyMatches { .. } => true,
                 Guard::Truthy { path: guard_path }
                 | Guard::Not { path: guard_path }
                 | Guard::Absent { path: guard_path }

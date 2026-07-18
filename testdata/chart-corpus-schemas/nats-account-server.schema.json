@@ -72,17 +72,17 @@
                     },
                     {
                       "not": {
-                        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                       }
                     },
                     {
                       "not": {
-                        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
                       }
                     },
                     {
                       "not": {
-                        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
                       }
                     }
                   ],
@@ -99,7 +99,7 @@
         }
       }
     },
-    "schema10": {
+    "schema12": {
       "additionalProperties": {},
       "properties": {
         "configMap": {
@@ -111,12 +111,17 @@
         }
       }
     },
-    "schema11": {
+    "schema13": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "schema13": {
+    "schema15": {
+      "not": {
+        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+      }
+    },
+    "schema16": {
       "additionalProperties": {},
       "properties": {
         "configMap": {
@@ -128,7 +133,7 @@
         }
       }
     },
-    "schema14": {
+    "schema18": {
       "properties": {
         "type": {
           "enum": [
@@ -141,17 +146,12 @@
       ],
       "type": "object"
     },
-    "schema15": {
-      "not": {
-        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-      }
-    },
-    "schema16": {
-      "not": {
-        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
-      }
-    },
     "schema19": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "schema20": {
       "properties": {
         "type": {}
       },
@@ -160,16 +160,11 @@
       ],
       "type": "object"
     },
-    "schema20": {
+    "schema21": {
       "additionalProperties": {},
       "properties": {
         "key": {},
         "name": {}
-      }
-    },
-    "schema21": {
-      "not": {
-        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
       }
     },
     "schema23": {
@@ -225,6 +220,11 @@
           "type": "object"
         }
       ]
+    },
+    "schema6": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -430,7 +430,7 @@
             "additionalProperties": {},
             "properties": {
               "operatorjwt": {
-                "$ref": "#/$defs/schema13"
+                "$ref": "#/$defs/schema16"
               }
             }
           }
@@ -629,7 +629,7 @@
             "additionalProperties": {},
             "properties": {
               "systemaccountjwt": {
-                "$ref": "#/$defs/schema13"
+                "$ref": "#/$defs/schema16"
               }
             }
           }
@@ -1012,16 +1012,16 @@
                   "$ref": "#/$defs/schema23"
                 },
                 {
-                  "$ref": "#/$defs/schema11"
+                  "$ref": "#/$defs/schema13"
+                },
+                {
+                  "$ref": "#/$defs/schema6"
                 },
                 {
                   "$ref": "#/$defs/schema15"
                 },
                 {
-                  "$ref": "#/$defs/schema16"
-                },
-                {
-                  "$ref": "#/$defs/schema21"
+                  "$ref": "#/$defs/schema19"
                 }
               ],
               "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
@@ -1064,16 +1064,16 @@
                   "$ref": "#/$defs/schema23"
                 },
                 {
-                  "$ref": "#/$defs/schema11"
+                  "$ref": "#/$defs/schema13"
+                },
+                {
+                  "$ref": "#/$defs/schema6"
                 },
                 {
                   "$ref": "#/$defs/schema15"
                 },
                 {
-                  "$ref": "#/$defs/schema16"
-                },
-                {
-                  "$ref": "#/$defs/schema21"
+                  "$ref": "#/$defs/schema19"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -1229,16 +1229,16 @@
                                 "$ref": "#/$defs/schema23"
                               },
                               {
-                                "$ref": "#/$defs/schema11"
+                                "$ref": "#/$defs/schema13"
+                              },
+                              {
+                                "$ref": "#/$defs/schema6"
                               },
                               {
                                 "$ref": "#/$defs/schema15"
                               },
                               {
-                                "$ref": "#/$defs/schema16"
-                              },
-                              {
-                                "$ref": "#/$defs/schema21"
+                                "$ref": "#/$defs/schema19"
                               }
                             ],
                             "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
@@ -1263,7 +1263,7 @@
           "additionalProperties": {},
           "properties": {
             "secret": {
-              "$ref": "#/$defs/schema20"
+              "$ref": "#/$defs/schema21"
             }
           }
         },
@@ -1332,10 +1332,10 @@
       ],
       "properties": {
         "operatorjwt": {
-          "$ref": "#/$defs/schema10"
+          "$ref": "#/$defs/schema12"
         },
         "systemaccountjwt": {
-          "$ref": "#/$defs/schema10"
+          "$ref": "#/$defs/schema12"
         }
       }
     },
@@ -1347,11 +1347,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/schema19"
+                  "$ref": "#/$defs/schema20"
                 }
               },
               {
-                "$ref": "#/$defs/schema14"
+                "$ref": "#/$defs/schema18"
               }
             ]
           },
@@ -1394,16 +1394,16 @@
                                 "$ref": "#/$defs/schema23"
                               },
                               {
-                                "$ref": "#/$defs/schema11"
+                                "$ref": "#/$defs/schema13"
+                              },
+                              {
+                                "$ref": "#/$defs/schema6"
                               },
                               {
                                 "$ref": "#/$defs/schema15"
                               },
                               {
-                                "$ref": "#/$defs/schema16"
-                              },
-                              {
-                                "$ref": "#/$defs/schema21"
+                                "$ref": "#/$defs/schema19"
                               }
                             ],
                             "type": "string"
@@ -1416,7 +1416,7 @@
                       {
                         "anyOf": [
                           {
-                            "pattern": "^-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$",
+                            "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$",
                             "type": "string"
                           },
                           {

@@ -904,6 +904,153 @@ fn existential_range_sentinel_lowers_to_contains() {
     }
 }
 
+/// A per-member `fail` under a truthy-and-type test requires every member
+/// to be a TRUTHY string: sealed-secrets aborts on empty-string
+/// `privateKeyAnnotations` members, not only on non-strings.
+#[test]
+fn ranged_member_truthy_string_test_requires_truthy_members() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          args: |-
+            {{- if .Values.privateKeyAnnotations }}
+            {{- $flags := "" }}
+            {{- range $k, $v := .Values.privateKeyAnnotations }}
+              {{- if not (and $v (kindIs "string" $v)) }}
+                {{ fail "Annotation values have to be strings" }}
+              {{- end }}
+              {{- $flags = printf "%s=%s,%s" $k $v $flags }}
+            {{- end }}
+            {{ trimSuffix "," $flags }}
+            {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("privateKeyAnnotations: {}\n"));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "privateKeyAnnotations": { "audit": "ok" } }),
+            true,
+            "truthy string member",
+        ),
+        (
+            serde_json::json!({ "privateKeyAnnotations": {} }),
+            true,
+            "empty map",
+        ),
+        (
+            serde_json::json!({ "privateKeyAnnotations": { "audit": 7 } }),
+            false,
+            "numeric member",
+        ),
+        (
+            serde_json::json!({ "privateKeyAnnotations": { "audit": "" } }),
+            false,
+            "empty-string member is falsy",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "truthy string member {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A per-member `fail` keyed on literal name equality forbids exactly those
+/// member names, under the clause's live outer guard: cilium rejects
+/// `extraEnv` entries colliding with its backoff variables only while the
+/// backoff feature is enabled.
+#[test]
+fn ranged_member_name_equality_fail_forbids_the_literal_names() {
+    let src = indoc! {r#"
+        {{- if .Values.k8sClientExponentialBackoff.enabled }}
+        {{- range .Values.extraEnv }}
+        {{- if or (eq .name "KUBE_CLIENT_BACKOFF_BASE") (eq .name "KUBE_CLIENT_BACKOFF_DURATION") }}
+        {{ fail "k8sClientExponentialBackoff cannot be enabled when extraEnv contains KUBE_CLIENT_BACKOFF_BASE or KUBE_CLIENT_BACKOFF_DURATION" }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data: {}
+    "#};
+    let values_yaml = indoc! {r#"
+        k8sClientExponentialBackoff:
+          enabled: true
+        extraEnv: []
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "extraEnv": [{ "name": "KUBE_CLIENT_BACKOFF_BASE", "value": "1" }] }),
+            false,
+            "forbidden name under the live guard",
+        ),
+        (
+            serde_json::json!({ "extraEnv": [{ "name": "OTHER", "value": "1" }] }),
+            true,
+            "unrelated name",
+        ),
+        (
+            serde_json::json!({
+                "k8sClientExponentialBackoff": { "enabled": false },
+                "extraEnv": [{ "name": "KUBE_CLIENT_BACKOFF_BASE", "value": "1" }]
+            }),
+            true,
+            "forbidden name in the dead arm",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "forbidden member name {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A `fail` keyed on a range-KEY regex constrains the collection's key
+/// domain through `propertyNames`: traefik aborts on uppercase
+/// `ingressRoute` keys.
+#[test]
+fn range_key_regex_fail_lowers_to_property_names() {
+    let src = indoc! {r#"
+        {{- range $name, $config := .Values.ingressRoute }}
+        {{- if regexMatch "[A-Z]" $name }}
+        {{- fail (printf "ERROR: ingressRoute key %q contains uppercase characters." $name) }}
+        {{- end }}
+        {{- end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data: {}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("ingressRoute: {}\n"));
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({ "ingressRoute": { "dashboard": {} } }),
+            true,
+            "lowercase key",
+        ),
+        (serde_json::json!({ "ingressRoute": {} }), true, "empty map"),
+        (
+            serde_json::json!({ "ingressRoute": { "Dashboard": {} } }),
+            false,
+            "uppercase key",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "range key regex {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// cilium's validators state finite scalar domains through `fail` guards: a
 /// `len` bound, an `int`-coerced inequality pair, and a negated literal
 /// membership. Each conjunct lowers through its sound subset, so the
@@ -991,10 +1138,24 @@ fn variable_bound_coercion_fail_guards_lower_through_sound_subsets() {
         ),
         (serde_json::json!({ "controller": { "replicas": 1 } }), true),
         (serde_json::json!({ "controller": { "replicas": 0 } }), true),
-        // A numeric string coerces into the failing domain at render time
-        // but stays outside the raw-integer subset (sound abstention).
+        // Clean decimal spellings coerce into the failing domain at render
+        // time, so the string preimage rejects them alongside raw integers.
         (
             serde_json::json!({ "controller": { "replicas": "5" } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "controller": { "replicas": "-1" } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "controller": { "replicas": "1" } }),
+            true,
+        ),
+        // A leading zero flips ParseInt's base detection to octal, so the
+        // spelling stays outside the claimed decimal preimage.
+        (
+            serde_json::json!({ "controller": { "replicas": "09" } }),
             true,
         ),
     ] {

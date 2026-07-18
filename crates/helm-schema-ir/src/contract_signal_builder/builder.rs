@@ -4,8 +4,8 @@ use crate::{Guard, ProviderSchemaUse, ValueKind, contract::ContractUse};
 use helm_schema_core::{
     ConditionalGuard, ConditionalOverlayEvidence, ConditionalPathOverlay, ContractFailImplication,
     ContractPathSchemaEvidence, ContractRequirednessEvidence, ContractRequirementTarget,
-    ContractSchemaSignals, ContractValuePathFacts, FailValueRequirement, MetadataFieldKind,
-    Predicate,
+    ContractSchemaSignals, ContractValuePathFacts, FailValueRequirement, GuardValue,
+    MetadataFieldKind, Predicate,
 };
 
 #[tracing::instrument(skip_all)]
@@ -928,9 +928,16 @@ fn record_fail_conjunction(
     if let crate::eval_effect::CaptureKind::CollectionItems {
         paths: collection_paths,
         schema_type,
+        pattern,
     } = &capture.kind
     {
-        record_collection_item_requirements(paths, capture, collection_paths, schema_type);
+        record_collection_item_requirements(
+            paths,
+            capture,
+            collection_paths,
+            schema_type,
+            pattern.as_deref(),
+        );
         return;
     }
     if let crate::eval_effect::CaptureKind::IndexAccess { path, index } = &capture.kind {
@@ -1017,6 +1024,9 @@ fn record_fail_conjunction(
         return;
     }
     if record_range_key_prefix_requirement(paths, &capture.kind, &conjunction) {
+        return;
+    }
+    if record_range_key_matches_requirement(paths, &capture.kind, &conjunction) {
         return;
     }
     if let crate::eval_effect::CaptureKind::MemberAccess { handled_kinds } = &capture.kind {
@@ -1351,6 +1361,99 @@ fn record_range_key_prefix_requirement(
     true
 }
 
+/// Lower a fail conjunction keyed on a range-KEY regex: rendering aborts
+/// for any key matching (or, negated, failing) the pattern, so the
+/// collection's key domain excludes it (traefik fails on uppercase
+/// `ingressRoute` keys). Bounded to a single key-pattern conjunct with no
+/// other member-scoped tests; anything richer abstains.
+fn record_range_key_matches_requirement(
+    paths: &mut BTreeMap<String, ContractPathAccumulator>,
+    kind: &crate::eval_effect::CaptureKind,
+    conjunction: &[Predicate],
+) -> bool {
+    fn key_match(predicate: &Predicate) -> Option<(bool, &str, &str)> {
+        match predicate {
+            Predicate::Guard(Guard::RangeKeyMatches { path, pattern }) => {
+                Some((false, path.as_str(), pattern.as_str()))
+            }
+            Predicate::Not(inner) => match inner.as_ref() {
+                Predicate::Guard(Guard::RangeKeyMatches { path, pattern }) => {
+                    Some((true, path.as_str(), pattern.as_str()))
+                }
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
+    if !matches!(kind, crate::eval_effect::CaptureKind::Fail) {
+        return false;
+    }
+    let matches: Vec<(bool, &str, &str)> = conjunction.iter().filter_map(key_match).collect();
+    let [(negated, collection_path, pattern)] = matches.as_slice() else {
+        return !matches.is_empty();
+    };
+    let has_matching_range = conjunction.iter().any(|predicate| {
+        matches!(predicate, Predicate::Guard(Guard::Range { path }) if path == collection_path)
+    });
+    if !has_matching_range {
+        return true;
+    }
+    let member_scope = format!("{collection_path}.*");
+    let mut outer_guards = Vec::new();
+    for predicate in conjunction {
+        if key_match(predicate).is_some() {
+            continue;
+        }
+        match predicate {
+            Predicate::Guard(Guard::Range { path }) if path == collection_path => {}
+            _ if predicate.value_paths().iter().any(|path| {
+                path == &member_scope
+                    || helm_schema_core::values_path_is_descendant(path, &member_scope)
+            }) =>
+            {
+                return true;
+            }
+            _ => {
+                let Some(guard) = fail_outer_guard(predicate) else {
+                    return true;
+                };
+                if guard
+                    .value_paths()
+                    .iter()
+                    .any(|path| path_contains_wildcard(path))
+                {
+                    return true;
+                }
+                outer_guards.push(guard);
+            }
+        }
+    }
+    outer_guards.sort();
+    outer_guards.dedup();
+    let requirement = if *negated {
+        FailValueRequirement::MatchesPattern {
+            pattern: (*pattern).to_string(),
+            templated: false,
+        }
+    } else {
+        FailValueRequirement::NotMatchesPattern {
+            pattern: (*pattern).to_string(),
+        }
+    };
+    let implication = ContractFailImplication {
+        outer_guards,
+        target: ContractRequirementTarget::Keys,
+        requirements: vec![requirement],
+    };
+    let acc = path_accumulator(paths, collection_path);
+    acc.referenced = true;
+    if !acc.fail_implications.contains(&implication) {
+        acc.fail_implications.push(implication);
+    }
+    true
+}
+
 fn capture_outer_guards(
     capture: &crate::eval_effect::FailCapture,
 ) -> Option<Vec<ConditionalGuard>> {
@@ -1477,8 +1580,8 @@ fn record_value_requirement_capture(
         !collection.contains('*') && !suffix.is_empty() && !suffix.contains('*')
     });
     if let Some((collection_path, member_suffix)) = member_field_split {
-        let key_equals_ranges: BTreeSet<&str> = capture
-            .conjunction
+        let conjunction = remove_redundant_approximate_conditions(&capture.conjunction);
+        let key_equals_ranges: BTreeSet<&str> = conjunction
             .iter()
             .filter_map(|predicate| match predicate {
                 Predicate::Guard(Guard::RangeKeyEquals { path, .. }) => Some(path.as_str()),
@@ -1486,12 +1589,25 @@ fn record_value_requirement_capture(
             })
             .collect();
         let mut outer_guards = Vec::new();
-        for predicate in &capture.conjunction {
+        let mut self_truthy_selected = false;
+        for predicate in &conjunction {
             match predicate {
                 Predicate::Guard(Guard::Range { path })
                     if path == collection_path || key_equals_ranges.contains(path.as_str()) => {}
+                // The consumer's own truthiness selection over the ranged
+                // member cannot become an outer guard (its path is
+                // per-member); it scopes the requirement to truthy member
+                // values instead (`.password | default ""` behind
+                // `if $password` reaching `sha256sum`).
+                Predicate::Guard(Guard::Truthy { path: guard_path }) if guard_path == path => {
+                    self_truthy_selected = true;
+                }
                 _ => {
-                    let Some(guard) = predicate_to_guard(predicate, None) else {
+                    // Fail polarity admits strengthened guards: the arm then
+                    // enforces its requirement less often, never more (the
+                    // document-level `if (include "redis.createConfigmap" .)`
+                    // wrapping the ACL users range).
+                    let Some(guard) = fail_outer_guard(predicate) else {
                         return;
                     };
                     if guard
@@ -1505,6 +1621,18 @@ fn record_value_requirement_capture(
                 }
             }
         }
+        let requirement = if self_truthy_selected {
+            match requirement {
+                FailValueRequirement::SchemaType(schema_type) => {
+                    FailValueRequirement::TruthyImpliesSchemaType(schema_type)
+                }
+                // Only the plain type requirement has a truthy-scoped form;
+                // a selection over any other requirement abstains as before.
+                _ => return,
+            }
+        } else {
+            requirement
+        };
         outer_guards.sort();
         outer_guards.dedup();
         let allow_integer = {
@@ -1592,6 +1720,7 @@ fn record_collection_item_requirements(
     capture: &crate::eval_effect::FailCapture,
     collection_paths: &BTreeSet<String>,
     schema_type: &str,
+    pattern: Option<&str>,
 ) {
     let Some(outer_guards) = capture_outer_guards(capture) else {
         return;
@@ -1600,12 +1729,19 @@ fn record_collection_item_requirements(
         if path_contains_wildcard(path) {
             continue;
         }
+        let mut requirements = vec![FailValueRequirement::SchemaType(schema_type.to_string())];
+        if let Some(pattern) = pattern {
+            requirements.push(FailValueRequirement::MatchesPattern {
+                pattern: pattern.to_string(),
+                templated: false,
+            });
+        }
         let implication = ContractFailImplication {
             outer_guards: outer_guards.clone(),
             target: ContractRequirementTarget::Members {
                 allow_integer: false,
             },
-            requirements: vec![FailValueRequirement::SchemaType(schema_type.to_string())],
+            requirements,
         };
         let acc = path_accumulator(paths, path);
         acc.referenced = true;
@@ -1831,11 +1967,27 @@ fn requirements_from_negation(
             (!member.contains('.'))
                 .then(|| vec![FailValueRequirement::HasMember(member.to_string())])
         }
-        // Dropping an equality arm weakens the requirement (fewer values
-        // rejected), which is the safe direction: `required` emptiness
-        // tests carry `= null` / `= ""` arms whose negations have no
-        // member-schema spelling.
-        Predicate::Guard(Guard::Eq { .. }) => Some(Vec::new()),
+        // A concrete scalar equality over a tested MEMBER negates to a
+        // not-equals requirement (cilium's forbidden `extraEnv` names). A
+        // scalar VALUE target keeps the equality as its selection guard —
+        // the terminal-clause lane already encodes that exactly, and
+        // reading it as the test would invert selection and test in
+        // multi-conjunct captures (loki's default htpasswd program). Null,
+        // empty-string, and float arms stay dropped — they ride `required`
+        // emptiness tests whose absence semantics the tolerant-leaf
+        // encoding already covers — and dropping an arm only weakens the
+        // conjunction of negations, which is the safe direction.
+        Predicate::Guard(Guard::Eq { path, value }) => match value {
+            GuardValue::String(text)
+                if path == scope && scope.contains(".*") && !text.is_empty() =>
+            {
+                Some(vec![FailValueRequirement::NotEquals(value.clone())])
+            }
+            GuardValue::Int(_) | GuardValue::Bool(_) if path == scope && scope.contains(".*") => {
+                Some(vec![FailValueRequirement::NotEquals(value.clone())])
+            }
+            _ => Some(Vec::new()),
+        },
         _ => None,
     }
 }
@@ -1864,10 +2016,21 @@ fn requirements_from_holding(
         // encoded at the value's position is vacuous when the value is
         // absent, so presence needs no spelled requirement.
         Predicate::Guard(Guard::Absent { path }) if path == scope => Some(Vec::new()),
-        // The tested value's own truthiness (`and $v (kindIs "string" $v)`):
-        // the type requirement carries the substance; truthiness (rejecting
-        // "" or 0) stays unmodeled as a bounded approximation.
-        Predicate::Guard(Guard::Truthy { path }) if path == scope => Some(Vec::new()),
+        // The tested MEMBER's own truthiness (`and $v (kindIs "string"
+        // $v)`): a falsy member — including the empty string — takes the
+        // failing arm, so validity requires Helm-truthiness alongside any
+        // type requirement (sealed-secrets' privateKeyAnnotations members).
+        // A ranged member always EXISTS when tested, so the requirement is
+        // exact per member; a scalar VALUE target instead lowers through
+        // the terminal-clause lane, whose guard encoding carries the
+        // absence semantics a properties-anchored arm cannot.
+        Predicate::Guard(Guard::Truthy { path }) if path == scope => {
+            if scope.contains(".*") {
+                Some(vec![FailValueRequirement::HelmTruthy])
+            } else {
+                Some(Vec::new())
+            }
+        }
         Predicate::Guard(Guard::Truthy { path }) => {
             let member = path.strip_prefix(&format!("{scope}."))?;
             (!member.contains('.'))
@@ -2756,7 +2919,9 @@ fn guard_to_conditional_guard(
             path: path(value_path)?,
             pattern: pattern.clone(),
         }),
-        Guard::MatchesPattern { .. } | Guard::RangeKeyPrefix { .. } => None,
+        Guard::MatchesPattern { .. }
+        | Guard::RangeKeyPrefix { .. }
+        | Guard::RangeKeyMatches { .. } => None,
         Guard::TypeIs {
             path: value_path,
             schema_type,

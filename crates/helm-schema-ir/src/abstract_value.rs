@@ -754,8 +754,12 @@ impl AbstractValue {
                 }
                 Self::choice(out)
             }
-            // Which layer supplies the member depends on runtime keys, so
-            // the selected value is the union of per-layer selections.
+            // Member selection distributes over the layers WITH their
+            // precedence: mergo recurses into nested maps with the same
+            // override order, so `merged.key` is itself a layered merge of
+            // the per-layer members. Collapsing to an unordered choice here
+            // would erase the shadowing that makes a fully-overridden base
+            // member unreachable (kyverno's `featuresOverride.logging`).
             Self::MergedLayers(layers) => {
                 let mut out = Vec::new();
                 for value in layers {
@@ -763,7 +767,11 @@ impl AbstractValue {
                         out.push(bound);
                     }
                 }
-                Self::choice(out)
+                match out.len() {
+                    0 => None,
+                    1 => out.pop(),
+                    _ => Some(Self::MergedLayers(out)),
+                }
             }
             Self::Dict(map) => {
                 let (head, tail) = rest.split_first()?;

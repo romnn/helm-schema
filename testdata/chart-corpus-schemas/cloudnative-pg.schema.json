@@ -262,132 +262,91 @@
         "null"
       ]
     },
-    "schema10": {
-      "additionalProperties": {},
-      "properties": {
-        "failurePolicy": {
-          "anyOf": [
-            {
-              "allOf": [
-                {
-                  "not": {
-                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[-?:]([ \\t]|$)"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": ":[ \\t]|:$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-                  }
-                }
-              ],
-              "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
-              "type": "string"
-            },
-            {
-              "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
-              "type": "null"
-            }
-          ]
-        }
-      }
-    },
     "schema11": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      "description": "A list of node selector requirements by node's fields.",
+      "items": {
+        "additionalProperties": false,
+        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+        "properties": {
+          "key": {
+            "description": "The label key that the selector applies to.",
+            "type": "string"
+          },
+          "operator": {
+            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+            "type": "string"
+          },
+          "values": {
+            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": [
+              "array",
+              "null"
+            ]
           }
         },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-          }
-        }
-      ],
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": "string"
+        "required": [
+          "key",
+          "operator"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ]
     },
-    "schema19": {
+    "schema12": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "additionalProperties": false,
+        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+        "properties": {
+          "key": {
+            "description": "The label key that the selector applies to.",
+            "type": "string"
+          },
+          "operator": {
+            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+            "type": "string"
+          },
+          "values": {
+            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "operator"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "schema18": {
       "allOf": [
         {
           "not": {
@@ -426,17 +385,17 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
           }
         },
         {
           "not": {
-            "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
           }
         },
         {
           "not": {
-            "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
           }
         }
       ],
@@ -674,17 +633,17 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
               }
             }
           ],
@@ -696,44 +655,6 @@
       ]
     },
     "schema21": {
-      "additionalProperties": false,
-      "description": "SELinuxOptions are the labels to be applied to the container",
-      "properties": {
-        "level": {
-          "description": "Level is SELinux level label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "role": {
-          "description": "Role is a SELinux role label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "type": {
-          "description": "Type is a SELinux type label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "user": {
-          "description": "User is a SELinux user label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "schema22": {
       "allOf": [
         {
           "not": {
@@ -772,21 +693,59 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
           }
         },
         {
           "not": {
-            "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
           }
         },
         {
           "not": {
-            "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
           }
         }
       ],
       "type": "string"
+    },
+    "schema22": {
+      "additionalProperties": false,
+      "description": "SELinuxOptions are the labels to be applied to the container",
+      "properties": {
+        "level": {
+          "description": "Level is SELinux level label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "role": {
+          "description": "Role is a SELinux role label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "Type is a SELinux type label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "description": "User is a SELinux user label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
     },
     "schema25": {
       "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
@@ -917,16 +876,21 @@
       "type": "object"
     },
     "schema42": {
-      "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-      "format": "int32",
-      "type": "integer"
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
     },
     "schema43": {
       "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
       "format": "int32",
-      "type": "null"
+      "type": "integer"
     },
     "schema44": {
+      "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+      "format": "int32",
+      "type": "null"
+    },
+    "schema46": {
       "not": {
         "properties": {
           "webhook": {
@@ -953,7 +917,7 @@
         "type": "object"
       }
     },
-    "schema45": {
+    "schema47": {
       "not": {
         "properties": {
           "webhook": {
@@ -1046,7 +1010,7 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "schema51": {
+    "schema53": {
       "not": {
         "properties": {
           "serviceAccount": {
@@ -1065,14 +1029,14 @@
         "type": "object"
       }
     },
-    "schema52": {
+    "schema54": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
     },
-    "schema53": {
+    "schema55": {
       "properties": {
         "config": {
           "properties": {
@@ -1092,25 +1056,6 @@
         "config"
       ],
       "type": "object"
-    },
-    "schema58": {
-      "not": {
-        "properties": {
-          "config": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "config"
-        ],
-        "type": "object"
-      }
     },
     "schema6": {
       "additionalProperties": false,
@@ -1153,6 +1098,25 @@
     "schema60": {
       "not": {
         "properties": {
+          "config": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "config"
+        ],
+        "type": "object"
+      }
+    },
+    "schema62": {
+      "not": {
+        "properties": {
           "rbac": {
             "properties": {
               "create": {}
@@ -1169,54 +1133,77 @@
         "type": "object"
       }
     },
-    "schema66": {
+    "schema64": {
+      "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+      "type": "string"
+    },
+    "schema69": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
     "schema7": {
-      "description": "A list of node selector requirements by node's fields.",
-      "items": {
-        "additionalProperties": false,
-        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-        "properties": {
-          "key": {
-            "description": "The label key that the selector applies to.",
-            "type": "string"
-          },
-          "operator": {
-            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-            "type": "string"
-          },
-          "values": {
-            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
           }
         },
-        "required": [
-          "key",
-          "operator"
-        ],
-        "type": [
-          "object",
-          "null"
-        ]
-      },
-      "type": [
-        "array",
-        "null"
-      ]
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+      "type": "string"
     },
-    "schema74": {
+    "schema77": {
+      "not": {
+        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+      }
+    },
+    "schema78": {
       "not": {
         "properties": {
           "sidecarLabel": {}
@@ -1227,7 +1214,76 @@
         "type": "object"
       }
     },
-    "schema76": {
+    "schema8": {
+      "additionalProperties": {},
+      "properties": {
+        "failurePolicy": {
+          "anyOf": [
+            {
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+                  }
+                }
+              ],
+              "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
+              "type": "string"
+            },
+            {
+              "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "schema80": {
       "not": {
         "properties": {
           "clusterWide": {}
@@ -1238,13 +1294,13 @@
         "type": "object"
       }
     },
-    "schema77": {
+    "schema81": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema78": {
+    "schema82": {
       "properties": {
         "create": {
           "enum": [
@@ -1257,49 +1313,7 @@
       ],
       "type": "object"
     },
-    "schema8": {
-      "description": "A list of node selector requirements by node's labels.",
-      "items": {
-        "additionalProperties": false,
-        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-        "properties": {
-          "key": {
-            "description": "The label key that the selector applies to.",
-            "type": "string"
-          },
-          "operator": {
-            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-            "type": "string"
-          },
-          "values": {
-            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "key",
-          "operator"
-        ],
-        "type": [
-          "object",
-          "null"
-        ]
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "schema80": {
+    "schema85": {
       "properties": {
         "clusterWide": {}
       },
@@ -1308,12 +1322,7 @@
       ],
       "type": "object"
     },
-    "schema81": {
-      "not": {
-        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-      }
-    },
-    "schema82": {
+    "schema86": {
       "not": {
         "properties": {
           "create": {}
@@ -1324,12 +1333,7 @@
         "type": "object"
       }
     },
-    "schema83": {
-      "not": {
-        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
-      }
-    },
-    "schema86": {
+    "schema88": {
       "oneOf": [
         {
           "type": [
@@ -1345,9 +1349,9 @@
         }
       ]
     },
-    "schema88": {
+    "schema89": {
       "not": {
-        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
     "schema9": {
@@ -1389,25 +1393,21 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
           }
         },
         {
           "not": {
-            "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
           }
         },
         {
           "not": {
-            "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
           }
         }
       ],
-      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-      "type": "string"
-    },
-    "schema90": {
-      "pattern": "^-?(0|[1-9][0-9]*)$",
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
     "schema91": {
@@ -1477,7 +1477,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema58"
+                "$ref": "#/$defs/schema60"
               },
               {
                 "properties": {
@@ -1503,7 +1503,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema62"
               },
               {
                 "properties": {
@@ -1529,7 +1529,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema51"
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -1587,7 +1587,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema60"
+                    "$ref": "#/$defs/schema62"
                   },
                   {
                     "properties": {
@@ -1611,14 +1611,14 @@
                 ]
               },
               {
-                "$ref": "#/$defs/schema53"
+                "$ref": "#/$defs/schema55"
               }
             ]
           },
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema45"
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -1719,7 +1719,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema60"
+            "$ref": "#/$defs/schema62"
           },
           {
             "properties": {
@@ -1771,7 +1771,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema58"
+                "$ref": "#/$defs/schema60"
               },
               {
                 "properties": {
@@ -1801,7 +1801,7 @@
                   "not": {
                     "properties": {
                       "config": {
-                        "$ref": "#/$defs/schema80"
+                        "$ref": "#/$defs/schema85"
                       }
                     },
                     "required": [
@@ -1882,7 +1882,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema62"
               },
               {
                 "properties": {
@@ -1908,7 +1908,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema51"
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -2030,7 +2030,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema58"
+                "$ref": "#/$defs/schema60"
               },
               {
                 "properties": {
@@ -2056,7 +2056,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema62"
               },
               {
                 "properties": {
@@ -2082,7 +2082,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema51"
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -2108,7 +2108,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema45"
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -2142,7 +2142,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema44"
+                "$ref": "#/$defs/schema46"
               },
               {
                 "properties": {
@@ -2181,7 +2181,7 @@
           "nameOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema22"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "not": {
@@ -2222,7 +2222,7 @@
           "nameOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema22"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "not": {
@@ -2278,7 +2278,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema58"
+                    "$ref": "#/$defs/schema60"
                   },
                   {
                     "properties": {
@@ -2327,7 +2327,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema51"
+                "$ref": "#/$defs/schema53"
               },
               {
                 "properties": {
@@ -2358,7 +2358,7 @@
           "namespaceOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema9"
+                "$ref": "#/$defs/schema7"
               },
               {
                 "$ref": "#/$defs/schema25"
@@ -2377,7 +2377,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema60"
+            "$ref": "#/$defs/schema62"
           },
           {
             "properties": {
@@ -2428,16 +2428,16 @@
                     "$ref": "#/$defs/schema92"
                   },
                   {
-                    "$ref": "#/$defs/schema66"
+                    "$ref": "#/$defs/schema69"
                   },
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema77"
                   },
                   {
-                    "$ref": "#/$defs/schema88"
+                    "$ref": "#/$defs/schema89"
                   }
                 ],
                 "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
@@ -2463,7 +2463,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema45"
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -2497,7 +2497,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema44"
+                "$ref": "#/$defs/schema46"
               },
               {
                 "properties": {
@@ -2558,16 +2558,16 @@
                     "$ref": "#/$defs/schema92"
                   },
                   {
-                    "$ref": "#/$defs/schema66"
+                    "$ref": "#/$defs/schema69"
                   },
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema77"
                   },
                   {
-                    "$ref": "#/$defs/schema88"
+                    "$ref": "#/$defs/schema89"
                   }
                 ],
                 "description": "`namespace` is the namespace of the service. Required",
@@ -2589,7 +2589,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema62"
               },
               {
                 "properties": {
@@ -2613,7 +2613,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema53"
+            "$ref": "#/$defs/schema55"
           }
         ]
       },
@@ -2623,7 +2623,7 @@
           "namespaceOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema22"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "not": {
@@ -2664,7 +2664,7 @@
           "namespaceOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema22"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "not": {
@@ -2680,7 +2680,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema44"
+            "$ref": "#/$defs/schema46"
           },
           {
             "properties": {
@@ -2743,7 +2743,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema45"
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -2777,7 +2777,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema44"
+                "$ref": "#/$defs/schema46"
               },
               {
                 "properties": {
@@ -2839,16 +2839,16 @@
                     "$ref": "#/$defs/schema92"
                   },
                   {
-                    "$ref": "#/$defs/schema66"
+                    "$ref": "#/$defs/schema69"
                   },
                   {
-                    "$ref": "#/$defs/schema81"
+                    "$ref": "#/$defs/schema42"
                   },
                   {
-                    "$ref": "#/$defs/schema83"
+                    "$ref": "#/$defs/schema77"
                   },
                   {
-                    "$ref": "#/$defs/schema88"
+                    "$ref": "#/$defs/schema89"
                   }
                 ],
                 "description": "The name of the Webhook Service.\nDO NOT CHANGE THE SERVICE NAME as it is currently used to generate the certificate\nand can not be configured",
@@ -2865,7 +2865,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema45"
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -2899,7 +2899,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema44"
+                "$ref": "#/$defs/schema46"
               },
               {
                 "properties": {
@@ -2955,7 +2955,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema45"
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -2989,7 +2989,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema44"
+                "$ref": "#/$defs/schema46"
               },
               {
                 "properties": {
@@ -3041,7 +3041,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/schema90"
+                    "$ref": "#/$defs/schema64"
                   }
                 ]
               }
@@ -3056,7 +3056,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema45"
+                "$ref": "#/$defs/schema47"
               },
               {
                 "properties": {
@@ -3090,7 +3090,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema44"
+                "$ref": "#/$defs/schema46"
               },
               {
                 "properties": {
@@ -3136,7 +3136,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema60"
+            "$ref": "#/$defs/schema62"
           },
           {
             "properties": {
@@ -3168,7 +3168,7 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema19"
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "not": {
@@ -3192,7 +3192,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema60"
+                "$ref": "#/$defs/schema62"
               },
               {
                 "properties": {
@@ -3216,7 +3216,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/schema53"
+            "$ref": "#/$defs/schema55"
           }
         ]
       },
@@ -3229,7 +3229,7 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema19"
+                    "$ref": "#/$defs/schema18"
                   },
                   {
                     "not": {
@@ -3317,7 +3317,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/schema52"
+                        "$ref": "#/$defs/schema54"
                       },
                       "optional": {
                         "description": "Specify whether the ConfigMap or its key must be defined",
@@ -3373,7 +3373,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/schema86"
+                        "$ref": "#/$defs/schema88"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -3398,7 +3398,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/schema52"
+                        "$ref": "#/$defs/schema54"
                       },
                       "optional": {
                         "description": "Specify whether the Secret or its key must be defined",
@@ -3468,10 +3468,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/schema8"
+                            "$ref": "#/$defs/schema12"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/schema7"
+                            "$ref": "#/$defs/schema11"
                           }
                         },
                         "type": "object",
@@ -3508,10 +3508,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/schema8"
+                            "$ref": "#/$defs/schema12"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/schema7"
+                            "$ref": "#/$defs/schema11"
                           }
                         },
                         "type": [
@@ -3602,7 +3602,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema77"
+          "$ref": "#/$defs/schema81"
         },
         {
           "not": {
@@ -3648,7 +3648,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema80"
                   },
                   {
                     "properties": {
@@ -3666,7 +3666,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema86"
                   },
                   {
                     "properties": {
@@ -3706,7 +3706,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema76"
+                    "$ref": "#/$defs/schema80"
                   },
                   {
                     "properties": {
@@ -3724,7 +3724,7 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema82"
+                    "$ref": "#/$defs/schema86"
                   },
                   {
                     "properties": {
@@ -3760,7 +3760,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema82"
+                "$ref": "#/$defs/schema86"
               },
               {
                 "properties": {
@@ -3800,7 +3800,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema82"
+                "$ref": "#/$defs/schema86"
               },
               {
                 "properties": {
@@ -3821,7 +3821,7 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema11"
+                    "$ref": "#/$defs/schema9"
                   },
                   {
                     "$ref": "#/$defs/schema29"
@@ -3991,7 +3991,7 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/schema21"
+              "$ref": "#/$defs/schema22"
             },
             "seccompProfile": {
               "anyOf": [
@@ -4072,16 +4072,16 @@
               "$ref": "#/$defs/schema92"
             },
             {
-              "$ref": "#/$defs/schema66"
+              "$ref": "#/$defs/schema69"
             },
             {
-              "$ref": "#/$defs/schema81"
+              "$ref": "#/$defs/schema42"
             },
             {
-              "$ref": "#/$defs/schema83"
+              "$ref": "#/$defs/schema77"
             },
             {
-              "$ref": "#/$defs/schema88"
+              "$ref": "#/$defs/schema89"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
@@ -4120,7 +4120,7 @@
           }
         },
         {
-          "pattern": "^(true|false|True|False|TRUE|FALSE)$",
+          "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
           "type": "string"
         }
       ]
@@ -4153,16 +4153,16 @@
                   "$ref": "#/$defs/schema92"
                 },
                 {
-                  "$ref": "#/$defs/schema66"
+                  "$ref": "#/$defs/schema69"
                 },
                 {
-                  "$ref": "#/$defs/schema81"
+                  "$ref": "#/$defs/schema42"
                 },
                 {
-                  "$ref": "#/$defs/schema83"
+                  "$ref": "#/$defs/schema77"
                 },
                 {
-                  "$ref": "#/$defs/schema88"
+                  "$ref": "#/$defs/schema89"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -4190,7 +4190,7 @@
             "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
             "properties": {
               "name": {
-                "$ref": "#/$defs/schema52"
+                "$ref": "#/$defs/schema54"
               }
             },
             "type": [
@@ -4347,7 +4347,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema78"
+                    "$ref": "#/$defs/schema82"
                   }
                 ]
               },
@@ -4388,7 +4388,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema78"
+                    "$ref": "#/$defs/schema82"
                   }
                 ]
               },
@@ -4398,7 +4398,7 @@
                   "configMapName": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema11"
+                        "$ref": "#/$defs/schema9"
                       },
                       {
                         "$ref": "#/$defs/schema29"
@@ -4441,7 +4441,7 @@
                           {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema74"
+                                "$ref": "#/$defs/schema78"
                               },
                               {
                                 "properties": {
@@ -4463,7 +4463,7 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema78"
+                        "$ref": "#/$defs/schema82"
                       },
                       {
                         "anyOf": [
@@ -4481,7 +4481,7 @@
                           {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/schema74"
+                                "$ref": "#/$defs/schema78"
                               },
                               {
                                 "properties": {
@@ -4539,7 +4539,7 @@
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/schema78"
+                    "$ref": "#/$defs/schema82"
                   }
                 ]
               },
@@ -4549,7 +4549,7 @@
                   "namespace": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema9"
+                        "$ref": "#/$defs/schema7"
                       },
                       {
                         "$ref": "#/$defs/schema25"
@@ -4635,7 +4635,7 @@
         "name": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema11"
+              "$ref": "#/$defs/schema9"
             },
             {
               "$ref": "#/$defs/schema29"
@@ -4656,7 +4656,7 @@
     "nameOverride": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema22"
+          "$ref": "#/$defs/schema21"
         },
         {
           "not": {
@@ -4671,7 +4671,7 @@
     "namespaceOverride": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema9"
+          "$ref": "#/$defs/schema7"
         },
         {
           "$ref": "#/$defs/schema25"
@@ -4686,7 +4686,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema77"
+          "$ref": "#/$defs/schema81"
         },
         {
           "additionalProperties": {
@@ -4713,7 +4713,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema77"
+          "$ref": "#/$defs/schema81"
         },
         {
           "$ref": "#/$defs/schema26"
@@ -4732,7 +4732,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema77"
+          "$ref": "#/$defs/schema81"
         },
         {
           "$ref": "#/$defs/schema33"
@@ -4797,7 +4797,7 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/schema21"
+              "$ref": "#/$defs/schema22"
             },
             "seccompProfile": {
               "anyOf": [
@@ -4911,16 +4911,16 @@
               "$ref": "#/$defs/schema92"
             },
             {
-              "$ref": "#/$defs/schema66"
+              "$ref": "#/$defs/schema69"
             },
             {
-              "$ref": "#/$defs/schema81"
+              "$ref": "#/$defs/schema42"
             },
             {
-              "$ref": "#/$defs/schema83"
+              "$ref": "#/$defs/schema77"
             },
             {
-              "$ref": "#/$defs/schema88"
+              "$ref": "#/$defs/schema89"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -4975,7 +4975,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/schema90"
+          "$ref": "#/$defs/schema64"
         }
       ]
     },
@@ -5015,7 +5015,7 @@
             },
             "limits": {
               "additionalProperties": {
-                "$ref": "#/$defs/schema86"
+                "$ref": "#/$defs/schema88"
               },
               "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
               "type": [
@@ -5025,7 +5025,7 @@
             },
             "requests": {
               "additionalProperties": {
-                "$ref": "#/$defs/schema86"
+                "$ref": "#/$defs/schema88"
               },
               "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
               "type": [
@@ -5037,7 +5037,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema77"
+          "$ref": "#/$defs/schema81"
         },
         {
           "type": "null"
@@ -5097,16 +5097,16 @@
                   "$ref": "#/$defs/schema92"
                 },
                 {
-                  "$ref": "#/$defs/schema66"
+                  "$ref": "#/$defs/schema69"
                 },
                 {
-                  "$ref": "#/$defs/schema81"
+                  "$ref": "#/$defs/schema42"
                 },
                 {
-                  "$ref": "#/$defs/schema83"
+                  "$ref": "#/$defs/schema77"
                 },
                 {
-                  "$ref": "#/$defs/schema88"
+                  "$ref": "#/$defs/schema89"
                 }
               ],
               "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
@@ -5127,7 +5127,7 @@
         "name": {
           "anyOf": [
             {
-              "$ref": "#/$defs/schema11"
+              "$ref": "#/$defs/schema9"
             },
             {
               "$ref": "#/$defs/schema29"
@@ -5143,7 +5143,7 @@
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/schema90"
+              "$ref": "#/$defs/schema64"
             }
           ]
         },
@@ -5172,16 +5172,16 @@
                   "$ref": "#/$defs/schema92"
                 },
                 {
-                  "$ref": "#/$defs/schema66"
+                  "$ref": "#/$defs/schema69"
                 },
                 {
-                  "$ref": "#/$defs/schema81"
+                  "$ref": "#/$defs/schema42"
                 },
                 {
-                  "$ref": "#/$defs/schema83"
+                  "$ref": "#/$defs/schema77"
                 },
                 {
-                  "$ref": "#/$defs/schema88"
+                  "$ref": "#/$defs/schema89"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -5203,7 +5203,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema82"
+                "$ref": "#/$defs/schema86"
               },
               {
                 "properties": {
@@ -5224,7 +5224,7 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema11"
+                    "$ref": "#/$defs/schema9"
                   },
                   {
                     "$ref": "#/$defs/schema29"
@@ -5280,16 +5280,16 @@
                   "$ref": "#/$defs/schema92"
                 },
                 {
-                  "$ref": "#/$defs/schema66"
+                  "$ref": "#/$defs/schema69"
                 },
                 {
-                  "$ref": "#/$defs/schema81"
+                  "$ref": "#/$defs/schema42"
                 },
                 {
-                  "$ref": "#/$defs/schema83"
+                  "$ref": "#/$defs/schema77"
                 },
                 {
-                  "$ref": "#/$defs/schema88"
+                  "$ref": "#/$defs/schema89"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -5523,7 +5523,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema77"
+          "$ref": "#/$defs/schema81"
         },
         {
           "not": {
@@ -5548,7 +5548,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema82"
+                        "$ref": "#/$defs/schema86"
                       },
                       {
                         "properties": {
@@ -5564,7 +5564,7 @@
                     ]
                   },
                   "then": {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema8"
                   }
                 }
               ]
@@ -5580,7 +5580,7 @@
                   "if": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/schema82"
+                        "$ref": "#/$defs/schema86"
                       },
                       {
                         "properties": {
@@ -5596,7 +5596,7 @@
                     ]
                   },
                   "then": {
-                    "$ref": "#/$defs/schema10"
+                    "$ref": "#/$defs/schema8"
                   }
                 }
               ]
@@ -5612,10 +5612,10 @@
             "initialDelaySeconds": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema42"
+                  "$ref": "#/$defs/schema43"
                 },
                 {
-                  "$ref": "#/$defs/schema43"
+                  "$ref": "#/$defs/schema44"
                 },
                 {
                   "not": {
@@ -5623,7 +5623,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema90"
+                  "$ref": "#/$defs/schema64"
                 }
               ]
             }
@@ -5657,7 +5657,7 @@
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/schema90"
+              "$ref": "#/$defs/schema64"
             }
           ]
         },
@@ -5667,10 +5667,10 @@
             "initialDelaySeconds": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/schema42"
+                  "$ref": "#/$defs/schema43"
                 },
                 {
-                  "$ref": "#/$defs/schema43"
+                  "$ref": "#/$defs/schema44"
                 },
                 {
                   "not": {
@@ -5678,7 +5678,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema90"
+                  "$ref": "#/$defs/schema64"
                 }
               ]
             }
@@ -5706,7 +5706,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema90"
+                  "$ref": "#/$defs/schema64"
                 }
               ]
             },
@@ -5728,7 +5728,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema90"
+                  "$ref": "#/$defs/schema64"
                 }
               ]
             }

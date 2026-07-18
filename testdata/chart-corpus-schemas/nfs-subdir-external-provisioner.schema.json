@@ -263,7 +263,7 @@
       ]
     },
     "schema10": {
-      "description": "A list of node selector requirements by node's labels.",
+      "description": "A list of node selector requirements by node's fields.",
       "items": {
         "additionalProperties": false,
         "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
@@ -305,6 +305,48 @@
       ]
     },
     "schema11": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "additionalProperties": false,
+        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+        "properties": {
+          "key": {
+            "description": "The label key that the selector applies to.",
+            "type": "string"
+          },
+          "operator": {
+            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+            "type": "string"
+          },
+          "values": {
+            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "key",
+          "operator"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "schema12": {
       "additionalProperties": false,
       "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
       "properties": {
@@ -336,63 +378,7 @@
         }
       ]
     },
-    "schema12": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^[!&*#{}\\[\\],|>@`%]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[-?:]([ \\t]|$)"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(|~|null|Null|NULL)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-          }
-        }
-      ],
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": "string"
-    },
-    "schema18": {
+    "schema14": {
       "additionalProperties": {},
       "properties": {
         "path": {
@@ -434,17 +420,17 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
               }
             }
           ],
@@ -684,17 +670,17 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
               }
             }
           ],
@@ -706,44 +692,6 @@
       ]
     },
     "schema21": {
-      "additionalProperties": false,
-      "description": "SELinuxOptions are the labels to be applied to the container",
-      "properties": {
-        "level": {
-          "description": "Level is SELinux level label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "role": {
-          "description": "Role is a SELinux role label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "type": {
-          "description": "Type is a SELinux type label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "user": {
-          "description": "User is a SELinux user label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "schema22": {
       "allOf": [
         {
           "not": {
@@ -782,21 +730,59 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
           }
         },
         {
           "not": {
-            "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
           }
         },
         {
           "not": {
-            "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
           }
         }
       ],
       "type": "string"
+    },
+    "schema22": {
+      "additionalProperties": false,
+      "description": "SELinuxOptions are the labels to be applied to the container",
+      "properties": {
+        "level": {
+          "description": "Level is SELinux level label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "role": {
+          "description": "Role is a SELinux role label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "Type is a SELinux type label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "description": "User is a SELinux user label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
     },
     "schema24": {
       "additionalProperties": {
@@ -834,6 +820,11 @@
     },
     "schema37": {
       "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "schema39": {
+      "not": {
         "properties": {
           "serviceAccount": {
             "properties": {
@@ -851,50 +842,7 @@
         "type": "object"
       }
     },
-    "schema39": {
-      "not": {
-        "properties": {
-          "storageClass": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "storageClass"
-        ],
-        "type": "object"
-      }
-    },
-    "schema44": {
-      "not": {
-        "properties": {
-          "rbac": {
-            "properties": {
-              "create": {}
-            },
-            "required": [
-              "create"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "rbac"
-        ],
-        "type": "object"
-      }
-    },
-    "schema47": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "schema5": {
+    "schema4": {
       "anyOf": [
         {
           "allOf": [
@@ -935,17 +883,17 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
               }
             }
           ],
@@ -958,92 +906,65 @@
         }
       ]
     },
-    "schema54": {
+    "schema41": {
+      "not": {
+        "properties": {
+          "storageClass": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "storageClass"
+        ],
+        "type": "object"
+      }
+    },
+    "schema46": {
+      "not": {
+        "properties": {
+          "rbac": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "rbac"
+        ],
+        "type": "object"
+      }
+    },
+    "schema47": {
+      "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
+      "type": "string"
+    },
+    "schema50": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "schema56": {
+      "not": {
+        "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+      }
+    },
+    "schema58": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "schema56": {
-      "not": {
-        "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
-      }
-    },
-    "schema57": {
-      "not": {
-        "properties": {
-          "create": {}
-        },
-        "required": [
-          "create"
-        ],
-        "type": "object"
-      }
-    },
-    "schema58": {
-      "not": {
-        "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
-      }
-    },
     "schema6": {
-      "additionalProperties": false,
-      "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
-      "properties": {
-        "gmsaCredentialSpec": {
-          "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "gmsaCredentialSpecName": {
-          "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "hostProcess": {
-          "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "runAsUserName": {
-          "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "schema62": {
-      "not": {
-        "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
-      }
-    },
-    "schema65": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "schema66": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "schema67": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "schema7": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -1085,17 +1006,17 @@
               },
               {
                 "not": {
-                  "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                  "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                 }
               },
               {
                 "not": {
-                  "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                  "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
                 }
               },
               {
                 "not": {
-                  "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                  "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
                 }
               }
             ],
@@ -1147,17 +1068,17 @@
               },
               {
                 "not": {
-                  "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                  "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                 }
               },
               {
                 "not": {
-                  "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                  "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
                 }
               },
               {
                 "not": {
-                  "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                  "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
                 }
               }
             ],
@@ -1169,57 +1090,140 @@
         ]
       }
     },
-    "schema70": {
+    "schema61": {
+      "not": {
+        "properties": {
+          "create": {}
+        },
+        "required": [
+          "create"
+        ],
+        "type": "object"
+      }
+    },
+    "schema63": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "schema66": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "schema67": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "schema68": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "schema7": {
+      "additionalProperties": false,
+      "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
+      "properties": {
+        "gmsaCredentialSpec": {
+          "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gmsaCredentialSpecName": {
+          "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hostProcess": {
+          "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "runAsUserName": {
+          "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "schema71": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "schema71": {
+    "schema72": {
       "not": {
         "pattern": "[\\r\\n]"
       }
     },
     "schema9": {
-      "description": "A list of node selector requirements by node's fields.",
-      "items": {
-        "additionalProperties": false,
-        "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-        "properties": {
-          "key": {
-            "description": "The label key that the selector applies to.",
-            "type": "string"
-          },
-          "operator": {
-            "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-            "type": "string"
-          },
-          "values": {
-            "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-            "items": {
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ]
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^[!&*#{}\\[\\],|>@`%]"
           }
         },
-        "required": [
-          "key",
-          "operator"
-        ],
-        "type": [
-          "object",
-          "null"
-        ]
-      },
-      "type": [
-        "array",
-        "null"
-      ]
+        {
+          "not": {
+            "pattern": "^[-?:]([ \\t]|$)"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(|~|null|Null|NULL)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+          }
+        }
+      ],
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "string"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1288,7 +1292,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema44"
+                "$ref": "#/$defs/schema46"
               },
               {
                 "properties": {
@@ -1314,7 +1318,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema37"
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -1479,7 +1483,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema44"
+                "$ref": "#/$defs/schema46"
               },
               {
                 "properties": {
@@ -1505,7 +1509,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema37"
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -1531,7 +1535,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema39"
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -1685,7 +1689,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema44"
+                "$ref": "#/$defs/schema46"
               },
               {
                 "properties": {
@@ -1711,7 +1715,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema37"
+                "$ref": "#/$defs/schema39"
               },
               {
                 "properties": {
@@ -1737,7 +1741,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema39"
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -1768,7 +1772,7 @@
           "nameOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema22"
+                "$ref": "#/$defs/schema21"
               },
               {
                 "not": {
@@ -1836,7 +1840,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema39"
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -1868,7 +1872,7 @@
             "additionalProperties": {},
             "properties": {
               "mountOptions": {
-                "$ref": "#/$defs/schema7"
+                "$ref": "#/$defs/schema6"
               }
             }
           }
@@ -1879,7 +1883,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema39"
+            "$ref": "#/$defs/schema41"
           },
           {
             "properties": {
@@ -2022,7 +2026,7 @@
         "additionalProperties": {},
         "properties": {
           "nfs": {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema14"
           }
         }
       }
@@ -2151,7 +2155,7 @@
             "additionalProperties": {},
             "properties": {
               "server": {
-                "$ref": "#/$defs/schema5"
+                "$ref": "#/$defs/schema4"
               }
             }
           }
@@ -2311,7 +2315,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema44"
+            "$ref": "#/$defs/schema46"
           },
           {
             "properties": {
@@ -2345,13 +2349,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema66"
-                      },
-                      {
                         "$ref": "#/$defs/schema67"
                       },
                       {
-                        "$ref": "#/$defs/schema70"
+                        "$ref": "#/$defs/schema68"
+                      },
+                      {
+                        "$ref": "#/$defs/schema71"
                       },
                       {
                         "not": {
@@ -2359,22 +2363,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema71"
+                        "$ref": "#/$defs/schema72"
                       },
                       {
-                        "$ref": "#/$defs/schema65"
+                        "$ref": "#/$defs/schema66"
                       },
                       {
-                        "$ref": "#/$defs/schema47"
+                        "$ref": "#/$defs/schema50"
+                      },
+                      {
+                        "$ref": "#/$defs/schema37"
                       },
                       {
                         "$ref": "#/$defs/schema56"
                       },
                       {
-                        "$ref": "#/$defs/schema58"
-                      },
-                      {
-                        "$ref": "#/$defs/schema62"
+                        "$ref": "#/$defs/schema63"
                       }
                     ],
                     "description": "Name of the object being referenced.",
@@ -2423,7 +2427,7 @@
               "accessModes": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema22"
+                    "$ref": "#/$defs/schema21"
                   },
                   {
                     "type": "null"
@@ -2440,7 +2444,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/schema39"
+            "$ref": "#/$defs/schema41"
           },
           {
             "properties": {
@@ -2485,7 +2489,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema39"
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -2551,7 +2555,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema39"
+                "$ref": "#/$defs/schema41"
               },
               {
                 "properties": {
@@ -2634,10 +2638,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/schema10"
+                            "$ref": "#/$defs/schema11"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/schema9"
+                            "$ref": "#/$defs/schema10"
                           }
                         },
                         "type": "object",
@@ -2674,10 +2678,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/schema10"
+                            "$ref": "#/$defs/schema11"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/schema9"
+                            "$ref": "#/$defs/schema10"
                           }
                         },
                         "type": [
@@ -2768,7 +2772,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema54"
+          "$ref": "#/$defs/schema58"
         },
         {
           "not": {
@@ -2795,13 +2799,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema66"
-                },
-                {
                   "$ref": "#/$defs/schema67"
                 },
                 {
-                  "$ref": "#/$defs/schema70"
+                  "$ref": "#/$defs/schema68"
+                },
+                {
+                  "$ref": "#/$defs/schema71"
                 },
                 {
                   "not": {
@@ -2809,22 +2813,22 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema71"
+                  "$ref": "#/$defs/schema72"
                 },
                 {
-                  "$ref": "#/$defs/schema65"
+                  "$ref": "#/$defs/schema66"
                 },
                 {
-                  "$ref": "#/$defs/schema47"
+                  "$ref": "#/$defs/schema50"
+                },
+                {
+                  "$ref": "#/$defs/schema37"
                 },
                 {
                   "$ref": "#/$defs/schema56"
                 },
                 {
-                  "$ref": "#/$defs/schema58"
-                },
-                {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema63"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -2920,7 +2924,7 @@
     "nameOverride": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema22"
+          "$ref": "#/$defs/schema21"
         },
         {
           "not": {
@@ -2948,7 +2952,7 @@
             "type": "object"
           },
           "then": {
-            "$ref": "#/$defs/schema18"
+            "$ref": "#/$defs/schema14"
           }
         },
         {
@@ -2971,13 +2975,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema66"
-                      },
-                      {
                         "$ref": "#/$defs/schema67"
                       },
                       {
-                        "$ref": "#/$defs/schema70"
+                        "$ref": "#/$defs/schema68"
+                      },
+                      {
+                        "$ref": "#/$defs/schema71"
                       },
                       {
                         "not": {
@@ -2985,22 +2989,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema71"
+                        "$ref": "#/$defs/schema72"
                       },
                       {
-                        "$ref": "#/$defs/schema65"
+                        "$ref": "#/$defs/schema66"
                       },
                       {
-                        "$ref": "#/$defs/schema47"
+                        "$ref": "#/$defs/schema50"
+                      },
+                      {
+                        "$ref": "#/$defs/schema37"
                       },
                       {
                         "$ref": "#/$defs/schema56"
                       },
                       {
-                        "$ref": "#/$defs/schema58"
-                      },
-                      {
-                        "$ref": "#/$defs/schema62"
+                        "$ref": "#/$defs/schema63"
                       }
                     ],
                     "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
@@ -3034,13 +3038,13 @@
               "server": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/schema66"
-                  },
-                  {
                     "$ref": "#/$defs/schema67"
                   },
                   {
-                    "$ref": "#/$defs/schema70"
+                    "$ref": "#/$defs/schema68"
+                  },
+                  {
+                    "$ref": "#/$defs/schema71"
                   },
                   {
                     "not": {
@@ -3048,22 +3052,22 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/schema71"
+                    "$ref": "#/$defs/schema72"
                   },
                   {
-                    "$ref": "#/$defs/schema65"
+                    "$ref": "#/$defs/schema66"
                   },
                   {
-                    "$ref": "#/$defs/schema47"
+                    "$ref": "#/$defs/schema50"
+                  },
+                  {
+                    "$ref": "#/$defs/schema37"
                   },
                   {
                     "$ref": "#/$defs/schema56"
                   },
                   {
-                    "$ref": "#/$defs/schema58"
-                  },
-                  {
-                    "$ref": "#/$defs/schema62"
+                    "$ref": "#/$defs/schema63"
                   }
                 ],
                 "description": "server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
@@ -3082,7 +3086,7 @@
                     "$ref": "#/$defs/helm-truthy"
                   },
                   "then": {
-                    "$ref": "#/$defs/schema7"
+                    "$ref": "#/$defs/schema6"
                   }
                 }
               ]
@@ -3144,16 +3148,16 @@
           ]
         },
         "path": {
-          "$ref": "#/$defs/schema5"
+          "$ref": "#/$defs/schema4"
         },
         "reclaimPolicy": {
           "description": "Reclaim policy for the main nfs volume"
         },
         "server": {
-          "$ref": "#/$defs/schema5"
+          "$ref": "#/$defs/schema4"
         },
         "volumeName": {
-          "$ref": "#/$defs/schema22"
+          "$ref": "#/$defs/schema21"
         }
       },
       "type": "object"
@@ -3161,7 +3165,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema54"
+          "$ref": "#/$defs/schema58"
         },
         {
           "additionalProperties": {
@@ -3187,7 +3191,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/schema54"
+          "$ref": "#/$defs/schema58"
         },
         {
           "$ref": "#/$defs/schema24"
@@ -3236,8 +3240,7 @@
                       {
                         "anyOf": [
                           {
-                            "pattern": "^-?(0|[1-9][0-9]*)$",
-                            "type": "string"
+                            "$ref": "#/$defs/schema47"
                           },
                           {
                             "type": "integer"
@@ -3317,10 +3320,10 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/schema21"
+              "$ref": "#/$defs/schema22"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/schema11"
+              "$ref": "#/$defs/schema12"
             },
             "supplementalGroups": {
               "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
@@ -3366,13 +3369,13 @@
               ]
             },
             "windowsOptions": {
-              "$ref": "#/$defs/schema6"
+              "$ref": "#/$defs/schema7"
             }
           },
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema54"
+          "$ref": "#/$defs/schema58"
         },
         {
           "type": "null"
@@ -3432,8 +3435,7 @@
           "type": "null"
         },
         {
-          "pattern": "^-?(0|[1-9][0-9]*)$",
-          "type": "string"
+          "$ref": "#/$defs/schema47"
         }
       ]
     },
@@ -3521,7 +3523,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema54"
+          "$ref": "#/$defs/schema58"
         },
         {
           "not": {
@@ -3628,19 +3630,19 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/schema21"
+              "$ref": "#/$defs/schema22"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/schema11"
+              "$ref": "#/$defs/schema12"
             },
             "windowsOptions": {
-              "$ref": "#/$defs/schema6"
+              "$ref": "#/$defs/schema7"
             }
           },
           "type": "object"
         },
         {
-          "$ref": "#/$defs/schema54"
+          "$ref": "#/$defs/schema58"
         },
         {
           "type": "null"
@@ -3654,7 +3656,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema57"
+                "$ref": "#/$defs/schema61"
               },
               {
                 "properties": {
@@ -3695,7 +3697,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema57"
+                "$ref": "#/$defs/schema61"
               },
               {
                 "properties": {
@@ -3716,7 +3718,7 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema12"
+                    "$ref": "#/$defs/schema9"
                   },
                   {
                     "$ref": "#/$defs/schema26"
@@ -3755,13 +3757,13 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/schema66"
-                },
-                {
                   "$ref": "#/$defs/schema67"
                 },
                 {
-                  "$ref": "#/$defs/schema70"
+                  "$ref": "#/$defs/schema68"
+                },
+                {
+                  "$ref": "#/$defs/schema71"
                 },
                 {
                   "not": {
@@ -3769,22 +3771,22 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/schema71"
+                  "$ref": "#/$defs/schema72"
                 },
                 {
-                  "$ref": "#/$defs/schema65"
+                  "$ref": "#/$defs/schema66"
                 },
                 {
-                  "$ref": "#/$defs/schema47"
+                  "$ref": "#/$defs/schema50"
+                },
+                {
+                  "$ref": "#/$defs/schema37"
                 },
                 {
                   "$ref": "#/$defs/schema56"
                 },
                 {
-                  "$ref": "#/$defs/schema58"
-                },
-                {
-                  "$ref": "#/$defs/schema62"
+                  "$ref": "#/$defs/schema63"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -3815,7 +3817,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema57"
+                "$ref": "#/$defs/schema61"
               },
               {
                 "properties": {
@@ -3844,7 +3846,7 @@
                     "type": "null"
                   },
                   {
-                    "pattern": "^(true|false|True|False|TRUE|FALSE)$",
+                    "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
                     "type": "string"
                   }
                 ],
@@ -3857,7 +3859,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema57"
+                "$ref": "#/$defs/schema61"
               },
               {
                 "properties": {
@@ -3898,7 +3900,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema57"
+                "$ref": "#/$defs/schema61"
               },
               {
                 "properties": {
@@ -3919,7 +3921,7 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/schema12"
+                    "$ref": "#/$defs/schema9"
                   },
                   {
                     "$ref": "#/$defs/schema26"
@@ -3934,7 +3936,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema57"
+                "$ref": "#/$defs/schema61"
               },
               {
                 "properties": {
@@ -3974,7 +3976,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema57"
+                "$ref": "#/$defs/schema61"
               },
               {
                 "properties": {
@@ -3997,13 +3999,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema66"
-                      },
-                      {
                         "$ref": "#/$defs/schema67"
                       },
                       {
-                        "$ref": "#/$defs/schema70"
+                        "$ref": "#/$defs/schema68"
+                      },
+                      {
+                        "$ref": "#/$defs/schema71"
                       },
                       {
                         "not": {
@@ -4011,22 +4013,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema71"
+                        "$ref": "#/$defs/schema72"
                       },
                       {
-                        "$ref": "#/$defs/schema65"
+                        "$ref": "#/$defs/schema66"
                       },
                       {
-                        "$ref": "#/$defs/schema47"
+                        "$ref": "#/$defs/schema50"
+                      },
+                      {
+                        "$ref": "#/$defs/schema37"
                       },
                       {
                         "$ref": "#/$defs/schema56"
                       },
                       {
-                        "$ref": "#/$defs/schema58"
-                      },
-                      {
-                        "$ref": "#/$defs/schema62"
+                        "$ref": "#/$defs/schema63"
                       }
                     ],
                     "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
@@ -4046,7 +4048,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/schema57"
+                "$ref": "#/$defs/schema61"
               },
               {
                 "properties": {
@@ -4069,13 +4071,13 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/schema66"
-                      },
-                      {
                         "$ref": "#/$defs/schema67"
                       },
                       {
-                        "$ref": "#/$defs/schema70"
+                        "$ref": "#/$defs/schema68"
+                      },
+                      {
+                        "$ref": "#/$defs/schema71"
                       },
                       {
                         "not": {
@@ -4083,22 +4085,22 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/schema71"
+                        "$ref": "#/$defs/schema72"
                       },
                       {
-                        "$ref": "#/$defs/schema65"
+                        "$ref": "#/$defs/schema66"
                       },
                       {
-                        "$ref": "#/$defs/schema47"
+                        "$ref": "#/$defs/schema50"
+                      },
+                      {
+                        "$ref": "#/$defs/schema37"
                       },
                       {
                         "$ref": "#/$defs/schema56"
                       },
                       {
-                        "$ref": "#/$defs/schema58"
-                      },
-                      {
-                        "$ref": "#/$defs/schema62"
+                        "$ref": "#/$defs/schema63"
                       }
                     ],
                     "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
@@ -4169,13 +4171,13 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/schema66"
-            },
-            {
               "$ref": "#/$defs/schema67"
             },
             {
-              "$ref": "#/$defs/schema70"
+              "$ref": "#/$defs/schema68"
+            },
+            {
+              "$ref": "#/$defs/schema71"
             },
             {
               "not": {
@@ -4183,22 +4185,22 @@
               }
             },
             {
-              "$ref": "#/$defs/schema71"
+              "$ref": "#/$defs/schema72"
             },
             {
-              "$ref": "#/$defs/schema65"
+              "$ref": "#/$defs/schema66"
             },
             {
-              "$ref": "#/$defs/schema47"
+              "$ref": "#/$defs/schema50"
+            },
+            {
+              "$ref": "#/$defs/schema37"
             },
             {
               "$ref": "#/$defs/schema56"
             },
             {
-              "$ref": "#/$defs/schema58"
-            },
-            {
-              "$ref": "#/$defs/schema62"
+              "$ref": "#/$defs/schema63"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",

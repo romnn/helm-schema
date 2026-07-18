@@ -88,13 +88,201 @@ fn plain_string_provider_preimage_rejects_yaml_unsafe_spellings() {
             "forbidden leading indicator",
         ),
         (serde_json::json!("false"), false, "implicit Boolean"),
+        (serde_json::json!("yes"), false, "YAML 1.1 Boolean alias"),
         (serde_json::json!("7"), false, "implicit number"),
+        (
+            serde_json::json!("1_000"),
+            false,
+            "underscore-separated number",
+        ),
+        (serde_json::json!("1."), false, "trailing-dot float"),
+        (
+            serde_json::json!("+.nan"),
+            true,
+            "signed NaN stays a string",
+        ),
+        (
+            serde_json::json!("1e999"),
+            true,
+            "float overflow stays a string",
+        ),
         (serde_json::json!("line\nbreak"), false, "line break"),
     ] {
         let instance = serde_json::json!({ "value": value });
         assert!(
             schema_accepts_instance(&schema, &instance) == want,
             "plain YAML {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A Boolean provider slot accepts every spelling the YAML 1.1 resolver
+/// reads back as a Boolean — crossplane renders `hostNetwork: yes` into a
+/// valid manifest, so rejecting the alias set falsely narrows the input.
+#[test]
+fn boolean_slot_accepts_every_resolver_boolean_spelling() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          hostNetwork: {{ .Values.hostNetwork }}
+          containers:
+            - name: test
+              image: busybox
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("hostNetwork: false\n"));
+
+    for (value, want, label) in [
+        (serde_json::json!(true), true, "native Boolean"),
+        (serde_json::json!("yes"), true, "yes alias"),
+        (serde_json::json!("off"), true, "off alias"),
+        (serde_json::json!("Y"), true, "single-letter alias"),
+        (serde_json::json!("TRUE"), true, "uppercase spelling"),
+        (serde_json::json!("yeah"), false, "non-token string"),
+    ] {
+        let instance = serde_json::json!({ "hostNetwork": value });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "boolean spelling {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// An integer provider slot accepts every spelling the YAML 1.1 resolver
+/// reads back as an in-range integer: signs, underscore separators, and
+/// radix prefixes all reparse to the integer the slot needs (metrics-server
+/// renders `port: +443` into a valid Service).
+#[test]
+fn integer_slot_accepts_every_resolver_integer_spelling() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: test
+        spec:
+          ports:
+            - port: {{ .Values.port }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("port: 443\n"));
+
+    for (value, want, label) in [
+        (serde_json::json!(443), true, "native integer"),
+        (serde_json::json!("443"), true, "decimal string"),
+        (serde_json::json!("+443"), true, "signed decimal"),
+        (serde_json::json!("1_000"), true, "underscore separator"),
+        (serde_json::json!("0x1F"), true, "hex literal"),
+        (
+            serde_json::json!("_443"),
+            false,
+            "leading underscore stays a string",
+        ),
+        (serde_json::json!("4.5"), false, "float spelling"),
+        (serde_json::json!("not-a-port"), false, "non-numeric string"),
+    ] {
+        let instance = serde_json::json!({ "port": value });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "integer spelling {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// `genSignedCert` passes every ip-list entry through `net.ParseIP` and
+/// aborts rendering on nil, so items must additionally spell an IP address —
+/// not merely a string (cilium's Hubble certificate SANs).
+#[test]
+fn signed_cert_ip_list_items_require_the_ip_lexical_domain() {
+    let src = indoc! {r#"
+        {{- $cert := genSelfSignedCert "audit.example" .Values.ips (list "audit.example") 365 }}
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: test
+        data:
+          tls.crt: {{ $cert.Cert | b64enc }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("ips: []\n"));
+
+    for (value, want, label) in [
+        (serde_json::json!(["10.0.0.7"]), true, "IPv4"),
+        (serde_json::json!(["::1"]), true, "IPv6 loopback"),
+        (
+            serde_json::json!(["2001:db8::8a2e:370:7334"]),
+            true,
+            "IPv6 full form",
+        ),
+        (
+            serde_json::json!(["::ffff:10.0.0.7"]),
+            true,
+            "IPv4-mapped IPv6",
+        ),
+        (
+            serde_json::json!(["not-an-ip"]),
+            false,
+            "non-address string",
+        ),
+        (
+            serde_json::json!(["999.999.999.999"]),
+            false,
+            "out-of-range octets",
+        ),
+        (
+            serde_json::json!(["10.0.0.07"]),
+            false,
+            "leading-zero octet",
+        ),
+        (serde_json::json!([7]), false, "non-string item"),
+    ] {
+        let instance = serde_json::json!({ "ips": value });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "ip list item {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A `typeOf`-dispatched numeric lane still renders into the provider slot,
+/// so the arm's typing must keep the provider's constraint: policy/v1
+/// `minAvailable` is int-or-string, and a fractional float in the selected
+/// numeric lane renders a manifest the API server rejects (sealed-secrets'
+/// PDB dispatch).
+#[test]
+fn typeof_dispatched_numeric_lane_keeps_the_provider_intersection() {
+    let src = indoc! {r#"
+        apiVersion: policy/v1
+        kind: PodDisruptionBudget
+        metadata:
+          name: test
+        spec:
+          {{- if regexMatch "64$" (typeOf .Values.pdb.minAvailable) }}
+          minAvailable: {{ .Values.pdb.minAvailable }}
+          {{- end }}
+          selector:
+            matchLabels:
+              app: test
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("pdb:\n  minAvailable: 1\n"));
+
+    for (value, want, label) in [
+        (serde_json::json!(1), true, "integer"),
+        (
+            serde_json::json!(2.0),
+            true,
+            "integral float renders as integer",
+        ),
+        (
+            serde_json::json!("50%"),
+            true,
+            "string skips the numeric arm",
+        ),
+        (serde_json::json!(1.5), false, "fractional float"),
+    ] {
+        let instance = serde_json::json!({ "pdb": { "minAvailable": value } });
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "dispatched numeric lane {label}: instance={instance}; schema={schema}"
         );
     }
 }

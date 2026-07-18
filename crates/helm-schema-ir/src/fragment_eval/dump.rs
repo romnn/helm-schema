@@ -169,6 +169,9 @@ fn fmt_guard(guard: &Guard) -> String {
         Guard::RangeKeyPrefix { path, prefix } => {
             format!("rangeKeyPrefix({path}: {prefix})")
         }
+        Guard::RangeKeyMatches { path, pattern } => {
+            format!("rangeKeyMatches({path} ~ {pattern})")
+        }
         Guard::Or { paths } => format!("or({})", paths.join(", ")),
         Guard::AnyOf { alternatives } => {
             let rendered: Vec<String> = alternatives

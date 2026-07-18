@@ -766,6 +766,53 @@
             "path": "auth.quorum.enabled",
             "type": "truthy"
           }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "auth.client.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "auth.client.existingSecret",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "auth.quorum.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "auth.quorum.existingSecret",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.quorum.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
         ]
       ],
       "kind": "Scalar",
@@ -1883,6 +1930,15 @@
             "path": "configuration",
             "type": "truthy"
           }
+        ],
+        [
+          {
+            "paths": [
+              "configuration",
+              "existingConfigmap"
+            ],
+            "type": "or"
+          }
         ]
       ],
       "kind": "Scalar",
@@ -1899,15 +1955,6 @@
           "template_path": "<inline:0>"
         }
       ],
-      "resource": null,
-      "source_expr": "configuration"
-    },
-    {
-      "condition": [
-        []
-      ],
-      "kind": "Scalar",
-      "path": [],
       "resource": {
         "api_version": "apps/v1beta1",
         "api_version_branches": [
@@ -6076,6 +6123,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ],
         [
@@ -6093,6 +6161,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.quorum.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -11763,6 +11852,27 @@
             "type": "or"
           },
           {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
+          },
+          {
             "path": "nameOverride",
             "type": "default"
           }
@@ -11786,6 +11896,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.quorum.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           },
           {
             "path": "nameOverride",
@@ -17620,6 +17751,88 @@
             ],
             "type": "or"
           }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "auth.client.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "auth.client.existingSecret",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "auth.quorum.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "auth.quorum.existingSecret",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.quorum.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
+        ],
+        [
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.client.autoGenerated",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.client.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.client.existingSecret",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.quorum.autoGenerated",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.quorum.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.quorum.existingSecret",
+                  "type": "not"
+                }
+              ]
+            ],
+            "type": "any_of"
+          }
         ]
       ],
       "kind": "Scalar",
@@ -18017,6 +18230,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -18134,6 +18368,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -18268,6 +18523,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -18464,6 +18740,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -18562,6 +18859,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -18679,6 +18997,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.client.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.client.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -19396,6 +19735,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.quorum.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -19513,6 +19873,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.quorum.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -19647,6 +20028,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.quorum.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -19843,6 +20245,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.quorum.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -19941,6 +20364,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.quorum.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],
@@ -20058,6 +20502,27 @@
               "tls.quorum.enabled"
             ],
             "type": "or"
+          },
+          {
+            "alternatives": [
+              [
+                {
+                  "path": "tls.quorum.enabled",
+                  "type": "truthy"
+                },
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "not"
+                }
+              ],
+              [
+                {
+                  "path": "tls.quorum.passwordsSecretName",
+                  "type": "truthy"
+                }
+              ]
+            ],
+            "type": "any_of"
           }
         ]
       ],

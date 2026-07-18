@@ -155,6 +155,7 @@ impl ValuePathContext<'_> {
                 "default" => self.default_truthy_predicate(args).is_some(),
                 "dig" => self.dig_truthy_predicate(args).is_some(),
                 "regexMatch" | "mustRegexMatch" => self.regex_match_predicate(args).is_some(),
+                "include" => self.include_truthy_predicate(expr).is_some(),
                 function if is_files_get_function(function) => {
                     self.files_get_printf_predicate(args).is_some()
                 }
@@ -260,6 +261,9 @@ impl ValuePathContext<'_> {
                 .dig_truthy_predicate(args)
                 .or_else(|| self.truthy_predicate(expr)),
             "regexMatch" | "mustRegexMatch" => self.regex_match_predicate(args),
+            "include" => self
+                .include_truthy_predicate(expr)
+                .or_else(|| self.truthy_predicate(expr)),
             function if is_files_get_function(function) => self
                 .files_get_printf_predicate(args)
                 .or_else(|| self.truthy_predicate(expr)),
@@ -639,6 +643,15 @@ impl ValuePathContext<'_> {
         }
         let path = match self.with_body_fragment_value_expr(subject)? {
             AbstractValue::ValuesPath(path) if !path.is_empty() => path,
+            // The subject is a destructured range KEY: the pattern applies
+            // per key of the ranged collection (traefik's uppercase
+            // `ingressRoute` gate).
+            AbstractValue::RangeKey(collection) if !collection.is_empty() => {
+                return Some(Predicate::from(Guard::RangeKeyMatches {
+                    path: collection,
+                    pattern: pattern.to_string(),
+                }));
+            }
             _ => return None,
         };
         // A subject that reached this consumer through `tpl` carries its
@@ -782,7 +795,7 @@ impl ValuePathContext<'_> {
             name,
         )?;
         HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() + 1));
-        let predicate = self.literal_dispatch_arms_predicate(&arms, target);
+        let predicate = self.literal_dispatch_arms_predicate(&arms, &|arm| arm.literal == target);
         HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() - 1));
         let predicate = predicate?;
         Some(if negated {
@@ -790,6 +803,42 @@ impl ValuePathContext<'_> {
         } else {
             predicate
         })
+    }
+
+    /// A bare `include "name" .` used AS a condition is truthy exactly when
+    /// the called helper emits non-empty text. For a pure literal dispatch
+    /// under a root context, the truthy states are the arms with non-empty
+    /// output, each conjoined with its prior arms' negations (redis'
+    /// `if (include "redis.createConfigmap" .)` document gate reduces to
+    /// `empty .Values.existingConfigmap`). An arm whose trimmed literal is
+    /// empty but which still collected whitespace abstains: its render
+    /// truthiness would depend on the chain's trim markers.
+    fn include_truthy_predicate(&self, expr: &TemplateExpr) -> Option<Predicate> {
+        let name = helper_root_call(expr)?;
+        if !self
+            .current_dot_binding
+            .as_ref()
+            .is_none_or(|dot| matches!(dot, AbstractValue::RootContext))
+        {
+            return None;
+        }
+        if HELPER_DISPATCH_DEPTH.with(std::cell::Cell::get) >= MAX_HELPER_DISPATCH_DEPTH {
+            return None;
+        }
+        let arms = crate::helper_literal_dispatch::helper_literal_dispatch(
+            self.fragment_context.analysis_db,
+            name,
+        )?;
+        if arms
+            .iter()
+            .any(|arm| arm.literal.is_empty() && !arm.raw_empty)
+        {
+            return None;
+        }
+        HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() + 1));
+        let predicate = self.literal_dispatch_arms_predicate(&arms, &|arm| !arm.literal.is_empty());
+        HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() - 1));
+        predicate
     }
 
     fn helper_literal_membership_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
@@ -928,7 +977,7 @@ impl ValuePathContext<'_> {
         HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() + 1));
         let predicates = targets
             .into_iter()
-            .map(|target| self.literal_dispatch_arms_predicate(&arms, &target))
+            .map(|target| self.literal_dispatch_arms_predicate(&arms, &|arm| arm.literal == target))
             .collect::<Option<Vec<_>>>();
         HELPER_DISPATCH_DEPTH.with(|depth| depth.set(depth.get() - 1));
         let mut predicates = predicates?;
@@ -943,7 +992,7 @@ impl ValuePathContext<'_> {
     fn literal_dispatch_arms_predicate(
         &self,
         arms: &[crate::helper_literal_dispatch::LiteralDispatchArm],
-        target: &str,
+        select: &dyn Fn(&crate::helper_literal_dispatch::LiteralDispatchArm) -> bool,
     ) -> Option<Predicate> {
         let mut prior: Vec<Predicate> = Vec::new();
         let mut matching: Vec<Predicate> = Vec::new();
@@ -954,7 +1003,7 @@ impl ValuePathContext<'_> {
                         return None;
                     }
                     let condition = self.condition_predicate_expr(header.expr());
-                    if arm.literal == target {
+                    if select(arm) {
                         let mut conjuncts: Vec<Predicate> =
                             prior.iter().map(Predicate::negated).collect();
                         conjuncts.push(condition.clone());
@@ -963,7 +1012,7 @@ impl ValuePathContext<'_> {
                     prior.push(condition);
                 }
                 None => {
-                    if arm.literal == target {
+                    if select(arm) {
                         matching.push(Predicate::all(
                             prior.iter().map(Predicate::negated).collect(),
                         ));
@@ -972,8 +1021,8 @@ impl ValuePathContext<'_> {
             }
         }
         Some(match matching.len() {
-            // No arm renders the literal: the dispatch is total, so the
-            // comparison can never hold.
+            // No arm is selected: the dispatch is total, so the condition
+            // can never hold.
             0 => Predicate::False,
             1 => matching.remove(0),
             _ => Predicate::Or(matching),

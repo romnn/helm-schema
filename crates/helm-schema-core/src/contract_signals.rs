@@ -291,6 +291,17 @@ impl QuotedScalarStyle {
 pub enum FailValueRequirement {
     /// The value must be of this JSON Schema type.
     SchemaType(String),
+    /// The value must be of this JSON Schema type only when Helm-truthy:
+    /// every falsy spelling escapes through the consumer's own truthiness
+    /// selection (a ranged ACL member's `default ""` password reaching
+    /// `sha256sum` behind `if $password`).
+    TruthyImpliesSchemaType(String),
+    /// The value must be Helm-truthy (sealed-secrets aborts on any falsy
+    /// `privateKeyAnnotations` member, including the empty string).
+    HelmTruthy,
+    /// The value must not equal this literal (cilium forbids ranged
+    /// `extraEnv` names colliding with its own backoff variables).
+    NotEquals(GuardValue),
     /// The value must be of this JSON Schema type IF present and non-null:
     /// Go's `eq`/`ne` compare `nil` against anything, so a missing or null
     /// comparison operand renders while a present value of a different
@@ -304,6 +315,10 @@ pub enum FailValueRequirement {
     /// (`regexMatch` type-asserts a string subject, so string-ness rides
     /// along).
     MatchesPattern { pattern: String, templated: bool },
+    /// The value must be a string NOT matching this regular expression —
+    /// the failing test fired on matches, and its `regexMatch` still
+    /// type-asserts a string subject (traefik's uppercase key gate).
+    NotMatchesPattern { pattern: String },
     /// The value HOSTS literal member reads: it must be an object — or one
     /// of the kinds the chart's own type dispatch provably handles before
     /// the reads run (nack converts the string image form with `set`).

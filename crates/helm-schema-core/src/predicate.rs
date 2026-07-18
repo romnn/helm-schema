@@ -173,6 +173,7 @@ impl Predicate {
                 Guard::Range { .. }
                 | Guard::RangeKeyPrefix { .. }
                 | Guard::RangeKeyEquals { .. }
+                | Guard::RangeKeyMatches { .. }
                 | Guard::Absent { .. }
                 | Guard::With { .. }
                 | Guard::Default { .. }
@@ -280,6 +281,7 @@ impl Predicate {
                 | Guard::MatchesPattern { .. }
                 | Guard::RangeKeyPrefix { .. }
                 | Guard::RangeKeyEquals { .. }
+                | Guard::RangeKeyMatches { .. }
                 | Guard::Range { .. }
                 | Guard::With { .. }
                 | Guard::Default { .. }

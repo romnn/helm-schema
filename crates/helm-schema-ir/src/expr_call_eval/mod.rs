@@ -9,9 +9,9 @@ use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_with_helper_calls};
 
 use helm_schema_ast::{
-    is_coercing_arithmetic_function, is_merge_function, is_provenance_preserving_function,
-    is_string_predicate_function, is_string_splitting_function, is_string_transform_function,
-    is_total_numeric_cast_function,
+    is_checksum_function, is_coercing_arithmetic_function, is_merge_function,
+    is_provenance_preserving_function, is_string_predicate_function, is_string_splitting_function,
+    is_string_transform_function, is_total_numeric_cast_function,
 };
 
 mod collections;
@@ -143,9 +143,14 @@ pub(crate) fn eval_call_with_helper_calls(
                 effects.merge(operand.effects.clone());
             }
             record_strict_kind_result(&operands[0], "string", &mut effects);
-            for operand in &operands[1..=2] {
+            for (index, operand) in operands.iter().enumerate().take(3).skip(1) {
                 record_strict_kind_result(operand, "array", &mut effects);
-                record_collection_item_kind_result(operand, "string", &mut effects);
+                record_collection_item_kind_result(
+                    operand,
+                    "string",
+                    helm_schema_ast::strict_collection_item_pattern(function, index),
+                    &mut effects,
+                );
             }
             record_strict_kind_result(&operands[3], "integer", &mut effects);
             EvalResult::with_effects(None, effects)
@@ -158,6 +163,15 @@ pub(crate) fn eval_call_with_helper_calls(
         "concat" => {
             let mut result = eval_concat(args, env, resolver);
             record_strict_kind_operands(args, "array", env, resolver, &mut result.effects);
+            result
+        }
+        // The checksum family consumes a typed Go string subject and emits a
+        // digest. Unknown-call value semantics (not a string transform) keep
+        // an `include … | sha256sum` annotation's serialized placement
+        // intact while the subject gains its strict-string contract.
+        function if is_checksum_function(function) && args.len() == 1 => {
+            let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
+            record_string_call_consumers(function, args, env, resolver, &mut result.effects);
             result
         }
         // len/has additionally erase operand shape: only a derived count or
@@ -508,6 +522,27 @@ pub(crate) fn eval_pipeline_with_helper_calls(
             "replace" if args.len() == 2 => eval_replace_pipeline(current, args, env, resolver),
             "trimPrefix" | "trimSuffix" if args.len() == 1 => {
                 eval_trim_affix_pipeline(function, current, args, env, resolver)
+            }
+            // The piped checksum subject keeps unknown-stage value
+            // semantics (see the call form above) while gaining its
+            // strict-string contract (redis' sentinel
+            // `coalesce … | sha256sum` lane).
+            function if is_checksum_function(function) && args.is_empty() => {
+                let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(
+                    function,
+                    args,
+                    &current.value,
+                    &current.effects,
+                    env,
+                    resolver,
+                );
+                let mut result = eval_unknown_call(args, current.effects, env, resolver);
+                record_string_consumer_effects(&string_paths, &mut result.effects);
+                record_raw_range_key_string_consumer_paths(
+                    &raw_range_key_paths,
+                    &mut result.effects,
+                );
+                result
             }
             function if is_string_transform_function(function) => {
                 let (string_paths, raw_range_key_paths) = pipeline_string_operand_facts(

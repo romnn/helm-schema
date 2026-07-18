@@ -2864,7 +2864,7 @@
                     "type": "integer"
                   },
                   {
-                    "pattern": "^-?(0|[1-9][0-9]*)$",
+                    "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
                     "type": "string"
                   }
                 ]
@@ -3171,7 +3171,7 @@
                     "type": "integer"
                   },
                   {
-                    "pattern": "^-?(0|[1-9][0-9]*)$",
+                    "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
                     "type": "string"
                   }
                 ]
@@ -4430,17 +4430,17 @@
                   },
                   {
                     "not": {
-                      "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                     }
                   },
                   {
                     "not": {
-                      "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
                     }
                   },
                   {
                     "not": {
-                      "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
                     }
                   }
                 ],
@@ -4738,17 +4738,17 @@
                       },
                       {
                         "not": {
-                          "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                         }
                       },
                       {
                         "not": {
-                          "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
                         }
                       },
                       {
                         "not": {
-                          "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
                         }
                       }
                     ],
@@ -6358,6 +6358,370 @@
                 ]
               }
             ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tls": {
+                      "properties": {
+                        "client": {
+                          "properties": {
+                            "passwordsSecretName": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "passwordsSecretName"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "client"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "client": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "client"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "tls": {
+                              "properties": {
+                                "client": {
+                                  "properties": {
+                                    "passwordsSecretName": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  },
+                                  "required": [
+                                    "passwordsSecretName"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "client"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "tls"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "client": {
+                            "properties": {
+                              "passwordsSecretName": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "passwordsSecretName"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "client"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "client": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "client"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "quorum": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "quorum"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "properties": {
+                    "tls": {
+                      "properties": {
+                        "quorum": {
+                          "properties": {
+                            "passwordsSecretName": {
+                              "$ref": "#/$defs/helm-truthy"
+                            }
+                          },
+                          "required": [
+                            "passwordsSecretName"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "quorum"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "tls"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "quorum": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "quorum"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "tls": {
+                              "properties": {
+                                "quorum": {
+                                  "properties": {
+                                    "passwordsSecretName": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  },
+                                  "required": [
+                                    "passwordsSecretName"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "quorum"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "tls"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "quorum": {
+                            "properties": {
+                              "passwordsSecretName": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "passwordsSecretName"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "quorum"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "client": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "client"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "quorum": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "quorum"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -6474,7 +6838,7 @@
             "additionalProperties": {},
             "properties": {
               "kubeVersion": {
-                "pattern": "^v?([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
+                "pattern": "^v?([0-9]{1,20})(\\.[0-9]{1,20})?(\\.[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
                 "type": "string"
               }
             }
@@ -7435,7 +7799,7 @@
         "additionalProperties": {},
         "properties": {
           "kubeVersion": {
-            "pattern": "^v?([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
+            "pattern": "^v?([0-9]{1,20})(\\.[0-9]{1,20})?(\\.[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\\+([0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*))?$",
             "type": "string"
           }
         }
@@ -8683,17 +9047,17 @@
                   },
                   {
                     "not": {
-                      "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                      "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                     }
                   },
                   {
                     "not": {
-                      "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                      "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
                     }
                   },
                   {
                     "not": {
-                      "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                      "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
                     }
                   }
                 ],
@@ -8888,17 +9252,17 @@
                       },
                       {
                         "not": {
-                          "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                          "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                         }
                       },
                       {
                         "not": {
-                          "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                          "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
                         }
                       },
                       {
                         "not": {
-                          "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                          "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
                         }
                       }
                     ],
@@ -17335,6 +17699,97 @@
                     "type": "object"
                   }
                 ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "client": {
+                            "properties": {
+                              "passwordsSecretName": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "passwordsSecretName"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "client"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "client": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "client"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "tls": {
+                              "properties": {
+                                "client": {
+                                  "properties": {
+                                    "passwordsSecretName": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  },
+                                  "required": [
+                                    "passwordsSecretName"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "client"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "tls"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  }
+                ]
               }
             ]
           }
@@ -17824,6 +18279,97 @@
                       "tls"
                     ],
                     "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "tls": {
+                        "properties": {
+                          "quorum": {
+                            "properties": {
+                              "passwordsSecretName": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "passwordsSecretName"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "quorum"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tls"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "tls": {
+                            "properties": {
+                              "quorum": {
+                                "properties": {
+                                  "enabled": {
+                                    "$ref": "#/$defs/helm-truthy"
+                                  }
+                                },
+                                "required": [
+                                  "enabled"
+                                ],
+                                "type": "object"
+                              }
+                            },
+                            "required": [
+                              "quorum"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "tls": {
+                              "properties": {
+                                "quorum": {
+                                  "properties": {
+                                    "passwordsSecretName": {
+                                      "$ref": "#/$defs/helm-truthy"
+                                    }
+                                  },
+                                  "required": [
+                                    "passwordsSecretName"
+                                  ],
+                                  "type": "object"
+                                }
+                              },
+                              "required": [
+                                "quorum"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "tls"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
                   }
                 ]
               }
@@ -19512,7 +20058,7 @@
               "type": "integer"
             },
             {
-              "pattern": "^-?(0|[1-9][0-9]*)$",
+              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
               "type": "string"
             }
           ]
@@ -19525,7 +20071,7 @@
               "type": "integer"
             },
             {
-              "pattern": "^-?(0|[1-9][0-9]*)$",
+              "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
               "type": "string"
             }
           ]
@@ -19632,17 +20178,17 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
               }
             }
           ],
@@ -22239,7 +22785,7 @@
                     "type": "integer"
                   },
                   {
-                    "pattern": "^-?(0|[1-9][0-9]*)$",
+                    "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
                     "type": "string"
                   }
                 ]
@@ -22307,17 +22853,17 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
               }
             }
           ],
@@ -22371,17 +22917,17 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
               }
             }
           ],
@@ -23621,17 +24167,17 @@
         },
         {
           "not": {
-            "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+            "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
           }
         },
         {
           "not": {
-            "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+            "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
           }
         },
         {
           "not": {
-            "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+            "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
           }
         }
       ],
@@ -23894,17 +24440,17 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
               }
             }
           ],
@@ -23929,7 +24475,7 @@
           "type": "integer"
         },
         {
-          "pattern": "^-?(0|[1-9][0-9]*)$",
+          "pattern": "^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$",
           "type": "string"
         }
       ]
@@ -24052,17 +24598,17 @@
             },
             {
               "not": {
-                "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
               }
             },
             {
               "not": {
-                "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
               }
             }
           ],
@@ -24164,17 +24710,17 @@
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+                    "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
                   }
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$"
+                    "pattern": "^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$"
                   }
                 },
                 {
                   "not": {
-                    "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$"
+                    "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
                   }
                 }
               ],
@@ -24255,6 +24801,286 @@
     "tls": {
       "additionalProperties": {},
       "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "client": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "client"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "client": {
+                              "properties": {
+                                "passwordsSecretName": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "passwordsSecretName"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "client"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "client": {
+                        "properties": {
+                          "passwordsSecretName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "passwordsSecretName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "client": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "quorum": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "quorum"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "client": {
+                "additionalProperties": {},
+                "properties": {
+                  "passwordsSecretName": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "quorum": {
+                            "properties": {
+                              "enabled": {
+                                "$ref": "#/$defs/helm-truthy"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "quorum"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "not": {
+                          "properties": {
+                            "quorum": {
+                              "properties": {
+                                "passwordsSecretName": {
+                                  "$ref": "#/$defs/helm-truthy"
+                                }
+                              },
+                              "required": [
+                                "passwordsSecretName"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "quorum"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "properties": {
+                      "quorum": {
+                        "properties": {
+                          "passwordsSecretName": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "passwordsSecretName"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "quorum"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "client": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "client"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "properties": {
+                      "quorum": {
+                        "properties": {
+                          "enabled": {
+                            "$ref": "#/$defs/helm-truthy"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "quorum"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "quorum": {
+                "additionalProperties": {},
+                "properties": {
+                  "passwordsSecretName": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "$ref": "#/$defs/helm-truthy"
+                        }
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
         {
           "if": {
             "anyOf": [

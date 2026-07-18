@@ -1042,6 +1042,132 @@ fn bitnami_redis_ternary_selector_requires_boolean() -> color_eyre::eyre::Result
     )
 }
 
+/// traefik aborts on any `ingressRoute` key containing an uppercase
+/// character (RFC 1123 resource names); the key domain lowers to
+/// `propertyNames`.
+#[test]
+fn traefik_ingress_route_keys_must_be_lowercase() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "traefik",
+        vec![
+            SemanticCase::rejected(
+                "uppercase ingressRoute key",
+                "/ingressRoute",
+                json!({ "ingressRoute": { "Audit": { "enabled": false } } }),
+            ),
+            SemanticCase::accepted(
+                "lowercase ingressRoute key",
+                json!({ "ingressRoute": { "audit": { "enabled": false } } }),
+            ),
+        ],
+    )
+}
+
+/// sealed-secrets' ranged annotation/label members abort on any value that
+/// is not a TRUTHY string — the empty string is falsy and takes the `fail`
+/// arm just like a non-string.
+#[test]
+fn sealed_secrets_private_key_metadata_members_must_be_truthy_strings()
+-> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "sealed-secrets",
+        vec![
+            SemanticCase::rejected(
+                "empty-string annotation member",
+                "/privateKeyAnnotations",
+                json!({ "privateKeyAnnotations": { "audit": "" } }),
+            ),
+            SemanticCase::rejected(
+                "numeric label member",
+                "/privateKeyLabels",
+                json!({ "privateKeyLabels": { "audit": 7 } }),
+            ),
+            SemanticCase::accepted(
+                "truthy string members",
+                json!({
+                    "privateKeyAnnotations": { "audit": "ok" },
+                    "privateKeyLabels": { "audit": "ok" }
+                }),
+            ),
+        ],
+    )
+}
+
+/// cilium forbids `extraEnv` entries named after its backoff variables while
+/// `k8sClientExponentialBackoff` (default-enabled) is live; disabling the
+/// feature reopens the names.
+#[test]
+fn cilium_backoff_env_name_collisions_are_rejected_while_live() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "cilium",
+        vec![
+            SemanticCase::rejected(
+                "colliding env name under the default-enabled backoff",
+                "/extraEnv",
+                json!({ "extraEnv": [{ "name": "KUBE_CLIENT_BACKOFF_BASE", "value": "1" }] }),
+            ),
+            SemanticCase::accepted(
+                "unrelated env name",
+                json!({ "extraEnv": [{ "name": "AUDIT", "value": "1" }] }),
+            ),
+            SemanticCase::accepted(
+                "colliding env name with the backoff disabled",
+                json!({
+                    "k8sClientExponentialBackoff": { "enabled": false },
+                    "extraEnv": [{ "name": "KUBE_CLIENT_BACKOFF_BASE", "value": "1" }]
+                }),
+            ),
+        ],
+    )
+}
+
+/// A truthy non-string ACL password reaches `sha256sum` inside the ranged
+/// users body and aborts rendering; a string hashes, and every Helm-falsy
+/// spelling escapes to the `nopass` arm through the `default ""` local.
+#[test]
+fn bitnami_redis_acl_passwords_reaching_sha256sum_must_be_strings() -> color_eyre::eyre::Result<()>
+{
+    assert_chart_cases(
+        "bitnami-redis",
+        vec![
+            SemanticCase::rejected(
+                "numeric ACL user password",
+                "/auth/acl/users/0/password",
+                json!({
+                    "auth": {
+                        "acl": {
+                            "enabled": true,
+                            "users": [{ "username": "audit", "password": 7 }]
+                        }
+                    }
+                }),
+            ),
+            SemanticCase::accepted(
+                "string ACL user password",
+                json!({
+                    "auth": {
+                        "acl": {
+                            "enabled": true,
+                            "users": [{ "username": "audit", "password": "s3cret" }]
+                        }
+                    }
+                }),
+            ),
+            SemanticCase::accepted(
+                "passwordless ACL user selects nopass",
+                json!({
+                    "auth": {
+                        "acl": {
+                            "enabled": true,
+                            "users": [{ "username": "audit" }]
+                        }
+                    }
+                }),
+            ),
+        ],
+    )
+}
+
 /// Helm coalesces LISTS atomically: a replacement list's members reach the
 /// template verbatim, so a `enabled: null` member must survive instance
 /// composition and validate against the nil-tolerant comparison operand
@@ -1355,13 +1481,20 @@ fn cilium_certificate_sans_require_string_members() -> color_eyre::eyre::Result<
                     "hubble": { "tls": { "server": { "extraDnsNames": [7] } } }
                 }),
             ),
+            SemanticCase::rejected(
+                "non-address Hubble IP SAN",
+                "/hubble/tls/server/extraIpAddresses/0",
+                json!({
+                    "hubble": { "tls": { "server": { "extraIpAddresses": ["not-an-ip"] } } }
+                }),
+            ),
             SemanticCase::accepted(
                 "string Hubble SANs",
                 json!({
                     "hubble": {
                         "tls": {
                             "server": {
-                                "extraIpAddresses": ["10.0.0.7"],
+                                "extraIpAddresses": ["10.0.0.7", "2001:db8::1"],
                                 "extraDnsNames": ["audit.example"]
                             }
                         }
@@ -2208,9 +2341,14 @@ fn jenkins_controller_replicas_domain_is_bounded() -> color_eyre::eyre::Result<(
                 "the single supported replica",
                 json!({ "controller": { "replicas": 1 } }),
             ),
-            SemanticCase::accepted(
-                "a numeric string stays outside the raw-integer subset",
+            SemanticCase::rejected(
+                "a clean decimal spelling coerces into the failing domain",
+                "/controller/replicas",
                 json!({ "controller": { "replicas": "5" } }),
+            ),
+            SemanticCase::accepted(
+                "a decimal spelling inside the domain",
+                json!({ "controller": { "replicas": "1" } }),
             ),
         ],
     )

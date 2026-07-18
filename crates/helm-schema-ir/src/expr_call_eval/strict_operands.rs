@@ -486,6 +486,7 @@ pub(super) fn record_comparable_kind_result(
 pub(super) fn record_collection_item_kind_result(
     operand: &EvalResult,
     schema_type: &str,
+    pattern: Option<&str>,
     effects: &mut Effects,
 ) {
     let mut collection_paths = BTreeSet::new();
@@ -565,6 +566,7 @@ pub(super) fn record_collection_item_kind_result(
                 kind: crate::eval_effect::CaptureKind::CollectionItems {
                     paths: BTreeSet::from([path.clone()]),
                     schema_type: schema_type.to_string(),
+                    pattern: pattern.map(str::to_string),
                 },
             };
             if !effects.helper_fails.contains(&capture) {
@@ -574,6 +576,15 @@ pub(super) fn record_collection_item_kind_result(
     }
     for path in individual_paths {
         for conjunction in strict_operand_selection_conjunctions(operand, &path) {
+            if let Some(pattern) = pattern {
+                push_value_pattern_capture(
+                    conjunction.clone(),
+                    path.clone(),
+                    pattern.to_string(),
+                    false,
+                    effects,
+                );
+            }
             push_value_type_capture(conjunction, path.clone(), schema_type.to_string(), effects);
         }
     }

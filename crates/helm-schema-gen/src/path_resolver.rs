@@ -10,7 +10,7 @@ use helm_schema_core::{ContractPathSchemaEvidence, ContractSchemaSignals, Metada
 use crate::merge::merge_schema_list;
 use crate::provider_schema::ProviderSchemaCandidate;
 use crate::resolve_policy::{ResolvePolicy, ValuePathSchemaFacts, ValuePathSchemaInputs};
-use crate::schema_model::{empty_schema, is_empty_schema, type_schema};
+use crate::schema_model::{empty_schema, guard_value_to_json, is_empty_schema, type_schema};
 use crate::values_yaml::{ValuesYamlPathFacts, ValuesYamlPathInfo, build_values_yaml_path_info};
 
 pub(crate) struct ResolvedPathSchema {
@@ -388,17 +388,20 @@ pub(crate) fn fail_requirement_schema<'a>(
                 target_path,
                 allow_integer,
             } => {
-                // Nil-tolerant requirements (comparison operands) hold only
-                // when the leaf is present, so the wrapper must not demand
-                // the field itself. A `NotSchemaType` requirement is
-                // likewise satisfied by an absent leaf: the failing test it
-                // negates fired only on values OF that type (a quoted-token
-                // splice constrains strings; members without the field
-                // never render it).
+                // Nil-tolerant requirements (comparison operands, and
+                // truthy-scoped types whose absent leaf is falsy and escapes
+                // the consumer) hold only when the leaf is present, so the
+                // wrapper must not demand the field itself. A
+                // `NotSchemaType` requirement is likewise satisfied by an
+                // absent leaf: the failing test it negates fired only on
+                // values OF that type (a quoted-token splice constrains
+                // strings; members without the field never render it).
                 let tolerant_leaf = implication.requirements.iter().all(|requirement| {
                     matches!(
                         requirement,
                         helm_schema_core::FailValueRequirement::ComparableKind(_)
+                            | helm_schema_core::FailValueRequirement::TruthyImpliesSchemaType(_)
+                            | helm_schema_core::FailValueRequirement::NotEquals(_)
                     )
                 }) || implication.requirements.iter().any(|requirement| {
                     matches!(
@@ -451,12 +454,45 @@ pub(crate) fn fail_requirement_schema<'a>(
                 }));
             }
             helm_schema_core::ContractRequirementTarget::Keys => {
-                let object = if requirements_allow_runtime_kind(&implication.requirements, "string")
-                {
-                    serde_json::json!({ "type": "object" })
-                } else {
-                    serde_json::json!({ "type": "object", "maxProperties": 0 })
-                };
+                let mut object =
+                    if requirements_allow_runtime_kind(&implication.requirements, "string") {
+                        serde_json::json!({ "type": "object" })
+                    } else {
+                        serde_json::json!({ "type": "object", "maxProperties": 0 })
+                    };
+                // Pattern requirements constrain each KEY's spelling
+                // (traefik's uppercase gate); string keys are structural in
+                // YAML maps, so only the pattern itself needs encoding.
+                let mut key_schemas = Vec::new();
+                for requirement in &implication.requirements {
+                    match requirement {
+                        helm_schema_core::FailValueRequirement::MatchesPattern {
+                            pattern,
+                            templated: false,
+                        } => {
+                            if let Some(pattern) = ecma_compatible_pattern(pattern) {
+                                key_schemas.push(serde_json::json!({ "pattern": pattern }));
+                            }
+                        }
+                        helm_schema_core::FailValueRequirement::NotMatchesPattern { pattern } => {
+                            if let Some(pattern) = ecma_compatible_pattern(pattern) {
+                                key_schemas
+                                    .push(serde_json::json!({ "not": { "pattern": pattern } }));
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+                match key_schemas.len() {
+                    0 => {}
+                    1 => {
+                        object["propertyNames"] =
+                            key_schemas.pop().unwrap_or_else(|| serde_json::json!({}));
+                    }
+                    _ => {
+                        object["propertyNames"] = serde_json::json!({ "allOf": key_schemas });
+                    }
+                }
                 let array = if requirements_allow_runtime_kind(&implication.requirements, "integer")
                 {
                     serde_json::json!({ "type": "array" })
@@ -590,11 +626,18 @@ fn requirements_allow_runtime_kind(
 
     requirements.iter().all(|requirement| match requirement {
         FailValueRequirement::SchemaType(required) => required == schema_type,
+        // Every runtime kind has a Helm-falsy spelling that escapes the
+        // consumer, so the truthy-scoped requirement excludes no kind.
+        FailValueRequirement::TruthyImpliesSchemaType(_) => true,
+        // Every runtime kind except null has truthy inhabitants.
+        FailValueRequirement::HelmTruthy => schema_type != "null",
+        FailValueRequirement::NotEquals(_) => true,
         FailValueRequirement::ComparableKind(required) => {
             required == schema_type || schema_type == "null"
         }
         FailValueRequirement::NotSchemaType(rejected) => rejected != schema_type,
-        FailValueRequirement::MatchesPattern { .. } => schema_type == "string",
+        FailValueRequirement::MatchesPattern { .. }
+        | FailValueRequirement::NotMatchesPattern { .. } => schema_type == "string",
         FailValueRequirement::Iterable { allow_integer } => {
             matches!(schema_type, "array" | "object" | "null")
                 || schema_type == "integer" && *allow_integer
@@ -631,6 +674,31 @@ fn fail_value_requirement_schema(
                     }));
                 }
             }
+            // Only truthy values reach the consumer; every Helm-falsy
+            // spelling escapes through the selection and stays accepted.
+            FailValueRequirement::TruthyImpliesSchemaType(schema_type) => {
+                parts.push(serde_json::json!({
+                    "anyOf": [
+                        type_schema(schema_type),
+                        { "not": { "$ref": format!(
+                            "#/$defs/{}",
+                            crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME
+                        ) } },
+                    ]
+                }));
+            }
+            FailValueRequirement::HelmTruthy => {
+                parts.push(serde_json::json!({ "$ref": format!(
+                    "#/$defs/{}",
+                    crate::condition_encoding::HELM_TRUTHY_DEFINITION_NAME
+                ) }));
+            }
+            FailValueRequirement::NotEquals(value) => {
+                let Some(value) = guard_value_to_json(value) else {
+                    continue;
+                };
+                parts.push(serde_json::json!({ "not": { "const": value } }));
+            }
             // Nil compares, so a null member is as valid as an absent one.
             FailValueRequirement::ComparableKind(schema_type) => {
                 parts.push(serde_json::json!({
@@ -663,6 +731,16 @@ fn fail_value_requirement_schema(
                     } else {
                         parts.push(matches);
                     }
+                }
+            }
+            FailValueRequirement::NotMatchesPattern { pattern } => {
+                // Abstaining on an untranslatable pattern only widens the
+                // arm back to its other requirements, as for MatchesPattern.
+                if let Some(pattern) = ecma_compatible_pattern(pattern) {
+                    parts.push(serde_json::json!({
+                        "type": "string",
+                        "not": { "pattern": pattern },
+                    }));
                 }
             }
             FailValueRequirement::MemberHost { handled_kinds } => {
@@ -718,7 +796,21 @@ fn fail_value_requirement_schema(
             "required": required_members,
         }));
     }
-    merge_schema_list(parts)
+    // Requirements are CONJUNCTIVE: they must all hold for the tested
+    // value. `merge_schema_list` is the evidence-union combiner whose
+    // fallback is `anyOf`, which would silently weaken a multi-requirement
+    // implication (two not-equals arms union into a tautology).
+    let mut conjuncts: Vec<Value> = Vec::new();
+    for part in parts {
+        if !conjuncts.contains(&part) {
+            conjuncts.push(part);
+        }
+    }
+    match conjuncts.len() {
+        0 => empty_schema(),
+        1 => conjuncts.remove(0),
+        _ => serde_json::json!({ "allOf": conjuncts }),
+    }
 }
 
 fn type_hint_schema(schema_types: &BTreeSet<String>) -> Value {

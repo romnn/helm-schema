@@ -92,6 +92,18 @@ pub fn is_string_transform_function(function: &str) -> bool {
     )
 }
 
+/// Returns whether a function is one of Sprig's checksum digests: a typed Go
+/// string subject (any other kind aborts rendering) producing derived hex
+/// text with no reverse identity. They are NOT string transforms — an
+/// `include … | sha256sum` checksum annotation must keep the include's
+/// serialized placement semantics rather than a text derivation of it.
+pub fn is_checksum_function(function: &str) -> bool {
+    matches!(
+        function,
+        "sha1sum" | "sha256sum" | "sha512sum" | "adler32sum"
+    )
+}
+
 /// Returns the argument positions that a Helm/Sprig call requires to be Go strings.
 ///
 /// `argument_count` includes a pipeline input, which Go templates append as the final
@@ -132,8 +144,10 @@ pub fn string_operand_indices(function: &str, argument_count: usize) -> Vec<usiz
         // The duration is the first argument; the second is a time value.
         "mustDateModify" if argument_count >= 2 => vec![0],
         // The string subject is final; `trunc`'s preceding width and
-        // `substr`'s start/end offsets are numeric.
-        "trunc" | "substr" | "trim" | "lower" | "indent" | "nindent" | "repeat" => {
+        // `substr`'s start/end offsets are numeric. The checksum family is
+        // unary, so subject-last covers both call and pipeline forms.
+        "trunc" | "substr" | "trim" | "lower" | "indent" | "nindent" | "repeat" | "sha1sum"
+        | "sha256sum" | "sha512sum" | "adler32sum" => {
             vec![argument_count - 1]
         }
         // `splitn separator count subject` has a non-string middle argument.
@@ -160,10 +174,14 @@ pub fn strict_parser_operand_pattern(
             // prerelease validation rejects a NUMERIC identifier with a
             // leading zero (`3.1.0-01` aborts while `3.1.0-rc.1` renders),
             // so the prerelease alternatives spell that rule out. Build
-            // metadata stays unvalidated.
+            // metadata stays unvalidated. Core components parse through
+            // `ParseUint(…, 10, 64)`: every value up to 20 digits may fit
+            // uint64, while 21+ digits certainly overflow and abort, so the
+            // component grammar is bounded there (still a superset of the
+            // accepted language).
             Some((
                 argument_count - 1,
-                r"^v?([0-9]+)(\.[0-9]+)?(\.[0-9]+)?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$",
+                r"^v?([0-9]{1,20})(\.[0-9]{1,20})?(\.[0-9]{1,20})?(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?(\+([0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*))?$",
             ))
         }
         "mustDateModify" if argument_count == 2 => Some((
@@ -173,6 +191,26 @@ pub fn strict_parser_operand_pattern(
         "urlParse" if argument_count == 1 => {
             Some((0, r"^([^\u0000-\u001F\u007F%]|%[0-9A-Fa-f]{2})*$"))
         }
+        _ => None,
+    }
+}
+
+/// Returns the lexical language required of every ITEM of a strict
+/// collection operand, keyed by the zero-based operand index.
+///
+/// Like [`strict_parser_operand_pattern`], the pattern is a conservative
+/// superset of every string the runtime parser accepts, so lowering it may
+/// miss some invalid inputs but never rejects one the parser accepts.
+pub fn strict_collection_item_pattern(function: &str, index: usize) -> Option<&'static str> {
+    match (function, index) {
+        // genSignedCert/genSelfSignedCert pass every ip-list entry through
+        // net.ParseIP and abort rendering on nil. The alternates are exact
+        // dotted-quad IPv4 (leading zeros rejected, as Go's parser does) and
+        // a superset of every IPv6 textual form — hex digits, colons, and
+        // dots with at least one colon — so no valid address is rejected.
+        ("genSignedCert" | "genSelfSignedCert", 1) => Some(
+            r"^(((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])|[0-9A-Fa-f.]*:[0-9A-Fa-f:.]*)$",
+        ),
         _ => None,
     }
 }

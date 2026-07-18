@@ -34,6 +34,47 @@ const PLAIN_SCALAR_NULL_TOKEN_PATTERN: &str = r"^(|~|null|Null|NULL)$";
 const PLAIN_SCALAR_BOOL_TOKEN_PATTERN: &str =
     r"^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$";
 
+// The numeric token grammars below are derived from go-yaml v2's `resolve()`,
+// the YAML 1.1 resolver Helm's manifest consumers inherit through
+// `sigs.k8s.io/yaml`. A plain scalar starting with a sign or digit has every
+// underscore stripped, then reads as a base-detecting integer
+// (`strconv.ParseInt`/`ParseUint` with base 0: decimal, `0x` hex, `0b`
+// binary, `0o`/leading-zero octal) or a decimal float
+// (`yamlStyleFloat` + `ParseFloat`); a scalar starting with `.` reads as a
+// bare `ParseFloat` without underscore stripping. On any parse error —
+// including float64 overflow — the token falls back to a plain string.
+//
+// Exclusion alternates must be PROVABLY numeric (over-excluding falsely
+// rejects strings that stay strings), so digit counts are bounded far below
+// the float64 overflow cliff and exotic residue (underscored hex, 100+-digit
+// mantissas, three-digit exponents) is deliberately left unexcluded.
+
+/// Sign/digit-led tokens the resolver provably reads as decimal numbers,
+/// after global underscore stripping. Covers integers ("1_000"), leading-zero
+/// float fallbacks ("09"), trailing-dot floats ("1."), exponent forms
+/// ("1e99", bounded to two exponent digits so overflow never reaches the
+/// claim), and sign-led leading-dot floats ("-.5"). An unsigned leading
+/// underscore stays a string (the resolver never enters its numeric path).
+const PLAIN_SCALAR_DECIMAL_NUMBER_TOKEN_PATTERN: &str = r"^([0-9][0-9_]{0,50}(\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$";
+/// Radix-prefixed tokens the resolver provably reads as integers, with digit
+/// counts bounded to stay within `int64` for signed spellings.
+const PLAIN_SCALAR_PREFIXED_NUMBER_TOKEN_PATTERN: &str =
+    r"^[+-]?(0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20})$";
+/// The exact special-float table entries: signed infinities and UNSIGNED
+/// NaNs only — "+.nan" is absent from the resolver table and stays a string.
+const PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN: &str = r"^([+-]?\.(inf|Inf|INF)|\.(nan|NaN|NAN))$";
+/// Tokens the resolver provably reads as `!!int` within `int64`/`uint64`:
+/// optionally signed decimal without a leading zero (underscores stripped),
+/// or a bounded radix-prefixed/legacy-octal literal. Float-tagged spellings
+/// that merely have an integral value ("09", "4e2", "1.") stay out — a
+/// float64 in an integer manifest slot is not reliably accepted.
+const PLAIN_SCALAR_INTEGER_TOKEN_PATTERN: &str = r"^([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})$";
+/// Tokens the resolver provably reads as any numeric tag with a
+/// JSON-representable value: the integer lane plus the decimal float lanes.
+/// Infinities and NaNs are excluded — they have no JSON encoding, so a
+/// number slot never accepts them downstream.
+const PLAIN_SCALAR_NUMBER_TOKEN_PATTERN: &str = r"^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[0-9][0-9_]{0,50}(\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$";
+
 /// Generator-side policy for lowering semantic value uses into schema evidence.
 ///
 /// Decisions about provider-schema domains and guard-derived constraints live
@@ -710,19 +751,19 @@ fn scalar_plain_string_preimage(schema: Value, allowed: &ImplicitTokenAllowance)
     }
     if !allowed.number && !allowed.integer {
         exclusions.push(serde_json::json!({
-            "not": { "pattern": "^[+-]?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?$" }
+            "not": { "pattern": PLAIN_SCALAR_DECIMAL_NUMBER_TOKEN_PATTERN }
         }));
-        // Helm's YAML 1.1 resolver also reads hex, explicit octal, binary,
-        // and legacy leading-zero spellings as integers, so a bare token in
-        // any of those forms reparses away from the string the sink needs
-        // (velero's unquoted BackupStorageLocation provider).
+        // Helm's YAML 1.1 resolver also reads hex, explicit octal, and
+        // binary spellings as integers, so a bare token in any of those
+        // forms reparses away from the string the sink needs (velero's
+        // unquoted BackupStorageLocation provider).
         exclusions.push(serde_json::json!({
-            "not": { "pattern": "^[+-]?(0x[0-9a-fA-F]+|0o[0-7]+|0b[01]+|0[0-9]+)$" }
+            "not": { "pattern": PLAIN_SCALAR_PREFIXED_NUMBER_TOKEN_PATTERN }
         }));
     }
     if !allowed.number {
         exclusions.push(serde_json::json!({
-            "not": { "pattern": "^[+-]?\\.(inf|Inf|INF|nan|NaN|NAN)$" }
+            "not": { "pattern": PLAIN_SCALAR_SPECIAL_FLOAT_TOKEN_PATTERN }
         }));
     }
     let lexical_domain = serde_json::json!({
@@ -749,9 +790,9 @@ fn scalar_number_preimage(schema: Value, integer: bool) -> Value {
     let string_schema = scalar_string_preimage(
         object,
         if integer {
-            r"^-?(0|[1-9][0-9]*)$"
+            PLAIN_SCALAR_INTEGER_TOKEN_PATTERN
         } else {
-            r"^-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?$"
+            PLAIN_SCALAR_NUMBER_TOKEN_PATTERN
         },
     );
     union_schema_list(vec![schema, string_schema])
@@ -759,7 +800,7 @@ fn scalar_number_preimage(schema: Value, integer: bool) -> Value {
 
 fn scalar_boolean_preimage(schema: Value) -> Value {
     let object = schema.as_object().expect("typed schema is an object");
-    let string_schema = scalar_string_preimage(object, r"^(true|false|True|False|TRUE|FALSE)$");
+    let string_schema = scalar_string_preimage(object, PLAIN_SCALAR_BOOL_TOKEN_PATTERN);
     union_schema_list(vec![schema, string_schema])
 }
 
@@ -864,6 +905,15 @@ fn conditional_target_schema_inner(
             collect_positive_self_types(guard, target_value_path, false, &mut positive_self_types);
         }
         for schema_type in positive_self_types {
+            // A "number" partition over an integer-allowing branch is NOT a
+            // contradiction: draft-07 `integer` is a value predicate that
+            // integral floats satisfy, so the arm stays satisfiable while the
+            // branch keeps rejecting fractional floats the render would place
+            // into the provider slot (sealed-secrets' `typeOf`-dispatched
+            // policy/v1 minAvailable).
+            if schema_type == "number" && schema_allows_non_falsy_type(&branch_schema, "integer") {
+                continue;
+            }
             if !schema_allows_non_falsy_type(&branch_schema, &schema_type) {
                 branch_schema = union_schema_list(vec![branch_schema, type_schema(&schema_type)]);
             }

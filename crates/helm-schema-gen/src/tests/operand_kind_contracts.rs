@@ -697,6 +697,9 @@ fn semver_parser_binds_lexical_operand_contract() {
         // identifier (airflow's `airflowVersion: 3.1.0-01`)
         "3.1.0-01",
         "1.2.3-alpha.01",
+        // A 21-digit core component certainly overflows `ParseUint`'s
+        // uint64 and aborts the parser.
+        "111111111111111111111.0.0",
     ] {
         let instance = serde_json::json!({
             "enabled": true,

@@ -104,35 +104,25 @@ fn build_single_condition_fragment(
                     if mapping.contains_key(YamlValue::String(key.clone()))
             ),
         ),
-        // The guard is a sound SUBSET of its Sprig coercion by definition,
-        // so the explicit test admits raw integers only; an absent key
-        // satisfies it exactly when the declared default is an integer
-        // above the bound (the merged render is then statically decided).
+        // The guard is a sound SUBSET of its Sprig coercion by definition:
+        // the explicit test admits raw integers, plus the clean decimal
+        // string spellings the coercion provably parses into the claimed
+        // region (jenkins' `"5"` replicas abort like `5`). An absent key
+        // satisfies it exactly when the declared default lands in the
+        // region (the merged render is then statically decided).
         ConditionalGuard::IntGt { path, bound } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
-            SchemaNode::foreign(serde_json::json!({
-                "type": "integer",
-                "exclusiveMinimum": bound,
-            })),
-            matches!(
-                yaml_value_at_path(values_yaml_doc, path),
-                Some(YamlValue::Number(number))
-                    if number.as_i64().is_some_and(|value| value > *bound)
-            ),
+            int_bound_leaf_schema("exclusiveMinimum", *bound, decimal_strings_above(*bound)),
+            decimal_default_int_value(yaml_value_at_path(values_yaml_doc, path))
+                .is_some_and(|value| value > *bound),
         ),
         ConditionalGuard::IntLt { path, bound } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
-            SchemaNode::foreign(serde_json::json!({
-                "type": "integer",
-                "exclusiveMaximum": bound,
-            })),
-            matches!(
-                yaml_value_at_path(values_yaml_doc, path),
-                Some(YamlValue::Number(number))
-                    if number.as_i64().is_some_and(|value| value < *bound)
-            ),
+            int_bound_leaf_schema("exclusiveMaximum", *bound, decimal_strings_below(*bound)),
+            decimal_default_int_value(yaml_value_at_path(values_yaml_doc, path))
+                .is_some_and(|value| value < *bound),
         ),
         ConditionalGuard::Absent { path } => {
             let segments = split_value_path(path);
@@ -261,6 +251,99 @@ fn guard_value_enum_schema(value: &GuardValue) -> Option<SchemaNode> {
     guard_value_to_json(value).map(|value| SchemaNode::enum_values(vec![value]))
 }
 
+/// The typed-integer bound leaf, widened with the decimal string preimage
+/// when one is representable.
+fn int_bound_leaf_schema(keyword: &str, bound: i64, pattern: Option<String>) -> SchemaNode {
+    let integer = serde_json::json!({ "type": "integer", (keyword): bound });
+    match pattern {
+        Some(pattern) => SchemaNode::foreign(serde_json::json!({
+            "anyOf": [integer, { "type": "string", "pattern": pattern }]
+        })),
+        None => SchemaNode::foreign(integer),
+    }
+}
+
+// Sprig's `int`/`int64` coercion parses strings through `strconv.ParseInt`
+// with base detection, so a leading zero flips the base to octal and a
+// non-decimal spelling coerces to 0. The preimage patterns below therefore
+// claim only CLEAN decimal spellings — optional sign, no leading zero —
+// whose parsed value provably lands in the claimed region; every other
+// spelling abstains. Bounds outside the simple sign regimes (a positive
+// `IntLt` bound, a negative `IntGt` bound) abstain entirely: their regions
+// span both signs and zero, which these digit-wise patterns do not model.
+
+/// Alternates matching unsigned decimal spellings with value strictly
+/// greater than `bound` (`bound >= 0`), without leading zeros.
+fn decimal_magnitude_above(bound: u64) -> String {
+    let digits: Vec<u8> = bound.to_string().bytes().map(|byte| byte - b'0').collect();
+    let mut alternates = vec![format!("[1-9][0-9]{{{},}}", digits.len())];
+    for (index, &digit) in digits.iter().enumerate() {
+        // The first digit needs no extra floor: a bound's leading digit is
+        // nonzero (or the bound is 0 itself, where digit+1 = 1).
+        let low = digit + 1;
+        if low > 9 {
+            continue;
+        }
+        let prefix: String = digits[..index]
+            .iter()
+            .map(|digit| char::from(b'0' + digit))
+            .collect();
+        let range = if low == 9 {
+            "9".to_string()
+        } else {
+            format!("[{low}-9]")
+        };
+        let suffix = match digits.len() - index - 1 {
+            0 => String::new(),
+            1 => "[0-9]".to_string(),
+            count => format!("[0-9]{{{count}}}"),
+        };
+        alternates.push(format!("{prefix}{range}{suffix}"));
+    }
+    alternates.join("|")
+}
+
+/// Decimal string spellings coercing strictly above `bound`; only
+/// non-negative bounds have a single-sign region.
+fn decimal_strings_above(bound: i64) -> Option<String> {
+    let bound = u64::try_from(bound).ok()?;
+    Some(format!("^\\+?({})$", decimal_magnitude_above(bound)))
+}
+
+/// Decimal string spellings coercing strictly below `bound`; only
+/// non-positive bounds have a single-sign region.
+fn decimal_strings_below(bound: i64) -> Option<String> {
+    if bound > 0 {
+        return None;
+    }
+    let magnitude = bound.unsigned_abs();
+    if magnitude == 0 {
+        // Below zero: any negative with a nonzero digit. Leading zeros are
+        // safe HERE only: the octal reinterpretation is still negative.
+        return Some("^-0*[1-9][0-9]*$".to_string());
+    }
+    Some(format!("^-({})$", decimal_magnitude_above(magnitude)))
+}
+
+/// The statically decided integer value of a declared default: a YAML
+/// integer, or a clean signed decimal string spelling (no leading zero).
+fn decimal_default_int_value(value: Option<&YamlValue>) -> Option<i64> {
+    match value? {
+        YamlValue::Number(number) => number.as_i64(),
+        YamlValue::String(text) => {
+            let unsigned = text.strip_prefix(['+', '-']).unwrap_or(text);
+            if unsigned.is_empty()
+                || (unsigned.len() > 1 && unsigned.starts_with('0'))
+                || !unsigned.bytes().all(|byte| byte.is_ascii_digit())
+            {
+                return None;
+            }
+            text.trim_start_matches('+').parse::<i64>().ok()
+        }
+        _ => None,
+    }
+}
+
 fn build_default_aware_leaf_condition_fragment(
     value_path: &str,
     ancestor_segments: &[String],
@@ -364,16 +447,14 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
         ConditionalGuard::Absent { path } => {
             Some(yaml_value_at_path(values_yaml_doc, path).is_none())
         }
-        ConditionalGuard::IntGt { path, bound } => Some(matches!(
-            yaml_value_at_path(values_yaml_doc, path),
-            Some(YamlValue::Number(number))
-                if number.as_i64().is_some_and(|value| value > *bound)
-        )),
-        ConditionalGuard::IntLt { path, bound } => Some(matches!(
-            yaml_value_at_path(values_yaml_doc, path),
-            Some(YamlValue::Number(number))
-                if number.as_i64().is_some_and(|value| value < *bound)
-        )),
+        ConditionalGuard::IntGt { path, bound } => Some(
+            decimal_default_int_value(yaml_value_at_path(values_yaml_doc, path))
+                .is_some_and(|value| value > *bound),
+        ),
+        ConditionalGuard::IntLt { path, bound } => Some(
+            decimal_default_int_value(yaml_value_at_path(values_yaml_doc, path))
+                .is_some_and(|value| value < *bound),
+        ),
         ConditionalGuard::HasKey { path, key } => Some(matches!(
             yaml_value_at_path(values_yaml_doc, path),
             Some(YamlValue::Mapping(mapping))

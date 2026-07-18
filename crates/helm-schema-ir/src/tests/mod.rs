@@ -398,10 +398,13 @@ data:
 
 #[test]
 fn opaque_include_guard_abstains_from_provider_schema_evidence() {
+    // The arm renders a VALUES-dependent token, so the helper is not a
+    // literal dispatch and the include guard stays undecodable. (A pure
+    // literal arm now decodes exactly and no longer exercises abstention.)
     let helpers = r#"
 {{- define "resource.enabled" -}}
 {{- if .Values.enabled -}}
-true
+{{ .Values.marker }}
 {{- end -}}
 {{- end -}}
 "#;

@@ -123,6 +123,11 @@ pub enum Guard {
     /// POSITIVE form (the key exists in the collection); the negation runs
     /// for every OTHER member and has no key-presence encoding.
     RangeKeyEquals { path: String, key: String },
+    /// A destructured range key matches a literal regular expression
+    /// (`if regexMatch "[A-Z]" $name`). The path names the ranged
+    /// collection; the predicate applies per key, so lowering targets the
+    /// collection's key domain (traefik's uppercase `ingressRoute` gate).
+    RangeKeyMatches { path: String, pattern: String },
     /// Disjunction: `if or .Values.A .Values.B`
     Or { paths: Vec<String> },
     /// Disjunction whose arms may each contain a conjunction of typed guards.
@@ -208,6 +213,7 @@ impl Guard {
             | Self::MatchesPattern { .. }
             | Self::RangeKeyPrefix { .. }
             | Self::RangeKeyEquals { .. }
+            | Self::RangeKeyMatches { .. }
             | Self::Range { .. }
             | Self::With { .. }
             | Self::Default { .. }
@@ -230,6 +236,7 @@ impl Guard {
             | Guard::MatchesPattern { path, .. }
             | Guard::RangeKeyPrefix { path, .. }
             | Guard::RangeKeyEquals { path, .. }
+            | Guard::RangeKeyMatches { path, .. }
             | Guard::Range { path }
             | Guard::With { path }
             | Guard::Default { path }
@@ -281,6 +288,10 @@ impl Guard {
             Guard::RangeKeyPrefix { path, prefix } => Guard::RangeKeyPrefix {
                 path: map(&path),
                 prefix,
+            },
+            Guard::RangeKeyMatches { path, pattern } => Guard::RangeKeyMatches {
+                path: map(&path),
+                pattern,
             },
             Guard::Or { paths } => Guard::Or {
                 paths: paths.into_iter().map(|path| map(&path)).collect(),

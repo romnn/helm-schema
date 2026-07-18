@@ -15,6 +15,11 @@ use crate::node_eval::{NodeAction, else_if_pairs, node_action};
 pub(crate) struct LiteralDispatchArm {
     pub(crate) header: Option<TemplateHeader>,
     pub(crate) literal: String,
+    /// Whether the arm collected NO content at all. `literal` is trimmed (an
+    /// approximation of the chain's trim markers), so an empty `literal`
+    /// alone cannot distinguish "renders nothing" from "renders only
+    /// whitespace" — which differ under Helm truthiness.
+    pub(crate) raw_empty: bool,
 }
 
 pub(crate) fn helper_literal_dispatch(
@@ -93,13 +98,37 @@ fn dispatch_arms(
                     literal.push_str(child.utf8_text(source.as_bytes()).ok()?);
                 }
                 NodeAction::Suppressed => {}
+                // A bare literal output (`{{- true -}}`, `{{ "text" }}`)
+                // renders static text just like a text node (redis'
+                // `createConfigmap` gate spells its `true` this way).
+                NodeAction::Output(exprs) => {
+                    let [expr] = exprs.as_deref()? else {
+                        return None;
+                    };
+                    literal.push_str(&literal_output_text(expr)?);
+                }
                 _ => return None,
             }
         }
         out.push(LiteralDispatchArm {
             header: arm_header,
+            raw_empty: literal.is_empty(),
             literal: literal.trim().to_string(),
         });
     }
     Some(out)
+}
+
+/// The exact text a plain scalar literal renders. Floats abstain: Go's
+/// formatting of float64 output is not worth modeling here.
+fn literal_output_text(expr: &helm_schema_ast::TemplateExpr) -> Option<String> {
+    use helm_schema_ast::{Literal, TemplateExpr};
+    match expr.deparen() {
+        TemplateExpr::Literal(Literal::String(text) | Literal::RawString(text)) => {
+            Some(text.clone())
+        }
+        TemplateExpr::Literal(Literal::Bool(value)) => Some(value.to_string()),
+        TemplateExpr::Literal(Literal::Int(value)) => Some(value.to_string()),
+        _ => None,
+    }
 }

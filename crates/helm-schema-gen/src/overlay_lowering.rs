@@ -654,12 +654,17 @@ fn fail_requirement_runtime_types(
                             || *runtime_type == required
                             || required == "number" && *runtime_type == "integer"
                     }
+                    // Every runtime kind has a Helm-falsy escape spelling.
+                    FailValueRequirement::TruthyImpliesSchemaType(_) => true,
+                    FailValueRequirement::HelmTruthy => *runtime_type != "null",
+                    FailValueRequirement::NotEquals(_) => true,
                     FailValueRequirement::NotSchemaType(rejected) => {
                         *runtime_type != rejected
                             && !(rejected == "number" && *runtime_type == "integer")
                     }
                     FailValueRequirement::HasMember(_) => *runtime_type == "object",
-                    FailValueRequirement::MatchesPattern { .. } => *runtime_type == "string",
+                    FailValueRequirement::MatchesPattern { .. }
+                    | FailValueRequirement::NotMatchesPattern { .. } => *runtime_type == "string",
                     FailValueRequirement::MemberHost { handled_kinds } => {
                         *runtime_type == "object"
                             || handled_kinds.iter().any(|handled| handled == runtime_type)

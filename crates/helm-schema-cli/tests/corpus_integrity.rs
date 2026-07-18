@@ -4,6 +4,13 @@
 //! the corpus fixture stops representing the packaged chart while its tests
 //! keep passing (bitnami-redis shipped without its locked `common` library
 //! this way).
+//!
+//! Both lock formats count: Helm v3 `Chart.lock` and the legacy Helm v2
+//! `requirements.lock` (datadog still ships the latter, and skipping it left
+//! that chart's four dependencies entirely unchecked). An unpacked dependency
+//! directory only counts when its own `Chart.yaml` records the locked
+//! version — presence alone would let a stale vendored copy drift away from
+//! the packaged chart while this gate keeps passing.
 
 use serde::Deserialize;
 
@@ -32,13 +39,35 @@ struct ManifestDependency {
     alias: Option<String>,
 }
 
-/// A locked dependency counts as vendored when `charts/` holds its unpacked
-/// directory (under the real or aliased name) or its packaged archive.
+#[derive(Deserialize)]
+struct VendoredChartVersion {
+    version: String,
+}
+
+/// Helm v3 writes `Chart.lock`; v2-era charts (datadog) still ship
+/// `requirements.lock`. Prefer `Chart.lock` when both exist, as Helm does.
+fn chart_lock_path(chart_dir: &std::path::Path) -> Option<std::path::PathBuf> {
+    ["Chart.lock", "requirements.lock"]
+        .iter()
+        .map(|name| chart_dir.join(name))
+        .find(|path| path.is_file())
+}
+
+/// A locked dependency counts as vendored when `charts/` holds its packaged
+/// archive at the locked version, or its unpacked directory (under the real
+/// or aliased name) whose `Chart.yaml` records the locked version.
 fn dependency_is_vendored(chart_dir: &std::path::Path, names: &[&str], version: &str) -> bool {
     let charts_dir = chart_dir.join("charts");
     names.iter().any(|name| {
-        charts_dir.join(name).join("Chart.yaml").is_file()
-            || charts_dir.join(format!("{name}-{version}.tgz")).is_file()
+        if charts_dir.join(format!("{name}-{version}.tgz")).is_file() {
+            return true;
+        }
+        let manifest_path = charts_dir.join(name).join("Chart.yaml");
+        let Ok(manifest_text) = std::fs::read_to_string(&manifest_path) else {
+            return false;
+        };
+        serde_yaml::from_str::<VendoredChartVersion>(&manifest_text)
+            .is_ok_and(|manifest| manifest.version == version)
     })
 }
 
@@ -48,10 +77,9 @@ fn corpus_charts_vendor_every_locked_dependency() -> color_eyre::eyre::Result<()
     let mut missing = Vec::new();
     for entry in std::fs::read_dir(&corpus_root)? {
         let chart_dir = entry?.path();
-        let lock_path = chart_dir.join("Chart.lock");
-        if !lock_path.is_file() {
+        let Some(lock_path) = chart_lock_path(&chart_dir) else {
             continue;
-        }
+        };
         let lock: ChartLock = serde_yaml::from_str(&std::fs::read_to_string(&lock_path)?)?;
         let manifest: ChartManifest =
             serde_yaml::from_str(&std::fs::read_to_string(chart_dir.join("Chart.yaml"))?)?;
@@ -78,6 +106,41 @@ fn corpus_charts_vendor_every_locked_dependency() -> color_eyre::eyre::Result<()
         missing.join("\n")
     );
     Ok(())
+}
+
+/// A stale unpacked dependency directory must not satisfy the gate: only the
+/// locked version proves the vendored copy matches the packaged chart.
+#[test]
+fn unpacked_dependency_with_wrong_version_is_not_vendored() -> color_eyre::eyre::Result<()> {
+    let chart_dir = tempfile::tempdir()?;
+    let dependency_dir = chart_dir.path().join("charts").join("common");
+    std::fs::create_dir_all(&dependency_dir)?;
+    std::fs::write(
+        dependency_dir.join("Chart.yaml"),
+        "name: common\nversion: 1.0.0\n",
+    )?;
+    assert!(dependency_is_vendored(
+        chart_dir.path(),
+        &["common"],
+        "1.0.0"
+    ));
+    assert!(!dependency_is_vendored(
+        chart_dir.path(),
+        &["common"],
+        "2.0.0"
+    ));
+    Ok(())
+}
+
+/// datadog is the corpus chart that still locks its dependencies through the
+/// Helm v2 `requirements.lock`; discovery must not skip it.
+#[test]
+fn legacy_requirements_lock_is_discovered() {
+    let datadog = test_util::workspace_testdata()
+        .join("charts")
+        .join("datadog");
+    let lock_path = chart_lock_path(&datadog).expect("datadog lock file discovered");
+    assert!(lock_path.ends_with("requirements.lock"));
 }
 
 /// The committed provider bundle is a deterministic test input: if it goes

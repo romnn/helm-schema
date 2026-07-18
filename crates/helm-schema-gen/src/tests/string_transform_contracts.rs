@@ -389,6 +389,212 @@ fn htpasswd_operands_require_strings() {
     }
 }
 
+/// Sprig's checksum family hashes a typed Go string, so a truthy non-string
+/// reaching `sha256sum` aborts rendering — including a ranged member picked
+/// through a local `default ""` selection, where only the truthy lane hashes
+/// and every falsy spelling escapes to `nopass` (bitnami-redis' ACL users).
+#[test]
+fn checksum_operands_require_strings_through_ranged_default_selection() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          direct: {{ sha256sum .Values.seed | quote }}
+          users.acl: |-
+            {{- range .Values.users }}
+            {{- $password := .password | default "" }}
+            user {{ .username }} {{ if $password }}#{{ sha256sum $password }}{{ else }}nopass{{ end }}
+            {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(src), Some("seed: audit\nusers: []\n"));
+
+    for (instance, want, label) in [
+        (serde_json::json!({ "seed": 7 }), false, "direct numeric"),
+        (serde_json::json!({ "seed": "ok" }), true, "direct string"),
+        (
+            serde_json::json!({ "users": [{ "username": "u", "password": 7 }] }),
+            false,
+            "truthy numeric member",
+        ),
+        (
+            serde_json::json!({ "users": [{ "username": "u", "password": "s3cret" }] }),
+            true,
+            "string member",
+        ),
+        (
+            serde_json::json!({ "users": [{ "username": "u" }] }),
+            true,
+            "absent member selects nopass",
+        ),
+        (
+            serde_json::json!({ "users": [{ "username": "u", "password": 0 }] }),
+            true,
+            "falsy member escapes the hash",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "checksum operand {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// The full bitnami-redis ACL shape: the whole document rides an
+/// include-result gate (`if (include "redis.createConfigmap" .)`), which
+/// decodes through the helper's literal dispatch (`{{- true -}}` under
+/// `empty .Values.existingConfigmap`) instead of degrading to an
+/// undecodable marker that would drop the member capture; the secret lane
+/// and the default-user hash ride includes with no values identity.
+#[test]
+fn checksum_member_contract_survives_include_result_document_gate() {
+    let src = indoc! {r#"
+        {{- if (include "redis.createConfigmap" .) }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          users.acl: |-
+            {{- if .Values.auth.acl.enabled}}
+            {{- $password := include "redis.password" . }}
+            user default on {{ if $password}}#{{ sha256sum $password}}{{ else }}nopass{{ end }} ~* &* +@all
+            {{- if .Values.auth.acl.users -}}
+            {{- $userSecret := .Values.auth.acl.userSecret -}}
+            {{- range .Values.auth.acl.users }}
+            {{- $userPassword := .password | default "" }}
+            {{- if $userSecret }}
+            {{- $secretPassword := include "common.secrets.get" (dict "secret" $userSecret "key" .username "context" $) }}
+            user {{ .username }} {{ default "on" .enabled }} {{ if $secretPassword }}#{{ sha256sum $secretPassword }}{{ else }}nopass{{ end }} {{ default "~*" .keys }}
+            {{- else }}
+            user {{ .username }} {{ default "on" .enabled }} {{ if $userPassword }}#{{ sha256sum $userPassword }}{{ else }}nopass{{ end }} {{ default "~*" .keys }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+        {{- end }}
+    "#};
+    let helpers = indoc! {r#"
+        {{- define "redis.createConfigmap" -}}
+        {{- if empty .Values.existingConfigmap }}
+            {{- true -}}
+        {{- end -}}
+        {{- end -}}
+        {{- define "redis.password" -}}
+        {{- .Values.auth.password -}}
+        {{- end -}}
+        {{- define "common.secrets.get" -}}
+        secret
+        {{- end -}}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir_with_helpers(src, helpers),
+        Some(
+            "existingConfigmap: \"\"\nauth:\n  password: \"\"\n  acl:\n    enabled: false\n    users: []\n    userSecret: \"\"\n",
+        ),
+    );
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "auth": { "acl": { "enabled": true, "users": [{ "username": "u", "password": 7 }] } }
+            }),
+            false,
+            "numeric password under the live gate",
+        ),
+        (
+            serde_json::json!({
+                "auth": { "acl": { "enabled": true, "users": [{ "username": "u", "password": "ok" }] } }
+            }),
+            true,
+            "string password",
+        ),
+        (
+            serde_json::json!({
+                "existingConfigmap": "external",
+                "auth": { "acl": { "enabled": true, "users": [{ "username": "u", "password": 7 }] } }
+            }),
+            true,
+            "numeric password behind the dead include gate",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "include-gated checksum member {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// The checksum contract survives OUTER branch guards around the range: the
+/// selection's per-member truthiness cannot become a root guard, so it scopes
+/// the member requirement to truthy values instead, and the enclosing `if`
+/// chain lowers as the implication's outer guards (bitnami-redis nests the
+/// ACL users range under `acl.enabled` and `acl.users`).
+#[test]
+fn checksum_member_contract_survives_outer_branch_guards() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          users.acl: |-
+            {{- if .Values.auth.acl.enabled}}
+            {{- if .Values.auth.acl.users -}}
+            {{- $userSecret := .Values.auth.acl.userSecret -}}
+            {{- range .Values.auth.acl.users }}
+            {{- $userPassword := .password | default "" }}
+            {{- if $userSecret }}
+            user {{ .username }} secretlane
+            {{- else }}
+            user {{ .username }} {{ default "on" .enabled }} {{ if $userPassword }}#{{ sha256sum $userPassword }}{{ else }}nopass{{ end }} {{ default "~*" .keys }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(
+        parse_ir(src),
+        Some("auth:\n  acl:\n    enabled: false\n    users: []\n    userSecret: \"\"\n"),
+    );
+
+    for (instance, want, label) in [
+        (
+            serde_json::json!({
+                "auth": { "acl": { "enabled": true, "users": [{ "username": "u", "password": 7 }] } }
+            }),
+            false,
+            "numeric password under live guards",
+        ),
+        (
+            serde_json::json!({
+                "auth": { "acl": { "enabled": true, "users": [{ "username": "u", "password": "ok" }] } }
+            }),
+            true,
+            "string password under live guards",
+        ),
+        (
+            serde_json::json!({
+                "auth": { "acl": { "enabled": true, "users": [{ "username": "u", "password": 0 }] } }
+            }),
+            true,
+            "falsy password escapes to nopass",
+        ),
+        (
+            serde_json::json!({
+                "auth": { "acl": { "enabled": false, "users": [{ "username": "u", "password": 7 }] } }
+            }),
+            true,
+            "numeric password in the dead arm",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "guarded checksum member {label}: instance={instance}; schema={schema}"
+        );
+    }
+}
+
 /// A direct `tpl` program input keeps its Go string contract through a
 /// `default` selection chain: `tpl` parses the RAW value before any
 /// truthiness selection runs, so a map aborts rendering even when its
