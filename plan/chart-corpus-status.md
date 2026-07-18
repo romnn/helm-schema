@@ -1,7 +1,7 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-18 (sixth round) after implementing the reopened
-follow-up items from the independent post-fix pass. Green corpus tests are a
+Last reconciled 2026-07-18 (seventh round) after implementing the remaining
+in-progress ledger items. Green corpus tests are a
 baseline, not completion evidence: the reopening pass verified claims with
 concrete opposite-polarity probes, and this round implemented the ones that
 survived verification, re-adjudicating the ones whose root cause turned out
@@ -140,8 +140,15 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   presence gate (bounded; legacy locks and unpacked-version verification remain
   In progress)
 - F103 test compositors scrubbing nulls only along map chains
-- F104 `$tplYaml` program-wrapper alternatives at value nodes (bounded;
-  decoded-result and `$tplYamlSpread` compatibility remain In progress)
+- F104 `$tplYaml` program-wrapper alternatives at value nodes, completed by
+  wrapper RESULT compatibility (seventh round): a replace program's static
+  decoding must inhabit the node's accepted kinds (certainly-incompatible
+  lexeme classes reject; dynamic programs stay open), spread programs must
+  decode to the parent collection's kind (scalars always abort; the values
+  root refuses the spread wrapper), sentinels are classified structurally
+  (a `hasKey`-guarded `fail` marks the spread form), and a singleton
+  sentinel map never rides a node's ordinary object domain — the engine
+  intercepts it before consumers see it
 
 - F31 scalar-domain fail implications (bounded): `len`, literal membership,
   semver-minimum, and raw-integer subsets are lowered; direct/local
@@ -231,15 +238,44 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   gates like `if (include "redis.createConfigmap" .)` now lower exactly
   instead of degrading to an undecodable marker
 
+- F104 wrapper result compatibility (seventh round): see the F104 entry
+  above; pinned by `wrapper_program_results_must_be_compatible_with_node_
+  and_parent` (gen) and `nats_wrapper_results_must_be_compatible_with_
+  their_sinks` (CLI), every polarity verified under `helm template`
+- F93 singleton `additionalEnvs` (seventh round): a first-iteration-provable
+  dedup guard (`not (hasKey $acc …)` over an accumulator that is a provably
+  empty dict, in a single-depth loop) carries `Guard::AtMostOneMember` as a
+  sound subset; row conditions substitute such subsets (fires-less-often is
+  safe for positive rows), and the member-wildcard `if`-side encodes as the
+  ∀-member quantification — signoz now rejects a singleton
+  `additionalEnvs: {AUDIT: {value: 7}}` while the case-colliding shadowed
+  multi-key map stays open (kubeconform-verified both ways)
+- F80 external-secrets guard-scoped `omit` (seventh round): `omit` on a
+  values-backed map records removed keys as an effect riding the binding
+  meta; the branch join fills sound RETAIN guards from the omitting arm's
+  header negation (now including `or`-headers, one negated equality per
+  disjunct); the provider payload subtracts omitted members and re-adds
+  each key as a root-anchored arm under branch + retain guards. With the
+  new exact `Guard::MinMembers` decode for `gt (keys . | len) N`, the real
+  chart now accepts a string `runAsUser` under `adaptSecurityContext:
+  force`/`auto` and rejects it under `disabled` with a live render gate —
+  all polarities verified with `helm template --skip-schema-validation` +
+  kubeconform (the chart's shipped `values.schema.json` is deliberately
+  not evidence)
+- F28/F51 oauth2-proxy legacy `extraPaths` (seventh round, re-adjudicated):
+  the ground truth is the chart's own `deprecation.yaml` `fail`, not a
+  provider splice — helm aborts when a legacy `backend.serviceName/
+  servicePort` is set while `capabilities.ingress.apiVersion` resolves
+  `networking.k8s.io/v1`. Member-field truthiness now negates to the new
+  `FieldHelmFalsy` requirement, and the capability equality lowers through
+  a sound subset flipping the dispatch's `semverCompare "<C"` bounds into
+  `>=C` kubeVersion patterns (literal dispatch now reads `{{- print … -}}`
+  arms and trim-marker delimiter tokens). Pinned kubeVersions reject the
+  legacy shape, the v1beta1 lane keeps it, and the unpinned
+  capability-dependent lane soundly abstains
+
 ## In progress
 
-- **F28/F51 residual — provider splice for legacy Ingress paths.** OAuth2
-  Proxy accepts legacy `ingress.extraPaths[].backend.serviceName/servicePort`
-  spliced through `tpl (toYaml $extraPaths)` into a `networking.k8s.io/v1`
-  Ingress; the item schema should intersect the provider's HTTPIngressPath
-  (with the program-wrapper alternative for template-bearing strings). The
-  ranged-terminal machinery this item originally asked for landed (cilium's
-  forbidden `extraEnv` names are now rejected while the backoff is live).
 - **F31 residual — non-decimal coercion preimages.** Clean decimal spellings
   now reject through the `IntGt`/`IntLt` string preimages (jenkins `"5"` and
   `"-1"`), with declared-default evaluation extended to decimal strings.
@@ -255,26 +291,21 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `toString | trimSuffix "-jmx"` tag domain — the latter needs the semver
   comparator preimage to flow through derived-text subjects with lexical
   escapes.
-- **F80 residual — recursive overlays and guard-scoped `omit`.** Member
-  projection over `mergeOverwrite` layers now keeps layered precedence
-  through `pick`/`deepCopy` (the override lane binds member typing). Still
-  open: airflow's scalar `workers.celery.sets[].labels` reaching `mustMerge`
-  (needs bounded interpretation of the recursive `workersMergeValues`
-  helper and the `$globals.Values` rebinding), and external-secrets' string
-  `securityContext.runAsUser` reaching the provider slot when the
-  openshift-compatibility `omit` is disabled (dict-boundary provenance
-  through guard-scoped `omit`).
-- **F93 bounded remainder — singleton `additionalEnvs`.** General case-folded
-  multi-key dedup remains relational, but a SigNoz map with at most one member
-  cannot be shadowed. Constrain that representable lane to the EnvVar shape
-  while retaining a case-colliding multi-key acceptance control. Soundness
-  needs the empty-dict-initialized merge-only accumulator recognized so the
-  dedup guard is provably true on the first iteration.
-- **F104 remainder — wrapper result compatibility.** NATS accepts static
-  `$tplYaml` programs that decode to a non-resource or wrong member kind, and
-  `$tplYamlSpread` programs whose result kind cannot spread into the parent;
-  Helm then aborts. Intersect decoded program output with the sink/node schema
-  and enforce spread parent/root rules.
+- **F80 residual — airflow's recursive `workersMergeValues` lane.** The
+  external-secrets half landed (see Completed). Airflow's scalar
+  `workers.celery.sets[].labels` reaching `mustMerge` remains open; the
+  seventh-round diagnosis is precise: (a) the recursive custom-merge helper
+  needs a bounded recognizer producing a layered value
+  (`MergedLayers([overwrite, input])` per its full-overwrite key list),
+  (b) `set $globals.Values "workers" $workers` on a `deepCopy`-of-root
+  context is unobserved — the `with $globals` block resolves
+  `.Values.workers.labels` to the plain path, so the set-member identity
+  never reaches the `mustMerge` strict-operand capture, and (c) the
+  layered member then needs per-layer strict-operand arms (the velero
+  merge-shadow machinery). Each is a bounded new lane; together they are a
+  round of their own. The mini-fixture reproduction shows the helper-body
+  captures already carry `workers.celery.sets.*` identities into the
+  recursion, so (b) is the load-bearing gap.
 
 ## Rejected (invalid or won't fix by design)
 

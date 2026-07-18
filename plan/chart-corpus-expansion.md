@@ -7297,3 +7297,139 @@ pattern rewrite plus `$defs` renumbering, with the semantic layer held by
 the 79 passing `chart_reaudit` pins and per-chart default validation.
 1280/1280 workspace tests, doc tests clean, `task lint` warning-free
 (exit 0), luup2 `check:local` exit 0 with the fresh release binary.
+
+## Remaining-items round (2026-07-18, seventh round)
+
+Directive: implement everything still open in the status ledger. Four of
+the five items landed; the airflow recursive-merge lane was diagnosed to
+its exact gaps and stays In progress.
+
+### F104 — wrapper result compatibility (FIXED)
+
+- Detection classifies each sentinel structurally: a sentinel whose
+  single-key `hasKey` test guards a `fail` terminal is the engine's
+  SPREAD form (`program_wrapper_sentinels` now returns key → spread).
+- The generator's wrapper pass is edge-aware (member vs item vs shared
+  `$defs`) and kind-aware (`accepted_kinds` over type/enum/const and
+  combinators): a REPLACE program that is certainly incompatible with the
+  node rejects through resolver-token lexeme classes (reusing the F76
+  grammars), a SPREAD program must decode to the parent's kind (scalars
+  always abort, null is the no-op removal), and the values root gains a
+  `not` against the singleton spread wrapper.
+- A singleton sentinel map no longer rides a node's ordinary object
+  domain: the engine intercepts it before any consumer, so the ordinary
+  arm subtracts the sentinel-singleton shape (`propertyNames` +
+  `maxProperties: 1`) and the wrapper alternative's program constraint is
+  the only lane it may take. This also closes the `{"$tplYaml": true}`
+  tpl-abort case at object-accepting nodes.
+- Pins: `wrapper_program_results_must_be_compatible_with_node_and_parent`
+  (gen, two-sentinel engine), `nats_wrapper_results_must_be_compatible_
+  with_their_sinks` (CLI; every polarity reproduced under `helm
+  template`, including the spread parent-kind aborts and the root
+  refusal).
+
+### F93 — singleton `additionalEnvs` (FIXED)
+
+- The interpreter tracks loop depth; at depth one, an `if not (hasKey
+  $acc …)` header whose accumulator is a PROVABLY empty dict at the
+  evaluation point yields `Guard::AtMostOneMember { path }` as the
+  approximate condition's sound subset (with ≤1 members every iteration
+  is the first).
+- `record_contract_use` substitutes approximate conjuncts whose sound
+  subset is entirely `AtMostOneMember`: the strengthened conjunction
+  describes a genuine subset of the row's firing states, so its narrowing
+  evidence binds soundly there.
+- The condition encoding lowers `AtMostOneMember` as
+  `maxProperties/maxItems: 1`, and the `if`-side member wildcard segment
+  now encodes as the ∀-member quantification (`additionalProperties` +
+  `items`), exact under the size bound.
+- Collateral fix: `schema_allows_type` understands `"type": [ … ]`
+  arrays, which stops `conditional_target_schema`'s positive-self-type
+  union from widening k8s `["object","null"]` payload arms with an open
+  object (this was silently absorbing the EnvVar arm on the real chart).
+- Pins: `dedup_accumulator_binds_member_typing_to_singleton_maps` (gen);
+  the signoz reaudit pin now REJECTS the singleton numeric member and
+  keeps the shadowed multi-key acceptance control (kubeconform-verified).
+
+### F80 — external-secrets guard-scoped `omit` (FIXED)
+
+- `omit` on a values-backed identity records the removed keys as an
+  EFFECT (`omitted_map_keys`), which rides assignment bindings and hole
+  metas into `SpliceMeta.omitted_members`/`ContractUse.omitted_members`
+  (key → sound RETAIN guards). Identity stays untouched, so bindings,
+  dispatch decoding, and every existing lane keep working.
+- At an `if` join, freshly omitted keys get retain guards from the
+  omitting arm's header negation; `reassignment_exclusion`'s negation
+  logic moved into a shared `header_negation_sound_subset` that now also
+  strengthens through `or` headers (one negated equality per disjunct —
+  exactly the `or (eq … "force") (and (eq … "auto") (include
+  isOpenShift))` OpenShift gate). Binding-time meta snapshots are
+  refreshed at the join so the render lowers as one unguarded splice.
+- The generator subtracts omitted members from the whole-payload
+  projection (provider cache key extended — an under-keyed hit would leak
+  one use's subtraction into another) and re-adds each key as a
+  root-anchored arm under branch + retain guards
+  (`append_omitted_member_arms`, the merge-shadow-arm pattern).
+- New exact `Guard::MinMembers { path, bound }` decodes
+  `gt (keys X | len) N` (`keys` aborts on non-maps, so both polarities
+  encode as `{type: object, minProperties}`), unlocking the real chart's
+  `if and (.enabled) (gt (keys . | len) 1)` render gate; a MinMembers
+  self-guard is load-bearing on the overlay key like TypeIs.
+- Pins: `guard_scoped_omit_scopes_removed_member_typing` (gen),
+  `external_secrets_omitted_security_context_keys_scope_their_typing`
+  (CLI). All polarities verified with `helm template
+  --skip-schema-validation` + kubeconform; the chart's shipped
+  `values.schema.json` (which rejects a string `runAsUser` before
+  rendering) is deliberately not evidence per the project policy.
+
+### F28/F51 — oauth2-proxy legacy `extraPaths` (FIXED, re-adjudicated)
+
+- The residual's provider-splice framing was wrong for the vendored
+  chart: the structural ground truth is the chart's own
+  `deprecation.yaml`, which `fail`s when any `extraPaths[].backend.
+  serviceName/servicePort` is truthy while `capabilities.ingress.
+  apiVersion` resolves `networking.k8s.io/v1`.
+- Member-field truthiness in a ranged fail now negates to the new
+  `FailValueRequirement::FieldHelmFalsy { path }` ("the member's field,
+  when present, is Helm-falsy"), encoded as a nested-`properties`
+  `not: helm-truthy` — absent and falsy fields render, truthy ones abort.
+- The capability equality lowers through a new sound subset:
+  `eq (include NAME .) "LIT"` over a literal dispatch whose non-else arms
+  are `semverCompare "<C" (PATH | default .Capabilities.KubeVersion.
+  Version)` bounds flips each to a `>=C` `MatchesPattern` on PATH
+  (release-only patterns let the `-0` prerelease marker drop out). The
+  capability-default lane stays out of the subset, so an unpinned
+  `kubeVersion` soundly abstains — consistent with the capability-oracle
+  policy.
+- Literal-dispatch parsing now reads `{{- print "…" -}}` output arms and
+  skips trim-marker delimiter tokens, which un-blocks capability helpers
+  across the corpus.
+- Pins: `capability_dispatch_scoped_member_field_fail_lowers` (gen),
+  `oauth2_proxy_legacy_extra_paths_abort_under_the_v1_ingress_api` (CLI);
+  each polarity reproduced under `helm template` (pinned modern version
+  aborts, 1.18 renders the v1beta1 legacy shape, unpinned abstains).
+
+### F80 airflow — diagnosed, not landed
+
+The `workers.celery.sets[].labels → mustMerge` lane needs three new
+subsystems: a bounded recognizer for the recursive custom merge
+(producing `MergedLayers([overwrite, input])` with its full-overwrite
+key list), observation of `set $globals.Values "workers" $workers` on a
+`deepCopy`-of-root context so the `with $globals` block resolves
+`.Values.workers` to the layered value, and per-layer strict-operand
+arms for the layered member. A reduced fixture shows the helper-body
+captures already carry `workers.celery.sets.*` into the recursion; the
+unobserved context-copy rebinding is the load-bearing gap. Left In
+progress with this diagnosis.
+
+### Validation
+
+All 54 chart-corpus fixtures, the IR corpus, and the gen corpus
+regenerated (churn: `$defs` renumbering plus the type-array
+self-type-union fix, `MinMembers` conditions, wrapper subtraction arms,
+and omitted-member payloads; the gen corpus dumps must come from the
+`schema_fixtures_match` run alone — sibling validation tests overwrite
+the same dump paths with different values). 1287/1287 workspace tests,
+doc tests clean, `task lint` exit 0, and the downstream luup2
+`check:local` (schema generation for every private chart, jv lint,
+`helm lint --strict`, kube-score) exit 0 with the fresh release binary.
