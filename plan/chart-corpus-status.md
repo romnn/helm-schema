@@ -1,14 +1,14 @@
 # Chart-corpus findings: status ledger
 
-Last reconciled 2026-07-18 (seventh round) after implementing the remaining
-in-progress ledger items. Green corpus tests are a
+Last reconciled 2026-07-18 (eighth round) after implementing the airflow
+recursive `workersMergeValues` lane. Green corpus tests are a
 baseline, not completion evidence: the reopening pass verified claims with
-concrete opposite-polarity probes, and this round implemented the ones that
-survived verification, re-adjudicating the ones whose root cause turned out
-to be a deliberate policy. Where a finding has both a completed bounded part
-and a remainder, the completed part is listed below with a "(bounded)" marker
-and the residual is classified separately. Per-finding history lives in
-`chart-corpus-expansion.md`.
+concrete opposite-polarity probes, and the recent rounds implemented the ones
+that survived verification, re-adjudicating the ones whose root cause turned
+out to be a deliberate policy. Where a finding has both a completed bounded
+part and a remainder, the completed part is listed below with a "(bounded)"
+marker and the residual is classified separately. Per-finding history lives
+in `chart-corpus-expansion.md`.
 
 ## Completed
 
@@ -111,8 +111,9 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
 - F78 value-selecting functions keeping candidate-selection predicates
 - F79 `break`/`continue` suppressing later-iteration contracts
 - F80 ordered `merge`/`mergeOverwrite` layers with per-key shadowing arms
-  (bounded to the direct Velero provider-splice case; derived maps remain In
-  progress)
+  (the direct Velero provider-splice case; the airflow recursive
+  custom-merge lane landed in the eighth round — see its entry below;
+  the worker-family provider-typing residual stays In progress)
 - F81 Sprig arithmetic coercion boundary
 - F82 chart-authored `values.yaml` programs executed by `tpl`
 - F84 split-segment provider preimage for integer slots (bounded; general
@@ -273,6 +274,31 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   arms and trim-marker delimiter tokens). Pinned kubeVersions reject the
   legacy shape, the v1beta1 lane keeps it, and the unpinned
   capability-dependent lane soundly abstains
+- F80 airflow recursive `workersMergeValues` lane (eighth round): the three
+  diagnosed gaps landed. (a) `IrAnalysisDb::custom_merge_helper` recognizes
+  the bounded recursive-merge define shape (list-indexed map params, empty
+  `dict` accumulator, `has`-probed literal full-overwrite list, ranges only
+  over the two maps, member-disciplined `set` values, self-recursion,
+  `toYaml ACC` terminal) and the call site substitutes
+  `MergedLayers([overwrite, input])` marked YAML-serialized so
+  `include … | fromYaml` round-trips; (b) `set $copy.Values KEY V` on a
+  `deepCopy`-of-root local is observed as a values-member overlay on the
+  local, document-scope assignments apply that context-copy mutation, and
+  `.Values.…` fields resolve through a `with`-dot whose `Values` member was
+  replaced; (c) strict-operand captures walk merge layers in order — each
+  layer truthy-scoped (the merged value exists regardless of any one layer,
+  so no layer's presence may be demanded), deeper layers additionally
+  conditioned on the earlier layers' absence, opaque layers blocking
+  everything below them (`MergedLayers` member projection now keeps an
+  opaque layer as an unknown shadow instead of dropping it). Collateral:
+  document-scope ranges over structured/joined iterables bind their item
+  variable to the member domain, and fail-polarity `Or` guards drop
+  undecodable disjuncts instead of vetoing the arm. The real chart now
+  rejects scalar `workers.celery.sets[].labels` and
+  `workers.celery.sets[].persistence` while map-shaped per-set overrides
+  stay open — every polarity verified under `helm template`; pinned by
+  `airflow_worker_set_overrides_bind_strict_member_kinds` (CLI) and the
+  recognizer tests (IR)
 
 ## In progress
 
@@ -291,21 +317,24 @@ Fixed on the current tree and pinned by tests (corpus fixtures,
   `toString | trimSuffix "-jmx"` tag domain — the latter needs the semver
   comparator preimage to flow through derived-text subjects with lexical
   escapes.
-- **F80 residual — airflow's recursive `workersMergeValues` lane.** The
-  external-secrets half landed (see Completed). Airflow's scalar
-  `workers.celery.sets[].labels` reaching `mustMerge` remains open; the
-  seventh-round diagnosis is precise: (a) the recursive custom-merge helper
-  needs a bounded recognizer producing a layered value
-  (`MergedLayers([overwrite, input])` per its full-overwrite key list),
-  (b) `set $globals.Values "workers" $workers` on a `deepCopy`-of-root
-  context is unobserved — the `with $globals` block resolves
-  `.Values.workers.labels` to the plain path, so the set-member identity
-  never reaches the `mustMerge` strict-operand capture, and (c) the
-  layered member then needs per-layer strict-operand arms (the velero
-  merge-shadow machinery). Each is a bounded new lane; together they are a
-  round of their own. The mini-fixture reproduction shows the helper-body
-  captures already carry `workers.celery.sets.*` identities into the
-  recursion, so (b) is the load-bearing gap.
+- **F105 — airflow root `labels` string-typed under the metadata-secret
+  conditions (suspected false rejection).** Observed while landing the
+  eighth round, present in the fixtures before it: an `if`-arm keyed on the
+  metadata-connection-secret conditions (scheduler enabled or the
+  triggerer/keda family, no `data.metadataSecretName`) constrains a TRUTHY
+  root `labels` to `¬truthy ∨ null ∨ string`, yet
+  `helm template --skip-schema-validation` renders `labels: {team: data}`
+  under composed defaults cleanly. The arm's shape points at the checksum
+  string-consumer lane (`include (print $.Template.BasePath …) . |
+  sha256sum` over the secret templates). Needs its own audit: find the
+  producer, verify polarity, and either scope or delete the claim.
+- **F80 residual — worker-family provider typing under the merged
+  context.** With `.Values.workers` resolving through the per-set merge,
+  the `airflowPodSecurityContext` priority-chain decoding cannot scope the
+  layered candidate exactly, so `workers.securityContext` abstains from
+  provider claims entirely (previously an overlay-guarded use; the
+  scheduler family keeps the exact break-scoped overlay). Sound but
+  incomplete; re-tightening needs merge-aware candidate-priority decoding.
 
 ## Rejected (invalid or won't fix by design)
 

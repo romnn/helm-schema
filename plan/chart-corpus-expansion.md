@@ -7433,3 +7433,96 @@ the same dump paths with different values). 1287/1287 workspace tests,
 doc tests clean, `task lint` exit 0, and the downstream luup2
 `check:local` (schema generation for every private chart, jv lint,
 `helm lint --strict`, kube-score) exit 0 with the fresh release binary.
+
+## Airflow recursive-merge round (2026-07-18, eighth round)
+
+Directive: implement the airflow `workersMergeValues` lane left In
+progress by the seventh round. All three diagnosed gaps landed, plus two
+collateral exact lowerings the chain needed.
+
+### F80 airflow — recursive custom merge (FIXED)
+
+The three gaps, in dependency order:
+
+- **(a) Bounded merge recognizer.** `IrAnalysisDb::custom_merge_helper`
+  classifies a define as the recursive-merge engine shape: `index . 0/1`
+  map params, an empty `dict` accumulator, a literal full-overwrite list
+  probed with `has` against the range key, every `range` destructured
+  over one of the two maps, every `set` writing the accumulator at the
+  range key from the maps' members only (`$val`, `get MAP $key`, `or` of
+  those, or the self-recursive merge of two members), no foreign
+  includes, and a `toYaml ACC` terminal. A recognized call site
+  substitutes `MergedLayers([overwrite, input])` (marked YAML-serialized
+  so `include … | fromYaml` round-trips) instead of summarizing the
+  recursion. The full-overwrite keys don't need to ride the value: the
+  non-full-overwrite exceptions (empty-slice overwrite loses, boolean
+  `or` sections) only surface through Helm-FALSY overwrite values, which
+  the truthy-scoped capture walker (c) never binds.
+- **(b) Context-copy rebinding (the load-bearing gap).**
+  `set $copy.Values KEY V` on a local holding a `deepCopy`-of-root
+  context records a local mutation overlaying KEY over the values root;
+  document-scope assignment evaluation now applies exactly that
+  context-copy flavor (helper scope already applied set mutations
+  generally); and `.Values.…` field resolution reads through a
+  `with`-dot Overlay whose `Values` member was replaced (`$.Values.…`
+  keeps naming the genuine root). The worker templates' `with $globals`
+  bodies now resolve `.Values.workers.…` to the per-set merged value.
+- **(c) Layered strict-operand captures.** The strict-kind, comparable-
+  kind, length-bearing, and member-host capture paths walk the operand
+  through merge layers in order: each layer's capture is scoped to the
+  layer path's TRUTHINESS (the merged value exists whether or not any
+  one layer supplies the member, so presence must never be demanded —
+  the truthy scope also routes `MembersAt` requirements through the
+  tolerant `TruthyImpliesSchemaType` encoding), deeper layers carry the
+  earlier layers' `Absent` guards, and a layer that is not fully
+  path-backed blocks every deeper layer. `MergedLayers` member
+  projection keeps an opaque layer as an `Unknown` shadow instead of
+  silently dropping it (a nil-filtered or unresolved overwrite map may
+  still shadow everything below).
+
+Collateral exact lowerings:
+
+- Document-scope ranges over structured or joined iterables bind their
+  item variable through `fragment_range_item` (airflow's
+  `range $workerSet := $workerSets` over the conditional default-set
+  concat; a parent-identity OutputPath item projects to its member so
+  the binding never claims the collection renders where members do).
+- Fail-polarity `Or` outer guards drop undecodable disjuncts instead of
+  vetoing the whole guard — the remaining arms imply the disjunction, so
+  the arm fires less often, never more (airflow's `or .Values.labels
+  <merged workers labels>` mustMerge gate).
+
+Behavior on the real chart, every polarity reproduced under
+`helm template --skip-schema-validation`: scalar
+`workers.celery.sets[].labels` REJECTS (mustMerge aborts under a truthy
+merged operand), scalar `workers.celery.sets[].persistence` REJECTS (the
+merge recursion's `hasKey` aborts), while map-shaped `labels`,
+`persistence.enabled`, and `resources`/`queue`/`replicas` per-set
+overrides ACCEPT. Present-but-falsy scalar members stay open (they never
+reach the strict consumers). Pins:
+`airflow_worker_set_overrides_bind_strict_member_kinds` (CLI),
+`recognizes_recursive_custom_merge_helper` /
+`merge_recognition_requires_accumulator_discipline` (IR).
+
+### Adjudicated churn
+
+- The `airflow_break_scopes_the_deprecated_security_context_candidate`
+  analysis pin repointed to the scheduler family (exact break-scoped
+  overlay preserved) and now also pins the worker family's provider
+  ABSTENTION under the merged context (ledger: F80 residual).
+- cert-manager's IR fixture gained two member-serialized uses for the
+  merged `nodeSelector` layers (the range-item binding lane).
+- 13 corpus fixtures churned; each changed chart still validates its
+  composed defaults with zero errors, and every behavioral
+  `chart_reaudit`/chart-semantics pin passes against the regenerated
+  schemas.
+- New ledger finding F105: the pre-existing arm string-typing a truthy
+  root `labels` under the metadata-secret conditions contradicts a clean
+  `helm template` render — recorded for its own audit round.
+
+### Validation
+
+All 55 chart-corpus fixtures regenerated (13 changed), the cert-manager
+IR fixture updated, gen corpus unchanged. 1290/1290 workspace tests, doc
+tests clean, `task lint` exit 0, and the downstream luup2 `check:local`
+exit 0 with the fresh release binary.
