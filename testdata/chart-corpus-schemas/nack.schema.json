@@ -1316,44 +1316,21 @@
       }
     },
     {
-      "if": {
-        "not": {
+      "additionalProperties": {},
+      "properties": {
+        "jetstream": {
+          "additionalProperties": {},
           "properties": {
-            "jetstream": {
-              "properties": {
-                "controlLoop": {
-                  "$ref": "#/$defs/helm-truthy"
+            "additionalArgs": {
+              "anyOf": [
+                {
+                  "type": "array"
+                },
+                {
+                  "type": "null"
                 }
-              },
-              "required": [
-                "controlLoop"
               ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "jetstream"
-          ],
-          "type": "object"
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "jetstream": {
-            "additionalProperties": {},
-            "properties": {
-              "additionalArgs": {
-                "anyOf": [
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Additional arguments to pass to the controller process"
-              }
+              "description": "Additional arguments to pass to the controller process"
             }
           }
         }

@@ -451,8 +451,9 @@ pub(super) fn record_strict_kind_result(
     schema_type: &str,
     effects: &mut Effects,
 ) {
-    for path in strict_operand_identity_paths(operand) {
-        for conjunction in strict_operand_selection_conjunctions(operand, &path) {
+    for (path, shadow) in layered_strict_operand_identity_paths(operand) {
+        for mut conjunction in strict_operand_selection_conjunctions(operand, &path) {
+            conjunction.extend(shadow.iter().cloned());
             push_value_type_capture(conjunction, path.clone(), schema_type.to_string(), effects);
         }
     }
@@ -466,8 +467,9 @@ pub(super) fn record_comparable_kind_result(
     schema_type: &str,
     effects: &mut Effects,
 ) {
-    for path in strict_operand_identity_paths(operand) {
-        for conjunction in strict_operand_selection_conjunctions(operand, &path) {
+    for (path, shadow) in layered_strict_operand_identity_paths(operand) {
+        for mut conjunction in strict_operand_selection_conjunctions(operand, &path) {
+            conjunction.extend(shadow.iter().cloned());
             let capture = crate::eval_effect::FailCapture {
                 conjunction,
                 ranged: crate::range_modes::RangeModes::default(),
@@ -651,19 +653,134 @@ fn push_value_pattern_capture(
     }
 }
 
-pub(super) fn strict_operand_identity_paths(operand: &EvalResult) -> BTreeSet<String> {
-    identity_value_paths(&operand.value)
-        .into_iter()
-        .filter(|path| {
-            !operand.effects.shape_erased_paths.contains(path)
-                && !operand.effects.derived_text_paths.contains(path)
-                && !operand
-                    .effects
-                    .local_output_meta
-                    .get(path)
-                    .is_some_and(|meta| meta.shape_erased || meta.derived_text)
-        })
-        .collect()
+fn strict_operand_path_is_clean(path: &str, effects: &Effects) -> bool {
+    !effects.shape_erased_paths.contains(path)
+        && !effects.derived_text_paths.contains(path)
+        && !effects
+            .local_output_meta
+            .get(path)
+            .is_some_and(|meta| meta.shape_erased || meta.derived_text)
+}
+
+/// Facts one merge layer contributes to the walk: the identity paths the
+/// layer's runtime value can be, and whether EVERY alternative of the layer
+/// resolves to such a path — only then does "all of them absent" prove the
+/// layer cannot shadow the layers below it.
+struct StrictLayerWalk {
+    paths: BTreeSet<String>,
+    absence_expressible: bool,
+}
+
+/// The strict-operand identities together with the merge-shadowing
+/// conditions under which the operand's runtime value IS that identity.
+///
+/// A [`AbstractValue::MergedLayers`] operand reaches a strict consumer as
+/// exactly one layer's member: the highest-precedence layer that supplies
+/// it. The top layer's contract therefore holds whenever its path is
+/// present, while a deeper layer's contract holds only where every earlier
+/// layer's identity is ABSENT (which fires less often than the real
+/// "earlier layer lacks the key" condition — the sound direction for fail
+/// captures). A layer whose alternatives are not all path-backed (a
+/// literal member, an unknown overwrite map) blocks every deeper layer
+/// instead of letting deeper contracts fire unshadowed. Non-merged shapes
+/// keep the flat per-path behavior.
+///
+/// Every layer's conditions carry the layer path's own TRUTHINESS: the
+/// strict consumer eats the MERGED value, which exists whether or not any
+/// one layer supplies the member, so a layer's contract must never demand
+/// the layer path's presence (the airflow worker-set members). Scoping to
+/// truthy layer values keeps the capture inside the states where the
+/// layer demonstrably feeds the consumer.
+pub(super) fn layered_strict_operand_identity_paths(
+    operand: &EvalResult,
+) -> Vec<(String, Vec<Predicate>)> {
+    fn collect(
+        value: &AbstractValue,
+        effects: &Effects,
+        shadow: &[Predicate],
+        emit: bool,
+        layered: bool,
+        out: &mut Vec<(String, Vec<Predicate>)>,
+    ) -> StrictLayerWalk {
+        match value {
+            AbstractValue::ValuesPath(path)
+            | AbstractValue::JsonDecodedPath(path)
+            | AbstractValue::OutputPath(path, _) => {
+                if emit && strict_operand_path_is_clean(path, effects) {
+                    let mut conditions = shadow.to_vec();
+                    if layered {
+                        conditions.push(Predicate::truthy_path(path.clone()));
+                    }
+                    let entry = (path.clone(), conditions);
+                    if !out.contains(&entry) {
+                        out.push(entry);
+                    }
+                }
+                StrictLayerWalk {
+                    paths: BTreeSet::from([path.clone()]),
+                    absence_expressible: true,
+                }
+            }
+            AbstractValue::Choice(choices) => {
+                let mut paths = BTreeSet::new();
+                let mut absence_expressible = true;
+                for choice in choices {
+                    let walk = collect(choice, effects, shadow, emit, layered, out);
+                    paths.extend(walk.paths);
+                    absence_expressible &= walk.absence_expressible;
+                }
+                StrictLayerWalk {
+                    paths,
+                    absence_expressible,
+                }
+            }
+            AbstractValue::MergedLayers(layers) => {
+                let mut shadow = shadow.to_vec();
+                let mut paths = BTreeSet::new();
+                let mut absence_expressible = true;
+                let mut unshadowed = true;
+                for layer in layers {
+                    let walk = collect(layer, effects, &shadow, emit && unshadowed, true, out);
+                    if walk.absence_expressible && !walk.paths.is_empty() {
+                        for path in &walk.paths {
+                            shadow
+                                .push(Predicate::from(crate::Guard::Absent { path: path.clone() }));
+                        }
+                    } else {
+                        unshadowed = false;
+                    }
+                    paths.extend(walk.paths);
+                    absence_expressible &= walk.absence_expressible;
+                }
+                StrictLayerWalk {
+                    paths,
+                    absence_expressible,
+                }
+            }
+            AbstractValue::Top
+            | AbstractValue::Unknown
+            | AbstractValue::RangeKey(_)
+            | AbstractValue::KeysList(_)
+            | AbstractValue::RootContext
+            | AbstractValue::StringSet(_)
+            | AbstractValue::DerivedBoolean(_)
+            | AbstractValue::Dict(_)
+            | AbstractValue::List(_)
+            | AbstractValue::Overlay { .. }
+            | AbstractValue::SplitList { .. }
+            | AbstractValue::SplitSegment { .. }
+            | AbstractValue::Widened(_) => StrictLayerWalk {
+                paths: BTreeSet::new(),
+                absence_expressible: false,
+            },
+        }
+    }
+
+    let mut out = Vec::new();
+    if let Some(value) = &operand.value {
+        collect(value, &operand.effects, &[], true, false, &mut out);
+    }
+    out
 }
 
 pub(super) fn strict_operand_selection_conjunctions(
@@ -709,9 +826,10 @@ pub(super) fn record_length_bearing_operand(
 }
 
 pub(super) fn record_length_bearing_result(operand: &EvalResult, effects: &mut Effects) {
-    for path in strict_operand_identity_paths(operand) {
+    for (path, shadow) in layered_strict_operand_identity_paths(operand) {
         for kind in ["boolean", "integer", "number"] {
-            for conjunction in strict_operand_selection_conjunctions(operand, &path) {
+            for mut conjunction in strict_operand_selection_conjunctions(operand, &path) {
+                conjunction.extend(shadow.iter().cloned());
                 record_forbidden_kind(&path, kind, conjunction, effects);
             }
         }

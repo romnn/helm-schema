@@ -1244,6 +1244,41 @@
       "condition": [
         [
           {
+            "path": "global.nodeSelector",
+            "type": "range"
+          },
+          {
+            "path": "nodeSelector",
+            "type": "range"
+          },
+          {
+            "path": "global.nodeSelector",
+            "type": "with"
+          },
+          {
+            "path": "nodeSelector",
+            "type": "with"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "nodeSelector",
+        "{*}"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "global.nodeSelector.*"
+    },
+    {
+      "condition": [
+        [
+          {
             "path": "global.priorityClassName",
             "type": "with"
           }
@@ -2533,6 +2568,41 @@
         "kind": "Deployment"
       },
       "source_expr": "nodeSelector"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "global.nodeSelector",
+            "type": "range"
+          },
+          {
+            "path": "nodeSelector",
+            "type": "range"
+          },
+          {
+            "path": "global.nodeSelector",
+            "type": "with"
+          },
+          {
+            "path": "nodeSelector",
+            "type": "with"
+          }
+        ]
+      ],
+      "kind": "Serialized",
+      "path": [
+        "spec",
+        "template",
+        "spec",
+        "nodeSelector",
+        "{*}"
+      ],
+      "resource": {
+        "api_version": "apps/v1",
+        "kind": "Deployment"
+      },
+      "source_expr": "nodeSelector.*"
     },
     {
       "condition": [

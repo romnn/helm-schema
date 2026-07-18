@@ -77,8 +77,8 @@ fn airflow_break_scopes_the_deprecated_security_context_candidate() -> color_eyr
     )?;
     let signals = contract_schema_signals!(collection);
     let evidence = signals
-        .evidence_for("workers.securityContext")
-        .expect("workers.securityContext evidence");
+        .evidence_for("scheduler.securityContext")
+        .expect("scheduler.securityContext evidence");
 
     assert!(
         evidence.provider_schema_uses.is_empty()
@@ -87,6 +87,23 @@ fn airflow_break_scopes_the_deprecated_security_context_candidate() -> color_eyr
                 .iter()
                 .any(|overlay| { !overlay.evidence.provider_schema_uses.is_empty() }),
         "the later candidate must only carry provider evidence behind its no-prior-break guard: {evidence:#?}"
+    );
+
+    // The WORKER family resolves `.Values.workers` through the per-set
+    // `workersMergeValues` rebinding, so its candidate is a layered merge
+    // the priority decoding cannot scope exactly: the deprecated member
+    // abstains entirely (no path-level or overlay provider claims) instead
+    // of binding the provider payload somewhere it may never render.
+    let workers = signals
+        .evidence_for("workers.securityContext")
+        .expect("workers.securityContext evidence");
+    assert!(
+        workers.provider_schema_uses.is_empty()
+            && workers
+                .conditional_overlays
+                .iter()
+                .all(|overlay| overlay.evidence.provider_schema_uses.is_empty()),
+        "the merged worker candidate must abstain from provider claims: {workers:#?}"
     );
 
     Ok(())

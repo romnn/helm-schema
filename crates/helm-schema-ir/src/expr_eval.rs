@@ -175,7 +175,20 @@ pub(crate) fn eval_expr_with_helper_calls(
     match expr {
         TemplateExpr::Parenthesized(inner) => eval_expr_with_helper_calls(inner, env, resolver),
         TemplateExpr::Field(path) if path.first().is_some_and(|segment| segment == "Values") => {
-            root_values_selector_result(&path[1..], env)
+            // Inside `with $copy` over a context copy whose `Values` member
+            // was replaced (`set $copy.Values …`), `.Values.…` reads the
+            // copy's overridden member. Only the Overlay shape that
+            // mutation produces re-routes; every other context keeps the
+            // root-values shortcut, including `$.Values.…`, which names
+            // the genuine root and never resolves here.
+            if let Some(AbstractValue::Overlay { entries, .. }) = &env.dot
+                && entries.contains_key("Values")
+                && let Some(value) = env.dot.as_ref().and_then(|dot| dot.apply_to_path(path))
+            {
+                EvalResult::from_value(value)
+            } else {
+                root_values_selector_result(&path[1..], env)
+            }
         }
         TemplateExpr::Field(path) if path.is_empty() => {
             EvalResult::from_value(env.dot.clone().unwrap_or(AbstractValue::RootContext))

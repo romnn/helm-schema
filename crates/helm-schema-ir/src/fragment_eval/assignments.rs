@@ -294,10 +294,61 @@ impl Interpreter<'_> {
         true
     }
 
+    /// `set $copy.Values KEY V` at DOCUMENT scope: replacing a values
+    /// member of a context-copy local (`$copy := deepCopy .`) re-routes
+    /// every later `with $copy` block onto the replaced member, so the
+    /// mutation must reach the fragment binding (airflow's per-worker-set
+    /// `set $globals.Values "workers" $workers`). Every other document
+    /// set call keeps the read-only treatment below.
+    fn apply_context_copy_value_mutations(&mut self, exprs: &[TemplateExpr]) {
+        fn is_context_copy(binding: &AbstractValue) -> bool {
+            match binding {
+                AbstractValue::RootContext => true,
+                AbstractValue::Overlay { fallback, .. } => is_context_copy(fallback),
+                _ => false,
+            }
+        }
+
+        let mut template_bindings = self.locals.range_member_values.clone();
+        template_bindings.extend(
+            self.locals
+                .fragment_values
+                .iter()
+                .map(|(name, value)| (name.clone(), value.clone())),
+        );
+        let current_dot = self.current_dot_fragment();
+        let env = crate::eval_env::EvalEnv::from_fragment_context(
+            &template_bindings,
+            current_dot.as_ref(),
+        );
+        for expr in exprs {
+            let mutation_expr = match expr {
+                TemplateExpr::VariableDefinition { value, .. }
+                | TemplateExpr::Assignment { value, .. } => value.as_ref(),
+                other => other,
+            };
+            let result = crate::expr_eval::eval_expr(mutation_expr, &env);
+            for (name, entries) in &result.effects.local_set_mutations {
+                if !entries.keys().all(|key| key == "Values") {
+                    continue;
+                }
+                let Some(binding) = self.locals.fragment_values.get(name) else {
+                    continue;
+                };
+                if !is_context_copy(binding) {
+                    continue;
+                }
+                let updated = binding.clone().with_overlay_entries(entries.clone());
+                self.locals.fragment_values.insert(name.clone(), updated);
+            }
+        }
+    }
+
     pub(super) fn eval_assignment_exprs(&mut self, exprs: &[TemplateExpr]) {
         if self.apply_helper_scope_set_mutations(exprs) {
             return;
         }
+        self.apply_context_copy_value_mutations(exprs);
         if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
             let rhs = std::slice::from_ref(&assignment.rhs_expr);
             self.record_required_subjects(rhs);

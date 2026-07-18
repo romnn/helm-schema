@@ -760,11 +760,17 @@ impl AbstractValue {
             // the per-layer members. Collapsing to an unordered choice here
             // would erase the shadowing that makes a fully-overridden base
             // member unreachable (kyverno's `featuresOverride.logging`).
+            // A layer whose member cannot be resolved drops only when the
+            // layer's shape PROVES the member absent; an opaque layer stays
+            // as an unknown member that may still shadow everything below
+            // it (airflow's nil-filtered celery overwrite layer).
             Self::MergedLayers(layers) => {
                 let mut out = Vec::new();
                 for value in layers {
-                    if let Some(bound) = value.apply_to_path(rest) {
-                        out.push(bound);
+                    match value.apply_to_path(rest) {
+                        Some(bound) => out.push(bound),
+                        None if value.member_projection_is_exhaustive() => {}
+                        None => out.push(Self::Unknown),
                     }
                 }
                 match out.len() {
@@ -792,6 +798,42 @@ impl AbstractValue {
                     fallback.apply_to_path(rest)
                 }
             }
+        }
+    }
+
+    /// Whether a failed [`Self::apply_to_path`] on this value proves the
+    /// member absent.
+    ///
+    /// Structured values enumerate their members (checked recursively,
+    /// since a projection can fail at any depth) and scalars have none, so
+    /// a miss is a genuine absence; opaque values (unknown call results,
+    /// derived text) may hold the member without the projection seeing it.
+    fn member_projection_is_exhaustive(&self) -> bool {
+        match self {
+            // Path-backed values and `Top` never fail a projection, and
+            // scalar shapes genuinely have no members. `RootContext` fails
+            // only on non-`Values` heads, which never name a user value.
+            Self::ValuesPath(_)
+            | Self::JsonDecodedPath(_)
+            | Self::OutputPath(_, _)
+            | Self::Top
+            | Self::RootContext
+            | Self::StringSet(_)
+            | Self::DerivedBoolean(_) => true,
+            Self::Dict(entries) => entries.values().all(Self::member_projection_is_exhaustive),
+            Self::List(items) => items.iter().all(Self::member_projection_is_exhaustive),
+            Self::Overlay { entries, fallback } => {
+                entries.values().all(Self::member_projection_is_exhaustive)
+                    && fallback.member_projection_is_exhaustive()
+            }
+            Self::Choice(choices) => choices.iter().all(Self::member_projection_is_exhaustive),
+            Self::MergedLayers(layers) => layers.iter().all(Self::member_projection_is_exhaustive),
+            Self::Unknown
+            | Self::RangeKey(_)
+            | Self::KeysList(_)
+            | Self::SplitList { .. }
+            | Self::SplitSegment { .. }
+            | Self::Widened(_) => false,
         }
     }
 

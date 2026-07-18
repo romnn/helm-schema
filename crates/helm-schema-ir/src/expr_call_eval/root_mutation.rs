@@ -36,6 +36,33 @@ pub(super) fn eval_set_call(
         }
         _ => None,
     };
+    // `set $copy.Values KEY V` on a context-copy local (`$copy := deepCopy
+    // .`) replaces one root values member for everything that later reads
+    // the copy (`with $copy` blocks): observed as a mutation of the LOCAL
+    // whose `Values` member overlays KEY over the real values root
+    // (airflow's per-worker-set `set $globals.Values "workers" $workers`).
+    let values_member_target = match args.first().map(TemplateExpr::deparen) {
+        Some(TemplateExpr::Selector { operand, path })
+            if path.as_slice() == ["Values"]
+                && matches!(
+                    operand.deparen(),
+                    TemplateExpr::Variable(name)
+                        if !name.trim_start_matches('$').is_empty()
+                ) =>
+        {
+            match operand.deparen() {
+                TemplateExpr::Variable(name) => {
+                    let name = name.trim_start_matches('$');
+                    env.locals
+                        .get(name)
+                        .and_then(|local| local.apply_to_path(&["Values".to_string()]))
+                        .map(|old_values| (name.to_string(), old_values))
+                }
+                _ => None,
+            }
+        }
+        _ => None,
+    };
     let mut keys = BTreeSet::new();
     if let Some(expr) = args.get(1) {
         let key = eval_expr_with_helper_calls(expr, env, resolver);
@@ -74,6 +101,23 @@ pub(super) fn eval_set_call(
         });
     if let Some(target) = target {
         effects.add_local_set_mutation(target, keys, assigned_value);
+    } else if let Some((local, old_values)) = values_member_target {
+        // An unresolvable assigned value must not replace the member: the
+        // copy would then resolve `.Values.KEY.…` to nothing where the
+        // unobserved form still reached the plain path.
+        if !keys.is_empty()
+            && !matches!(assigned_value, AbstractValue::Unknown | AbstractValue::Top)
+        {
+            let entries = keys
+                .iter()
+                .map(|key| (key.clone(), assigned_value.clone()))
+                .collect();
+            effects.add_local_set_mutation(
+                local,
+                BTreeSet::from(["Values".to_string()]),
+                old_values.with_overlay_entries(entries),
+            );
+        }
     } else if root_target {
         if keys.contains("Values")
             && let Some(assigned) = args.get(2)

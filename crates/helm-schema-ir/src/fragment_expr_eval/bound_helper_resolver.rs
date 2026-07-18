@@ -7,7 +7,7 @@ use crate::eval_effect::{Effects, EvalResult};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 
-use super::FragmentEvalContext;
+use super::{FragmentEvalContext, helper_result_from_expr_with_fragment_locals};
 
 pub(super) fn eval_expr_result_with_bound_helpers(
     expr: &TemplateExpr,
@@ -38,6 +38,9 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
     ) -> Option<EvalResult> {
         if !self.params.context.analysis_db.has_helper(name) {
             return None;
+        }
+        if let Some(result) = self.custom_merge_call(name, arg) {
+            return Some(result);
         }
         if self.params.seen.contains(name) {
             return Some(EvalResult::none());
@@ -120,5 +123,64 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_> {
             .implicit_template_name(suffix)?
             .to_string();
         self.resolve_helper_call(&name, arg)
+    }
+}
+
+impl BoundHelperValueResolver<'_, '_, '_> {
+    /// A call to a recognized custom merge helper resolves to the layered
+    /// merge of its `(list INPUT OVERWRITE …)` operands instead of the
+    /// recursive body summary.
+    ///
+    /// The layer order is exact for the helper's full-overwrite keys; for
+    /// other keys its per-kind exceptions (an empty-slice overwrite loses,
+    /// boolean `or` sections) stay inside the accept direction because
+    /// they surface only through Helm-FALSY overwrite values, which the
+    /// truthy-scoped strict-operand walker never binds. The payload paths
+    /// are marked YAML-serialized text so the conventional
+    /// `include … | fromYaml` decode recovers the value.
+    fn custom_merge_call(&mut self, name: &str, arg: Option<&TemplateExpr>) -> Option<EvalResult> {
+        self.params.context.analysis_db.custom_merge_helper(name)?;
+        let TemplateExpr::Call { function, args } = arg?.deparen() else {
+            return None;
+        };
+        if function != "list" || args.len() < 2 {
+            return None;
+        }
+        let eval_operand = |expr: &TemplateExpr| {
+            let mut seen = self.params.seen.clone();
+            helper_result_from_expr_with_fragment_locals(
+                expr,
+                self.params.fragment_locals,
+                self.params.outer,
+                self.params.current_dot,
+                self.params.context,
+                &mut seen,
+            )
+        };
+        let input = eval_operand(&args[0]);
+        let overwrite = eval_operand(&args[1]);
+        let input_layer = input
+            .value
+            .clone()
+            .and_then(AbstractValue::without_widened)
+            .unwrap_or(AbstractValue::Unknown);
+        let overwrite_layer = overwrite
+            .value
+            .clone()
+            .and_then(AbstractValue::without_widened)
+            .unwrap_or(AbstractValue::Unknown);
+        if input_layer.paths().is_empty() && overwrite_layer.paths().is_empty() {
+            return None;
+        }
+        let value = AbstractValue::MergedLayers(vec![overwrite_layer, input_layer]);
+        let mut effects = Effects::default();
+        effects.merge(input.effects.execution_only());
+        effects.merge(overwrite.effects.execution_only());
+        let payload_paths = value.paths();
+        effects
+            .yaml_serialized_paths
+            .extend(payload_paths.iter().cloned());
+        effects.derived_text_paths.extend(payload_paths);
+        Some(EvalResult::with_effects(Some(value), effects))
     }
 }

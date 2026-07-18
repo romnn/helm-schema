@@ -34,6 +34,7 @@ pub(crate) struct IrAnalysisDb {
     /// resource spans), shared across memoized-summary misses.
     body_eval_facts: RefCell<HashMap<String, Rc<BodyEvalFacts>>>,
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallCacheKey, Rc<FragmentSummary>>>,
+    custom_merge_helpers: RefCell<HashMap<String, bool>>,
 }
 
 pub(crate) struct BoundHelperCallSummary {
@@ -87,6 +88,7 @@ impl IrAnalysisDb {
             define_trees: RefCell::new(HashMap::new()),
             body_eval_facts: RefCell::new(HashMap::new()),
             bound_helper_calls: RefCell::new(BTreeMap::new()),
+            custom_merge_helpers: RefCell::new(HashMap::new()),
         }
     }
 
@@ -239,6 +241,243 @@ impl IrAnalysisDb {
                 (key.clone(), spread)
             })
             .collect()
+    }
+
+    /// Classifies `name` as a bounded chart-authored merge helper, memoized.
+    ///
+    /// The recognized shape is airflow's `workersMergeValues` engine: the
+    /// define destructures `(list INPUT OVERWRITE …)` through `index`,
+    /// builds an empty `dict` accumulator, declares a literal
+    /// full-overwrite key list probed with `has`, ranges only the two
+    /// maps with destructured `key, val` variables, writes accumulator
+    /// members only from the two maps' members (`$val`, `get MAP $key`,
+    /// `or` of those, or the self-recursive merge of those members), and
+    /// renders exactly `toYaml ACC`. Under those rules the output is a
+    /// merge of OVERWRITE over INPUT, so the call site can substitute the
+    /// layered value without evaluating the recursion.
+    pub(crate) fn custom_merge_helper(&self, name: &str) -> Option<()> {
+        if let Some(cached) = self.custom_merge_helpers.borrow().get(name) {
+            return cached.then_some(());
+        }
+        let recognized = self.classify_custom_merge_helper(name).is_some();
+        self.custom_merge_helpers
+            .borrow_mut()
+            .insert(name.to_string(), recognized);
+        recognized.then_some(())
+    }
+
+    fn classify_custom_merge_helper(&self, name: &str) -> Option<()> {
+        let body = self.parsed_helper_body(name)?;
+
+        let mut ranges = Vec::new();
+        if !collect_destructured_ranges(body.tree.root_node(), body.source, &mut ranges) {
+            return None;
+        }
+        if ranges.is_empty() {
+            return None;
+        }
+
+        let exprs = helm_schema_ast::parse_action_expressions(body.source);
+        let mut indexed_params: BTreeMap<i64, String> = BTreeMap::new();
+        let mut accumulator: Option<String> = None;
+        let mut literal_lists: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+        let mut nested_vars: BTreeSet<String> = BTreeSet::new();
+        for expr in &exprs {
+            let TemplateExpr::VariableDefinition {
+                name: var_name,
+                value,
+            } = expr
+            else {
+                continue;
+            };
+            let var_name = var_name.trim_start_matches('$').to_string();
+            match value.deparen() {
+                TemplateExpr::Call { function, args } if function == "index" => {
+                    if let [
+                        subject,
+                        TemplateExpr::Literal(helm_schema_ast::Literal::Int(n)),
+                    ] = args.as_slice()
+                        && matches!(subject.deparen(), TemplateExpr::Field(path) if path.is_empty())
+                        && indexed_params.insert(*n, var_name).is_some()
+                    {
+                        return None;
+                    }
+                }
+                TemplateExpr::Call { function, args } if function == "dict" && args.is_empty() => {
+                    if accumulator.replace(var_name).is_some() {
+                        return None;
+                    }
+                }
+                TemplateExpr::Call { function, args } if function == "list" => {
+                    let keys = args
+                        .iter()
+                        .map(|arg| match arg.deparen() {
+                            TemplateExpr::Literal(helm_schema_ast::Literal::String(key)) => {
+                                Some(key.clone())
+                            }
+                            _ => None,
+                        })
+                        .collect::<Option<BTreeSet<String>>>();
+                    if let Some(keys) = keys {
+                        literal_lists.insert(var_name, keys);
+                    }
+                }
+                _ => {
+                    if is_self_merge_recursion(value, name) {
+                        nested_vars.insert(var_name);
+                    }
+                }
+            }
+        }
+
+        let input_var = indexed_params.get(&0)?.clone();
+        let overwrite_var = indexed_params.get(&1)?.clone();
+        let out_var = accumulator?;
+        if input_var == overwrite_var || out_var == input_var || out_var == overwrite_var {
+            return None;
+        }
+        let mut key_vars: BTreeSet<String> = BTreeSet::new();
+        let mut val_vars: BTreeSet<String> = BTreeSet::new();
+        for range in &ranges {
+            if range.source_var != input_var && range.source_var != overwrite_var {
+                return None;
+            }
+            key_vars.insert(range.key_var.clone());
+            val_vars.insert(range.value_var.clone());
+        }
+
+        let is_map_member = |expr: &TemplateExpr| -> bool {
+            match expr.deparen() {
+                TemplateExpr::Variable(variable) => {
+                    val_vars.contains(variable.trim_start_matches('$'))
+                }
+                TemplateExpr::Call { function, args } if function == "get" => {
+                    matches!(
+                        args.first().map(TemplateExpr::deparen),
+                        Some(TemplateExpr::Variable(base))
+                            if base.trim_start_matches('$') == input_var
+                                || base.trim_start_matches('$') == overwrite_var
+                    ) && matches!(
+                        args.get(1).map(TemplateExpr::deparen),
+                        Some(TemplateExpr::Variable(key))
+                            if key_vars.contains(key.trim_start_matches('$'))
+                    )
+                }
+                _ => false,
+            }
+        };
+        fn allowed_set_value(
+            expr: &TemplateExpr,
+            nested_vars: &BTreeSet<String>,
+            is_map_member: &impl Fn(&TemplateExpr) -> bool,
+        ) -> bool {
+            if is_map_member(expr) {
+                return true;
+            }
+            match expr.deparen() {
+                TemplateExpr::Variable(variable) => {
+                    nested_vars.contains(variable.trim_start_matches('$'))
+                }
+                TemplateExpr::Call { function, args } if function == "or" => args
+                    .iter()
+                    .all(|arg| allowed_set_value(arg, nested_vars, is_map_member)),
+                _ => false,
+            }
+        }
+
+        let mut full_overwrite_sources: BTreeSet<String> = BTreeSet::new();
+        let mut disciplined = true;
+        for expr in &exprs {
+            expr.walk(|inner| match inner {
+                TemplateExpr::Call { function, args } => match function.as_str() {
+                    "has" => {
+                        if let (
+                            Some(TemplateExpr::Variable(subject)),
+                            Some(TemplateExpr::Variable(list_var)),
+                        ) = (
+                            args.first().map(TemplateExpr::deparen),
+                            args.get(1).map(TemplateExpr::deparen),
+                        ) && key_vars.contains(subject.trim_start_matches('$'))
+                            && literal_lists.contains_key(list_var.trim_start_matches('$'))
+                        {
+                            full_overwrite_sources.insert(list_var.trim_start_matches('$').into());
+                        }
+                    }
+                    "set" | "unset" => {
+                        let targets_out = matches!(
+                            args.first().map(TemplateExpr::deparen),
+                            Some(TemplateExpr::Variable(target))
+                                if target.trim_start_matches('$') == out_var
+                        );
+                        let keyed_by_range = matches!(
+                            args.get(1).map(TemplateExpr::deparen),
+                            Some(TemplateExpr::Variable(key))
+                                if key_vars.contains(key.trim_start_matches('$'))
+                        );
+                        if function == "unset"
+                            || args.len() != 3
+                            || !targets_out
+                            || !keyed_by_range
+                            || !allowed_set_value(&args[2], &nested_vars, &is_map_member)
+                        {
+                            disciplined = false;
+                        }
+                    }
+                    "include" | "template" => {
+                        match args.first().map(TemplateExpr::deparen) {
+                            Some(TemplateExpr::Literal(helm_schema_ast::Literal::String(
+                                callee,
+                            ))) if callee == name => {}
+                            _ => disciplined = false,
+                        }
+                        let recursion_operands_are_members = matches!(
+                            args.get(1).map(TemplateExpr::deparen),
+                            Some(TemplateExpr::Call {
+                                function: list_fn,
+                                args: list_args,
+                            }) if list_fn == "list"
+                                && list_args.len() >= 2
+                                && is_map_member(&list_args[0])
+                                && is_map_member(&list_args[1])
+                        );
+                        if !recursion_operands_are_members {
+                            disciplined = false;
+                        }
+                    }
+                    _ => {}
+                },
+                TemplateExpr::Assignment { name: target, .. } => {
+                    let target = target.trim_start_matches('$');
+                    if target == input_var || target == overwrite_var || target == out_var {
+                        disciplined = false;
+                    }
+                }
+                _ => {}
+            });
+        }
+        if !disciplined {
+            return None;
+        }
+
+        let renders_accumulator_yaml = matches!(
+            exprs.last().map(TemplateExpr::deparen),
+            Some(TemplateExpr::Call { function, args })
+                if function == "toYaml"
+                    && matches!(
+                        args.first().map(TemplateExpr::deparen),
+                        Some(TemplateExpr::Variable(subject))
+                            if subject.trim_start_matches('$') == out_var
+                    )
+        );
+        if !renders_accumulator_yaml {
+            return None;
+        }
+
+        let mut sources = full_overwrite_sources.into_iter();
+        let (Some(source), None) = (sources.next(), sources.next()) else {
+            return None;
+        };
+        literal_lists.remove(&source).map(|_keys| ())
     }
 
     pub(crate) fn parsed_helper_body(&self, name: &str) -> Option<ParsedHelperBody<'_>> {
@@ -633,6 +872,78 @@ fn header_has_key_literals(header: &helm_schema_ast::TemplateHeader) -> Option<B
     } else {
         Some(literals)
     }
+}
+
+struct DestructuredRange {
+    source_var: String,
+    key_var: String,
+    value_var: String,
+}
+
+/// Collects every `range` in the body, requiring each to be the
+/// destructured `range $key, $val := $VAR` form.
+///
+/// That is the only shape whose member writes the merge recognizer can
+/// attribute. Returns `false` when any range deviates.
+fn collect_destructured_ranges(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+    out: &mut Vec<DestructuredRange>,
+) -> bool {
+    if node.kind() == "range_action" {
+        let source_var =
+            helm_schema_ast::range_header_from_source(node, source).and_then(|header| match header
+                .expr()
+                .deparen()
+            {
+                TemplateExpr::Variable(variable) if !variable.is_empty() => {
+                    Some(variable.trim_start_matches('$').to_string())
+                }
+                _ => None,
+            });
+        let key_var = helm_schema_ast::range_destructured_key_variable(node, source);
+        let value_var = helm_schema_ast::range_destructured_value_variable(node, source);
+        match (source_var, key_var, value_var) {
+            (Some(source_var), Some(key_var), Some(value_var)) => out.push(DestructuredRange {
+                source_var,
+                key_var,
+                value_var,
+            }),
+            _ => return false,
+        }
+    }
+    let mut walker = node.walk();
+    node.named_children(&mut walker)
+        .all(|child| collect_destructured_ranges(child, source, out))
+}
+
+/// Whether a binding's value is the helper's own recursive merge of two
+/// members (`include SELF (list …) | fromYaml`).
+///
+/// The value discipline treats such a recursion result as another
+/// map-member source.
+fn is_self_merge_recursion(value: &TemplateExpr, helper_name: &str) -> bool {
+    let TemplateExpr::Pipeline(stages) = value.deparen() else {
+        return false;
+    };
+    let [head, tail] = stages.as_slice() else {
+        return false;
+    };
+    let head_is_self_include = matches!(
+        head.deparen(),
+        TemplateExpr::Call { function, args }
+            if (function == "include" || function == "template")
+                && matches!(
+                    args.first().map(TemplateExpr::deparen),
+                    Some(TemplateExpr::Literal(helm_schema_ast::Literal::String(callee)))
+                        if callee == helper_name
+                )
+    );
+    head_is_self_include
+        && matches!(
+            tail.deparen(),
+            TemplateExpr::Call { function, args } if function == "fromYaml" && args.is_empty()
+        )
 }
 
 fn subtree_contains_fail(source: &str, node: tree_sitter::Node<'_>) -> bool {

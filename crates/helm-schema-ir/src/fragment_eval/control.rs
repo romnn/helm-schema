@@ -817,15 +817,36 @@ impl Interpreter<'_> {
                 self.locals.fragment_values.insert(variable, binding);
             }
         }
-        // Ranging a derived keys list binds the item dot to the collection's
-        // key outside helper scope too (`range keys m` at a template site),
-        // so a same-map `pluck` member read keeps its identity.
-        if dot.is_none()
-            && let Some(item @ AbstractValue::RangeKey(_)) = iterable_value
+        // Ranging a structured iterable outside helper scope binds the item
+        // dot to the iterable's member domain: a derived keys list yields
+        // its collection key (`range keys m` at a template site keeps a
+        // same-map `pluck` member read exact), and a constructed or joined
+        // list yields the union of its item alternatives (airflow's
+        // `range $workerSet := $workerSets` over a conditional
+        // default-set concat). An item that still carries the ITERABLE's
+        // own identity (`fragment_range_item` keeps a non-decoded
+        // OutputPath whole for influence) projects to its member here, so
+        // the binding never claims the collection renders where its
+        // members do.
+        if dot.is_none() {
+            fn item_member_identity(item: AbstractValue) -> AbstractValue {
+                match item {
+                    AbstractValue::OutputPath(path, meta) if !meta.json_decoded => {
+                        AbstractValue::OutputPath(
+                            helm_schema_core::append_value_path(&path, "*"),
+                            meta,
+                        )
+                    }
+                    AbstractValue::Choice(choices) => AbstractValue::Choice(
+                        choices.into_iter().map(item_member_identity).collect(),
+                    ),
+                    other => other,
+                }
+            }
+            dot = iterable_value
                 .as_ref()
                 .and_then(AbstractValue::fragment_range_item)
-        {
-            dot = Some(item);
+                .map(|item| item_member_identity(item).to_context_value());
         }
         // The value binding carries the member identity (`x.*`), while the
         // key binding retains its distinct collection-key provenance. This

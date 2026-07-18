@@ -1568,11 +1568,16 @@ fn fail_outer_guard(predicate: &Predicate) -> Option<ConditionalGuard> {
         // A disjunction lowers arm-by-arm: each strengthened arm implies
         // its real arm, so their disjunction implies the real disjunction
         // (jenkins' `or (lt $replicas 0) (gt $replicas 1)` domain check).
+        // An undecodable arm DROPS instead of vetoing the whole guard —
+        // the remaining arms are a subset of the disjunction, so the fail
+        // arm fires less often, never more (airflow's `or .Values.labels
+        // <merged workers labels>` mustMerge gate, whose merged disjunct
+        // has no flat-guard spelling).
         Predicate::Or(items) => {
             let mut guards = items
                 .iter()
-                .map(fail_outer_guard)
-                .collect::<Option<Vec<_>>>()?;
+                .filter_map(fail_outer_guard)
+                .collect::<Vec<_>>();
             guards.sort();
             guards.dedup();
             match guards.as_slice() {

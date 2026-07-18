@@ -11,7 +11,7 @@ use helm_schema_core::Predicate;
 
 use super::eval_all_args;
 use super::strict_operands::{
-    strict_operand_identity_paths, strict_operand_selection_conjunctions,
+    layered_strict_operand_identity_paths, strict_operand_selection_conjunctions,
 };
 use super::value_facts::identity_value_paths;
 
@@ -181,8 +181,9 @@ pub(super) fn eval_index(
 }
 
 pub(super) fn record_member_host_access(operand: &EvalResult, effects: &mut Effects) {
-    for path in strict_operand_identity_paths(operand) {
+    for (path, shadow) in layered_strict_operand_identity_paths(operand) {
         for mut conjunction in strict_operand_selection_conjunctions(operand, &path) {
+            conjunction.extend(shadow.iter().cloned());
             conjunction.push(
                 Predicate::from(crate::Guard::TypeIs {
                     path: path.clone(),

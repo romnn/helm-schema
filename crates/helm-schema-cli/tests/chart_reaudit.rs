@@ -2604,3 +2604,48 @@ fn airflow_disabled_common_tag_is_scoped_to_the_postgresql_child() -> color_eyre
         ],
     )
 }
+
+/// airflow's worker templates rebuild `.Values.workers` per worker set:
+/// `workersMergeValues` merges each `workers.celery.sets[]` entry over the
+/// celery-merged workers map, and `set $globals.Values "workers" $workers`
+/// rebinds the values context for the manifest body. A truthy set member
+/// that reaches a strict map consumer (`mustMerge .Values.workers.labels`,
+/// the securityContext helpers' `hasKey` probes, the merge recursion
+/// itself) must therefore be a map, while map-shaped per-set overrides
+/// stay open.
+#[test]
+fn airflow_worker_set_overrides_bind_strict_member_kinds() -> color_eyre::eyre::Result<()> {
+    assert_chart_cases(
+        "airflow",
+        vec![
+            SemanticCase::rejected(
+                "scalar labels in a worker set terminates mustMerge",
+                "/workers/celery/sets",
+                json!({ "workers": { "celery": { "sets": [
+                    { "name": "heavy", "labels": "oops" }
+                ] } } }),
+            ),
+            SemanticCase::rejected(
+                "scalar persistence in a worker set terminates the merge recursion",
+                "/workers/celery/sets",
+                json!({ "workers": { "celery": { "sets": [
+                    { "name": "heavy", "persistence": "oops" }
+                ] } } }),
+            ),
+            SemanticCase::accepted(
+                "map labels override renders",
+                json!({ "workers": { "celery": { "sets": [
+                    { "name": "heavy", "labels": { "tier": "heavy" } }
+                ] } } }),
+            ),
+            SemanticCase::accepted(
+                "structured per-set overrides render",
+                json!({ "workers": { "celery": { "sets": [
+                    { "name": "highcpu", "replicas": 2, "queue": "highcpu",
+                      "persistence": { "enabled": true },
+                      "resources": { "requests": { "cpu": "1" } } }
+                ] } } }),
+            ),
+        ],
+    )
+}
